@@ -1,0 +1,31 @@
+RIBBIT RACE FRIENDS — 4-DIGIT PIN UPDATE
+Build 2026.10.02-friends-pin-1
+
+WHAT CHANGED
+- New accounts choose their own 4-digit numeric PIN.
+- Login is username + 4-digit PIN.
+- PINs are not stored as plaintext. The server stores a per-account random salt and a PBKDF2-SHA256 derived hash (120,000 iterations).
+- Login and account-management attempts remain rate-limited.
+- Existing private-key accounts and saves are preserved. Their owners use MIGRATE OLD PRIVATE-KEY ACCOUNT once, enter the old key, and choose a new PIN. The old key hash is then cleared.
+- Account management now changes PINs instead of rotating private keys.
+
+HOW TO UPDATE YOUR LIVE CLOUDFLARE VERSION
+1. Back up/download your current GitHub repository if desired.
+2. Open your GitHub repository: apolotion/ribbit-race-friends.
+3. Upload the CONTENTS of this update folder over the existing repository, preserving public/, src/, scripts/, and tests/. Replace files with the same names.
+   Recommended easiest method if GitHub web upload becomes cumbersome: use GitHub Desktop, clone the repo, copy these files over it, commit, and push to main.
+4. Commit to the production branch: main. Suggested commit message:
+   Friends login: switch private keys to 4-digit PINs
+5. Cloudflare Builds should start automatically. Confirm the log runs:
+   npm run check && npm test
+   npx wrangler deploy
+6. Do NOT create a new Worker, Durable Object, or database. Keep the existing Worker name and bindings. The existing FriendsHub database is migrated in place by the code.
+7. Wait for: Success! Build completed.
+8. Open https://ribbit-race-friends.apolotion.workers.dev in an incognito/private window and hard refresh.
+9. Create a NEW test account. Confirm it asks for username, PIN, and PIN confirmation; then sign out and sign back in with the same PIN.
+10. If you already created an account under the old system, click MIGRATE OLD PRIVATE-KEY ACCOUNT. Enter username + old key + a new 4-digit PIN. Confirm the old save returns. This is a one-time migration.
+11. Open /account.html while signed in and test Change PIN. Then sign in with the new PIN.
+12. Test one private multiplayer room after the account tests.
+
+ROLLBACK NOTE
+Rolling the code back after users migrate is not recommended: migrated accounts have their legacy key hash cleared. Keep this update once migration begins. Existing save data is not intentionally reset by this migration.

@@ -1,5 +1,5 @@
 import {DurableObject} from 'cloudflare:workers';
-import {BUILD,digest,randomHex,equal,json,error,roomName,cookieValue,sessionCookie,limitedJson} from './common.js';
+import {BUILD,digest,randomHex,equal,pinHash,json,error,roomName,cookieValue,sessionCookie,limitedJson} from './common.js';
 import {sanitizeSaveData_,sanitizeDeletedKeys_,mergePersistentSaveData_,parseSaveJson_,summarizeSave_} from './save-data.js';
 import {createRoomApi} from './rooms-core.js';
 import vocabulary from './vocabulary.json' with {type:'json'};
@@ -10,6 +10,8 @@ export class FriendsHub extends DurableObject {
  constructor(ctx,env){
   super(ctx,env);this.ctx=ctx;this.env=env;this.sql=ctx.storage.sql;this.lastCleanup=0;
   this.sql.exec('CREATE TABLE IF NOT EXISTS users (id TEXT PRIMARY KEY, username TEXT UNIQUE NOT NULL, name TEXT NOT NULL, keyhash TEXT NOT NULL, savedata TEXT NOT NULL, revision INTEGER NOT NULL, created INTEGER NOT NULL, updated INTEGER NOT NULL, summary TEXT NOT NULL)');
+  try{this.sql.exec("ALTER TABLE users ADD COLUMN pinsalt TEXT NOT NULL DEFAULT ''");}catch(_){}
+  try{this.sql.exec("ALTER TABLE users ADD COLUMN pinhash TEXT NOT NULL DEFAULT ''");}catch(_){}
   this.sql.exec('CREATE TABLE IF NOT EXISTS sessions (hash TEXT PRIMARY KEY, uid TEXT NOT NULL, marker TEXT NOT NULL, guest INTEGER NOT NULL, name TEXT NOT NULL, expires INTEGER NOT NULL)');
   this.sql.exec('CREATE INDEX IF NOT EXISTS sessions_exp ON sessions(expires)');
   this.sql.exec('CREATE INDEX IF NOT EXISTS sessions_uid ON sessions(uid)');
@@ -32,7 +34,7 @@ export class FriendsHub extends DurableObject {
  readAuth(request){const token=cookieValue(request);if(!/^[a-f0-9]{64}$/.test(token))return null;const s=this.one('SELECT * FROM sessions WHERE hash=?',digest(token));if(!s||s.expires<=Date.now())return null;if(!s.guest&&!this.one('SELECT id FROM users WHERE id=?',s.uid))return null;return {...s,guest:!!s.guest};}
  validMarker(a,p){return a&&equal(p.sessionToken||p.guestToken||'',a.marker);}
  createSession(uid,name,guest=false){const token=randomHex(),s={hash:digest(token),uid,marker:randomHex(16),guest:guest?1:0,name,expires:Date.now()+(guest?21600:2592000)*1000};this.sql.exec('INSERT INTO sessions(hash,uid,marker,guest,name,expires) VALUES(?,?,?,?,?,?)',s.hash,s.uid,s.marker,s.guest,s.name,s.expires);return {token,auth:{...s,guest},seconds:guest?21600:2592000};}
- authResponse(a){const u=this.one('SELECT * FROM users WHERE id=?',a.uid);if(!u)return error('SESSION_EXPIRED','Sign in again.');return {ok:true,profileComplete:true,studentId:u.id,name:u.name,displayName:u.name,sessionToken:a.marker,classPeriod:'friends',classPeriods:['friends'],revision:u.revision,saveData:parseSaveJson_(u.savedata),autosaveSeconds:30,vocabulary,vocabularySource:'friends',friendsVersion:1};}
+ authResponse(a){const u=this.one('SELECT * FROM users WHERE id=?',a.uid);if(!u)return error('SESSION_EXPIRED','Sign in again.');return {ok:true,profileComplete:true,studentId:u.id,name:u.name,displayName:u.name,sessionToken:a.marker,classPeriod:'friends',classPeriods:['friends'],revision:u.revision,saveData:parseSaveJson_(u.savedata),autosaveSeconds:30,vocabulary,vocabularySource:'friends',friendsVersion:1,pinReady:!!u.pinhash};}
  stamp(meta){if(!meta)return meta;const n=Math.max(Date.now(),Number(this.props.getProperty('POLICY_CLOCK')||0)+1);this.props.setProperty('POLICY_CLOCK',String(n));return {...meta,policyStamp:n};}
  runtime(a,presence={}){return createRoomApi({auth:a,cache:this.cache,props:this.props,socketPresence:presence,store:{award:(uid,id)=>this.award(uid,id)}});}
  award(uid,matchid){
@@ -75,19 +77,32 @@ export class FriendsHub extends DurableObject {
      if(!/^[\p{L}\p{N}_-]{3,20}$/u.test(name))return error('INVALID_USERNAME','Use 3–20 letters, numbers, _ or -.');
      if(this.one('SELECT id FROM users WHERE username=?',key))return error('USERNAME_TAKEN','That username is taken. Choose another or sign in.');
      if(this.one('SELECT COUNT(*) AS n FROM users').n>=Math.max(1,Number(this.env.MAX_ACCOUNTS)||500))return error('REGISTRATION_FULL','The account limit has been reached. Guest play is still available.');
-     const uid=crypto.randomUUID(),secret=randomHex(16),now=Date.now();
-     this.sql.exec('INSERT INTO users VALUES(?,?,?,?,?,?,?,?,?)',uid,key,name,digest(uid+':'+secret),'{}',0,now,now,JSON.stringify(summarizeSave_({})));
+     const pin=String(payload.pin||'').trim();if(!/^\d{4}$/.test(pin))return error('INVALID_PIN','Choose exactly four numbers for your PIN.');
+     const uid=crypto.randomUUID(),salt=randomHex(16),now=Date.now();
+     this.sql.exec('INSERT INTO users(id,username,name,keyhash,savedata,revision,created,updated,summary,pinsalt,pinhash) VALUES(?,?,?,?,?,?,?,?,?,?,?)',uid,key,name,'','{}',0,now,now,JSON.stringify(summarizeSave_({})),salt,pinHash(uid,pin,salt));
      if(auth)this.sql.exec('DELETE FROM sessions WHERE hash=?',auth.hash);
      const session=this.createSession(uid,name);setCookie=sessionCookie(request.url,session.token,session.seconds);
-     return {...this.authResponse(session.auth),privateKey:secret.match(/.{8}/g).join('-')};
+     return this.authResponse(session.auth);
     }
     if(method==='apiLogin'){
      if(!this.limit('login:'+ip,30,600))return error('RATE_LIMIT','Too many attempts. Wait ten minutes.');
-     const username=String(payload.username||'').normalize('NFKC').trim().toLowerCase(),key=String(payload.key||'').replace(/[-\s]/g,'').toLowerCase();
+     const username=String(payload.username||'').normalize('NFKC').trim().toLowerCase(),pin=String(payload.pin||'').trim();
+     if(!/^\d{4}$/.test(pin))return error('INVALID_LOGIN','Enter your username and 4-digit PIN.');
      const u=this.one('SELECT * FROM users WHERE username=?',username);
-     if(!u||!equal(u.keyhash,digest(u.id+':'+key)))return error('INVALID_LOGIN','Username or private save key was not recognized.');
+     if(!u)return error('INVALID_LOGIN','Username or PIN was not recognized.');
+     if(!u.pinhash)return error('LEGACY_KEY_REQUIRED','This account still uses an old private key. Choose Migrate Old Account below.');
+     if(!equal(u.pinhash,pinHash(u.id,pin,u.pinsalt)))return error('INVALID_LOGIN','Username or PIN was not recognized.');
      if(auth)this.sql.exec('DELETE FROM sessions WHERE hash=?',auth.hash);
-     const s=this.createSession(u.id,u.name);setCookie=sessionCookie(request.url,s.token,s.seconds);return this.authResponse(s.auth);
+     const ss=this.createSession(u.id,u.name);setCookie=sessionCookie(request.url,ss.token,ss.seconds);return this.authResponse(ss.auth);
+    }
+    if(method==='apiMigrateLegacyKey'){
+     if(!this.limit('migrate:'+ip,12,600))return error('RATE_LIMIT','Too many migration attempts. Wait ten minutes.');
+     const username=String(payload.username||'').normalize('NFKC').trim().toLowerCase(),key=String(payload.key||'').replace(/[-\s]/g,'').toLowerCase(),pin=String(payload.pin||'').trim();
+     if(!/^\d{4}$/.test(pin))return error('INVALID_PIN','Choose exactly four numbers for your new PIN.');
+     const u=this.one('SELECT * FROM users WHERE username=?',username);
+     if(!u||!u.keyhash||!equal(u.keyhash,digest(u.id+':'+key)))return error('INVALID_LOGIN','Username or old private key was not recognized.');
+     const salt=randomHex(16);this.sql.exec('UPDATE users SET pinsalt=?,pinhash=?,keyhash=? WHERE id=?',salt,pinHash(u.id,pin,salt),'',u.id);
+     this.sql.exec('DELETE FROM sessions WHERE uid=?',u.id);const ss=this.createSession(u.id,u.name);setCookie=sessionCookie(request.url,ss.token,ss.seconds);return this.authResponse(ss.auth);
     }
     if(method==='apiOnlineGuestSession'){
      if(!this.limit('guest:'+ip,30,600))return error('RATE_LIMIT','Too many guest requests. Please wait.');
@@ -101,24 +116,26 @@ export class FriendsHub extends DurableObject {
      if(auth)this.sql.exec('DELETE FROM sessions WHERE hash=?',auth.hash);setCookie=sessionCookie(request.url,'',0);return {ok:true};
     }
     if(!auth)return error('SESSION_EXPIRED','Your session expired. Sign in or choose guest play again.');
-    if(!['apiAccount','apiExport','apiRotateKey','apiDeleteAccount'].includes(method)&&!this.validMarker(auth,payload))return error('SESSION_EXPIRED','Your account changed in another tab. Refresh before saving.');
+    if(!['apiAccount','apiExport','apiChangePin','apiDeleteAccount'].includes(method)&&!this.validMarker(auth,payload))return error('SESSION_EXPIRED','Your account changed in another tab. Refresh before saving.');
     if(!this.limit('api:'+auth.uid,500,60))return error('RATE_LIMIT','Too many requests. Wait a moment.');
     if(['apiLoad','apiAccount'].includes(method))return auth.guest?{ok:true,guest:true,name:auth.name}:this.authResponse(auth);
     if(method==='apiExport')return auth.guest?error('GUEST','Guest play has no cloud save.'):{...this.authResponse(auth),exportedAt:new Date().toISOString()};
-    if(['apiRotateKey','apiDeleteAccount'].includes(method)){
+    if(['apiChangePin','apiDeleteAccount'].includes(method)){
      if(auth.guest)return error('GUEST','Sign in to a saved account.');
-     if(!this.limit('manage:'+auth.uid,10,600))return error('RATE_LIMIT','Too many key attempts. Wait ten minutes.');
-     const u=this.one('SELECT * FROM users WHERE id=?',auth.uid),key=String(payload.key||'').replace(/[-\s]/g,'').toLowerCase();
-     if(!equal(u.keyhash,digest(u.id+':'+key)))return error('INVALID_KEY','The current private key was not recognized.');
+     if(!this.limit('manage:'+auth.uid,10,600))return error('RATE_LIMIT','Too many PIN attempts. Wait ten minutes.');
+     const u=this.one('SELECT * FROM users WHERE id=?',auth.uid),pin=String(payload.pin||'').trim();
+     if(!u.pinhash)return error('LEGACY_KEY_REQUIRED','Migrate this account to a PIN from the game login screen first.');
+     if(!/^\d{4}$/.test(pin)||!equal(u.pinhash,pinHash(u.id,pin,u.pinsalt)))return error('INVALID_PIN','The current PIN was not recognized.');
      if(method==='apiDeleteAccount'){
       if(payload.confirm!==u.name)return error('CONFIRM','Type your exact username to confirm deletion.');
       this.runtime(auth).deletePrivate(u.id);this.sql.exec('DELETE FROM sessions WHERE uid=?',u.id);this.sql.exec('DELETE FROM users WHERE id=?',u.id);
       this.sql.exec('DELETE FROM awards WHERE uid=?',u.id);setCookie=sessionCookie(request.url,'',0);
       return {ok:true,deleted:true,message:'Account and cloud save deleted. Historical opponents may retain past matchup records.'};
      }
-     const secret=randomHex(16);this.sql.exec('UPDATE users SET keyhash=? WHERE id=?',digest(u.id+':'+secret),u.id);
-     this.sql.exec('DELETE FROM sessions WHERE uid=?',u.id);const s=this.createSession(u.id,u.name);
-     setCookie=sessionCookie(request.url,s.token,s.seconds);return {ok:true,privateKey:secret.match(/.{8}/g).join('-'),name:u.name};
+     const nextPin=String(payload.newPin||'').trim();if(!/^\d{4}$/.test(nextPin))return error('INVALID_PIN','Choose exactly four numbers for the new PIN.');
+     const salt=randomHex(16);this.sql.exec('UPDATE users SET pinsalt=?,pinhash=? WHERE id=?',salt,pinHash(u.id,nextPin,salt),u.id);
+     this.sql.exec('DELETE FROM sessions WHERE uid=?',u.id);const ss=this.createSession(u.id,u.name);
+     setCookie=sessionCookie(request.url,ss.token,ss.seconds);return {ok:true,name:u.name,message:'PIN changed. Other devices were signed out.'};
     }
     if(method==='apiSave'){
      if(auth.guest)return error('GUEST','Guest play does not save to the cloud.');

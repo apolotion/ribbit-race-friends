@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {createRoomApi} from '../src/rooms-core.js';
 import {sanitizeSaveData_,mergePersistentSaveData_,summarizeSave_} from '../src/save-data.js';
-import {digest,equal,randomHex,sessionCookie,limitedJson} from '../src/common.js';
+import {digest,equal,randomHex,pinHash,sessionCookie,limitedJson} from '../src/common.js';
 const defaults={friendsVersion:1,protocol:3,lifecycleVersion:3,quickplayVersion:3,directCapable:true,skinId:'azure',appearance:null,settings:{stage:'park',roundGoal:'first5',bestOf:1,timeLimit:0},vocabulary:[{english:'Help',spanish:'Ayuda'},{english:'Paper',spanish:'Papel'},{english:'Time',spanish:'Tiempo'},{english:'More',spanish:'Más'}]};
 function harness(){const entries=new Map(),properties=new Map();let socketPresence={};const calls=[];
  const cache={get:k=>{const e=entries.get(k);return e&&e.until>Date.now()?e.value:null;},put:(k,v,s=600)=>entries.set(k,{value:String(v),until:Date.now()+s*1000}),remove:k=>entries.delete(k),removeAll:ks=>ks.forEach(k=>entries.delete(k))};cache.getAll=ks=>Object.fromEntries(ks.map(k=>[k,cache.get(k)]).filter(([,v])=>v!==null));cache.putAll=(o,s)=>Object.entries(o).forEach(([k,v])=>cache.put(k,v,s));
@@ -19,7 +19,7 @@ function harness(){const entries=new Map(),properties=new Map();let socketPresen
  }
  return {invoke,api,pair,cache,props,calls,users};}
 
-test('private key is random 128-bit hexadecimal and cookie is Secure/HttpOnly',()=>{assert.match(randomHex(16),/^[a-f0-9]{32}$/);assert.notEqual(randomHex(16),randomHex(16));const c=sessionCookie('https://example.invalid','abc',30);assert.match(c,/__Host-rrfriends=abc/);assert.match(c,/HttpOnly/);assert.match(c,/Secure/);assert.equal(equal('abc','abcd'),false);assert.equal(digest('x').length,64);});
+test('PIN derivation is salted and cookie is Secure/HttpOnly',()=>{const salt=randomHex(16);assert.equal(pinHash('u','1234',salt).length,64);assert.notEqual(pinHash('u','1234',salt),pinHash('u','1234',randomHex(16)));const c=sessionCookie('https://example.invalid','abc',30);assert.match(c,/__Host-rrfriends=abc/);assert.match(c,/HttpOnly/);assert.match(c,/Secure/);assert.equal(equal('abc','abcd'),false);assert.equal(digest('x').length,64);});
 test('JSON request size limit rejects oversized streamed input',async()=>{await assert.rejects(()=>limitedJson(new Request('https://x',{method:'POST',body:'{"value":"'+('x'.repeat(60))+'"}'}),30),/too large/);});
 test('save keeps Endless maxima, time minima, PvP maxima and result journal',()=>{const s=mergePersistentSaveData_({'ribbitRaceBestEndlessFlies:park':'10','ribbitRaceBestTime:park':'30',ribbitRacePvpMatchWins:'9',ribbitRaceOnlineMatchIdsV1:'["real"]'},{'ribbitRaceBestEndlessFlies:park':'15','ribbitRaceBestTime:park':'40',ribbitRacePvpMatchWins:'7',ribbitRaceOnlineMatchIdsV1:'[]'},[]);assert.equal(s['ribbitRaceBestEndlessFlies:park'],'15');assert.equal(s['ribbitRaceBestTime:park'],'30');assert.equal(s.ribbitRacePvpMatchWins,'9');assert.equal(s.ribbitRaceOnlineMatchIdsV1,'["real"]');assert.equal(summarizeSave_(s).levelRecords.park.endless,15);});
 test('save ignores unrelated keys and bounds payloads',()=>{const s=sanitizeSaveData_({schoolPassword:'ignore',ribbitRaceTotalFlies:'3'});assert.equal(s.schoolPassword,undefined);assert.throws(()=>sanitizeSaveData_({ribbitRaceHuge:'x'.repeat(180001)}),/too large/);});

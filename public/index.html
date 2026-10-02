@@ -578,24 +578,32 @@
     <p id="cloud-message" role="alert"></p>
     <div id="cloud-login-view" class="cloud-view">
      <label class="cloud-field">USERNAME<input id="cloud-login-id" maxlength="20" autocomplete="username" placeholder="Your username" /></label>
-     <label class="cloud-field">PRIVATE SAVE KEY<input id="cloud-login-pin" type="password" maxlength="48" autocomplete="current-password" placeholder="Paste your saved key" /></label>
+     <label class="cloud-field">4-DIGIT PIN<input id="cloud-login-pin" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="4" autocomplete="current-password" placeholder="4 numbers" /></label>
      <div class="cloud-actions"><button id="cloud-login-button" class="cloud-button primary">SIGN IN</button><button id="cloud-show-create" class="cloud-button">CREATE ACCOUNT</button><button id="cloud-play-guest" class="cloud-button">PLAY WITHOUT SAVING</button></div>
-     <p class="cloud-help">No school email or Google account needed. Your private key is your password; never share it. <a href="/help.html" target="_blank" rel="noopener">Help &amp; privacy</a></p>
+     <p class="cloud-help">No school email or Google account needed. Sign in with your username and 4-digit PIN. <a href="/help.html" target="_blank" rel="noopener">Help &amp; privacy</a></p>
+     <div class="cloud-actions"><button id="friends-show-migrate" class="cloud-button" type="button">MIGRATE OLD PRIVATE-KEY ACCOUNT</button></div>
     </div>
     <div id="cloud-create-view" class="cloud-view" hidden>
      <label class="cloud-field">CHOOSE A USERNAME<input id="cloud-create-name" maxlength="20" autocomplete="username" placeholder="3–20 letters, numbers, _ or -" /></label>
-     <input id="cloud-create-id" hidden /><select id="cloud-create-period" hidden></select><input id="cloud-create-pin" hidden /><input id="cloud-create-pin-confirm" hidden />
-     <p class="cloud-help">A unique private save key will be generated for you. Save it to return on another device. We do not collect email addresses and cannot email a forgotten key.</p>
+     <input id="cloud-create-id" hidden /><select id="cloud-create-period" hidden></select>
+     <label class="cloud-field">CHOOSE A 4-DIGIT PIN<input id="cloud-create-pin" type="password" inputmode="numeric" maxlength="4" autocomplete="new-password" placeholder="4 numbers" /></label>
+     <label class="cloud-field">CONFIRM PIN<input id="cloud-create-pin-confirm" type="password" inputmode="numeric" maxlength="4" autocomplete="new-password" placeholder="Type the same 4 numbers" /></label>
+     <p class="cloud-help">Choose a PIN you can remember. The server stores a salted derived hash, not the PIN itself.</p>
      <div class="cloud-actions"><button id="cloud-create-button" class="cloud-button primary">CREATE MY SAVE</button><button id="cloud-back-login" class="cloud-button">BACK</button></div>
+    </div>
+    <div id="friends-migrate-view" class="cloud-view" hidden>
+     <p class="cloud-help">Only for accounts created before the PIN update. Your save will stay intact.</p>
+     <label class="cloud-field">USERNAME<input id="friends-migrate-user" maxlength="20" autocomplete="username" /></label>
+     <label class="cloud-field">OLD PRIVATE SAVE KEY<input id="friends-migrate-key" type="password" maxlength="48" /></label>
+     <label class="cloud-field">NEW 4-DIGIT PIN<input id="friends-migrate-pin" type="password" inputmode="numeric" maxlength="4" /></label>
+     <label class="cloud-field">CONFIRM PIN<input id="friends-migrate-confirm" type="password" inputmode="numeric" maxlength="4" /></label>
+     <div class="cloud-actions"><button id="friends-migrate-button" class="cloud-button primary">MIGRATE &amp; SIGN IN</button><button id="friends-migrate-back" class="cloud-button">BACK</button></div>
     </div>
     <div id="cloud-profile-view" class="cloud-view" hidden><input id="cloud-profile-name"/><select id="cloud-profile-period"></select><button id="cloud-save-profile">SAVE</button><button id="cloud-profile-sign-out">BACK</button></div>
     <div id="cloud-created-view" class="cloud-view" hidden>
      <div class="cloud-code-box">USERNAME<strong id="cloud-created-name">—</strong></div>
-     <p class="cloud-help"><strong>Save this private key now.</strong> It is shown only once and unlocks your account on another device.</p>
-     <textarea id="friends-created-key" readonly rows="2" style="width:100%;padding:12px;font:700 17px monospace;user-select:text;background:white;color:#174f65;"></textarea>
+     <p class="cloud-help"><strong>Your save is ready.</strong> Use this username and the 4-digit PIN you chose whenever you return.</p>
      <div id="cloud-created-period" hidden></div>
-     <div class="cloud-actions"><button id="friends-copy-key" class="cloud-button">COPY KEY</button><button id="friends-download-key" class="cloud-button">SAVE KEY FILE</button></div>
-     <label class="cloud-help" style="display:block"><input id="friends-key-saved" type="checkbox"/> I have saved my username and private key.</label>
      <div class="cloud-actions"><button id="cloud-created-continue" class="cloud-button primary">PLAY RIBBIT RACE</button></div>
     </div>
    </div>
@@ -720,7 +728,7 @@
 
     // Online admission and live gameplay are direct-only. The existing Apps Script
     // web app still handles matchmaking, signaling, lifecycle, records and saving.
-    const RIBBIT_DIRECT_BUILD = "2026.09.25-friends-1";
+    const RIBBIT_DIRECT_BUILD = "2026.10.02-friends-pin-1";
     const RIBBIT_DIRECT_POLICY_VERSION = 2;
     // STUN discovers direct routes; it does not relay gameplay. LAN candidates
     // still work when this discovery service is unreachable. No TURN is used.
@@ -729,7 +737,7 @@
     const RIBBIT_ONLINE_PROTOCOL_VERSION = 3;
     const RIBBIT_QUICKPLAY_VERSION = 3;
 
-    const RIBBIT_CLOUD_CLIENT_VERSION = "2026.09.25-friends-1";
+    const RIBBIT_CLOUD_CLIENT_VERSION = "2026.10.02-friends-pin-1";
     const RIBBIT_CLOUD_SAVE_SCHEMA_VERSION = 2;
     // Preserve every current and future Ribbit Race key, including legacy one-button keys.
     const RIBBIT_GAME_KEY = /^(?:ribbitRace|oneButtonFrog)/;
@@ -789,7 +797,7 @@
       function cacheElements() {
         [
           "cloud-gate", "cloud-message", "cloud-login-view", "cloud-create-view", "cloud-profile-view", "cloud-created-view",
-          "cloud-login-id", "cloud-login-pin", "cloud-login-button", "cloud-show-create", "cloud-play-guest",
+          "cloud-login-id", "cloud-login-pin", "cloud-login-button", "cloud-show-create", "cloud-play-guest", "friends-show-migrate", "friends-migrate-view", "friends-migrate-user", "friends-migrate-key", "friends-migrate-pin", "friends-migrate-confirm", "friends-migrate-button", "friends-migrate-back",
           "cloud-create-id", "cloud-create-name", "cloud-create-period", "cloud-create-pin", "cloud-create-pin-confirm", "cloud-create-button",
           "cloud-back-login", "cloud-profile-name", "cloud-profile-period", "cloud-save-profile", "cloud-profile-sign-out",
           "cloud-created-name", "cloud-created-period", "cloud-created-continue",
@@ -847,6 +855,7 @@
       function showView(name) {
         elements["cloud-login-view"].hidden = name !== "login";
         elements["cloud-create-view"].hidden = name !== "create";
+        if(elements["friends-migrate-view"]) elements["friends-migrate-view"].hidden = name !== "migrate";
         elements["cloud-profile-view"].hidden = name !== "profile";
         elements["cloud-created-view"].hidden = name !== "created";
         setMessage("");
@@ -1414,21 +1423,22 @@
       }
 
       async function login() {
-        const username=elements['cloud-login-id'].value.trim(),key=elements['cloud-login-pin'].value.trim();
-        if(!username||!key){setMessage('Enter your username and private save key.');return;}
+        const username=elements['cloud-login-id'].value.trim(),pin=elements['cloud-login-pin'].value.trim();
+        if(!username||!/^\d{4}$/.test(pin)){setMessage('Enter your username and 4-digit PIN.');return;}
         setBusy(true);setMessage('LOADING YOUR SAVE...',false);
-        try{const r=await serverCall('apiLogin',{username,key});if(!r?.ok)throw new Error(r?.message||'Sign in failed.');
+        try{const r=await serverCall('apiLogin',{username,pin});if(!r?.ok)throw new Error(r?.message||'Sign in failed.');
           elements['cloud-login-pin'].value='';handleAuthResponse(r);
         }catch(e){setMessage(e.message);}finally{setBusy(false);}
       }
 
       async function createPlayer() {
-        const username=elements['cloud-create-name'].value.trim();
+        const username=elements['cloud-create-name'].value.trim(),pin=elements['cloud-create-pin'].value.trim(),confirmPin=elements['cloud-create-pin-confirm'].value.trim();
         if(!/^[\p{L}\p{N}_-]{3,20}$/u.test(username)){setMessage('Use 3–20 letters, numbers, _ or - for your username.');return;}
+        if(!/^\d{4}$/.test(pin)){setMessage('Choose exactly four numbers for your PIN.');return;}
+        if(pin!==confirmPin){setMessage('The two PIN entries do not match.');return;}
         setBusy(true);setMessage('CREATING YOUR FRIENDS SAVE...',false);
-        try{const r=await serverCall('apiCreatePlayer',{username});if(!r?.ok)throw new Error(r?.message||'Could not create save.');
-          pendingCreatedAuth=r;elements['cloud-created-name'].textContent=r.name;
-          document.getElementById('friends-created-key').value=r.privateKey;document.getElementById('friends-key-saved').checked=false;showView('created');
+        try{const r=await serverCall('apiCreatePlayer',{username,pin});if(!r?.ok)throw new Error(r?.message||'Could not create save.');
+          pendingCreatedAuth=r;elements['cloud-created-name'].textContent=r.name;showView('created');
         }catch(e){setMessage(e.message);}finally{setBusy(false);}
       }
 
@@ -1841,12 +1851,21 @@
         elements["cloud-play-guest"].addEventListener("click", playAsGuest);
         elements["cloud-back-login"].addEventListener("click", () => showView("login"));
         elements["cloud-create-button"].addEventListener("click", createPlayer);
+        elements["friends-show-migrate"].addEventListener("click",()=>{elements["friends-migrate-user"].value=elements["cloud-login-id"].value;showView("migrate");});
+        elements["friends-migrate-back"].addEventListener("click",()=>showView("login"));
+        elements["friends-migrate-button"].addEventListener("click",async()=>{
+          const username=elements["friends-migrate-user"].value.trim(),key=elements["friends-migrate-key"].value.trim(),pin=elements["friends-migrate-pin"].value.trim(),confirmPin=elements["friends-migrate-confirm"].value.trim();
+          if(!username||!key){setMessage("Enter your username and old private key.");return;}
+          if(!/^\d{4}$/.test(pin)){setMessage("Choose exactly four numbers for your new PIN.");return;}
+          if(pin!==confirmPin){setMessage("The two PIN entries do not match.");return;}
+          setBusy(true);setMessage("MIGRATING YOUR SAVE...",false);
+          try{const r=await serverCall("apiMigrateLegacyKey",{username,key,pin});if(!r?.ok)throw new Error(r?.message||"Migration failed.");elements["friends-migrate-key"].value="";elements["friends-migrate-pin"].value="";elements["friends-migrate-confirm"].value="";handleAuthResponse(r);}
+          catch(e){setMessage(e.message);}finally{setBusy(false);}
+        });
         elements["cloud-save-profile"].addEventListener("click", saveProfile);
         elements["cloud-profile-sign-out"].addEventListener("click", () => returnToCloudLogin(false));
         elements["cloud-created-continue"].addEventListener("click", () => {
-          if (!document.getElementById('friends-key-saved').checked){setMessage('Save your private key and check the box before playing.');return;}
           if (pendingCreatedAuth) beginAuthenticatedGame(pendingCreatedAuth);
-          document.getElementById('friends-created-key').value='';
           pendingCreatedAuth = null;
         });
         elements["cloud-account-button"].addEventListener("click", () => {
@@ -1871,8 +1890,6 @@
 
       async function bootstrap() {
         cacheElements();
-        document.getElementById('friends-copy-key').onclick=async()=>{const box=document.getElementById('friends-created-key');try{await navigator.clipboard.writeText(box.value);setMessage('KEY COPIED — KEEP IT PRIVATE',false);}catch(_){box.focus();box.select();setMessage('Press Ctrl+C or Command+C to copy the selected key.',false);}};
-        document.getElementById('friends-download-key').onclick=()=>{const value='Ribbit Race Friends Edition\nGame: '+location.origin+'\nUsername: '+elements['cloud-created-name'].textContent+'\nPrivate save key: '+document.getElementById('friends-created-key').value+'\nKeep this file private. Anyone with the key can access this save.\n';const a=document.createElement('a'),u=URL.createObjectURL(new Blob([value],{type:'text/plain'}));a.href=u;a.download='My_Ribbit_Race_Private_Key.txt';a.click();setTimeout(()=>URL.revokeObjectURL(u),1000);};
         document.getElementById('friends-manage').onclick=async()=>{if(!guestMode)await flushSave(true);window.open('/account.html','_blank','noopener');};
         patchStorage();
         bindUi();

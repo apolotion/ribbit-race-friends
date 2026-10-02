@@ -1,1 +1,1 @@
-Ribbit Race Friends Edition: separate public cloud accounts and saves, no school email, Cloudflare WebSocket multiplayer, private rooms and Quickplay. School game and student database are unchanged.
+Friends Edition PIN login: new accounts now choose a 4-digit PIN instead of receiving a private save key. Existing private-key accounts can migrate once without losing progress. PINs use salted PBKDF2 hashes; account management now supports PIN changes.
