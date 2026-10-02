@@ -1,0 +1,1 @@
+Ribbit Race Friends Edition: separate public cloud accounts and saves, no school email, Cloudflare WebSocket multiplayer, private rooms and Quickplay. School game and student database are unchanged.

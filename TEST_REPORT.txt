@@ -1,0 +1,102 @@
+RIBBIT RACE FRIENDS EDITION — TEST REPORT
+Build 2026.09.25-friends-1
+
+RESULT SUMMARY
+20 Node unit tests passed.
+10 HTTP smoke assertions passed.
+12 additional account/session/security integration assertions passed.
+21 browser-flow assertions passed, with no captured page exceptions.
+Total: 63 passing test assertions. Some repeat account/startup checks across
+multiple players; this count is not 63 unique feature scenarios.
+JavaScript parsing/integration-presence checks also passed.
+The source copier is checked separately in COPIER_TEST_REPORT.txt.
+
+WHAT EXECUTED
+The distributed game HTML, hub, room lifecycle, save helpers, routing and
+WebSocket relay code ran in the tests. Node 22.16.0 used an in-memory SQLite
+adapter for the Cloudflare storage interface. HTTP requests and actual local
+WebSocket connections reached that code through a local Node HTTP/upgrade adapter.
+Chromium ran the real DOM/canvas game; test-only shims supplied storage and
+forwarded browser HTTP/WebSocket traffic through Python to the local adapter.
+Those shims and developer control hooks are not present in the released game.
+
+The unit tests are included in tests/core.test.mjs. Run npm test.
+The HTTP smoke test is included in scripts/smoke.mjs. Run npm run smoke -- YOUR_URL
+only against your own deployment; it creates and deletes a temporary account.
+The local browser/Cloudflare adapters are environment-specific test harnesses,
+not production server alternatives, and are not distributed as the runtime.
+
+UNIT COVERAGE
+- Random save-key length and session cookie flags.
+- JSON request size enforcement.
+- Highest Endless/PvP records, minimum time records, protected result journal,
+  achievement union and validated save keys.
+- Old clients and missing connection preflight rejected.
+- Same-account room joins and incorrect player tokens rejected.
+- Forged Ready without real socket presence cannot start a match.
+- Correct two-player verification can admit a match; wrong challenge cannot.
+- Live human input/world state is not returned as control-API fallback traffic.
+- Lobby departure revokes access.
+- Both directions of CPU takeover and simulation-authority transfer.
+- Unstarted abort does not award a win.
+- Quickplay matching and fixed best-of-three/60-second rules.
+- Spectator authorization and delayed replay-poll handling.
+- Hidden ratings stay out of public profiles.
+- Guest display names use expiring storage.
+
+HTTP AND ACCOUNT COVERAGE
+- API health and public Friends build identifier.
+- Cross-origin API rejection and unauthenticated WebSocket rejection.
+- Account creation without email or a school identity.
+- Private key shown at creation but not disclosed by later account loads.
+- HttpOnly cookie set.
+- Cloud write/read and stale-revision conflict behavior.
+- Wrong session marker rejected to avoid saving into a changed account.
+- Wrong private key rejected.
+- Independent signed-in session restores existing progress.
+- Current private key required for key replacement.
+- Replacement changes the key and revokes old keys/other sessions.
+- Replacement key loads the same cloud record from a different session.
+- Temporary test account deleted and remaining sessions revoked.
+- Save/leaderboard compatibility diagnostic succeeds.
+
+BROWSER COVERAGE
+- Account creation shows generated key and requires confirmation it was saved.
+- Full game initializes for two account holders and two temporary guests.
+- Private room admits both actual relay socket slots.
+- Both players pass the loading barrier and enter playing state.
+- Guest receives more than 20 live world updates from the server relay.
+- Diagnostics report cloudflare-websocket, not direct P2P or Google.
+- Guest Space charge/release events are acknowledged by the simulation host.
+- A deliberately closed socket reconnects, re-verifies and resumes the same match.
+- Escape opens the online exit menu without pausing the game.
+- Guest leaving causes level-five CPU replacement on the host.
+- Two guests enter the separate Friends Quickplay queue and start a match.
+- Quickplay retains three-game/60-second settings.
+- Original host departure transfers simulation to the guest with CPU in host slot.
+- Mobile login controls remain visible; desktop and 390x844 layouts inspected.
+
+NOT VERIFIED / NOT A GUARANTEE
+- Native Cloudflare workerd execution, Wrangler bundling or actual account deployment.
+  Dependency download was unavailable in this build environment, so npm install
+  and wrangler deploy were not run. The package pins Wrangler in package.json.
+- Native unrestricted browser WebSockets or school/home network reachability.
+  The container Chromium is managed-policy blocked, hence the test-only bridge.
+- Public internet round-trip delay, region placement, throughput or latency under load.
+  Test transport timings are local and must not be described as real-world ping.
+- Natural completion of every stage/achievement, full lengthy Quickplay rematch
+  sessions, long spectator sessions, all reconnect timing races, or migration of
+  an existing public account database. This is a new, isolated installation.
+- Real platform hibernation/resumption, durable storage persistence across real
+  Cloudflare deploys, free-tier capacity, billing totals, or full abuse resistance.
+- Native Safari/iOS behavior, all mobile input gestures, and hundred-player scale.
+- Cryptographic/security audit or tamper-proof scoring. Host browser physics and
+  client-reported solo records remain trusted for this casual game.
+
+FIRST LIVE ACCEPTANCE TEST
+Deploy into a NEW personal Worker. Open the actual public URL in two browser
+profiles/devices, preferably on different networks. Verify account creation,
+Save Now/reload/cross-device login, Host/Join/Ready, responsive charge/release,
+matching words/scores, one completed recorded result, Quickplay, reconnection,
+CPU takeover and a delayed spectator. Check the Cloudflare logs/usage while
+expanding beyond one pair. Only then send the link to a larger friends group.

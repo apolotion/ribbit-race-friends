@@ -1,0 +1,103 @@
+{
+  "build": "2026.09.25-friends-1",
+  "base": "Ribbit Race Direct Connect 2 (provided conversation files)",
+  "deployment": "new standalone Cloudflare Worker; not deployed",
+  "files": {
+    ".gitignore": {
+      "bytes": 110,
+      "sha256": "e45db8b7e2e2ef8a58e093302e63d501da9d0f79d07e2e37cba37445b8ca6895"
+    },
+    "COPIER_TEST_REPORT.txt": {
+      "bytes": 800,
+      "sha256": "62c2985dc9a78815b56ff90d3455a69f7fe8cc10a8252f0470b836906a3c5f2d"
+    },
+    "INSTALL.txt": {
+      "bytes": 14061,
+      "sha256": "a1b76c62a3d4e80deefd417bd00bc9ba0129e9bd2875458cdc41f50462081fe1"
+    },
+    "README.md": {
+      "bytes": 10967,
+      "sha256": "a5386f8822a2beed915110d2058d0ab4529f90f2edde1da538c9e87bf1140d81"
+    },
+    "TEST_REPORT.txt": {
+      "bytes": 5985,
+      "sha256": "b9bc35d644dbdcad37fbe13023e3673fd71559840869590d817735a486b44b09"
+    },
+    "UPDATE_NOTE.txt": {
+      "bytes": 199,
+      "sha256": "b2c38bbef59202d3cfb623b5fef5c0ca3b8a92e6405bc0947e57d34882b7ea47"
+    },
+    "package.json": {
+      "bytes": 395,
+      "sha256": "8a5c98ca9b452fe5e36018244c394aa241daa7ec2236e3fc5653b68fd2295c19"
+    },
+    "public/_headers": {
+      "bytes": 494,
+      "sha256": "4dd46a6792666bd4c126b04a1b27977c58bb852b627b34917dcb5f8af7473b02"
+    },
+    "public/account.html": {
+      "bytes": 2201,
+      "sha256": "7d0d42e0bc24543450ed45f3066f10f395b7aa035a4da34c1b211fa51f2d407b"
+    },
+    "public/account.js": {
+      "bytes": 2645,
+      "sha256": "9492a6fe098bd137713ad4b59c6f655cc91010da0554ca493b3e68c7c53564e1"
+    },
+    "public/friends-ui.css": {
+      "bytes": 1602,
+      "sha256": "baddb1423c739a6d5f054b4bff54faa2cbaebe8e84b46bdd046ec10a29a06af6"
+    },
+    "public/help.html": {
+      "bytes": 4576,
+      "sha256": "483329a52f0ed3e2a1e194b1975d0c98ee9a79726990e3194c2a95a6c54122d3"
+    },
+    "public/index.html": {
+      "bytes": 1076227,
+      "sha256": "8f9e8417ce218ad4cbf66eff8cfd1dd78629467a6bf58e56de3cf9b03e47e658"
+    },
+    "scripts/check.mjs": {
+      "bytes": 1166,
+      "sha256": "eb31366ecc4ca268851be17eb1664dbb337447b3474b07dd74caf5e8a2e8716d"
+    },
+    "scripts/smoke.mjs": {
+      "bytes": 3274,
+      "sha256": "03b25b10c6b72bf2dc7abae60830d97b695a6e6d0ea501601862f2765464fa8e"
+    },
+    "src/common.js": {
+      "bytes": 2044,
+      "sha256": "9f2f0ae37d4087441fdf99fc74af34cc8190156cd4b102da244b228cf8c1348b"
+    },
+    "src/hub.js": {
+      "bytes": 15826,
+      "sha256": "14cc252f56d4c9d6b29782c6d09b2c2def378984ef126cb57cc578018e882736"
+    },
+    "src/index.js": {
+      "bytes": 2119,
+      "sha256": "c0875d67fdc3bd3ed92c3eded4986a23665c0b105e5ff514f10c325ed7f0d006"
+    },
+    "src/realtime.js": {
+      "bytes": 7878,
+      "sha256": "7103a0ae72e9f4a426e0bca5ad566ae3a60cb070e983f7dca2fc7f70310f9c8d"
+    },
+    "src/rooms-core.js": {
+      "bytes": 71076,
+      "sha256": "72307a66ced0f36f6e62c3895c0c0e571979d4868cc492e446857b39bd36cfc8"
+    },
+    "src/save-data.js": {
+      "bytes": 8421,
+      "sha256": "976fba4ee45829eb77eaba68c35cb928a21e9a587cb4ebd3c43f0072aefb6651"
+    },
+    "src/vocabulary.json": {
+      "bytes": 1175,
+      "sha256": "9708102e562a945b85a3db287365f58f5520b48039053618812b54895f122d5c"
+    },
+    "tests/core.test.mjs": {
+      "bytes": 8981,
+      "sha256": "1ae0c1550125b3a82f945e30d6f8d7f832d64e69c81196e06de6396f0e540278"
+    },
+    "wrangler.jsonc": {
+      "bytes": 673,
+      "sha256": "72c04131d6c51c32eb0a3655ca5d94190a5ae2adc2a117d3e08a2e8cdf137378"
+    }
+  }
+}
