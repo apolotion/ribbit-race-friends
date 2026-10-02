@@ -20,4 +20,4 @@ export async function limitedJson(request,maximum=600000){
  if(!v||typeof v!=='object'||Array.isArray(v))throw new Error('Expected an object.');return v;
 }
 
-export function pinHash(uid,pin,salt){return pbkdf2Sync(String(uid)+':'+String(pin),String(salt),120000,32,'sha256').toString('hex');}
+export function pinHash(uid,pin,salt){return pbkdf2Sync(String(uid)+':'+String(pin),String(salt),100000,32,'sha256').toString('hex');}
