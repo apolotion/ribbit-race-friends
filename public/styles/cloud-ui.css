@@ -1,0 +1,335 @@
+/* Friends authentication, save, and leaderboard interface. */
+/* Ribbit Race cloud login, guest mode, cloud save toast, and leaderboard. */
+    #cloud-gate,
+    #leaderboard-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 1000;
+      display: grid;
+      place-items: center;
+      padding: 18px;
+      background:
+        linear-gradient(rgba(8, 30, 42, 0.82), rgba(11, 42, 50, 0.90)),
+        repeating-linear-gradient(0deg, rgba(92,229,232,0.08) 0 4px, transparent 4px 12px);
+      color: #26363d;
+      user-select: text;
+      -webkit-user-select: text;
+    }
+
+    #cloud-gate[hidden],
+    #leaderboard-overlay[hidden] { display: none; }
+
+    .cloud-card,
+    .leaderboard-card {
+      width: min(680px, 96vw);
+      max-height: 94vh;
+      overflow: auto;
+      border: 8px solid #26363d;
+      background: #f7fdff;
+      box-shadow: 12px 12px 0 rgba(17, 38, 47, 0.42);
+      padding: 24px;
+    }
+
+    .cloud-title,
+    .leaderboard-title {
+      margin: 0;
+      padding: 16px 18px 12px;
+      border: 5px solid #07516a;
+      background: #0f9fbb;
+      color: #fff;
+      text-align: center;
+      font-size: clamp(28px, 6vw, 54px);
+      letter-spacing: 2px;
+      text-shadow: 4px 4px 0 #07516a;
+    }
+
+    .cloud-subtitle {
+      margin: 12px 0 20px;
+      text-align: center;
+      color: #59676d;
+      font-size: clamp(15px, 2.8vw, 22px);
+      font-weight: 700;
+    }
+
+    .cloud-view[hidden] { display: none; }
+
+    .cloud-field {
+      display: grid;
+      gap: 6px;
+      margin: 14px 0;
+      font-weight: 700;
+      color: #48555a;
+    }
+
+    .cloud-field input,
+    .cloud-field select,
+    .leaderboard-controls select {
+      width: 100%;
+      border: 4px solid #26363d;
+      background: #fff;
+      color: #26363d;
+      padding: 12px 14px;
+      font: 700 20px/1.2 "Courier New", Courier, monospace;
+      outline: none;
+      box-shadow: inset 0 0 0 3px #dff8ff;
+    }
+
+    .cloud-field input:focus,
+    .cloud-field select:focus,
+    .leaderboard-controls select:focus { box-shadow: inset 0 0 0 4px #5ce5e8; }
+    #cloud-create-name,
+    #cloud-profile-name { text-transform: none; }
+
+    .cloud-actions {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 12px;
+      margin-top: 18px;
+    }
+
+    .cloud-button {
+      min-width: 170px;
+      border: 5px solid #26363d;
+      background: #f7fdff;
+      color: #34484f;
+      padding: 12px 16px;
+      font: 700 18px/1.1 "Courier New", Courier, monospace;
+      cursor: pointer;
+      box-shadow: 5px 5px 0 #aebbc0;
+    }
+
+    .cloud-button:hover,
+    .cloud-button:focus-visible {
+      background: #b8f5dc;
+      box-shadow: 5px 5px 0 #07516a;
+    }
+
+    .cloud-button.primary {
+      background: #0f9fbb;
+      color: #fff;
+      box-shadow: 5px 5px 0 #07516a;
+    }
+
+    .cloud-button:disabled { opacity: 0.52; cursor: wait; }
+
+    #cloud-message {
+      min-height: 28px;
+      margin: 8px 0 0;
+      color: #a51f1c;
+      text-align: center;
+      font-weight: 700;
+    }
+
+    .cloud-help {
+      margin: 14px 0 0;
+      color: #617177;
+      text-align: center;
+      font-size: 14px;
+      line-height: 1.4;
+    }
+
+    .cloud-code-box {
+      margin: 18px auto;
+      border: 5px solid #26363d;
+      background: #b8f5dc;
+      padding: 18px;
+      text-align: center;
+    }
+
+    .cloud-code-box strong {
+      display: block;
+      margin-top: 8px;
+      color: #07516a;
+      font-size: clamp(26px, 7vw, 46px);
+      letter-spacing: 3px;
+    }
+
+    #cloud-status-pill {
+      position: absolute;
+      z-index: 40;
+      left: 7px;
+      bottom: 7px;
+      border: 3px solid #26363d;
+      background: rgba(184, 245, 220, 0.94);
+      color: #1d6d3a;
+      padding: 5px 9px;
+      font: 700 11px/1 "Courier New", Courier, monospace;
+      pointer-events: none;
+      opacity: 0;
+      transform: translateY(7px);
+    }
+
+    #cloud-status-pill.show {
+      animation: cloud-saved-toast 3s ease both;
+    }
+
+    @keyframes cloud-saved-toast {
+      0% { opacity: 0; transform: translateY(7px); }
+      14%, 72% { opacity: 0.94; transform: translateY(0); }
+      100% { opacity: 0; transform: translateY(7px); }
+    }
+
+    #corner-controls {
+      position: absolute;
+      z-index: 44;
+      right: 6px;
+      bottom: 3px;
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 4px;
+      pointer-events: none;
+    }
+
+    #cloud-account-button {
+      position: relative;
+      z-index: 1;
+      min-width: 108px;
+      max-width: 190px;
+      height: 32px;
+      text-align: center;
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+      border: 3px solid #26363d;
+      background: rgba(247, 253, 255, 0.90);
+      color: #48555a;
+      padding: 4px 8px;
+      font: 700 10px/1 "Courier New", Courier, monospace;
+      cursor: pointer;
+      opacity: 0.82;
+      pointer-events: auto;
+    }
+
+    #cloud-account-button:hover { opacity: 1; background: #b8f5dc; }
+
+    #cloud-account-panel {
+      position: absolute;
+      z-index: 45;
+      right: 7px;
+      top: auto;
+      bottom: 45px;
+      width: 230px;
+      border: 4px solid #26363d;
+      background: #f7fdff;
+      color: #48555a;
+      padding: 10px;
+      font: 700 12px/1.35 "Courier New", Courier, monospace;
+      box-shadow: 5px 5px 0 rgba(38,54,61,0.30);
+      user-select: text;
+      -webkit-user-select: text;
+    }
+
+    #cloud-account-panel[hidden] { display: none; }
+    #cloud-account-panel button { width: 100%; margin-top: 8px; padding: 7px; font: inherit; cursor: pointer; }
+
+    .leaderboard-card { width: min(980px, 97vw); }
+    .leaderboard-header { position: relative; }
+    #leaderboard-close {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      width: 46px;
+      height: 46px;
+      border: 4px solid #26363d;
+      background: #fff;
+      color: #26363d;
+      font: 900 26px/1 Arial, sans-serif;
+      cursor: pointer;
+    }
+
+    .leaderboard-controls {
+      display: grid;
+      grid-template-columns: 42px repeat(3, minmax(0, 1fr));
+      gap: 10px;
+      margin: 18px 0 12px;
+      align-items: end;
+    }
+
+    .leaderboard-controls label {
+      display: grid;
+      gap: 5px;
+      color: #48555a;
+      font: 700 13px/1.2 "Courier New", Courier, monospace;
+    }
+
+    .leaderboard-controls select { height: 42px; padding: 7px 8px; font-size: 15px; }
+    #leaderboard-refresh {
+      min-width: 42px;
+      width: 42px;
+      height: 42px;
+      align-self: end;
+      padding: 0;
+      border-width: 4px;
+      font-size: 20px;
+      line-height: 1;
+      box-shadow: 4px 4px 0 #aebbc0;
+    }
+    #leaderboard-context { margin: 8px 0 12px; text-align: center; color: #59676d; font-weight: 700; }
+
+    .leaderboard-table-wrap {
+      overflow: auto;
+      border: 5px solid #26363d;
+      background: #fff;
+    }
+
+    #leaderboard-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-family: "Courier New", Courier, monospace;
+      table-layout: fixed;
+    }
+    #leaderboard-table th,
+    #leaderboard-table td { padding: 10px 12px; border-bottom: 2px solid #d5e0e4; text-align: left; }
+    #leaderboard-table th { background: #0f9fbb; color: #fff; }
+    #leaderboard-table th:nth-child(1),
+    #leaderboard-table th:nth-child(3),
+    #leaderboard-table th:nth-child(4),
+    #leaderboard-table th:nth-child(5),
+    #leaderboard-table th:nth-child(6),
+    #leaderboard-table td:nth-child(1),
+    #leaderboard-table td:nth-child(3),
+    #leaderboard-table td:nth-child(4),
+    #leaderboard-table td:nth-child(5),
+    #leaderboard-table td:nth-child(6) { text-align: center; font-weight: 700; }
+    #leaderboard-table.leaderboard-metric-default th:nth-child(1),
+    #leaderboard-table.leaderboard-metric-default td:nth-child(1) { width: 11%; }
+    #leaderboard-table.leaderboard-metric-default th:nth-child(2),
+    #leaderboard-table.leaderboard-metric-default td:nth-child(2) { width: 29%; }
+    #leaderboard-table.leaderboard-metric-default th:nth-child(3),
+    #leaderboard-table.leaderboard-metric-default td:nth-child(3) { width: 16%; }
+    #leaderboard-table.leaderboard-metric-default th:nth-child(4),
+    #leaderboard-table.leaderboard-metric-default td:nth-child(4) { width: 14%; }
+    #leaderboard-table.leaderboard-metric-default th:nth-child(5),
+    #leaderboard-table.leaderboard-metric-default td:nth-child(5) { width: 17%; }
+    #leaderboard-table.leaderboard-metric-default th:nth-child(6),
+    #leaderboard-table.leaderboard-metric-default td:nth-child(6) { width: 13%; }
+    #leaderboard-table.leaderboard-metric-flies th:nth-child(1),
+    #leaderboard-table.leaderboard-metric-flies td:nth-child(1) { width: 14%; }
+    #leaderboard-table.leaderboard-metric-flies th:nth-child(2),
+    #leaderboard-table.leaderboard-metric-flies td:nth-child(2) { width: 34%; }
+    #leaderboard-table.leaderboard-metric-flies th:nth-child(3),
+    #leaderboard-table.leaderboard-metric-flies td:nth-child(3) { width: 22%; }
+    #leaderboard-table.leaderboard-metric-flies th:nth-child(4),
+    #leaderboard-table.leaderboard-metric-flies td:nth-child(4) { width: 30%; }
+    #leaderboard-table tbody tr:nth-child(odd) { background: #ffffff; }
+    #leaderboard-table tbody tr:nth-child(even) { background: #f2f5f6; }
+    #leaderboard-table tr.current-player { background: #b8f5dc !important; }
+    #leaderboard-empty { padding: 24px; text-align: center; color: #59676d; font-weight: 700; }
+
+    .leaderboard-pager {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 14px;
+      margin-top: 14px;
+      font: 700 15px/1 "Courier New", Courier, monospace;
+    }
+    .leaderboard-pager button { min-width: 110px; }
+
+    @media (max-width: 760px) {
+      .leaderboard-controls { grid-template-columns: 1fr 1fr; }
+      .cloud-card, .leaderboard-card { padding: 14px; border-width: 5px; }
+    }
