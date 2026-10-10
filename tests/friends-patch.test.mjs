@@ -2,11 +2,27 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import {pbkdf2Sync} from "node:crypto";
+import vm from "node:vm";
 import {PIN_PBKDF2_ITERATIONS,pinHash,BUILD} from "../src/common.js";
 import vocabulary from "../src/vocabulary.json" with {type:"json"};
 
 const expectedVocabulary = [{"english": "To be", "spanish": "Ser, Estar"}, {"english": "To go", "spanish": "Ir"}, {"english": "To do", "spanish": "Hacer"}, {"english": "To have", "spanish": "Tener"}, {"english": "To speak", "spanish": "Hablar"}, {"english": "Good", "spanish": "Bueno"}, {"english": "Big", "spanish": "Grande"}, {"english": "Easy", "spanish": "Fácil"}, {"english": "Fast", "spanish": "Rápido"}, {"english": "New", "spanish": "Nuevo"}, {"english": "Student", "spanish": "Estudiante"}, {"english": "Book", "spanish": "Libro"}, {"english": "University", "spanish": "Universidad"}, {"english": "School", "spanish": "Escuela"}, {"english": "Country", "spanish": "País"}];
-const html = fs.readFileSync(new URL("../public/index.html", import.meta.url), "utf8");
+const indexHtml = fs.readFileSync(new URL("../public/index.html", import.meta.url), "utf8");
+const browserFiles = [
+  "../public/scripts/friends-api-client.js",
+  "../public/scripts/auth-screen-controller.js",
+  "../public/scripts/cloud-client.js",
+  "../public/scripts/game.bundle.js",
+  "../public/scripts/bootstrap.js"
+];
+const styleFiles = [
+  "../public/styles/base.css",
+  "../public/styles/cloud-ui.css",
+  "../public/styles/game-shell.css"
+];
+const browserSource = browserFiles.map(file=>fs.readFileSync(new URL(file,import.meta.url),"utf8")).join("\n");
+const styles = styleFiles.map(file=>fs.readFileSync(new URL(file,import.meta.url),"utf8")).join("\n");
+const html = `${indexHtml}\n${styles}\n${browserSource}`;
 
 test("PIN hashing stays within Cloudflare PBKDF2 limit and matches 100000 rounds",()=>{
   assert.equal(PIN_PBKDF2_ITERATIONS,100000);
@@ -16,8 +32,8 @@ test("PIN hashing stays within Cloudflare PBKDF2 limit and matches 100000 rounds
 });
 
 test("Friends release exposes the new build marker",()=>{
-  assert.equal(BUILD,"2026.10.09-friends-legacy-account-recovery-1 ".trim());
-  assert.match(html,/2026\.10\.09\-friends\-legacy\-account\-recovery\-1/);
+  assert.equal(BUILD,"2026.10.10-friends-nick-delete-repair-1 ".trim());
+  assert.match(browserSource,/2026\.10\.10\-friends\-nick\-delete\-repair\-1/);
 });
 
 test("server vocabulary is exactly the requested 15 entries",()=>{
@@ -31,19 +47,73 @@ test("offline fallback vocabulary matches the server vocabulary",()=>{
   assert.match(html,/const FALLBACK_VOCABULARY = Object\.freeze/);
 });
 
-test("logout uses an explicit auth input lock and game suspension hook",()=>{
-  assert.match(html,/setGameInputLocked\(true\);\s*onlineIdentityGeneration\+\+/);
-  assert.match(html,/window\.RibbitRaceSuspendForLogin = \(\) =>/);
-  assert.match(html,/game\.state = "friendsLogin"/);
-  assert.match(html,/window\.RibbitFriendsGameInputLocked = \(\) => gameInputLocked/);
-  assert.match(html,/if \(friendsGameInputLocked\(\)\) \{\s*lastFrameTime = now;\s*accumulator = 0;/);
+test("logout confirms the server session and reloads the exact initial login document",()=>{
+  assert.match(browserSource,/setGameInputLocked\(true\);\s*onlineIdentityGeneration\+\+/);
+  assert.match(browserSource,/const result = await serverCall\("apiLogout"/);
+  assert.match(browserSource,/window\.RibbitAuthScreen\?\.reloadToInitialLogin\(\)/);
+  assert.match(browserSource,/class AuthScreenController/);
+  assert.match(browserSource,/window\.location\.replace\(target\.href\)/);
+  assert.match(browserSource,/window\.RibbitRaceSuspendForLogin = \(\) =>/);
+  assert.match(browserSource,/game\.state = "friendsLogin"/);
 });
 
-test("auth gate hides and inerts the game until sign-in or guest play",()=>{
-  assert.match(html,/<body class="ribbit-auth-locked">/);
-  assert.match(html,/<main id="game-frame" inert aria-hidden="true">/);
-  assert.match(html,/body\.ribbit-auth-locked #game-frame\{visibility:hidden;\}/);
-  assert.match(html,/setGameInputLocked\(false\);\s*elements\["cloud-gate"\]\.hidden = true/);
+test("auth boundary hides and inerts the runtime until sign-in or guest play",()=>{
+  assert.match(indexHtml,/<body class="ribbit-auth-locked">/);
+  assert.match(indexHtml,/<main id="game-frame" inert aria-hidden="true">/);
+  assert.match(styles,/body\.ribbit-auth-locked #game-frame\{visibility:hidden;\}/);
+  assert.match(browserSource,/setGameInputLocked\(false\);\s*elements\["cloud-gate"\]\.hidden = true/);
+  assert.match(browserSource,/this\.gameFrame\.setAttribute\("inert", ""\)/);
+});
+
+test("index is presentation-only and gameplay source is separated by responsibility",()=>{
+  assert.doesNotMatch(indexHtml,/<style\b/i);
+  assert.equal((indexHtml.match(/<script\b[^>]*src=/g)||[]).length,5);
+  assert.match(indexHtml,/\/scripts\/friends-api-client\.js/);
+  assert.match(indexHtml,/\/scripts\/auth-screen-controller\.js/);
+  assert.match(indexHtml,/\/scripts\/cloud-client\.js/);
+  assert.match(indexHtml,/\/scripts\/game\.bundle\.js/);
+  const modules=fs.readdirSync(new URL("../client/game/",import.meta.url)).filter(name=>/^\d+-.+\.js$/.test(name));
+  assert.equal(modules.length,8);
+  assert.match(fs.readFileSync(new URL("../scripts/build-game.mjs",import.meta.url),"utf8"),/class GameBundleBuilder/);
+});
+
+
+test("AuthScreenController owns runtime locking and clean-login navigation",()=>{
+  const source=fs.readFileSync(new URL("../public/scripts/auth-screen-controller.js",import.meta.url),"utf8");
+  const attrs=new Map();
+  const classes=new Map();
+  let suspended=0,replaced="";
+  const frame={
+    setAttribute:(key,value)=>attrs.set(key,value),
+    removeAttribute:key=>attrs.delete(key),
+    contains:()=>false
+  };
+  const context={
+    URL, console,
+    document:{body:{classList:{toggle:(key,value)=>classes.set(key,Boolean(value))}},getElementById:id=>id==="game-frame"?frame:null,activeElement:null},
+    window:{
+      location:{href:"https://game.example/"},
+      history:{replaceState:()=>{}},
+      RibbitRaceSuspendForLogin:()=>{suspended++;}
+    }
+  };
+  context.window.window=context.window;
+  context.window.document=context.document;
+  context.location=context.window.location;
+  context.history=context.window.history;
+  vm.runInNewContext(source,context,{filename:"auth-screen-controller.js"});
+  const controller=context.window.RibbitAuthScreen;
+  controller.setLocked(true);
+  assert.equal(classes.get("ribbit-auth-locked"),true);
+  assert.equal(attrs.has("inert"),true);
+  assert.equal(attrs.get("aria-hidden"),"true");
+  assert.equal(suspended,1);
+  controller.setLocked(false);
+  assert.equal(classes.get("ribbit-auth-locked"),false);
+  assert.equal(attrs.has("inert"),false);
+  context.window.location.replace=url=>{replaced=url;};
+  controller.reloadToInitialLogin();
+  assert.match(replaced,/^https:\/\/game\.example\/\?signedOut=1$/);
 });
 
 test("global gameplay hotkeys are gated while the login screen owns focus",()=>{
@@ -168,10 +238,12 @@ test("local Versus VS hover draws requested player-switch tooltip",()=>{
 });
 
 
-test("owner legacy recovery is one-shot and refuses PIN accounts",()=>{
+test("owner legacy recovery is request-triggered, one-shot and refuses PIN accounts",()=>{
   const hub=fs.readFileSync(new URL("../src/hub.js",import.meta.url),"utf8");
   assert.match(hub,/OWNER_DELETE_LEGACY_USERNAME/);
-  assert.match(hub,/OWNER_LEGACY_DELETE:/);
+  assert.match(hub,/OWNER_LEGACY_DELETE_V2:/);
+  assert.match(hub,/runOwnerLegacyCleanup\(\)/);
+  assert.match(hub,/async fetch\(request\)\{\s*this\.runOwnerLegacyCleanup\(\);/);
   assert.match(hub,/refused-pin-account/);
   assert.match(hub,/deleted-legacy/);
   assert.match(hub,/DELETE FROM sessions WHERE uid=\?/);

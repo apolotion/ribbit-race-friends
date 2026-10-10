@@ -1,14 +1,20 @@
-# Test report — 2026.10.09-friends-online-word-stability-1
+# Test report — Nick legacy-delete repair
 
-## Automated checks
+Build: `2026.10.10-friends-nick-delete-repair-1`
 
-- `npm run check`: PASS — server modules and complete HTML parse.
-- `npm test`: PASS — **35/35** tests.
-- Existing account/PIN, save merge, rooms, Quickplay, spectator, CPU-takeover, logout-lock, vocabulary, and 30-second connection checks remain green.
-- New online-label test repeatedly rebuilds the same PvP fly from 90 simulated authoritative snapshots with small anchor drift and verifies its word rectangle never moves.
-- Round changes clear old PvP placement cache entries so reused IDs cannot inherit an old round's position.
-- Quickplay layout tests require the taller PLAY WHILE WAITING rectangle and centered two-line group; the previous bottom-edge sublabel positioning is rejected.
+## Passed
+
+- Complete browser bundle rebuilt from the eight modular game source files.
+- Server and browser modules parse.
+- All required external assets are present.
+- 38/38 automated tests passed.
+- Recovery variable is read from `OWNER_DELETE_LEGACY_USERNAME`.
+- Recovery runs during Durable Object construction and at the start of every Hub request.
+- V2 one-shot marker prevents a later replacement PIN account from being deleted.
+- PIN accounts are explicitly refused.
+- Legacy cleanup removes sessions, awards, private online profile/rating data, and the user row.
+- Existing PIN hashing, logout reset, vocabulary, Quickplay, online word stability, and modular client tests still pass.
 
 ## Limits
 
-These tests run locally and do not deploy to the user's Cloudflare account. Actual two-device WebSocket latency and rendering should still be checked after Cloudflare finishes the GitHub-triggered deployment.
+The tests do not access the user's live Cloudflare Durable Object or delete any production account. The owner must verify the production log status after deploying and setting the temporary environment variable.

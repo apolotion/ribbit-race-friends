@@ -27,30 +27,34 @@ export class FriendsHub extends DurableObject {
    deleteProperty:k=>this.sql.exec('DELETE FROM persistent WHERE key=?',k),
    setProperties:o=>{for(const[k,v]of Object.entries(o))this.props.setProperty(k,v);}};
 
-  // Owner-only one-time cleanup for a LOST pre-PIN account.
-  // Set OWNER_DELETE_LEGACY_USERNAME in the Worker environment, let the Hub receive
-  // one normal API request, then remove the variable. A persistent tombstone makes
-  // the operation one-shot even if the variable is accidentally left in place.
-  const ownerLegacyDelete=String(env.OWNER_DELETE_LEGACY_USERNAME||'').normalize('NFKC').trim().toLowerCase();
-  if(ownerLegacyDelete&&/^[\p{L}\p{N}_-]{3,20}$/u.test(ownerLegacyDelete)){
-   const recoveryMarker='OWNER_LEGACY_DELETE:'+digest(ownerLegacyDelete).slice(0,32);
-   if(!this.props.getProperty(recoveryMarker)){
-    const old=this.one('SELECT id,username,pinhash FROM users WHERE username=?',ownerLegacyDelete);
-    if(!old){
-     this.props.setProperty(recoveryMarker,JSON.stringify({status:'not-found',username:ownerLegacyDelete,at:Date.now()}));
-    }else if(String(old.pinhash||'')){
-     // Never use this backdoor to erase an account that already has a PIN.
-     this.props.setProperty(recoveryMarker,JSON.stringify({status:'refused-pin-account',username:old.username,at:Date.now()}));
-    }else{
-     this.runtime({uid:old.id,marker:'',guest:false,expires:0}).deletePrivate(old.id);
-     this.sql.exec('DELETE FROM sessions WHERE uid=?',old.id);
-     this.sql.exec('DELETE FROM awards WHERE uid=?',old.id);
-     this.sql.exec('DELETE FROM users WHERE id=?',old.id);
-     this.props.setProperty(recoveryMarker,JSON.stringify({status:'deleted-legacy',username:old.username,at:Date.now()}));
-     console.log('Owner recovery deleted legacy Friends account:',old.username);
-    }
-   }
+  // Run once during construction and again on each Hub request. The per-request
+  // call is intentional: Cloudflare may keep a Durable Object warm while a Worker
+  // environment variable is added, so constructor-only recovery can be missed.
+  this.runOwnerLegacyCleanup();
+ }
+ runOwnerLegacyCleanup(){
+  const username=String(this.env.OWNER_DELETE_LEGACY_USERNAME||'').normalize('NFKC').trim().toLowerCase();
+  if(!username||!/^[\p{L}\p{N}_-]{3,20}$/u.test(username))return null;
+  const recoveryMarker='OWNER_LEGACY_DELETE_V2:'+digest(username).slice(0,32);
+  const prior=this.props.getProperty(recoveryMarker);
+  if(prior){try{return JSON.parse(prior);}catch(_){return {status:'already-processed',username};}}
+  const old=this.one('SELECT id,username,pinhash FROM users WHERE username=?',username);
+  let result;
+  if(!old){
+   result={status:'not-found',username,at:Date.now()};
+  }else if(String(old.pinhash||'')){
+   // Never use this owner cleanup to erase an account that already has a PIN.
+   result={status:'refused-pin-account',username:old.username,at:Date.now()};
+  }else{
+   this.runtime({uid:old.id,marker:'',guest:false,expires:0}).deletePrivate(old.id);
+   this.sql.exec('DELETE FROM sessions WHERE uid=?',old.id);
+   this.sql.exec('DELETE FROM awards WHERE uid=?',old.id);
+   this.sql.exec('DELETE FROM users WHERE id=?',old.id);
+   result={status:'deleted-legacy',username:old.username,at:Date.now()};
   }
+  this.props.setProperty(recoveryMarker,JSON.stringify(result));
+  console.log('Owner legacy account cleanup:',JSON.stringify(result));
+  return result;
  }
  one(q,...p){return this.sql.exec(q,...p).toArray()[0]||null;}
  tx(fn){return this.ctx.storage.transactionSync(fn);}
@@ -73,6 +77,7 @@ export class FriendsHub extends DurableObject {
  }
  writeSave(u,s){const clean=sanitizeSaveData_(s),rev=u.revision+1;this.sql.exec('UPDATE users SET savedata=?,revision=?,updated=?,summary=? WHERE id=?',JSON.stringify(clean),rev,Date.now(),JSON.stringify(summarizeSave_(clean)),u.id);return {ok:true,revision:rev,saveSchemaVersion:2};}
  async fetch(request){
+  this.runOwnerLegacyCleanup();
   const method=new URL(request.url).pathname.split('/').pop();let payload;
   try{payload=await limitedJson(request);}catch(e){return json(error('INVALID_REQUEST',e.message),400);}
   const ip=digest(request.headers.get('X-Friends-IP')||'unknown');
