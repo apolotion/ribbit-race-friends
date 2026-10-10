@@ -1,44 +1,43 @@
-# Ribbit Race Friends Edition — Single Player word stability
+# Ribbit Race Friends Edition — online word stability + Quickplay status layout
 
-Build: `2026.10.09-friends-stable-word-labels-1`
+Build: `2026.10.09-friends-online-word-stability-1`
 
 ## What changed
 
-- Fly word plates now keep a persistent placement for each fly instead of recomputing their position every animation frame.
-- New flies choose an open label location around labels already on screen; existing labels do not jump when another fly appears or disappears.
-- Removed the fractional duplicate text pass from fly vocabulary labels and the Single Player prompt to prevent subpixel shimmer when the high-resolution canvas is rescaled.
-- Existing PIN login, logout lock, 30-second Quickplay verification, Local Play routing, Versus hover tooltip, saves, and vocabulary are unchanged.
+1. **Online/Quickplay vocabulary labels no longer reflow between snapshots.** Each fly/word/round keeps one screen-space word-plate rectangle even when the guest rebuilds fly objects from authoritative WebSocket snapshots or receives tiny anchor differences.
+2. **Quickplay status text is centered inside PLAY WHILE WAITING.** The two-line label is vertically centered as one group inside a taller button, and CANCEL is moved down slightly for clearance.
+3. Existing behavior is preserved: 4-digit PIN accounts, 100,000-round PBKDF2, pure-login logout lock, 15-word vocabulary, 30-second Quickplay partner check, failed-connect Local Play routing, Versus hover tooltip, Cloudflare saves, Quickplay, spectators, and CPU takeover.
 
-## Update the live Cloudflare Friends Edition
+## Deploy to your existing GitHub/Cloudflare installation
 
-Use the existing GitHub repository and Cloudflare Worker. Do **not** create a new Worker, FriendsHub, FriendsRoom, or database.
+Do **not** create a new Worker, repository, FriendsHub, or FriendsRoom.
 
 Replace these files in `apolotion/ribbit-race-friends`:
 
-- `public/index.html`
-- `src/common.js`
-- `tests/friends-patch.test.mjs`
+```text
+public/index.html
+src/common.js
+tests/friends-patch.test.mjs
+```
 
-Then commit directly to `main`, for example:
+Commit directly to `main`, for example:
 
-`Fix Single Player word label jitter`
+```text
+Fix online word jitter and Quickplay status alignment
+```
 
 Cloudflare should automatically run:
 
-`npm run check && npm test`
+```text
+npm run check && npm test
+npx wrangler deploy
+```
 
-and then:
+Wait for `Success! Build completed`, then hard-refresh both players before testing.
 
-`npx wrangler deploy`
+## Test
 
-Wait for the build/deploy to succeed, then hard-refresh the game.
-
-## Quick verification
-
-1. Open Single Player and start Park.
-2. Watch all visible word plates for at least 15 seconds as flies bob and additional flies spawn.
-3. Catch one fly and wait for its replacement. Existing word plates should remain in the same location.
-4. Pause and resume. Labels should remain stable.
-5. Confirm the vocabulary is still the current 15-word list.
-
-No Durable Object reset or account migration is required.
+1. Start a private online match and a Quickplay match.
+2. Watch several fly labels on the guest screen for at least 20 seconds. Existing labels should stay fixed even as new snapshots arrive.
+3. In the Quickplay queue, confirm `DEVICE CHECK PASSED - PARTNER LINK NOT YET TESTED` is fully inside and centered under `PLAY WHILE WAITING`.
+4. Confirm the connection check still ends at 30 seconds if a matched partner cannot finish verification.

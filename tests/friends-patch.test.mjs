@@ -16,8 +16,8 @@ test("PIN hashing stays within Cloudflare PBKDF2 limit and matches 100000 rounds
 });
 
 test("Friends release exposes the new build marker",()=>{
-  assert.equal(BUILD,"2026.10.09-friends-stable-word-labels-1 ".trim());
-  assert.match(html,/2026\.10\.09\-friends\-stable\-word\-labels\-1/);
+  assert.equal(BUILD,"2026.10.09-friends-online-word-stability-1 ".trim());
+  assert.match(html,/2026\.10\.09\-friends\-online\-word\-stability\-1/);
 });
 
 test("server vocabulary is exactly the requested 15 entries",()=>{
@@ -60,19 +60,20 @@ test("Quickplay partner connection check is capped at 30 seconds",()=>{
 });
 
 test("queued device-check status is centered inside Play While Waiting",()=>{
-  assert.match(html,/minimize:\{x:115,y:204,w:250,h:29\}/);
-  assert.match(html,/subLabel=''/);
+  assert.match(html,/minimize:\{x:115,y:201,w:250,h:34\}/);
+  assert.match(html,/cancel:\{x:185,y:239,w:110,h:22\}/);
   assert.match(html,/DEVICE CHECK PASSED - PARTNER LINK NOT YET TESTED/);
-  assert.match(html,/Status is centered inside PLAY WHILE WAITING/);
-  assert.doesNotMatch(html,/fitText\('DEVICE CHECK PASSED - PARTNER LINK NOT YET TESTED',240,225/);
+  assert.match(html,/const groupTop=y\+\(h-\(mainHeight\+gap\+subHeight\)\)\/2;/);
+  assert.match(html,/drawBitmapText\(spec\.subLabel,\(left\+right\)\/2,groupTop\+mainHeight\+gap,subScale/);
+  assert.doesNotMatch(html,/y\+h-9,right-left,.39/);
 });
 
 
 test("single-player fly labels keep persistent placements instead of re-solving every frame",()=>{
   assert.match(html,/const flyLabelPlacementCache = new Map\(\);/);
   assert.match(html,/function chooseFlyLabelRect\(currentFly, anchor, width, height\)/);
-  assert.match(html,/if \(cached && cached\.signature === signature\) return cached\.rect;/);
-  assert.match(html,/flyLabelPlacementCache\.set\(cacheKey, \{ signature, rect: stableRect \}\);/);
+  assert.match(html,/if \(cached && cached\.vocabIndex === vocabIndex && cached\.width === width && cached\.height === height\) return cached\.rect;/);
+  assert.match(html,/flyLabelPlacementCache\.set\(cacheKey, \{/);
   assert.match(html,/function drawScene\(\) \{\s*\/\/ Prune labels only when a fly actually leaves[\s\S]{0,220}pruneFlyLabelPlacementCache\(\);/);
   assert.doesNotMatch(html,/flyLabelLayoutStamp = game\.visualTime/);
   assert.doesNotMatch(html,/flyLabelRectsThisFrame\.length = 0/);
@@ -126,8 +127,31 @@ test("actual label-placement function keeps existing fly rectangles stable as fl
   assert.deepEqual(api.chooseFlyLabelRect(b,{x:b.baseX,y:b.baseY},72,20),b1);
   flies.splice(flies.indexOf(b),1);
   api.pruneFlyLabelPlacementCache();
-  assert.equal(api.cache.has("solo:2"),false);
+  assert.equal(api.cache.has("solo:2:1"),false);
   assert.deepEqual(api.chooseFlyLabelRect(a,{x:a.baseX,y:a.baseY},72,20),a1);
+});
+
+test("online PvP label rectangles survive rebuilt snapshot flies and tiny anchor drift",()=>{
+  const names=["flyLabelCacheKey","pruneFlyLabelPlacementCache","overlapArea","getFlyLabelHudObstacles","chooseFlyLabelRect"];
+  const source=names.map(name=>extractFunctionSource(html,name)).join("\n");
+  const make=new Function("game","flies","W","CONFIG","clamp",`const flyLabelPlacementCache=new Map();\n${source}\nreturn {chooseFlyLabelRect,pruneFlyLabelPlacementCache,cache:flyLabelPlacementCache};`);
+  const game={mode:"pvp",pvpRoundNumber:2,pvpSuddenDeath:false};
+  const flies=[];
+  const api=make(game,flies,480,{playBottom:244},(v,a,b)=>Math.max(a,Math.min(b,v)));
+  let fly={id:7,vocabIndex:4,baseX:220,baseY:104,state:"active"};
+  flies.push(fly);api.pruneFlyLabelPlacementCache();
+  const first=api.chooseFlyLabelRect(fly,{x:220,y:104},80,20);
+  for(let snapshot=0;snapshot<90;snapshot++){
+    // Simulate the guest replacing the fly object from an authoritative snapshot.
+    fly={id:7,vocabIndex:4,baseX:220+(snapshot%3-1)*0.49,baseY:104+(snapshot%5-2)*0.37,state:"active"};
+    flies[0]=fly;api.pruneFlyLabelPlacementCache();
+    const rect=api.chooseFlyLabelRect(fly,{x:fly.baseX,y:fly.baseY},80,20);
+    assert.deepEqual(rect,first);
+  }
+  assert.equal(api.cache.size,1);
+  game.pvpRoundNumber=3;
+  api.pruneFlyLabelPlacementCache();
+  assert.equal(api.cache.size,0,"round change should release prior placements");
 });
 
 test("failed connection Local Play opens the single-player level menu without auto-starting",()=>{

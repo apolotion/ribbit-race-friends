@@ -730,12 +730,12 @@
     // Friends Edition: accounts, matchmaking, and live human gameplay use the
     // same-origin Cloudflare Worker/Durable Object service. The historical
     // directOnlyVersion field is retained only as a protocol compatibility marker.
-    const RIBBIT_DIRECT_BUILD = "2026.10.09-friends-stable-word-labels-1";
+    const RIBBIT_DIRECT_BUILD = "2026.10.09-friends-online-word-stability-1";
     const RIBBIT_DIRECT_POLICY_VERSION = 2;
     const RIBBIT_ONLINE_PROTOCOL_VERSION = 3;
     const RIBBIT_QUICKPLAY_VERSION = 3;
 
-    const RIBBIT_CLOUD_CLIENT_VERSION = "2026.10.09-friends-stable-word-labels-1";
+    const RIBBIT_CLOUD_CLIENT_VERSION = "2026.10.09-friends-online-word-stability-1";
     const RIBBIT_CLOUD_SAVE_SCHEMA_VERSION = 2;
     // Preserve every current and future Ribbit Race key, including legacy one-button keys.
     const RIBBIT_GAME_KEY = /^(?:ribbitRace|oneButtonFrog)/;
@@ -4785,7 +4785,7 @@
         pendingAction:'',changingMatch:false,queued:false,background:false,peekActivity:null,suspendedActivity:null,lastLocalSkin:'',queueTimer:null};
       const QUICK_UI={quick:{x:115,y:144,w:250,h:31},
         preview:{x:151,y:104,w:178,h:77},previous:{x:159,y:124,w:22,h:27},next:{x:299,y:124,w:22,h:27},
-        enter:{x:144,y:196,w:192,h:26},cancel:{x:185,y:237,w:110,h:22},minimize:{x:115,y:204,w:250,h:29}};
+        enter:{x:144,y:196,w:192,h:26},cancel:{x:185,y:239,w:110,h:22},minimize:{x:115,y:201,w:250,h:34}};
       function isQuickplay(){return !!state.quickplay;}
       function quickRoundStage(number){return quick.roundStages[Math.max(0,Number(number)-1)]||'park';}
       function updateQuickCounts(counts){
@@ -5451,8 +5451,11 @@
         if(spec.label){const left=x+(spec.icon?25:7),right=x+w-7;
           if(hasSub){
             const scale=Math.min(.76,(right-left)/Math.max(1,measureBitmapText(spec.label,1)));
-            drawBitmapText(spec.label,(left+right)/2,y+7,scale,'center',focused?'#07516a':'#48555a');
-            fitText(spec.subLabel,(left+right)/2,y+h-9,right-left,.39,focused?'#07516a':'#59666b');
+            const subScale=Math.min(.39,(right-left)/Math.max(1,measureBitmapText(spec.subLabel,1)));
+            const mainHeight=7*scale,subHeight=7*subScale,gap=2.5;
+            const groupTop=y+(h-(mainHeight+gap+subHeight))/2;
+            drawBitmapText(spec.label,(left+right)/2,groupTop,scale,'center',focused?'#07516a':'#48555a');
+            drawBitmapText(spec.subLabel,(left+right)/2,groupTop+mainHeight+gap,subScale,'center',focused?'#07516a':'#59666b');
           }else{
             const scale=Math.min(h>25?1.00:.80,(right-left)/Math.max(1,measureBitmapText(spec.label,1)));
             drawBitmapText(spec.label,(left+right)/2,cy-7*scale/2,scale,'center',focused?'#07516a':'#48555a');
@@ -16024,14 +16027,21 @@
       return { x: currentFly.baseX, y: currentFly.baseY };
     }
 
-    // Word plates must be visually stable. Each fly keeps the same label rectangle
-    // for its lifetime instead of re-solving all labels on every animation frame.
-    // This prevents single-player labels from hopping when another fly spawns,
-    // disappears, or the scene repaints at a slightly different cadence.
+    // Word plates must be visually stable. Each fly keeps one label rectangle for
+    // its lifetime in the current round. This applies to solo AND online PvP: remote
+    // snapshots can rebuild fly objects or vary anchors slightly, but must never make
+    // an existing vocabulary plate reflow or shake on the guest's screen.
     const flyLabelPlacementCache = new Map();
 
     function flyLabelCacheKey(currentFly) {
-      return `${game.mode}:${Number(currentFly?.id) || 0}`;
+      const id = Number(currentFly?.id) || 0;
+      const vocab = Number(currentFly?.vocabIndex) || 0;
+      if (game.mode === "pvp") {
+        const round = Math.max(1, Number(game.pvpRoundNumber) || 1);
+        const phase = game.pvpSuddenDeath ? "sd" : "normal";
+        return `pvp:${round}:${phase}:${id}:${vocab}`;
+      }
+      return `solo:${id}:${vocab}`;
     }
 
     function pruneFlyLabelPlacementCache() {
@@ -16059,9 +16069,12 @@
       const cacheKey = flyLabelCacheKey(currentFly);
       const anchorX = Math.round(Number(anchor.x) || 0);
       const anchorY = Math.round(Number(anchor.y) || 0);
-      const signature = `${anchorX}|${anchorY}|${width}|${height}|${Number(currentFly?.vocabIndex) || 0}`;
+      const vocabIndex = Number(currentFly?.vocabIndex) || 0;
       const cached = flyLabelPlacementCache.get(cacheKey);
-      if (cached && cached.signature === signature) return cached.rect;
+      // Network snapshots rebuild fly objects and may report tiny authoritative
+      // anchor differences. Once a label is placed for this fly/word/round, keep
+      // that exact screen rectangle until the fly actually leaves the round.
+      if (cached && cached.vocabIndex === vocabIndex && cached.width === width && cached.height === height) return cached.rect;
 
       const rawCandidates = [
         { x: anchorX - width / 2, y: anchorY - height - 10, priority: 0 },
@@ -16098,7 +16111,14 @@
 
       // Store a copy so later fly spawns route around this label without moving it.
       const stableRect = Object.freeze({ x: best.x, y: best.y, w: best.w, h: best.h });
-      flyLabelPlacementCache.set(cacheKey, { signature, rect: stableRect });
+      flyLabelPlacementCache.set(cacheKey, {
+        vocabIndex,
+        width,
+        height,
+        anchorX,
+        anchorY,
+        rect: stableRect
+      });
       return stableRect;
     }
 
