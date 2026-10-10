@@ -4,6 +4,7 @@ import {Buffer} from 'node:buffer';
 // No Google runtime, school identifiers, PINs, or school URLs are included.
 import {createHash, timingSafeEqual} from 'node:crypto';
 import {summarizeSave_,mergePersistentSaveData_} from './save-data.js';
+import {BUILD} from './common.js';
 export function createRoomApi({cache,props,auth,store,socketPresence}) {
  const Utilities={getUuid:()=>crypto.randomUUID(),DigestAlgorithm:{SHA_256:'sha256'},Charset:{UTF_8:'utf8'},
   computeDigest:(alg,value)=>[...createHash('sha256').update(String(value)).digest()],
@@ -25,7 +26,7 @@ const RR_ONLINE = Object.freeze({
 });
 
 function apiOnlineDiagnostic() {
- return {ok:true,build:'2026.09.25-friends-1',friendsVersion:1,transport:'cloudflare-websocket',
+ return {ok:true,build:BUILD,friendsVersion:1,transport:'cloudflare-websocket',
   googleRequired:false,cloudSave:true,protocol:3,quickplayVersion:3,saveCompatibility:rrDirectSaveCompatibility_()};
 }
 
@@ -312,7 +313,7 @@ function apiOnlineLeaveRoom(req) {
     else if(role==='host'||control.authorityRole===role)cache.removeAll([rrOnlineRoomKey_(code),rrOnlineMailKey_(room,'host'),rrOnlineMailKey_(room,'guest'),rrOnlineControlKey_(room)]);
     else {room.guest=null;rrOnlinePut_(cache,rrOnlineRoomKey_(code),room);cache.remove(ownKey);}
     cache.remove(RR_QUICKPLAY.PREFIX+'COUNTS');
-    if(room.quickplay){const key=rrQuickActiveKey_(departingId||'');const a=rrOnlineJson_(cache.get(key),null);if(a?.roomCode===code)cache.remove(key);}
+    if(room.quickplay)rrQuickReleaseParticipant_(cache,room,role);
     return {ok:true,left:true,replacedByCpu:live,cpuLevel:live?5:null};
   }finally{lock.releaseLock();}
 }
@@ -385,6 +386,31 @@ function rrQuickPutRegistry_(cache,r) {
 function rrQuickTicketKey_(ticket) {return RR_QUICKPLAY.PREFIX+'T:'+rrOnlineHash_(ticket);}
 function rrQuickActiveKey_(sid) {return RR_QUICKPLAY.PREFIX+'ACTIVE:'+rrOnlineHash_(sid).slice(0,32);}
 function rrQuickUserKey_(sid) {return RR_QUICKPLAY.PREFIX+'U:'+rrOnlineHash_(sid).slice(0,32);}
+function rrQuickRoleForStudent_(room,sid) {
+  if(!room||!sid)return '';
+  if(room.host?.studentId===sid)return 'host';
+  if(room.guest?.studentId===sid)return 'guest';
+  return '';
+}
+function rrQuickReleaseParticipant_(cache,room,role) {
+  if(!room?.quickplay||!['host','guest'].includes(role))return false;
+  const sid=room[role]?.studentId;if(!sid)return false;
+  let changed=false;
+  const activeKey=rrQuickActiveKey_(sid),active=rrOnlineJson_(cache.get(activeKey),null);
+  const activeMatches=active?.roomCode===room.code&&active.epoch===room.epoch;
+  if(activeMatches){cache.remove(activeKey);changed=true;}
+  const userKey=rrQuickUserKey_(sid),ticketKey=cache.get(userKey),ticket=ticketKey?rrOnlineJson_(cache.get(ticketKey),null):null;
+  const ticketMatches=ticket?.connection?.roomCode===room.code&&ticket.connection.epoch===room.epoch;
+  if(ticketMatches){cache.remove(ticketKey);cache.remove(userKey);changed=true;}
+  else if(!ticket&&activeMatches&&ticketKey){cache.remove(userKey);changed=true;}
+  if(ticketKey){
+    const registry=rrQuickRegistry_(cache),before=registry.waiters.length;
+    registry.waiters=registry.waiters.filter(item=>item.key!==ticketKey);
+    if(registry.waiters.length!==before)rrQuickPutRegistry_(cache,registry);
+  }
+  if(changed)cache.remove(RR_QUICKPLAY.PREFIX+'COUNTS');
+  return changed;
+}
 function rrQuickWriteTicket_(cache,ticket) {
   cache.put(rrQuickTicketKey_(ticket.token),JSON.stringify(ticket),ticket.status==='matched'?RR_QUICKPLAY.ASSIGNMENT_TTL:RR_QUICKPLAY.QUEUE_TTL);
 }
@@ -534,9 +560,14 @@ function apiQuickplayEnter(req) {
     const reg=rrQuickRegistry_(cache),userKey=rrQuickUserKey_(auth.studentId);
     const active=rrOnlineJson_(cache.get(rrQuickActiveKey_(auth.studentId)),null);
     if(active){
-      const room=rrOnlineReadRoom_(cache,active.roomCode),h=room&&room.epoch===active.epoch?rrOnlineJson_(cache.get(rrOnlineMailKey_(room,'host')),null):null;
-      if(h&&Date.now()-h.lastSeen<RR_ONLINE.OPPONENT_TIMEOUT_MS&&['starting','playing'].includes(h.phase)&&h.snapshot?.game?.pvpMatchWinnerIndex==null)
-        return rrOnlineError_('ALREADY_PLAYING','Finish or leave the Quickplay match already open for this account.');
+      const room=rrOnlineReadRoom_(cache,active.roomCode),role=room&&room.epoch===active.epoch?rrQuickRoleForStudent_(room,auth.studentId):'';
+      const control=room?rrOnlineControl_(cache,room):null;
+      if(room&&role&&control?.cpuIndex===(role==='host'?0:1))rrQuickReleaseParticipant_(cache,room,role);
+      else {
+        const h=room&&room.epoch===active.epoch?rrOnlineJson_(cache.get(rrOnlineMailKey_(room,'host')),null):null;
+        if(h&&Date.now()-h.lastSeen<RR_ONLINE.OPPONENT_TIMEOUT_MS&&['starting','playing'].includes(h.phase)&&h.snapshot?.game?.pvpMatchWinnerIndex==null)
+          return rrOnlineError_('ALREADY_PLAYING','Finish or leave the Quickplay match already open for this account.');
+      }
     }
     const existingKey=cache.get(userKey),existing=existingKey?rrOnlineJson_(cache.get(existingKey),null):null;
     if(existing&&Date.now()-existing.lastSeen<RR_QUICKPLAY.QUEUE_LIVE_MS){
@@ -822,6 +853,7 @@ function rrOnlineCheckTakeover_(cache,room,role,mails,control,req) {
     control={version:control.version+1,authorityRole:role,cpuIndex:opposite==='host'?0:1,cpuLevel:5,
       takeoverAt:Date.now(),reason:fresh?.left?'left':'disconnected',matchId:prior.matchId};
     rrOnlinePut_(cache,rrOnlineControlKey_(room),control);
+    rrQuickReleaseParticipant_(cache,room,opposite);
     return control;
   }finally{lock.releaseLock();}
 }
