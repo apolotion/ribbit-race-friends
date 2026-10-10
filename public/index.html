@@ -566,11 +566,12 @@
  #cloud-profile-view{display:none!important}
  /* Keep login/leaderboard panels inside narrow screens, including grid padding. */
     #cloud-gate .cloud-card{width:min(680px,100%);min-width:0;}
+    body.ribbit-auth-locked #game-frame{visibility:hidden;}
     #leaderboard-overlay .leaderboard-card{width:min(980px,100%);min-width:0;}
     .cloud-field input{min-width:0;}
   </style>
 </head>
-<body>
+<body class="ribbit-auth-locked">
 
   <section id="cloud-gate" aria-label="Friends Edition cloud sign in">
    <div class="cloud-card">
@@ -668,7 +669,7 @@
   </section>
 
 
-  <main id="game-frame">
+  <main id="game-frame" inert aria-hidden="true">
     <div id="cloud-status-pill" aria-live="polite">CLOUD SAVED</div>
     <div id="corner-controls">
       <button id="cloud-account-button" type="button" hidden>CLOUD</button>
@@ -726,18 +727,15 @@
 
 "use strict";
 
-    // Online admission and live gameplay are direct-only. The existing Apps Script
-    // web app still handles matchmaking, signaling, lifecycle, records and saving.
-    const RIBBIT_DIRECT_BUILD = "2026.10.02-friends-pin-1";
+    // Friends Edition: accounts, matchmaking, and live human gameplay use the
+    // same-origin Cloudflare Worker/Durable Object service. The historical
+    // directOnlyVersion field is retained only as a protocol compatibility marker.
+    const RIBBIT_DIRECT_BUILD = "2026.10.09-friends-stable-word-labels-1";
     const RIBBIT_DIRECT_POLICY_VERSION = 2;
-    // STUN discovers direct routes; it does not relay gameplay. LAN candidates
-    // still work when this discovery service is unreachable. No TURN is used.
-    // Set [] only when your school requires LAN-only discovery.
-    const RIBBIT_DIRECT_ICE_SERVERS = [{urls:"stun:stun.l.google.com:19302"}];
     const RIBBIT_ONLINE_PROTOCOL_VERSION = 3;
     const RIBBIT_QUICKPLAY_VERSION = 3;
 
-    const RIBBIT_CLOUD_CLIENT_VERSION = "2026.10.02-friends-pin-1";
+    const RIBBIT_CLOUD_CLIENT_VERSION = "2026.10.09-friends-stable-word-labels-1";
     const RIBBIT_CLOUD_SAVE_SCHEMA_VERSION = 2;
     // Preserve every current and future Ribbit Race key, including legacy one-button keys.
     const RIBBIT_GAME_KEY = /^(?:ribbitRace|oneButtonFrog)/;
@@ -793,6 +791,28 @@
       let leaderboardBaselineReady = false;
       let leaderboardRelevantDirty = false;
       let lastLeaderboardRecordCheckAt = 0;
+      let gameInputLocked = true;
+
+      function setGameInputLocked(locked) {
+        gameInputLocked = Boolean(locked);
+        window.__RIBBIT_FRIENDS_GAME_INPUT_LOCKED__ = gameInputLocked;
+        const frame = document.getElementById("game-frame");
+        document.body.classList.toggle("ribbit-auth-locked", gameInputLocked);
+        if (frame) {
+          if (gameInputLocked) {
+            frame.setAttribute("inert", "");
+            frame.setAttribute("aria-hidden", "true");
+          } else {
+            frame.removeAttribute("inert");
+            frame.removeAttribute("aria-hidden");
+          }
+        }
+        if (gameInputLocked) {
+          try { window.RibbitRaceSuspendForLogin?.(); } catch (error) { console.warn("Friends login suspend skipped", error); }
+          if (frame?.contains(document.activeElement)) { try { document.activeElement?.blur?.(); } catch (_) {} }
+        }
+      }
+      window.RibbitFriendsGameInputLocked = () => gameInputLocked;
 
       function cacheElements() {
         [
@@ -1031,6 +1051,7 @@
       }
 
       async function returnToCloudLogin(saveFirst = false) {
+        setGameInputLocked(true);
         onlineIdentityGeneration++;
         if(typeof window.RibbitRaceCancelOnlineActivities==='function')window.RibbitRaceCancelOnlineActivities();
         if (saveFirst && !guestMode && sessionToken) {
@@ -1068,6 +1089,10 @@
           try { window.RibbitRaceRefreshRuntimeFromStorage(); }
           catch (error) { console.warn("Runtime reset during sign out failed", error); }
         }
+        // Refreshing storage intentionally reconstructs a clean menu state. Put the
+        // runtime back into the dedicated login sentinel afterward so there is no
+        // hidden game state accepting work behind the authentication screen.
+        try { window.RibbitRaceSuspendForLogin?.(); } catch (_) {}
 
         elements["leaderboard-overlay"].hidden = true;
         elements["cloud-account-panel"].hidden = true;
@@ -1400,7 +1425,9 @@
           }
         }
 
+        setGameInputLocked(false);
         elements["cloud-gate"].hidden = true;
+        requestAnimationFrame(() => document.getElementById("game")?.focus({ preventScroll: true }));
         setMessage("", false);
         setTimeout(() => syncLeaderboardFirstPlaceNotices(false), 900);
         clearInterval(periodicTimer);
@@ -1486,7 +1513,9 @@
           try { window.RibbitRaceRefreshRuntimeFromStorage(); }
           catch (error) { console.warn("Guest runtime refresh failed", error); }
         }
+        setGameInputLocked(false);
         elements["cloud-gate"].hidden = true;
+        requestAnimationFrame(() => document.getElementById("game")?.focus({ preventScroll: true }));
       }
 
       function readLeaderboardRecordDate(levelId = "park") {
@@ -1890,6 +1919,7 @@
 
       async function bootstrap() {
         cacheElements();
+        setGameInputLocked(true);
         document.getElementById('friends-manage').onclick=async()=>{if(!guestMode)await flushSave(true);window.open('/account.html','_blank','noopener');};
         patchStorage();
         bindUi();
@@ -1922,6 +1952,7 @@
         restorePlaytestSnapshot,
         endPlaytestSession,
         isPlaytestSessionActive,
+        isGameInputLocked: () => gameInputLocked,
         getVocabulary,
         refreshVocabulary,
         returnToCloudLogin,
@@ -2021,6 +2052,7 @@
 
     const canvas = document.getElementById("game");
     const gameFrame = document.getElementById("game-frame");
+    const friendsGameInputLocked = () => window.RibbitFriendsGameInputLocked?.() === true;
     const rgbValueEditor = document.getElementById("rgb-value-editor");
     const fullscreenButton = document.getElementById("fullscreen-button");
     const fullscreenFallback = document.getElementById("fullscreen-fallback");
@@ -3771,7 +3803,7 @@
     let platforms = LEVELS.park.platforms;
     let flySpawns = LEVELS.park.flySpawns;
 
-    const FALLBACK_VOCABULARY = Object.freeze([{"english": "I need", "spanish": "Necesito"}, {"english": "Help", "spanish": "Ayuda"}, {"english": "More", "spanish": "Más"}, {"english": "Time", "spanish": "Tiempo"}, {"english": "Information", "spanish": "Información"}, {"english": "Bathroom", "spanish": "Baño"}, {"english": "Partner", "spanish": "Compañero"}, {"english": "Group", "spanish": "Grupo"}, {"english": "Pencil", "spanish": "Lápiz"}, {"english": "Pen", "spanish": "Bolígrafo"}, {"english": "Notebook", "spanish": "Cuaderno"}, {"english": "Folder", "spanish": "Carpeta"}, {"english": "Paper", "spanish": "Papel"}, {"english": "Computer", "spanish": "Computadora"}, {"english": "Look", "spanish": "Mira"}, {"english": "Listen", "spanish": "Escucha"}, {"english": "Read", "spanish": "Lee"}, {"english": "Write", "spanish": "Escribe"}, {"english": "Take out", "spanish": "Saca"}, {"english": "Put away", "spanish": "Guarda"}]);
+    const FALLBACK_VOCABULARY = Object.freeze([{"english":"To be","spanish":"Ser, Estar"},{"english":"To go","spanish":"Ir"},{"english":"To do","spanish":"Hacer"},{"english":"To have","spanish":"Tener"},{"english":"To speak","spanish":"Hablar"},{"english":"Good","spanish":"Bueno"},{"english":"Big","spanish":"Grande"},{"english":"Easy","spanish":"Fácil"},{"english":"Fast","spanish":"Rápido"},{"english":"New","spanish":"Nuevo"},{"english":"Student","spanish":"Estudiante"},{"english":"Book","spanish":"Libro"},{"english":"University","spanish":"Universidad"},{"english":"School","spanish":"Escuela"},{"english":"Country","spanish":"País"}]);
 
     function normalizeVocabularyEntries(entries) {
       const cleaned = [];
@@ -4178,6 +4210,7 @@
       return true;
     }
     document.addEventListener("keydown",event=>{
+      if(friendsGameInputLocked()) return;
       if(game.sandboxMode&&sandboxPreview.mode!=="play"&&["Space","KeyW","ArrowUp","KeyZ"].includes(event.code)){
         event.preventDefault();event.stopImmediatePropagation();return;
       }
@@ -4185,6 +4218,7 @@
       event.preventDefault();event.stopImmediatePropagation();if(!event.repeat)cycleSandboxAnimation();
     },{capture:true,passive:false});
     document.addEventListener("keyup",event=>{
+      if(friendsGameInputLocked()) return;
       if(game.sandboxMode&&["ShiftLeft","ShiftRight"].includes(event.code)){event.preventDefault();event.stopImmediatePropagation();}
     },{capture:true,passive:false});
 
@@ -4252,7 +4286,7 @@
       }
       // Friends Edition: authenticated WebSockets via Cloudflare, not WebRTC or Google polling.
       // Legacy internal names remain so the established game/prediction/lifecycle code is unchanged.
-      const DIRECT=Object.freeze({version:2,connectMs:45000,reconnectMs:35000,pingMs:500,staleMs:6000,controlMs:1200});
+      const DIRECT=Object.freeze({version:2,connectMs:30000,reconnectMs:35000,pingMs:500,staleMs:6000,controlMs:1200});
       const gate={preflightId:0,cancelPreflight:null,preflight:null,pairAt:0,phase:'idle',failure:'',lastAttempt:null,timer:null,
         everVerified:false,ending:false,expectedDeparture:false,departureAt:0,finishedOffline:false,pairId:'',localChallenge:'',
         serverVerified:false,serverVersion:0,lossAt:0,offerAttempt:0,retries:0,lastRetryAt:0};
@@ -4304,7 +4338,11 @@
         gate.phase='blocked';gate.ending=false;state.screen='directBlocked';state.focus='directRetry';game.state='onlineConnect';state.busy=false;
       }
       function directFailureAction(id){
-        if(id==='directLocal'){cleanup(true);return;}
+        if(id==='directLocal'){
+          // Failed Online/Quickplay should return to the Single Player level menu.
+          // Do not restore a queued/background activity or auto-start the Park stage.
+          cleanup(false);quick.suspendedActivity=null;quick.peekActivity=null;openSoloMenu(false);return;
+        }
         if(id==='directOnline'){state.screen='entry';state.focus='quick';setStatus('');return;}
         const a=gate.lastAttempt||{kind:'quick'};gate.failure='';state.screen='entry';
         if(a.kind==='quick')openQuickplay();else if(a.kind==='join'){showJoin();state.codeText=a.code||'';joinRoom();}else createRoom();
@@ -4747,7 +4785,7 @@
         pendingAction:'',changingMatch:false,queued:false,background:false,peekActivity:null,suspendedActivity:null,lastLocalSkin:'',queueTimer:null};
       const QUICK_UI={quick:{x:115,y:144,w:250,h:31},
         preview:{x:151,y:104,w:178,h:77},previous:{x:159,y:124,w:22,h:27},next:{x:299,y:124,w:22,h:27},
-        enter:{x:144,y:196,w:192,h:26},cancel:{x:185,y:231,w:110,h:22},minimize:{x:115,y:210,w:250,h:19}};
+        enter:{x:144,y:196,w:192,h:26},cancel:{x:185,y:237,w:110,h:22},minimize:{x:115,y:204,w:250,h:29}};
       function isQuickplay(){return !!state.quickplay;}
       function quickRoundStage(number){return quick.roundStages[Math.max(0,Number(number)-1)]||'park';}
       function updateQuickCounts(counts){
@@ -4884,7 +4922,7 @@
         const visible=['entry','quickSelect','quickQueue'].includes(state.screen);
         if(visible&&onlineAllowed()&&state.screen!=='quickQueue'&&now()>=quick.nextStatsAt)refreshQuickCounts();
         if(quick.queued&&!quick.inFlight&&now()>=quick.nextPollAt)exchangeQuickplay();
-        if(state.quickplay&&state.connected&&!state.active&&state.screen==='quickConnecting'&&now()-quick.connectingAt>DIRECT.connectMs+10000){
+        if(state.quickplay&&state.connected&&!state.active&&state.screen==='quickConnecting'&&now()-quick.connectingAt>DIRECT.connectMs){
           failDirect('MATCH SETUP TIMED OUT. NO RELAY MATCH WAS STARTED.');return;
         }
         if(!state.quickplay||!state.active||game.state!=='won')return;
@@ -4930,7 +4968,7 @@
         }
         if(quick.error)fitText(quick.error,W/2,224,390,.53,'#96334c');
         else if(selecting)fitText(state.busy?'CHECKING WEBRTC - PARTNER TEST FOLLOWS MATCHING':'FRIENDS ONLINE - NO AUTOMATIC RELAY FALLBACK',240,225,386,.5,'#07516a');
-        else if(queued)fitText('DEVICE CHECK PASSED - PARTNER LINK NOT YET TESTED',240,225,386,.5,'#07516a');
+        else if(queued){/* Status is centered inside PLAY WHILE WAITING. */}
         if(selecting||queued)drawPvpSetupActionButton(QUICK_UI.cancel,selecting?'BACK':'CANCEL',state.focus==='quickCancel',PVP_NEUTRAL_PALETTE);
         else drawOnlineAction({...ENTRY.back,label:'CANCEL',icon:'back',stripe:'#bac8cf'},state.focus==='back');
       }
@@ -5402,20 +5440,27 @@
       }
       function drawOnlineAction(spec,focused=false){
         if (!state.keyboardFocus && state.hoverId) focused = spec.id === state.hoverId;
-        const {x,y,w,h}=spec,palette=spec.palette||PVP_NEUTRAL_PALETTE;
+        const {x,y,w,h}=spec,palette=spec.palette||PVP_NEUTRAL_PALETTE,hasSub=!!spec.subLabel;
         ctx.save();ctx.fillStyle='rgba(25,43,52,.22)';ctx.fillRect(x+2,y+2,w,h);
         ctx.fillStyle=focused?COLORS.ink:'#9aa9ae';ctx.fillRect(x,y,w,h);
         ctx.fillStyle=focused?'#e8faf4':'#f7fdff';ctx.fillRect(x+2,y+2,w-4,h-4);
         ctx.fillStyle=focused?(spec.stripe||palette.light||'#5ce5e8'):'#ffffff';ctx.fillRect(x+5,y+4,w-10,2);
         const contentTop=y+8,contentBottom=y+h-3,cy=(contentTop+contentBottom)/2;
-        if(spec.icon)drawOnlineIcon(spec.icon,x+(spec.label?13:w/2),cy,focused?'#07516a':'#48555a');
+        const iconY=hasSub?y+h/2:cy;
+        if(spec.icon)drawOnlineIcon(spec.icon,x+(spec.label?13:w/2),iconY,focused?'#07516a':'#48555a');
         if(spec.label){const left=x+(spec.icon?25:7),right=x+w-7;
-          const scale=Math.min(h>25?1.00:.80,(right-left)/Math.max(1,measureBitmapText(spec.label,1)));
-          drawBitmapText(spec.label,(left+right)/2,cy-7*scale/2,scale,'center',focused?'#07516a':'#48555a');}
+          if(hasSub){
+            const scale=Math.min(.76,(right-left)/Math.max(1,measureBitmapText(spec.label,1)));
+            drawBitmapText(spec.label,(left+right)/2,y+7,scale,'center',focused?'#07516a':'#48555a');
+            fitText(spec.subLabel,(left+right)/2,y+h-9,right-left,.39,focused?'#07516a':'#59666b');
+          }else{
+            const scale=Math.min(h>25?1.00:.80,(right-left)/Math.max(1,measureBitmapText(spec.label,1)));
+            drawBitmapText(spec.label,(left+right)/2,cy-7*scale/2,scale,'center',focused?'#07516a':'#48555a');
+          }}
         ctx.restore();
       }
       function onlineButtons(){
-        const spec=(id,label,r,icon,stripe='#5ce5e8',tip='')=>({id,label,...r,icon,stripe,tip});
+        const spec=(id,label,r,icon,stripe='#5ce5e8',tip='',subLabel='')=>({id,label,...r,icon,stripe,tip,subLabel});
         if(state.screen==='directBlocked')return [
           spec('directRetry','TRY AGAIN',{x:67,y:193,w:163,h:28},'quick','#7fe3ae','Retry the direct connection check.'),
           spec('directLocal','LOCAL PLAY',{x:250,y:193,w:163,h:28},'home','#5ce5e8','Return to local play.'),
@@ -5425,7 +5470,7 @@
           spec('code','',ENTRY.code,null,'#ef7582','Type or paste the five-character room ID.'),spec('connect',state.busy?'CONNECTING':'JOIN ROOM',ENTRY.connect,'join','#ef7582','Connect to this room.'),spec('back','BACK',ENTRY.back,'back','#bac8cf','Return to Online.')];
         if(state.screen==='quickSelect')return [spec('quickFrog','',QUICK_UI.preview,null,'#5ce5e8','Left and right change your selected frog.'),
           spec('quickEnter',state.busy?'CHECKING DEVICE':'FIND MATCH',QUICK_UI.enter,'quick','#7fe3ae','60-second Endless, best of three, random stages.'),spec('quickCancel','BACK',QUICK_UI.cancel,'back','#bac8cf','Return to Online.')];
-        if(state.screen==='quickQueue')return [spec('quickMinimize','PLAY WHILE WAITING',QUICK_UI.minimize,'play','#7fe3ae','Keep searching while you play solo or customize frogs.'),spec('quickCancel','CANCEL',QUICK_UI.cancel,'cancel','#ef7582','Leave the queue.')];
+        if(state.screen==='quickQueue')return [spec('quickMinimize','PLAY WHILE WAITING',QUICK_UI.minimize,'play','#7fe3ae','Keep searching while you play solo or customize frogs.','DEVICE CHECK PASSED - PARTNER LINK NOT YET TESTED'),spec('quickCancel','CANCEL',QUICK_UI.cancel,'cancel','#ef7582','Leave the queue.')];
         if(state.screen==='quickConnecting')return [spec('back','CANCEL',ENTRY.back,'back','#bac8cf','Cancel this connection.')];
         if(state.screen==='profile')return [spec('name','',PROFILE_UI.name,null,'#ef9ebc','Type a display name, up to 20 characters.'),spec('nameSave',onlineIdentity.saving?'SAVING':'SAVE',PROFILE_UI.save,'save','#7fe3ae','Save this online name without changing your Friends account.'),spec('nameBack','BACK',PROFILE_UI.back,'back','#bac8cf','Return to Online.')];
         if(state.screen==='battleTags')return [spec('battlePrev','',{x:354,y:232,w:23,h:22},'previous','#eac65b','Previous opponents.'),spec('battleNext','',{x:384,y:232,w:23,h:22},'next','#eac65b','More opponents.'),spec('back','BACK',ENTRY.back,'back','#bac8cf','Return to Online.')];
@@ -5488,7 +5533,7 @@
         const match=onlineButtons().find(b=>b.x===rect.x&&b.y===rect.y&&b.w===rect.w);
         const text=String(label||'');
         const icon=match?.icon||( /BACK|LEAVE|HOME/.test(text)?'home':/CANCEL/.test(text)?'cancel':/WATCH/.test(text)?'eye':/READY|START|FIND|WAITING/.test(text)?'play':'gear');
-        drawOnlineAction({...rect,id:match?.id,label:text,icon,stripe:match?.stripe||palette?.light||'#5ce5e8'},selected||state.focus===match?.id);
+        drawOnlineAction({...rect,id:match?.id,label:text,icon,stripe:match?.stripe||palette?.light||'#5ce5e8',subLabel:match?.subLabel||''},selected||state.focus===match?.id);
       }
       function drawOnlineTooltip(){
               if(!isMenuVisible()||state.screen==='quickConnecting')return;
@@ -6428,21 +6473,23 @@
         ctx.save();ctx.globalAlpha=.94;ctx.fillStyle=stale?'#f8c7cc':'#f7fdff';ctx.fillRect(r.x,r.y,r.w,r.h);
         fitText(text,r.x+r.w/2,r.y+2,r.w-6,.48,stale?'#8c3048':'#52666b');ctx.restore();
       }
-      function menuKey(e){return onlineMenuKey(e);}
-      function pointerDown(e){return onlinePointerDown(e);}
-      function pointerMove(e){return onlinePointerMove(e);}
+      function menuKey(e){if(friendsGameInputLocked())return false;return onlineMenuKey(e);}
+      function pointerDown(e){if(friendsGameInputLocked())return false;return onlinePointerDown(e);}
+      function pointerMove(e){if(friendsGameInputLocked())return false;return onlinePointerMove(e);}
       document.addEventListener('keydown',e=>{
+        if(friendsGameInputLocked())return;
         if(exitMenuKey(e))return;
         if(state.active&&['Pause','KeyP','KeyR'].includes(e.code)){e.preventDefault();e.stopImmediatePropagation();}
       },{capture:true,passive:false});
       document.addEventListener('keydown',menuKey,{capture:true,passive:false});
-      document.addEventListener('keyup',e=>{if(isMenuVisible()||watch.active){e.preventDefault();e.stopImmediatePropagation();}},{capture:true,passive:false});
+      document.addEventListener('keyup',e=>{if(friendsGameInputLocked())return;if(isMenuVisible()||watch.active){e.preventDefault();e.stopImmediatePropagation();}},{capture:true,passive:false});
       document.addEventListener('paste',e=>{
         if(state.screen==='profile'&&state.focus==='name'){e.preventDefault();onlineIdentity.draft=cleanOnlineName(e.clipboardData?.getData('text')||'');}
         else if(state.screen==='join'&&state.codeFocused){e.preventDefault();state.codeText=String(e.clipboardData?.getData('text')||'').toUpperCase().replace(/[^A-Z2-9]/g,'').slice(0,5);}
         else if(state.screen==='spectateList'&&watch.codeFocus){e.preventDefault();watch.code=String(e.clipboardData?.getData('text')||'').toUpperCase().replace(/[^A-Z2-9]/g,'').slice(0,5);}
       });
       canvas.addEventListener('pointerdown',e=>{
+        if(friendsGameInputLocked())return;
         if(pointerDown(e))return;
         if(state.active&&pointInsideRect(getCanvasPoint(e),HUD_UI.pauseButton)){e.preventDefault();e.stopImmediatePropagation();showExitMenu();return;}
         if(state.active&&game.state==='playing'&&!pointInsideRect(getCanvasPoint(e),HUD_UI.pauseButton)){
@@ -6451,7 +6498,7 @@
         }
       },{capture:true,passive:false});
       canvas.addEventListener('pointermove',pointerMove,{capture:true,passive:false});
-      document.addEventListener('pointerup',e=>{if(state.active&&state.heldControls.has('PointerJump')){
+      document.addEventListener('pointerup',e=>{if(friendsGameInputLocked())return;if(state.active&&state.heldControls.has('PointerJump')){
         e.preventDefault();e.stopImmediatePropagation();handleControlUp({code:'PointerJump',preventDefault(){},stopPropagation(){}});
       }},{capture:true,passive:false});
       window.addEventListener('blur',releaseHeldControl);
@@ -13703,6 +13750,20 @@
       if(focused){ctx.fillStyle=COLORS.white;[[3,3],[rect.w-5,3],[3,rect.h-5],[rect.w-5,rect.h-5]].forEach(([dx,dy])=>ctx.fillRect(rect.x+dx,rect.y+dy,2,2));}
     }
 
+    function drawPvpVsHoverTooltip() {
+      if (OnlineVersus.isRoomMenu() || game.pvpSetupHoveredKey !== "vs") return;
+      const r = { x: 140, y: 210, w: 140, h: 14 };
+      ctx.save();
+      ctx.fillStyle = "rgba(25,43,52,0.30)";
+      ctx.fillRect(r.x + 2, r.y + 2, r.w, r.h);
+      ctx.fillStyle = COLORS.ink;
+      ctx.fillRect(r.x, r.y, r.w, r.h);
+      ctx.fillStyle = "#f7fdff";
+      ctx.fillRect(r.x + 2, r.y + 2, r.w - 4, r.h - 4);
+      drawBitmapText("CLICK TO SWITCH TO PLAYER", r.x + r.w / 2, r.y + 4, 0.50, "center", "#07516a");
+      ctx.restore();
+    }
+
     function drawPvpCpuDifficultyControl() {
       if(!game.pvpCpuEnabled) return;
       const rect=PVP_SETUP_UI.cpuDifficultyButton;
@@ -13877,7 +13938,7 @@
       });
       drawPvpSetupSkinButton(PVP_SETUP_UI.p1Selector,0);drawPvpSetupSkinButton(PVP_SETUP_UI.p2Selector,1);
       if (online) { OnlineVersus.drawRoomMiddle(); OnlineVersus.drawReadyBars(); }
-      else { drawPvpVsIcon(W / 2, 184, p1Palette, p2Palette); drawPvpCpuDifficultyControl(); }
+      else { drawPvpVsIcon(W / 2, 184, p1Palette, p2Palette); drawPvpCpuDifficultyControl(); drawPvpVsHoverTooltip(); }
       const bottomFocused=game.pvpSetupFocusArea==="bottom";
       drawPvpSetupActionButton(
         PVP_SETUP_UI.startButton,
@@ -15963,8 +16024,22 @@
       return { x: currentFly.baseX, y: currentFly.baseY };
     }
 
-    const flyLabelRectsThisFrame = [];
-    let flyLabelLayoutStamp = -1;
+    // Word plates must be visually stable. Each fly keeps the same label rectangle
+    // for its lifetime instead of re-solving all labels on every animation frame.
+    // This prevents single-player labels from hopping when another fly spawns,
+    // disappears, or the scene repaints at a slightly different cadence.
+    const flyLabelPlacementCache = new Map();
+
+    function flyLabelCacheKey(currentFly) {
+      return `${game.mode}:${Number(currentFly?.id) || 0}`;
+    }
+
+    function pruneFlyLabelPlacementCache() {
+      const live = new Set(flies.map((currentFly) => flyLabelCacheKey(currentFly)));
+      for (const key of flyLabelPlacementCache.keys()) {
+        if (!live.has(key)) flyLabelPlacementCache.delete(key);
+      }
+    }
 
     function overlapArea(first, second) {
       const width = Math.max(0, Math.min(first.x + first.w, second.x + second.w) - Math.max(first.x, second.x));
@@ -15980,20 +16055,29 @@
       ];
     }
 
-    function chooseFlyLabelRect(anchor, width, height) {
-      if (flyLabelLayoutStamp !== game.visualTime) {
-        flyLabelLayoutStamp = game.visualTime;
-        flyLabelRectsThisFrame.length = 0;
-      }
+    function chooseFlyLabelRect(currentFly, anchor, width, height) {
+      const cacheKey = flyLabelCacheKey(currentFly);
+      const anchorX = Math.round(Number(anchor.x) || 0);
+      const anchorY = Math.round(Number(anchor.y) || 0);
+      const signature = `${anchorX}|${anchorY}|${width}|${height}|${Number(currentFly?.vocabIndex) || 0}`;
+      const cached = flyLabelPlacementCache.get(cacheKey);
+      if (cached && cached.signature === signature) return cached.rect;
+
       const rawCandidates = [
-        { x: anchor.x - width / 2, y: anchor.y - height - 10, priority: 0 },
-        { x: anchor.x - width / 2, y: anchor.y + 10, priority: 1 },
-        { x: anchor.x - width - 11, y: anchor.y - height / 2, priority: 2 },
-        { x: anchor.x + 11, y: anchor.y - height / 2, priority: 3 },
-        { x: anchor.x - width / 2 - width * 0.35, y: anchor.y + 10, priority: 4 },
-        { x: anchor.x - width / 2 + width * 0.35, y: anchor.y + 10, priority: 5 }
+        { x: anchorX - width / 2, y: anchorY - height - 10, priority: 0 },
+        { x: anchorX - width / 2, y: anchorY + 10, priority: 1 },
+        { x: anchorX - width - 11, y: anchorY - height / 2, priority: 2 },
+        { x: anchorX + 11, y: anchorY - height / 2, priority: 3 },
+        { x: anchorX - width / 2 - width * 0.35, y: anchorY + 10, priority: 4 },
+        { x: anchorX - width / 2 + width * 0.35, y: anchorY + 10, priority: 5 }
       ];
-      const obstacles = getFlyLabelHudObstacles();
+      const hudObstacles = getFlyLabelHudObstacles();
+      const stableLabelObstacles = [];
+      for (const [otherKey, placement] of flyLabelPlacementCache.entries()) {
+        if (otherKey === cacheKey || !placement?.rect) continue;
+        stableLabelObstacles.push(placement.rect);
+      }
+
       let best = null;
       let bestScore = Infinity;
       rawCandidates.forEach((candidate) => {
@@ -16004,15 +16088,18 @@
           h: height
         };
         let score = candidate.priority * 4;
-        obstacles.forEach((obstacle) => { score += overlapArea(rect, obstacle) * 180; });
-        flyLabelRectsThisFrame.forEach((other) => { score += overlapArea(rect, other) * 75; });
+        hudObstacles.forEach((obstacle) => { score += overlapArea(rect, obstacle) * 180; });
+        stableLabelObstacles.forEach((other) => { score += overlapArea(rect, other) * 75; });
         const rectCenterX = rect.x + rect.w / 2;
         const rectCenterY = rect.y + rect.h / 2;
-        score += Math.hypot(rectCenterX - anchor.x, rectCenterY - anchor.y) * 0.02;
+        score += Math.hypot(rectCenterX - anchorX, rectCenterY - anchorY) * 0.02;
         if (score < bestScore) { bestScore = score; best = rect; }
       });
-      flyLabelRectsThisFrame.push(best);
-      return best;
+
+      // Store a copy so later fly spawns route around this label without moving it.
+      const stableRect = Object.freeze({ x: best.x, y: best.y, w: best.w, h: best.h });
+      flyLabelPlacementCache.set(cacheKey, { signature, rect: stableRect });
+      return stableRect;
     }
 
     function drawFlyNameTag(currentFly) {
@@ -16024,7 +16111,7 @@
       const lineHeight = Math.max(7, Math.ceil(8 * layout.scale + 1));
       const width = Math.round(clamp(Math.max(32, widest + 10), 32, 132));
       const height = Math.round(Math.max(17, 8 + layout.lines.length * lineHeight));
-      const rect = chooseFlyLabelRect(anchor, width, height);
+      const rect = chooseFlyLabelRect(currentFly, anchor, width, height);
       const appear = clamp(currentFly.spawnAge / CONFIG.flyGrowDuration, 0, 1);
 
       ctx.save();
@@ -16040,12 +16127,9 @@
 
       const textHeight = layout.lines.length * lineHeight - 1;
       const textTop = Math.round(rect.y + 5 + Math.max(0, (rect.h - 7 - textHeight) / 2));
+      // One integer-aligned bitmap pass keeps the vocabulary glyphs crisp on scaled
+      // displays. The old quarter-unit duplicate pass could look like text vibration.
       drawBitmapTextLayout(layout, rect.x + rect.w / 2, textTop, "center", "#34484f", null, 1);
-      ctx.save();
-      ctx.globalAlpha *= 0.24;
-      ctx.translate(0.25, 0);
-      drawBitmapTextLayout(layout, rect.x + rect.w / 2, textTop, "center", "#34484f", null, 1);
-      ctx.restore();
       ctx.restore();
     }
 
@@ -16671,12 +16755,9 @@
       const lineHeight = Math.max(6, Math.ceil(8 * layout.scale + 1));
       const totalHeight = layout.lines.length * lineHeight - 1;
       const promptTop = Math.round(top + 15 + Math.max(0, (height - 17 - totalHeight) / 2));
+      // Keep the prompt on a single pixel-aligned pass as well; duplicate fractional
+      // rendering can shimmer when a high-DPI canvas is rescaled by the browser.
       drawBitmapTextLayout(layout, W / 2, promptTop, "center", "#17495a", null, 1);
-      ctx.save();
-      ctx.globalAlpha = 0.24;
-      ctx.translate(0.25, 0);
-      drawBitmapTextLayout(layout, W / 2, promptTop, "center", "#17495a", null, 1);
-      ctx.restore();
     }
 
     function drawTopHud() {
@@ -20028,6 +20109,9 @@
     }
 
     function drawScene() {
+      // Prune labels only when a fly actually leaves. Existing flies retain their
+      // chosen word-plate rectangles across ordinary single-player animation frames.
+      pruneFlyLabelPlacementCache();
       if (OnlineVersus.isSpectating()) { OnlineVersus.drawSpectator(); return; }
       if (game.state === "onlineConnect") { OnlineVersus.drawEntry(); return; }
       if (game.state === "onlineSetup") { OnlineVersus.drawRoom(); return; }
@@ -20608,6 +20692,12 @@
       OnlineVersus.pumpTransport();
     }
     function frame(now) {
+      if (friendsGameInputLocked()) {
+        lastFrameTime = now;
+        accumulator = 0;
+        requestAnimationFrame(frame);
+        return;
+      }
       try {
         advanceOnlineSimulation(now);
         drawScene();OnlineVersus.drawOnlineTooltip();OnlineVersus.drawQueueBadge();OnlineVersus.drawSyncLabel();OnlineVersus.drawExitMenu();
@@ -20793,10 +20883,39 @@
       soloPhysicalInputsHeld.clear();
     }
 
+    window.RibbitRaceSuspendForLogin = () => {
+      try { clearPvpPhysicalShiftState(true); } catch (_) {}
+      try { clearSoloPhysicalInputState(true); } catch (_) {}
+      try { if (game.buttonHeld) releaseMainButton(); } catch (_) {}
+      frog.charging = false;
+      game.buttonHeld = false;
+      game.sandboxMode = false;
+      game.pauseHelpOpen = false;
+      game.customDraggingChannel = null;
+      game.customPointerId = null;
+      game.volumeDragging = false;
+      game.volumePointerId = null;
+      game.pausePressedSelection = null;
+      game.pausePointerId = null;
+      game.victoryPressedSelection = null;
+      game.victoryPointerId = null;
+      game.pvpVictoryPressedSelection = null;
+      game.pvpVictoryPointerId = null;
+      for (const player of pvpPlayers) { if (player) { player.inputHeld = false; player.charging = false; } }
+      game.state = "friendsLogin";
+      game.mode = "solo";
+      accumulator = 0;
+      lastFrameTime = performance.now();
+      gameFrame.classList.remove("ribbit-focus-mode", "rr-queue-reserved");
+      document.body.classList.remove("ribbit-focus-active");
+      if (document.fullscreenElement) { try { document.exitFullscreen?.(); } catch (_) {} }
+    };
+
     // Capture-phase handling avoids the browser collapsing both Shift keys into
     // one generic modifier. Sets also prevent releasing one assigned key from
     // releasing a frog while its alternate key is still held.
     function handlePhysicalJumpDown(event) {
+      if (friendsGameInputLocked()) return;
       if (OnlineVersus.handleControlDown(event)) return;
       if (game.mode === "pvp" && game.state === "playing") {
         const binding = getPvpControlBinding(event);
@@ -20825,6 +20944,7 @@
     }
 
     function handlePhysicalJumpUp(event) {
+      if (friendsGameInputLocked()) return;
       if (OnlineVersus.handleControlUp(event)) return;
       if (game.mode === "pvp") {
         const binding = getPvpControlBinding(event);
@@ -20908,6 +21028,7 @@
     let focusEscapeTriggered = false;
     const FOCUS_ESCAPE_HOLD_MS = 700;
     document.addEventListener("keydown", (event) => {
+      if (friendsGameInputLocked()) return;
       if (event.code !== "Escape" || !gameFrame.classList.contains("ribbit-focus-mode")) return;
       event.preventDefault();
       event.stopImmediatePropagation();
@@ -20921,6 +21042,7 @@
       }, FOCUS_ESCAPE_HOLD_MS);
     }, { capture: true, passive: false });
     document.addEventListener("keyup", (event) => {
+      if (friendsGameInputLocked()) return;
       if (event.code !== "Escape" || !focusEscapeActive) return;
       event.preventDefault();
       event.stopImmediatePropagation();
@@ -20933,6 +21055,7 @@
     }, { capture: true, passive: false });
 
     window.addEventListener("keydown", (event) => {
+      if (friendsGameInputLocked()) return;
       if (game.state === "custom" && (event.ctrlKey || event.metaKey) && !event.altKey) {
         const redo = event.code === "KeyY" || (event.code === "KeyZ" && event.shiftKey);
         const undo = event.code === "KeyZ" && !event.shiftKey;
@@ -21289,6 +21412,7 @@
     // Gameplay jump releases are handled in capture phase above. Keep this
     // listener available for non-gameplay key-up behavior added by future menus.
     window.addEventListener("keyup", (event) => {
+      if (friendsGameInputLocked()) return;
       if (game.state === "frogSandbox" && ["Space", "ArrowUp", "KeyW", "KeyZ"].includes(event.code)) {
         event.preventDefault();
         releaseFrogSandboxAction();
@@ -21297,6 +21421,7 @@
 
     // Optional mouse/touch support keeps the same one-button rules.
     canvas.addEventListener("pointerdown", (event) => {
+      if (friendsGameInputLocked()) return;
       event.preventDefault();
       canvas.setPointerCapture?.(event.pointerId);
       canvas.focus();
@@ -21870,6 +21995,7 @@
     });
 
     canvas.addEventListener("dblclick", (event) => {
+      if (friendsGameInputLocked()) return;
       if (game.state !== "title") return;
       if (performance.now() < game.ignoreHomeDoubleClickUntil) return;
       event.preventDefault();
@@ -21901,6 +22027,7 @@
 
 
     canvas.addEventListener("pointerup", (event) => {
+      if (friendsGameInputLocked()) return;
       event.preventDefault();
       if (game.pvpVictoryPressedSelection && event.pointerId === game.pvpVictoryPointerId) {
         const point = getCanvasPoint(event);
