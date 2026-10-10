@@ -1,10 +1,10 @@
 RIBBIT RACE FRIENDS — 4-DIGIT PIN UPDATE
-Build 2026.10.02-friends-pin-1
+Build 2026.10.10-friends-label-collision-polish-1
 
 WHAT CHANGED
 - New accounts choose their own 4-digit numeric PIN.
 - Login is username + 4-digit PIN.
-- PINs are not stored as plaintext. The server stores a per-account random salt and a PBKDF2-SHA256 derived hash (120,000 iterations).
+- PINs are not stored as plaintext. The server stores a per-account random salt and a PBKDF2-SHA256 derived hash (100,000 iterations).
 - Login and account-management attempts remain rate-limited.
 - Existing private-key accounts and saves are preserved. Their owners use MIGRATE OLD PRIVATE-KEY ACCOUNT once, enter the old key, and choose a new PIN. The old key hash is then cleared.
 - Account management now changes PINs instead of rotating private keys.

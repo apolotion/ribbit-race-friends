@@ -1,6 +1,6 @@
 import {Buffer} from 'node:buffer';
 import {createHash, timingSafeEqual, pbkdf2Sync} from 'node:crypto';
-export const BUILD='2026.10.02-friends-pin-1';
+export const BUILD='2026.10.10-friends-label-collision-polish-1';
 export const digest=v=>createHash('sha256').update(String(v)).digest('hex');
 export function randomHex(bytes=32){return [...crypto.getRandomValues(new Uint8Array(bytes))].map(v=>v.toString(16).padStart(2,'0')).join('');}
 export function equal(a,b){const x=Buffer.from(String(a)),y=Buffer.from(String(b));return x.length===y.length&&timingSafeEqual(x,y);}
@@ -20,4 +20,5 @@ export async function limitedJson(request,maximum=600000){
  if(!v||typeof v!=='object'||Array.isArray(v))throw new Error('Expected an object.');return v;
 }
 
-export function pinHash(uid,pin,salt){return pbkdf2Sync(String(uid)+':'+String(pin),String(salt),100000,32,'sha256').toString('hex');}
+export const PIN_PBKDF2_ITERATIONS=100000;
+export function pinHash(uid,pin,salt){return pbkdf2Sync(String(uid)+':'+String(pin),String(salt),PIN_PBKDF2_ITERATIONS,32,'sha256').toString('hex');}
