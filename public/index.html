@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#5a95b8" />
+  <title>Ribbit Race — Friends Edition</title>
+  <!-- Ribbit Race Friends Edition. Separate Cloudflare deployment; no school data or Google services. -->
+  <link rel="stylesheet" href="/styles/base.css?v=2026.10.10-label-collision-polish-1" />
+  <link rel="stylesheet" href="/styles/cloud-ui.css?v=2026.10.10-label-collision-polish-1" />
+  <link rel="stylesheet" href="/styles/game-shell.css?v=2026.10.10-label-collision-polish-1" />
+</head>
+<body class="ribbit-auth-locked">
+
+  <section id="cloud-gate" aria-label="Friends Edition cloud sign in">
+   <div class="cloud-card">
+    <h1 class="cloud-title">RIBBIT RACE</h1><p class="cloud-subtitle">FRIENDS EDITION · CLOUD SAVE</p>
+    <p id="cloud-message" role="alert"></p>
+    <div id="cloud-login-view" class="cloud-view">
+     <label class="cloud-field">USERNAME<input id="cloud-login-id" maxlength="20" autocomplete="username" placeholder="Your username" /></label>
+     <label class="cloud-field">4-DIGIT PIN<input id="cloud-login-pin" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="4" autocomplete="current-password" placeholder="4 numbers" /></label>
+     <div class="cloud-actions"><button id="cloud-login-button" class="cloud-button primary">SIGN IN</button><button id="cloud-show-create" class="cloud-button">CREATE ACCOUNT</button><button id="cloud-play-guest" class="cloud-button">PLAY WITHOUT SAVING</button></div>
+     <p class="cloud-help">No school email or Google account needed. Sign in with your username and 4-digit PIN. <a href="/help.html" target="_blank" rel="noopener">Help &amp; privacy</a></p>
+     <div class="cloud-actions"><button id="friends-show-migrate" class="cloud-button" type="button">MIGRATE OLD PRIVATE-KEY ACCOUNT</button></div>
+    </div>
+    <div id="cloud-create-view" class="cloud-view" hidden>
+     <label class="cloud-field">CHOOSE A USERNAME<input id="cloud-create-name" maxlength="20" autocomplete="username" placeholder="3–20 letters, numbers, _ or -" /></label>
+     <input id="cloud-create-id" hidden /><select id="cloud-create-period" hidden></select>
+     <label class="cloud-field">CHOOSE A 4-DIGIT PIN<input id="cloud-create-pin" type="password" inputmode="numeric" maxlength="4" autocomplete="new-password" placeholder="4 numbers" /></label>
+     <label class="cloud-field">CONFIRM PIN<input id="cloud-create-pin-confirm" type="password" inputmode="numeric" maxlength="4" autocomplete="new-password" placeholder="Type the same 4 numbers" /></label>
+     <p class="cloud-help">Choose a PIN you can remember. The server stores a salted derived hash, not the PIN itself.</p>
+     <div class="cloud-actions"><button id="cloud-create-button" class="cloud-button primary">CREATE MY SAVE</button><button id="cloud-back-login" class="cloud-button">BACK</button></div>
+    </div>
+    <div id="friends-migrate-view" class="cloud-view" hidden>
+     <p class="cloud-help">Only for accounts created before the PIN update. Your save will stay intact.</p>
+     <label class="cloud-field">USERNAME<input id="friends-migrate-user" maxlength="20" autocomplete="username" /></label>
+     <label class="cloud-field">OLD PRIVATE SAVE KEY<input id="friends-migrate-key" type="password" maxlength="48" /></label>
+     <label class="cloud-field">NEW 4-DIGIT PIN<input id="friends-migrate-pin" type="password" inputmode="numeric" maxlength="4" /></label>
+     <label class="cloud-field">CONFIRM PIN<input id="friends-migrate-confirm" type="password" inputmode="numeric" maxlength="4" /></label>
+     <div class="cloud-actions"><button id="friends-migrate-button" class="cloud-button primary">MIGRATE &amp; SIGN IN</button><button id="friends-migrate-back" class="cloud-button">BACK</button></div>
+    </div>
+    <div id="cloud-profile-view" class="cloud-view" hidden><input id="cloud-profile-name"/><select id="cloud-profile-period"></select><button id="cloud-save-profile">SAVE</button><button id="cloud-profile-sign-out">BACK</button></div>
+    <div id="cloud-created-view" class="cloud-view" hidden>
+     <div class="cloud-code-box">USERNAME<strong id="cloud-created-name">—</strong></div>
+     <p class="cloud-help"><strong>Your save is ready.</strong> Use this username and the 4-digit PIN you chose whenever you return.</p>
+     <div id="cloud-created-period" hidden></div>
+     <div class="cloud-actions"><button id="cloud-created-continue" class="cloud-button primary">PLAY RIBBIT RACE</button></div>
+    </div>
+   </div>
+  </section>
+
+  <section id="leaderboard-overlay" aria-label="Ribbit Race leaderboard" hidden>
+    <div class="leaderboard-card">
+      <div class="leaderboard-header">
+        <h2 class="leaderboard-title">LEADERBOARD</h2>
+        <button id="leaderboard-close" type="button" aria-label="Close leaderboard">×</button>
+      </div>
+      <div class="leaderboard-controls">
+        <button id="leaderboard-refresh" class="cloud-button" type="button" title="Refresh leaderboard" aria-label="Refresh leaderboard">↻</button>
+        <label id="leaderboard-scope-label">VIEW
+          <select id="leaderboard-scope">
+            <option value="myclass" selected>ALL PLAYERS</option>
+            <option value="school">ALL PLAYERS</option>
+            <option value="1">PERIOD 1</option>
+            <option value="2">PERIOD 2</option>
+            <option value="3">PERIOD 3</option>
+            <option value="4">PERIOD 4</option>
+            <option value="5">PERIOD 5</option>
+            <option value="6">PERIOD 6</option>
+            <option value="7">PERIOD 7</option>
+          </select>
+        </label>
+        <label>RANK BY
+          <select id="leaderboard-metric">
+            <option value="time">FASTEST TIME</option>
+            <option value="jumps">FEWEST JUMPS</option>
+            <option value="endless">60 SECONDS ENDLESS</option>
+            <option value="pvpwins">MOST PVP WINS</option>
+            <option value="flies">MOST FLIES EATEN</option>
+          </select>
+        </label>
+        <label id="leaderboard-level-wrap">LEVEL
+          <select id="leaderboard-level">
+            <option value="any">ANY LEVEL</option>
+            <option value="park">PARK</option>
+            <option value="swamp">SWAMP</option>
+            <option value="jungle">JUNGLE</option>
+            <option value="pond">POND</option>
+            <option value="lake">LAKE</option>
+            <option value="garden">GARDEN</option>
+          </select>
+        </label>
+      </div>
+      <p id="leaderboard-context">LOADING…</p>
+      <div class="leaderboard-table-wrap">
+        <table id="leaderboard-table">
+          <thead><tr><th>RANK</th><th>NAME</th><th>PERIOD</th><th>LEVEL</th><th>RESULT</th><th>DATE</th></tr></thead>
+          <tbody id="leaderboard-body"></tbody>
+        </table>
+        <div id="leaderboard-empty" hidden>NO RESULTS YET</div>
+      </div>
+      <div class="leaderboard-pager">
+        <button id="leaderboard-prev" class="cloud-button" type="button">PREVIOUS</button>
+        <span id="leaderboard-page">1 / 1</span>
+        <button id="leaderboard-next" class="cloud-button" type="button">NEXT</button>
+      </div>
+    </div>
+  </section>
+
+
+  <main id="game-frame" inert aria-hidden="true">
+    <div id="cloud-status-pill" aria-live="polite">CLOUD SAVED</div>
+    <div id="corner-controls">
+      <button id="cloud-account-button" type="button" hidden>CLOUD</button>
+      <button id="fullscreen-button" type="button" aria-label="Enter fullscreen" title="Fullscreen">
+        <span class="fs-corner fs-tl" aria-hidden="true"></span>
+        <span class="fs-corner fs-tr" aria-hidden="true"></span>
+        <span class="fs-corner fs-bl" aria-hidden="true"></span>
+        <span class="fs-corner fs-br" aria-hidden="true"></span>
+      </button>
+    </div>
+    <section id="fullscreen-fallback" aria-label="Fullscreen options" hidden>
+      <div class="fullscreen-fallback-card">
+        <h2>FULLSCREEN OPTIONS</h2>
+        <p>This browser frame did not grant fullscreen. Open Ribbit Race in its own tab, or expand it to fill the current embed.</p>
+        <div class="fullscreen-fallback-actions">
+          <button id="fullscreen-new-tab" type="button">OPEN NEW TAB</button>
+          <button id="fullscreen-focus-mode" type="button">FILL EMBED</button>
+          <button id="fullscreen-fallback-close" type="button">CLOSE</button>
+        </div>
+      </div>
+    </section>
+    <div id="cloud-account-panel" hidden>
+      <div>NAME: <strong id="cloud-account-name">—</strong></div>
+      <div hidden><strong id="cloud-account-period">—</strong></div>
+      <div class="cloud-panel-note">Your Friends save is separate from the school game.</div>
+      <button id="cloud-save-now" type="button">SAVE NOW</button>
+      <button id="cloud-refresh-vocab" type="button">REFRESH WORDS</button>
+      <button id="cloud-leaderboard" type="button">LEADERBOARD</button>
+      <button id="friends-manage" type="button">BACK UP / MANAGE SAVE</button>
+      <button id="cloud-sign-out" type="button">SIGN OUT</button>
+    </div>
+    <canvas
+      id="game"
+      width="1920"
+      height="1080"
+      tabindex="0"
+      aria-label="Ribbit Race language-learning frog game. Hold Space or either Shift key to charge a solo jump, then release to jump. Catch the fly carrying the Spanish translation of the English prompt. Collect five correct flies to win."
+    ></canvas>
+    <input
+      id="rgb-value-editor"
+      type="number"
+      inputmode="numeric"
+      min="0"
+      max="255"
+      step="1"
+      autocomplete="off"
+      aria-label="RGB channel value"
+    />
+    <p class="sr-only">In solo play, hold Space, W, Up, or either Shift key and release to leap. In versus play, Player 1 uses Left Shift and Player 2 uses Right Shift. Catch the fly carrying the Spanish translation of the English prompt. Five correct answers win. R restarts, Escape or the on-screen pause button pauses, and M mutes.</p>
+  </main>
+  <script src="/scripts/friends-api-client.js?v=2026.10.10-label-collision-polish-1"></script>
+  <script src="/scripts/auth-screen-controller.js?v=2026.10.10-label-collision-polish-1"></script>
+  <script src="/scripts/cloud-client.js?v=2026.10.10-label-collision-polish-1"></script>
+  <script src="/scripts/game.bundle.js?v=2026.10.10-label-collision-polish-1"></script>
+  <script src="/scripts/bootstrap.js?v=2026.10.10-label-collision-polish-1"></script>
+</body>
+</html>

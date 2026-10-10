@@ -1,6 +1,6 @@
 # Free the lost legacy `Nick` username
 
-Build: `2026.10.10-friends-nick-delete-repair-1`
+Build: `2026.10.10-friends-label-collision-polish-1`
 
 The old `Nick` row is stored in the live `FriendsHub` Durable Object SQLite database, not in a GitHub JSON file. The screenshot saying **That username is taken** means the row still exists.
 
@@ -43,7 +43,7 @@ https://ribbit-race-friends.apolotion.workers.dev/api/health
 Before continuing, verify the response contains:
 
 ```json
-"build": "2026.10.10-friends-nick-delete-repair-1"
+"build": "2026.10.10-friends-label-collision-polish-1"
 ```
 
 ## 2. Arm the one-time deletion

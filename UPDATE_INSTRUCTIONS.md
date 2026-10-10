@@ -1,43 +1,107 @@
-# Ribbit Race Friends Edition — online word stability + Quickplay status layout
+# Update the existing Ribbit Race Friends Edition
 
-Build: `2026.10.09-friends-online-word-stability-1`
+Build: `2026.10.10-friends-label-collision-polish-1`  
+Displayed game version: `VERSION 1.2.0`
 
-## What changed
+This updates the existing `apolotion/ribbit-race-friends` GitHub repository and its existing Cloudflare Worker. It does **not** create or replace the `FriendsHub` database, `FriendsRoom` room service, Worker URL, PIN accounts, or saved progress.
 
-1. **Online/Quickplay vocabulary labels no longer reflow between snapshots.** Each fly/word/round keeps one screen-space word-plate rectangle even when the guest rebuilds fly objects from authoritative WebSocket snapshots or receives tiny anchor differences.
-2. **Quickplay status text is centered inside PLAY WHILE WAITING.** The two-line label is vertically centered as one group inside a taller button, and CANCEL is moved down slightly for clearance.
-3. Existing behavior is preserved: 4-digit PIN accounts, 100,000-round PBKDF2, pure-login logout lock, 15-word vocabulary, 30-second Quickplay partner check, failed-connect Local Play routing, Versus hover tooltip, Cloudflare saves, Quickplay, spectators, and CPU takeover.
+## Changes in this release
 
-## Deploy to your existing GitHub/Cloudflare installation
+- Every fly vocabulary plate uses an **above-the-fly-only** placement system. The game no longer chooses side or below-fly locations.
+- Solo and online word plates keep a stable per-fly placement and are prerendered once, removing repeated text-layout shimmer and most label reflow.
+- Paused Single Player and its resume countdown continue to use the existing frozen-world frame, so the labels are not recomputed while paused.
+- The Friends first-place achievement now renders `NEW FRIENDS #1!` correctly; the bitmap font now contains a real `#` glyph.
+- Hovering over the center CPU/VS toggle in Local Versus displays `CLICK TO ENABLE LOCAL PVP`. When Local PvP is active, it displays `LOCAL PVP ENABLED`.
+- Frog collision handling now classifies every overlap by its shallowest axis:
+  - horizontal overlap → rebound;
+  - vertical overlap → bonk.
+- Collision cooldowns still prevent duplicate effects, but they no longer allow frogs to remain embedded.
+- Swept collision detection catches fast frogs that cross between fixed-physics frames, preventing tunneling/phasing even when the final-frame boxes no longer overlap.
+- `VERSION 1.2.0` is displayed in Solo Settings, Versus Settings, and the Pause menu.
 
-Do **not** create a new Worker, repository, FriendsHub, or FriendsRoom.
+All existing PIN accounts, saves, vocabulary, Quickplay rules, disconnect/CPU takeover behavior, spectators, Battle Tags, logout reset, and legacy-account recovery remain in place.
 
-Replace these files in `apolotion/ribbit-race-friends`:
+## Install from the patch ZIP
+
+1. Extract `Ribbit_Race_Friends_Label_Collision_Polish_Patch.zip`.
+2. Copy its contents into the root of your existing `apolotion/ribbit-race-friends` repository, preserving every folder.
+3. Replace the matching files and add any included documentation files.
+4. Commit directly to `main`, for example:
+
+   ```text
+   Stabilize fly labels and harden Versus collisions
+   ```
+
+5. Wait for Cloudflare to run:
+
+   ```text
+   npm run check && npm test
+   npx wrangler deploy
+   ```
+
+6. Confirm the deployment log ends with `Success! Build completed.`
+7. Open the normal Worker URL with `/api/health` appended and confirm:
+
+   ```json
+   {
+     "build": "2026.10.10-friends-label-collision-polish-1"
+   }
+   ```
+
+8. Hard-refresh every test device.
+
+Do not create a new Worker or delete/recreate `FriendsHub` or `FriendsRoom`.
+
+## Post-deployment checks
+
+### Fly signs and Solo stability
+
+1. Start Single Player and watch flies at the top, sides, and middle of the map.
+2. Confirm every sign is above its fly—not underneath or beside it.
+3. Pause while several signs are visible and leave it paused for at least ten seconds.
+4. Confirm the world and signs remain stationary.
+5. Resume and confirm the countdown does not make the signs jitter.
+
+### Achievement banner
+
+Earn or trigger the first Friends leaderboard achievement and confirm it says:
 
 ```text
-public/index.html
-src/common.js
-tests/friends-patch.test.mjs
+NEW FRIENDS #1!
 ```
 
-Commit directly to `main`, for example:
+### Local PvP tooltip
 
-```text
-Fix online word jitter and Quickplay status alignment
+1. Open Local Versus with the CPU enabled.
+2. Hover over the center CPU/VS toggle.
+3. Confirm the popup says `CLICK TO ENABLE LOCAL PVP`.
+4. Click the toggle and confirm the popup changes to `LOCAL PVP ENABLED`.
+
+### Frog collisions
+
+Test the following in Local Versus:
+
+- collide from the left/right → both frogs rebound apart;
+- land on or rise into the other frog → a bonk occurs;
+- collide at high speed → the frogs do not pass through one another;
+- overlap near a wall/platform → the collision still separates both hitboxes.
+
+### Version label
+
+Confirm `VERSION 1.2.0` appears in:
+
+- Solo Settings;
+- Versus Settings;
+- Pause menu.
+
+## Editing modular game source later
+
+Edit the source files under `client/game/`, then run:
+
+```bash
+npm run build
+npm run check
+npm test
 ```
 
-Cloudflare should automatically run:
-
-```text
-npm run check && npm test
-npx wrangler deploy
-```
-
-Wait for `Success! Build completed`, then hard-refresh both players before testing.
-
-## Test
-
-1. Start a private online match and a Quickplay match.
-2. Watch several fly labels on the guest screen for at least 20 seconds. Existing labels should stay fixed even as new snapshots arrive.
-3. In the Quickplay queue, confirm `DEVICE CHECK PASSED - PARTNER LINK NOT YET TESTED` is fully inside and centered under `PLAY WHILE WAITING`.
-4. Confirm the connection check still ends at 30 seconds if a matched partner cannot finish verification.
+`public/scripts/game.bundle.js` is generated by `scripts/build-game.mjs`. Do not hand-edit the generated bundle unless you are deliberately bypassing the modular source workflow.

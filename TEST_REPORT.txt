@@ -1,102 +1,64 @@
-RIBBIT RACE FRIENDS EDITION — TEST REPORT
-Build 2026.09.25-friends-1
+# Test report
 
-RESULT SUMMARY
-20 Node unit tests passed.
-10 HTTP smoke assertions passed.
-12 additional account/session/security integration assertions passed.
-21 browser-flow assertions passed, with no captured page exceptions.
-Total: 63 passing test assertions. Some repeat account/startup checks across
-multiple players; this count is not 63 unique feature scenarios.
-JavaScript parsing/integration-presence checks also passed.
-The source copier is checked separately in COPIER_TEST_REPORT.txt.
+Build: `2026.10.10-friends-label-collision-polish-1`  
+Displayed game version: `VERSION 1.2.0`
 
-WHAT EXECUTED
-The distributed game HTML, hub, room lifecycle, save helpers, routing and
-WebSocket relay code ran in the tests. Node 22.16.0 used an in-memory SQLite
-adapter for the Cloudflare storage interface. HTTP requests and actual local
-WebSocket connections reached that code through a local Node HTTP/upgrade adapter.
-Chromium ran the real DOM/canvas game; test-only shims supplied storage and
-forwarded browser HTTP/WebSocket traffic through Python to the local adapter.
-Those shims and developer control hooks are not present in the released game.
+## Automated results
 
-The unit tests are included in tests/core.test.mjs. Run npm test.
-The HTTP smoke test is included in scripts/smoke.mjs. Run npm run smoke -- YOUR_URL
-only against your own deployment; it creates and deletes a temporary account.
-The local browser/Cloudflare adapters are environment-specific test harnesses,
-not production server alternatives, and are not distributed as the runtime.
+Commands run:
 
-UNIT COVERAGE
-- Random save-key length and session cookie flags.
-- JSON request size enforcement.
-- Highest Endless/PvP records, minimum time records, protected result journal,
-  achievement union and validated save keys.
-- Old clients and missing connection preflight rejected.
-- Same-account room joins and incorrect player tokens rejected.
-- Forged Ready without real socket presence cannot start a match.
-- Correct two-player verification can admit a match; wrong challenge cannot.
-- Live human input/world state is not returned as control-API fallback traffic.
-- Lobby departure revokes access.
-- Both directions of CPU takeover and simulation-authority transfer.
-- Unstarted abort does not award a win.
-- Quickplay matching and fixed best-of-three/60-second rules.
-- Spectator authorization and delayed replay-poll handling.
-- Hidden ratings stay out of public profiles.
-- Guest display names use expiring storage.
+```bash
+npm run check
+npm test
+```
 
-HTTP AND ACCOUNT COVERAGE
-- API health and public Friends build identifier.
-- Cross-origin API rejection and unauthenticated WebSocket rejection.
-- Account creation without email or a school identity.
-- Private key shown at creation but not disclosed by later account loads.
-- HttpOnly cookie set.
-- Cloud write/read and stale-revision conflict behavior.
-- Wrong session marker rejected to avoid saving into a changed account.
-- Wrong private key rejected.
-- Independent signed-in session restores existing progress.
-- Current private key required for key replacement.
-- Replacement changes the key and revokes old keys/other sessions.
-- Replacement key loads the same cloud record from a different session.
-- Temporary test account deleted and remaining sessions revoked.
-- Save/leaderboard compatibility diagnostic succeeds.
+Result:
 
-BROWSER COVERAGE
-- Account creation shows generated key and requires confirmation it was saved.
-- Full game initializes for two account holders and two temporary guests.
-- Private room admits both actual relay socket slots.
-- Both players pass the loading barrier and enter playing state.
-- Guest receives more than 20 live world updates from the server relay.
-- Diagnostics report cloudflare-websocket, not direct P2P or Google.
-- Guest Space charge/release events are acknowledged by the simulation host.
-- A deliberately closed socket reconnects, re-verifies and resumes the same match.
-- Escape opens the online exit menu without pausing the game.
-- Guest leaving causes level-five CPU replacement on the host.
-- Two guests enter the separate Friends Quickplay queue and start a match.
-- Quickplay retains three-game/60-second settings.
-- Original host departure transfers simulation to the guest with CPU in host slot.
-- Mobile login controls remain visible; desktop and 390x844 layouts inspected.
+```text
+50 tests
+50 passed
+0 failed
+```
 
-NOT VERIFIED / NOT A GUARANTEE
-- Native Cloudflare workerd execution, Wrangler bundling or actual account deployment.
-  Dependency download was unavailable in this build environment, so npm install
-  and wrangler deploy were not run. The package pins Wrangler in package.json.
-- Native unrestricted browser WebSockets or school/home network reachability.
-  The container Chromium is managed-policy blocked, hence the test-only bridge.
-- Public internet round-trip delay, region placement, throughput or latency under load.
-  Test transport timings are local and must not be described as real-world ping.
-- Natural completion of every stage/achievement, full lengthy Quickplay rematch
-  sessions, long spectator sessions, all reconnect timing races, or migration of
-  an existing public account database. This is a new, isolated installation.
-- Real platform hibernation/resumption, durable storage persistence across real
-  Cloudflare deploys, free-tier capacity, billing totals, or full abuse resistance.
-- Native Safari/iOS behavior, all mobile input gestures, and hundred-player scale.
-- Cryptographic/security audit or tamper-proof scoring. Host browser physics and
-  client-reported solo records remain trusted for this casual game.
+The full test command was repeated three additional times after the final bundle generation; all three runs again passed 50/50.
 
-FIRST LIVE ACCEPTANCE TEST
-Deploy into a NEW personal Worker. Open the actual public URL in two browser
-profiles/devices, preferably on different networks. Verify account creation,
-Save Now/reload/cross-device login, Host/Join/Ready, responsive charge/release,
-matching words/scores, one completed recorded result, Quickplay, reconnection,
-CPU takeover and a delayed spectator. Check the Cloudflare logs/usage while
-expanding beyond one pair. Only then send the link to a larger friends group.
+## New coverage in this release
+
+- Executes the actual fly-label placement routine and checks eight representative fly positions; every generated word plate remains above its fly.
+- Confirms existing fly placements remain stable while other flies are added and removed.
+- Confirms online placements survive reconstructed WebSocket snapshot objects and small anchor drift.
+- Confirms labels use prerendered sprites and whole-physical-pixel text scales to reduce shimmer.
+- Verifies the bitmap font contains a `#` glyph and the achievement title remains `NEW FRIENDS #1!`.
+- Confirms the Local Versus hover text contains `CLICK TO ENABLE LOCAL PVP`.
+- Confirms `VERSION 1.2.0` is present in both settings screens and the Pause menu.
+- Executes the collision-axis helpers and verifies horizontal overlaps separate fully and map to rebounds.
+- Executes the collision-axis helpers and verifies vertical overlaps separate fully and map to bonks.
+- Simulates two high-speed frogs crossing between frames and verifies swept collision detection reconstructs a valid horizontal or vertical contact rather than allowing tunneling.
+- Confirms the Versus collision resolver has no silent overlap/no-effect fallback.
+
+## Preserved regression coverage
+
+The suite also retains checks for:
+
+- PIN authentication and Cloudflare's 100,000-iteration PBKDF2 limit;
+- current 15-word vocabulary and offline/server parity;
+- cloud saves and achievement merging;
+- clean sign-out and input locking;
+- modular asset generation;
+- 30-second Quickplay partner verification;
+- centered Quickplay device-check text;
+- failed-connect Local Play routing;
+- disconnect notice, CPU takeover, and immediate requeue;
+- spectators, private ratings, and guest display names;
+- one-time legacy-account recovery protection.
+
+## Static/build validation
+
+- All Worker and browser JavaScript modules parse.
+- The eight modular gameplay sources rebuild `public/scripts/game.bundle.js` successfully.
+- Required public assets are present.
+- The Friends Edition remains free of Google Apps Script and WebRTC runtime dependencies.
+
+## Limits
+
+These checks use local Node-based Cloudflare/Durable Object adapters and deterministic execution of extracted browser functions. This package was not deployed to the user's live Cloudflare account, and physical two-device collision play was not performed from this environment. Test the deployed Worker on real devices before broad use.

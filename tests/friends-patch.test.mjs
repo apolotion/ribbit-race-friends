@@ -32,8 +32,8 @@ test("PIN hashing stays within Cloudflare PBKDF2 limit and matches 100000 rounds
 });
 
 test("Friends release exposes the new build marker",()=>{
-  assert.equal(BUILD,"2026.10.10-friends-nick-delete-repair-1 ".trim());
-  assert.match(browserSource,/2026\.10\.10\-friends\-nick\-delete\-repair\-1/);
+  assert.equal(BUILD,"2026.10.10-friends-label-collision-polish-1");
+  assert.match(browserSource,/2026\.10\.10\-friends\-label\-collision\-polish\-1/);
 });
 
 test("server vocabulary is exactly the requested 15 entries",()=>{
@@ -149,13 +149,17 @@ test("single-player fly labels keep persistent placements instead of re-solving 
   assert.doesNotMatch(html,/flyLabelRectsThisFrame\.length = 0/);
 });
 
-test("single-player vocabulary text has no fractional duplicate render pass",()=>{
+test("fly vocabulary text is rasterized once on quarter-step pixel scales",()=>{
   const start=html.indexOf("function drawFlyNameTag(currentFly)");
   const end=html.indexOf("function getFlySpawnScale",start);
   const block=html.slice(start,end);
   assert.ok(start>=0 && end>start);
   assert.doesNotMatch(block,/translate\(0\.25,\s*0\)/);
-  assert.equal((block.match(/drawBitmapTextLayout\(layout,/g)||[]).length,1);
+  assert.match(html,/const scales = \[1, 0\.75, 0\.5\]/);
+  assert.match(html,/const flyLabelSpriteCache = new Map\(\);/);
+  assert.match(html,/function getFlyLabelSprite\(/);
+  assert.match(block,/ctx\.drawImage\(sprite,/);
+  assert.doesNotMatch(block,/drawBitmapTextLayout\(layout,/);
 });
 
 
@@ -175,7 +179,7 @@ function extractFunctionSource(source,name){
 test("actual label-placement function keeps existing fly rectangles stable as flies spawn and leave",()=>{
   const names=["flyLabelCacheKey","pruneFlyLabelPlacementCache","overlapArea","getFlyLabelHudObstacles","chooseFlyLabelRect"];
   const source=names.map(name=>extractFunctionSource(html,name)).join("\n");
-  const make=new Function("game","flies","W","CONFIG","clamp",`const flyLabelPlacementCache=new Map();\n${source}\nreturn {chooseFlyLabelRect,pruneFlyLabelPlacementCache,cache:flyLabelPlacementCache};`);
+  const make=new Function("game","flies","W","CONFIG","clamp",`const flyLabelPlacementCache=new Map();\nconst flyLabelSpriteCache=new Map();\n${source}\nreturn {chooseFlyLabelRect,pruneFlyLabelPlacementCache,cache:flyLabelPlacementCache};`);
   const game={mode:"solo"};
   const flies=[];
   const api=make(game,flies,480,{playBottom:244},(v,a,b)=>Math.max(a,Math.min(b,v)));
@@ -204,7 +208,7 @@ test("actual label-placement function keeps existing fly rectangles stable as fl
 test("online PvP label rectangles survive rebuilt snapshot flies and tiny anchor drift",()=>{
   const names=["flyLabelCacheKey","pruneFlyLabelPlacementCache","overlapArea","getFlyLabelHudObstacles","chooseFlyLabelRect"];
   const source=names.map(name=>extractFunctionSource(html,name)).join("\n");
-  const make=new Function("game","flies","W","CONFIG","clamp",`const flyLabelPlacementCache=new Map();\n${source}\nreturn {chooseFlyLabelRect,pruneFlyLabelPlacementCache,cache:flyLabelPlacementCache};`);
+  const make=new Function("game","flies","W","CONFIG","clamp",`const flyLabelPlacementCache=new Map();\nconst flyLabelSpriteCache=new Map();\n${source}\nreturn {chooseFlyLabelRect,pruneFlyLabelPlacementCache,cache:flyLabelPlacementCache};`);
   const game={mode:"pvp",pvpRoundNumber:2,pvpSuddenDeath:false};
   const flies=[];
   const api=make(game,flies,480,{playBottom:244},(v,a,b)=>Math.max(a,Math.min(b,v)));
@@ -229,11 +233,11 @@ test("failed connection Local Play opens the single-player level menu without au
   assert.doesNotMatch(html,/if\(id==='directLocal'\)\{cleanup\(true\);return;\}/);
 });
 
-test("local Versus VS hover draws requested player-switch tooltip",()=>{
+test("local Versus VS hover explains how to enable local PvP",()=>{
   assert.match(html,/function drawPvpVsHoverTooltip\(\)/);
   assert.match(html,/game\.pvpSetupHoveredKey !== "vs"/);
-  assert.match(html,/drawBitmapText\("CLICK TO SWITCH TO PLAYER"/);
-  assert.doesNotMatch(html,/fitText\("CLICK TO SWITCH TO PLAYER"/);
+  assert.match(html,/CLICK TO ENABLE LOCAL PVP/);
+  assert.match(html,/LOCAL PVP ENABLED/);
   assert.match(html,/drawPvpCpuDifficultyControl\(\); drawPvpVsHoverTooltip\(\);/);
 });
 
@@ -250,4 +254,127 @@ test("owner legacy recovery is request-triggered, one-shot and refuses PIN accou
   assert.match(hub,/DELETE FROM awards WHERE uid=\?/);
   assert.match(hub,/DELETE FROM users WHERE id=\?/);
   assert.match(hub,/deletePrivate\(old\.id\)/);
+});
+
+
+test("untimed Single Player top-center fly keeps its word plate above the fly",()=>{
+  const names=["flyLabelCacheKey","pruneFlyLabelPlacementCache","overlapArea","getFlyLabelHudObstacles","chooseFlyLabelRect"];
+  const source=names.map(name=>extractFunctionSource(html,name)).join("\n");
+  const make=new Function("game","flies","W","CONFIG","clamp",`const flyLabelPlacementCache=new Map();\nconst flyLabelSpriteCache=new Map();\n${source}\nreturn {chooseFlyLabelRect};`);
+  const game={mode:"solo",soloTimeLimitSeconds:0};
+  const fly={id:9,vocabIndex:2,baseX:240,baseY:56};
+  const api=make(game,[fly],480,{playBottom:229},(v,a,b)=>Math.max(a,Math.min(b,v)));
+  const rect=api.chooseFlyLabelRect(fly,{x:240,y:56},70,20);
+  assert.ok(rect.y+rect.h<56,`expected label above fly, received ${JSON.stringify(rect)}`);
+});
+
+test("Single Player pause and resume countdown reuse one frozen world bitmap",()=>{
+  assert.match(html,/const soloFrozenWorldCanvas = document\.createElement\("canvas"\);/);
+  assert.match(html,/function shouldFreezeSoloWorld\(\) \{[\s\S]{0,160}game\.state === "paused" \|\| game\.state === "countdown"/);
+  assert.match(html,/if \(freezeSoloWorld && paintSoloFrozenWorld\(\)\) \{[\s\S]{0,180}return;/);
+  assert.match(html,/if \(freezeSoloWorld\) captureSoloFrozenWorld\(\);/);
+  assert.match(html,/function drawSoloPauseOverlay\(\)/);
+});
+
+test("CPU takeover leaves an explicit disconnected-player notice",()=>{
+  assert.match(html,/takeoverReason:''/);
+  assert.match(html,/state\.takeoverReason=response\.takeover\?\.reason==='left'\?'left':'disconnected'/);
+  assert.match(html,/PLAYER DISCONNECTED - CPU LEVEL 5 TAKES OVER/);
+  assert.match(html,/drawBitmapText\(departedLabel,W\/2,panel\.y\+6/);
+  assert.match(html,/CPU LEVEL 5 TAKES OVER/);
+});
+
+test("replaced Quickplay participant is released and routed back to requeue",()=>{
+  const rooms=fs.readFileSync(new URL("../src/rooms-core.js",import.meta.url),"utf8");
+  assert.match(rooms,/function rrQuickReleaseParticipant_\(cache,room,role\)/);
+  assert.match(rooms,/rrQuickReleaseParticipant_\(cache,room,opposite\);/);
+  assert.match(rooms,/if\(room\.quickplay\)rrQuickReleaseParticipant_\(cache,room,role\);/);
+  assert.match(html,/if\(code==='REPLACED_BY_CPU'&&wasQuickplay\)/);
+  assert.match(html,/PLAYER DISCONNECTED - READY TO FIND A NEW MATCH/);
+});
+
+
+test("every fly word plate uses top-only candidate rows",()=>{
+  const names=["flyLabelCacheKey","pruneFlyLabelPlacementCache","overlapArea","getFlyLabelHudObstacles","chooseFlyLabelRect"];
+  const source=names.map(name=>extractFunctionSource(html,name)).join("\n");
+  const make=new Function("game","flies","W","CONFIG","clamp",`const flyLabelPlacementCache=new Map();\nconst flyLabelSpriteCache=new Map();\n${source}\nreturn {chooseFlyLabelRect};`);
+  const game={mode:"solo",soloTimeLimitSeconds:0};
+  const anchors=[
+    [30,51],[240,39],[450,51],[76,105],[404,105],[161,149],[319,149],[240,117]
+  ];
+  const flies=anchors.map(([x,y],index)=>({id:index+1,vocabIndex:index,baseX:x,baseY:y}));
+  const api=make(game,flies,480,{playBottom:229},(v,a,b)=>Math.max(a,Math.min(b,v)));
+  for(const fly of flies){
+    const rect=api.chooseFlyLabelRect(fly,{x:fly.baseX,y:fly.baseY},Math.min(110,44+fly.id*3),20);
+    assert.ok(rect.y+rect.h<=fly.baseY-3,`label must remain above fly ${fly.id}: ${JSON.stringify(rect)}`);
+  }
+  assert.doesNotMatch(source,/anchorY \+ 10/);
+  assert.doesNotMatch(source,/anchorX \+ 11/);
+});
+
+test("Friends first-place achievement renders a real number sign instead of a fallback question mark",()=>{
+  assert.match(html,/"#": \["01010", "11111"/);
+  assert.match(html,/title: "NEW FRIENDS #1!"/);
+});
+
+test("version 1.2.0 appears in both settings screens and the pause menu",()=>{
+  assert.match(html,/const RIBBIT_DISPLAY_VERSION = "VERSION 1\.2\.0"/);
+  assert.match(html,/function drawVersionLabel\(/);
+  const calls=html.match(/drawVersionLabel\(/g)||[];
+  assert.ok(calls.length>=4,`expected helper plus three visible placements, got ${calls.length}`);
+  assert.match(html,/drawVersionLabel\(399, 218, "right"\)/);
+});
+
+test("frog overlap axis is deterministic and cooldown separation removes intersections",()=>{
+  const source=["getPvpOverlapMetrics","separatePvpPlayersAlongAxis"].map(name=>extractFunctionSource(html,name)).join("\n");
+  const make=new Function("W","CONFIG","clamp",`${source}\nreturn {getPvpOverlapMetrics,separatePvpPlayersAlongAxis};`);
+  const api=make(480,{playBottom:229},(v,a,b)=>Math.max(a,Math.min(b,v)));
+  const sideA={x:100,y:100,w:20,h:20},sideB={x:115,y:100,w:20,h:20};
+  assert.equal(api.getPvpOverlapMetrics(sideA,sideB).axis,"horizontal");
+  assert.equal(api.separatePvpPlayersAlongAxis(sideA,sideB),true);
+  assert.equal(api.getPvpOverlapMetrics(sideA,sideB),null);
+  const topA={x:100,y:100,w:20,h:20},topB={x:100,y:115,w:20,h:20};
+  assert.equal(api.getPvpOverlapMetrics(topA,topB).axis,"vertical");
+  assert.equal(api.separatePvpPlayersAlongAxis(topA,topB),true);
+  assert.equal(api.getPvpOverlapMetrics(topA,topB),null);
+});
+
+test("overlap resolution maps horizontal contact to rebound and vertical contact to bonk",()=>{
+  const source=["getPvpOverlapMetrics","resolvePvpOverlapByAxis"].map(name=>extractFunctionSource(html,name)).join("\n");
+  const events=[];
+  const make=new Function("bouncePvpPlayersSideways","bonkPvpPlayer",`${source}\nreturn {resolvePvpOverlapByAxis};`);
+  const api=make((a,b)=>events.push(["rebound",a,b]),(victim,stomper)=>events.push(["bonk",victim,stomper]));
+  const a={x:0,y:0,w:20,h:20},side={x:15,y:0,w:20,h:20};
+  assert.equal(api.resolvePvpOverlapByAxis(a,side),"rebound");
+  const top={x:0,y:0,w:20,h:20},bottom={x:0,y:15,w:20,h:20};
+  assert.equal(api.resolvePvpOverlapByAxis(top,bottom),"bonk");
+  assert.deepEqual(events.map(event=>event[0]),["rebound","bonk"]);
+});
+
+test("fast-moving frogs use swept collision detection instead of tunneling through",()=>{
+  const source=["getPvpOverlapMetrics","getPvpSweptCollisionMetrics","placePvpPlayersAtSweptContact"].map(name=>extractFunctionSource(html,name)).join("\n");
+  const make=new Function("clamp","lerp",`${source}\nreturn {getPvpOverlapMetrics,getPvpSweptCollisionMetrics,placePvpPlayersAtSweptContact};`);
+  const api=make((v,a,b)=>Math.max(a,Math.min(b,v)),(a,b,t)=>a+(b-a)*t);
+  const left={previousX:90,previousY:100,x:130,y:100,w:20,h:20};
+  const right={previousX:130,previousY:100,x:90,y:100,w:20,h:20};
+  assert.equal(api.getPvpOverlapMetrics(left,right),null);
+  const horizontal=api.getPvpSweptCollisionMetrics(left,right);
+  assert.equal(horizontal.axis,"horizontal");
+  assert.ok(horizontal.time>=0&&horizontal.time<=1);
+  const contact=api.placePvpPlayersAtSweptContact(left,right,horizontal);
+  assert.equal(contact.axis,"horizontal");
+  const upper={previousX:100,previousY:70,x:100,y:130,w:20,h:20};
+  const lower={previousX:100,previousY:130,x:100,y:70,w:20,h:20};
+  const vertical=api.getPvpSweptCollisionMetrics(upper,lower);
+  assert.equal(vertical.axis,"vertical");
+  assert.equal(api.placePvpPlayersAtSweptContact(upper,lower,vertical).axis,"vertical");
+});
+
+test("Versus collision code cannot silently ignore overlapping frogs",()=>{
+  const block=extractFunctionSource(html,"resolvePvpCollision");
+  assert.match(block,/let overlapMetrics = getPvpOverlapMetrics\(a, b\)/);
+  assert.match(block,/if \(a\.collisionCooldown > 0 \|\| b\.collisionCooldown > 0\) \{\s*separatePvpPlayersAlongAxis\(a, b, overlapMetrics\)/);
+  assert.doesNotMatch(block,/separatePvpPlayersWithoutRebound/);
+  assert.match(block,/resolvePvpOverlapByAxis\(a, b, overlapMetrics\)/);
+  assert.match(html,/else \{\s*const reboundSpeed = CONFIG\.minimumJumpX \* 0\.55;/);
 });
