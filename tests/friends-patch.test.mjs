@@ -16,8 +16,8 @@ test("PIN hashing stays within Cloudflare PBKDF2 limit and matches 100000 rounds
 });
 
 test("Friends release exposes the new build marker",()=>{
-  assert.equal(BUILD,"2026.10.09-friends-online-word-stability-1 ".trim());
-  assert.match(html,/2026\.10\.09\-friends\-online\-word\-stability\-1/);
+  assert.equal(BUILD,"2026.10.09-friends-legacy-account-recovery-1 ".trim());
+  assert.match(html,/2026\.10\.09\-friends\-legacy\-account\-recovery\-1/);
 });
 
 test("server vocabulary is exactly the requested 15 entries",()=>{
@@ -165,4 +165,17 @@ test("local Versus VS hover draws requested player-switch tooltip",()=>{
   assert.match(html,/drawBitmapText\("CLICK TO SWITCH TO PLAYER"/);
   assert.doesNotMatch(html,/fitText\("CLICK TO SWITCH TO PLAYER"/);
   assert.match(html,/drawPvpCpuDifficultyControl\(\); drawPvpVsHoverTooltip\(\);/);
+});
+
+
+test("owner legacy recovery is one-shot and refuses PIN accounts",()=>{
+  const hub=fs.readFileSync(new URL("../src/hub.js",import.meta.url),"utf8");
+  assert.match(hub,/OWNER_DELETE_LEGACY_USERNAME/);
+  assert.match(hub,/OWNER_LEGACY_DELETE:/);
+  assert.match(hub,/refused-pin-account/);
+  assert.match(hub,/deleted-legacy/);
+  assert.match(hub,/DELETE FROM sessions WHERE uid=\?/);
+  assert.match(hub,/DELETE FROM awards WHERE uid=\?/);
+  assert.match(hub,/DELETE FROM users WHERE id=\?/);
+  assert.match(hub,/deletePrivate\(old\.id\)/);
 });
