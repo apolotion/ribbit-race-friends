@@ -6,9 +6,9 @@
   <meta name="theme-color" content="#5a95b8" />
   <title>Ribbit Race — Friends Edition</title>
   <!-- Ribbit Race Friends Edition. Separate Cloudflare deployment; no school data or Google services. -->
-  <link rel="stylesheet" href="/styles/base.css?v=2026.10.10-label-collision-polish-1" />
-  <link rel="stylesheet" href="/styles/cloud-ui.css?v=2026.10.10-label-collision-polish-1" />
-  <link rel="stylesheet" href="/styles/game-shell.css?v=2026.10.10-label-collision-polish-1" />
+  <link rel="stylesheet" href="/styles/base.css?v=2026.10.10-visual-polish-1" />
+  <link rel="stylesheet" href="/styles/cloud-ui.css?v=2026.10.10-visual-polish-1" />
+  <link rel="stylesheet" href="/styles/game-shell.css?v=2026.10.10-visual-polish-1" />
 </head>
 <body class="ribbit-auth-locked">
 
@@ -21,7 +21,6 @@
      <label class="cloud-field">4-DIGIT PIN<input id="cloud-login-pin" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="4" autocomplete="current-password" placeholder="4 numbers" /></label>
      <div class="cloud-actions"><button id="cloud-login-button" class="cloud-button primary">SIGN IN</button><button id="cloud-show-create" class="cloud-button">CREATE ACCOUNT</button><button id="cloud-play-guest" class="cloud-button">PLAY WITHOUT SAVING</button></div>
      <p class="cloud-help">No school email or Google account needed. Sign in with your username and 4-digit PIN. <a href="/help.html" target="_blank" rel="noopener">Help &amp; privacy</a></p>
-     <div class="cloud-actions"><button id="friends-show-migrate" class="cloud-button" type="button">MIGRATE OLD PRIVATE-KEY ACCOUNT</button></div>
     </div>
     <div id="cloud-create-view" class="cloud-view" hidden>
      <label class="cloud-field">CHOOSE A USERNAME<input id="cloud-create-name" maxlength="20" autocomplete="username" placeholder="3–20 letters, numbers, _ or -" /></label>
@@ -30,14 +29,6 @@
      <label class="cloud-field">CONFIRM PIN<input id="cloud-create-pin-confirm" type="password" inputmode="numeric" maxlength="4" autocomplete="new-password" placeholder="Type the same 4 numbers" /></label>
      <p class="cloud-help">Choose a PIN you can remember. The server stores a salted derived hash, not the PIN itself.</p>
      <div class="cloud-actions"><button id="cloud-create-button" class="cloud-button primary">CREATE MY SAVE</button><button id="cloud-back-login" class="cloud-button">BACK</button></div>
-    </div>
-    <div id="friends-migrate-view" class="cloud-view" hidden>
-     <p class="cloud-help">Only for accounts created before the PIN update. Your save will stay intact.</p>
-     <label class="cloud-field">USERNAME<input id="friends-migrate-user" maxlength="20" autocomplete="username" /></label>
-     <label class="cloud-field">OLD PRIVATE SAVE KEY<input id="friends-migrate-key" type="password" maxlength="48" /></label>
-     <label class="cloud-field">NEW 4-DIGIT PIN<input id="friends-migrate-pin" type="password" inputmode="numeric" maxlength="4" /></label>
-     <label class="cloud-field">CONFIRM PIN<input id="friends-migrate-confirm" type="password" inputmode="numeric" maxlength="4" /></label>
-     <div class="cloud-actions"><button id="friends-migrate-button" class="cloud-button primary">MIGRATE &amp; SIGN IN</button><button id="friends-migrate-back" class="cloud-button">BACK</button></div>
     </div>
     <div id="cloud-profile-view" class="cloud-view" hidden><input id="cloud-profile-name"/><select id="cloud-profile-period"></select><button id="cloud-save-profile">SAVE</button><button id="cloud-profile-sign-out">BACK</button></div>
     <div id="cloud-created-view" class="cloud-view" hidden>
@@ -159,10 +150,10 @@
     />
     <p class="sr-only">In solo play, hold Space, W, Up, or either Shift key and release to leap. In versus play, Player 1 uses Left Shift and Player 2 uses Right Shift. Catch the fly carrying the Spanish translation of the English prompt. Five correct answers win. R restarts, Escape or the on-screen pause button pauses, and M mutes.</p>
   </main>
-  <script src="/scripts/friends-api-client.js?v=2026.10.10-label-collision-polish-1"></script>
-  <script src="/scripts/auth-screen-controller.js?v=2026.10.10-label-collision-polish-1"></script>
-  <script src="/scripts/cloud-client.js?v=2026.10.10-label-collision-polish-1"></script>
-  <script src="/scripts/game.bundle.js?v=2026.10.10-label-collision-polish-1"></script>
-  <script src="/scripts/bootstrap.js?v=2026.10.10-label-collision-polish-1"></script>
+  <script src="/scripts/friends-api-client.js?v=2026.10.10-visual-polish-1"></script>
+  <script src="/scripts/auth-screen-controller.js?v=2026.10.10-visual-polish-1"></script>
+  <script src="/scripts/cloud-client.js?v=2026.10.10-visual-polish-1"></script>
+  <script src="/scripts/game.bundle.js?v=2026.10.10-visual-polish-1"></script>
+  <script src="/scripts/bootstrap.js?v=2026.10.10-visual-polish-1"></script>
 </body>
 </html>

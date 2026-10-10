@@ -1,107 +1,71 @@
-# Update the existing Ribbit Race Friends Edition
+# Ribbit Race Friends 1.3.0 — update instructions
 
-Build: `2026.10.10-friends-label-collision-polish-1`  
-Displayed game version: `VERSION 1.2.0`
+Build: `2026.10.10-friends-visual-polish-1`
 
-This updates the existing `apolotion/ribbit-race-friends` GitHub repository and its existing Cloudflare Worker. It does **not** create or replace the `FriendsHub` database, `FriendsRoom` room service, Worker URL, PIN accounts, or saved progress.
+This updates the existing GitHub-connected Cloudflare Friends Edition. It does not create a new installation.
 
-## Changes in this release
+## Install the patch
 
-- Every fly vocabulary plate uses an **above-the-fly-only** placement system. The game no longer chooses side or below-fly locations.
-- Solo and online word plates keep a stable per-fly placement and are prerendered once, removing repeated text-layout shimmer and most label reflow.
-- Paused Single Player and its resume countdown continue to use the existing frozen-world frame, so the labels are not recomputed while paused.
-- The Friends first-place achievement now renders `NEW FRIENDS #1!` correctly; the bitmap font now contains a real `#` glyph.
-- Hovering over the center CPU/VS toggle in Local Versus displays `CLICK TO ENABLE LOCAL PVP`. When Local PvP is active, it displays `LOCAL PVP ENABLED`.
-- Frog collision handling now classifies every overlap by its shallowest axis:
-  - horizontal overlap → rebound;
-  - vertical overlap → bonk.
-- Collision cooldowns still prevent duplicate effects, but they no longer allow frogs to remain embedded.
-- Swept collision detection catches fast frogs that cross between fixed-physics frames, preventing tunneling/phasing even when the final-frame boxes no longer overlap.
-- `VERSION 1.2.0` is displayed in Solo Settings, Versus Settings, and the Pause menu.
-
-All existing PIN accounts, saves, vocabulary, Quickplay rules, disconnect/CPU takeover behavior, spectators, Battle Tags, logout reset, and legacy-account recovery remain in place.
-
-## Install from the patch ZIP
-
-1. Extract `Ribbit_Race_Friends_Label_Collision_Polish_Patch.zip`.
-2. Copy its contents into the root of your existing `apolotion/ribbit-race-friends` repository, preserving every folder.
-3. Replace the matching files and add any included documentation files.
-4. Commit directly to `main`, for example:
+1. Back up the current `apolotion/ribbit-race-friends` repository or note the current working commit.
+2. Extract `Ribbit_Race_Friends_Visual_Polish_Patch.zip`.
+3. Copy the extracted contents into the **root** of the existing repository, preserving every path and replacing matching files.
+4. Confirm that examples such as these are directly under the repository root:
 
    ```text
-   Stabilize fly labels and harden Versus collisions
+   client/game/70-rendering.js
+   public/scripts/cloud-client.js
+   public/scripts/game.bundle.js
+   src/common.js
+   tests/friends-patch.test.mjs
+   package.json
    ```
 
-5. Wait for Cloudflare to run:
+   Do not upload the patch ZIP itself or add an extra parent folder.
+5. Commit directly to `main`. Suggested message:
+
+   ```text
+   Polish achievements, fly labels, Final Catch, custom frogs and Sandbox
+   ```
+6. Wait for the existing Cloudflare Git build to run:
 
    ```text
    npm run check && npm test
    npx wrangler deploy
    ```
+7. Confirm the build log reports all 59 tests passing and a successful Wrangler deployment.
+8. Open:
 
-6. Confirm the deployment log ends with `Success! Build completed.`
-7. Open the normal Worker URL with `/api/health` appended and confirm:
+   ```text
+   https://ribbit-race-friends.apolotion.workers.dev/api/health
+   ```
+
+   Confirm:
 
    ```json
    {
-     "build": "2026.10.10-friends-label-collision-polish-1"
+     "build": "2026.10.10-friends-visual-polish-1"
    }
    ```
+9. Hard-refresh the game on each test device.
 
-8. Hard-refresh every test device.
+## Keep the existing infrastructure
 
-Do not create a new Worker or delete/recreate `FriendsHub` or `FriendsRoom`.
+Do not create or delete the Worker, repository, `FriendsHub`, `FriendsRoom`, or SQLite Durable Object namespaces. No database migration or account reset is required.
 
 ## Post-deployment checks
 
-### Fly signs and Solo stability
+- Put a fly or word plate behind an achievement toast; the toast should become translucent instead of obscuring the answer.
+- Open Jungle and confirm the center-tree snake is gone.
+- Complete a Final Catch and confirm remaining vocabulary plates move with their flies and fade out.
+- Trigger a Friends leaderboard first-place notice; it should say `FRIENDS LEADER!`.
+- Open the PvP leaderboard and confirm exactly one victory is displayed as `1 WIN`.
+- Compare the main menu and Single Player level menu; `MADE BY NICK` should stay on the same baseline.
+- Play Lake and confirm labels—especially near the top-right edge—are centered.
+- Open Pause > How To Play; the redesigned book panel should show `VERSION 1.3.0` in its footer.
+- Open Custom Frog and confirm the larger live preview remains visible while editing Body, Belly, and Accents.
+- Enter Sandbox; newly created flies should use the same grow-and-spark entrance as normal Single Player flies.
+- Confirm the login page has no public old-private-key migration control.
 
-1. Start Single Player and watch flies at the top, sides, and middle of the map.
-2. Confirm every sign is above its fly—not underneath or beside it.
-3. Pause while several signs are visible and leave it paused for at least ten seconds.
-4. Confirm the world and signs remain stationary.
-5. Resume and confirm the countdown does not make the signs jitter.
+## Rollback
 
-### Achievement banner
-
-Earn or trigger the first Friends leaderboard achievement and confirm it says:
-
-```text
-NEW FRIENDS #1!
-```
-
-### Local PvP tooltip
-
-1. Open Local Versus with the CPU enabled.
-2. Hover over the center CPU/VS toggle.
-3. Confirm the popup says `CLICK TO ENABLE LOCAL PVP`.
-4. Click the toggle and confirm the popup changes to `LOCAL PVP ENABLED`.
-
-### Frog collisions
-
-Test the following in Local Versus:
-
-- collide from the left/right → both frogs rebound apart;
-- land on or rise into the other frog → a bonk occurs;
-- collide at high speed → the frogs do not pass through one another;
-- overlap near a wall/platform → the collision still separates both hitboxes.
-
-### Version label
-
-Confirm `VERSION 1.2.0` appears in:
-
-- Solo Settings;
-- Versus Settings;
-- Pause menu.
-
-## Editing modular game source later
-
-Edit the source files under `client/game/`, then run:
-
-```bash
-npm run build
-npm run check
-npm test
-```
-
-`public/scripts/game.bundle.js` is generated by `scripts/build-game.mjs`. Do not hand-edit the generated bundle unless you are deliberately bypassing the modular source workflow.
+Revert the Git commit and let Cloudflare redeploy the prior compatible version. Do not delete the Durable Objects to roll back visual or gameplay code.

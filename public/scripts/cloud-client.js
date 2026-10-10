@@ -3,12 +3,12 @@
     // Friends Edition: accounts, matchmaking, and live human gameplay use the
     // same-origin Cloudflare Worker/Durable Object service. The historical
     // directOnlyVersion field is retained only as a protocol compatibility marker.
-    const RIBBIT_DIRECT_BUILD = "2026.10.10-friends-label-collision-polish-1";
+    const RIBBIT_DIRECT_BUILD = "2026.10.10-friends-visual-polish-1";
     const RIBBIT_DIRECT_POLICY_VERSION = 2;
     const RIBBIT_ONLINE_PROTOCOL_VERSION = 3;
     const RIBBIT_QUICKPLAY_VERSION = 3;
 
-    const RIBBIT_CLOUD_CLIENT_VERSION = "2026.10.10-friends-label-collision-polish-1";
+    const RIBBIT_CLOUD_CLIENT_VERSION = "2026.10.10-friends-visual-polish-1";
     const RIBBIT_CLOUD_SAVE_SCHEMA_VERSION = 2;
     // Preserve every current and future Ribbit Race key, including legacy one-button keys.
     const RIBBIT_GAME_KEY = /^(?:ribbitRace|oneButtonFrog)/;
@@ -76,7 +76,7 @@
       function cacheElements() {
         [
           "cloud-gate", "cloud-message", "cloud-login-view", "cloud-create-view", "cloud-profile-view", "cloud-created-view",
-          "cloud-login-id", "cloud-login-pin", "cloud-login-button", "cloud-show-create", "cloud-play-guest", "friends-show-migrate", "friends-migrate-view", "friends-migrate-user", "friends-migrate-key", "friends-migrate-pin", "friends-migrate-confirm", "friends-migrate-button", "friends-migrate-back",
+          "cloud-login-id", "cloud-login-pin", "cloud-login-button", "cloud-show-create", "cloud-play-guest",
           "cloud-create-id", "cloud-create-name", "cloud-create-period", "cloud-create-pin", "cloud-create-pin-confirm", "cloud-create-button",
           "cloud-back-login", "cloud-profile-name", "cloud-profile-period", "cloud-save-profile", "cloud-profile-sign-out",
           "cloud-created-name", "cloud-created-period", "cloud-created-continue",
@@ -128,7 +128,6 @@
       function showView(name) {
         elements["cloud-login-view"].hidden = name !== "login";
         elements["cloud-create-view"].hidden = name !== "create";
-        if(elements["friends-migrate-view"]) elements["friends-migrate-view"].hidden = name !== "migrate";
         elements["cloud-profile-view"].hidden = name !== "profile";
         elements["cloud-created-view"].hidden = name !== "created";
         setMessage("");
@@ -813,7 +812,7 @@
           return `${String(minutes).padStart(2, "0")}:${remainder}`;
         }
         if (metric === "jumps") return `${Math.floor(Number(value))} JUMPS`;
-        if (metric === "pvpwins") return `${Math.floor(Number(value))} WINS`;
+        if (metric === "pvpwins") { const wins = Math.floor(Number(value)); return `${wins} ${wins === 1 ? "WIN" : "WINS"}`; }
         return `${Math.floor(Number(value))} FLIES`;
       }
 
@@ -1148,17 +1147,6 @@
         elements["cloud-play-guest"].addEventListener("click", playAsGuest);
         elements["cloud-back-login"].addEventListener("click", () => showView("login"));
         elements["cloud-create-button"].addEventListener("click", createPlayer);
-        elements["friends-show-migrate"].addEventListener("click",()=>{elements["friends-migrate-user"].value=elements["cloud-login-id"].value;showView("migrate");});
-        elements["friends-migrate-back"].addEventListener("click",()=>showView("login"));
-        elements["friends-migrate-button"].addEventListener("click",async()=>{
-          const username=elements["friends-migrate-user"].value.trim(),key=elements["friends-migrate-key"].value.trim(),pin=elements["friends-migrate-pin"].value.trim(),confirmPin=elements["friends-migrate-confirm"].value.trim();
-          if(!username||!key){setMessage("Enter your username and old private key.");return;}
-          if(!/^\d{4}$/.test(pin)){setMessage("Choose exactly four numbers for your new PIN.");return;}
-          if(pin!==confirmPin){setMessage("The two PIN entries do not match.");return;}
-          setBusy(true);setMessage("MIGRATING YOUR SAVE...",false);
-          try{const r=await serverCall("apiMigrateLegacyKey",{username,key,pin});if(!r?.ok)throw new Error(r?.message||"Migration failed.");elements["friends-migrate-key"].value="";elements["friends-migrate-pin"].value="";elements["friends-migrate-confirm"].value="";handleAuthResponse(r);}
-          catch(e){setMessage(e.message);}finally{setBusy(false);}
-        });
         elements["cloud-save-profile"].addEventListener("click", saveProfile);
         elements["cloud-profile-sign-out"].addEventListener("click", () => returnToCloudLogin(false));
         elements["cloud-created-continue"].addEventListener("click", () => {

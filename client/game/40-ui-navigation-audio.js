@@ -90,26 +90,28 @@
     });
 
     const CUSTOM_UI = Object.freeze({
-      // Custom colors are edited directly; the former Slot 1-3 row is intentionally hidden.
+      // The editor mirrors the main Frog Color screen: a large live frog preview
+      // stays on the left while color controls remain grouped on the right.
+      preview: Object.freeze({ x: 44, y: 52, w: 146, h: 148 }),
       slotButtons: Object.freeze([
-        Object.freeze({ index: 0, x: 163, y: 54, w: 42, h: 31 }),
-        Object.freeze({ index: 1, x: 219, y: 54, w: 42, h: 31 }),
-        Object.freeze({ index: 2, x: 275, y: 54, w: 42, h: 31 })
+        Object.freeze({ index: 0, x: 51, y: 170, w: 38, h: 27 }),
+        Object.freeze({ index: 1, x: 98, y: 170, w: 38, h: 27 }),
+        Object.freeze({ index: 2, x: 145, y: 170, w: 38, h: 27 })
       ]),
       partButtons: Object.freeze([
-        Object.freeze({ id: "body", label: "BODY", x: 91, y: 91, w: 94, h: 22 }),
-        Object.freeze({ id: "belly", label: "BELLY", x: 193, y: 91, w: 94, h: 22 }),
-        Object.freeze({ id: "accents", label: "ACCENTS", x: 295, y: 91, w: 94, h: 22 })
+        Object.freeze({ id: "body", label: "BODY", x: 202, y: 58, w: 68, h: 24 }),
+        Object.freeze({ id: "belly", label: "BELLY", x: 276, y: 58, w: 68, h: 24 }),
+        Object.freeze({ id: "accents", label: "ACCENTS", x: 350, y: 58, w: 78, h: 24 })
       ]),
       sliders: Object.freeze([
-        Object.freeze({ channel: "r", label: "R", x: 145, y: 130, w: 190, h: 8, hitX: 130, hitY: 122, hitW: 225, hitH: 20 }),
-        Object.freeze({ channel: "g", label: "G", x: 145, y: 160, w: 190, h: 8, hitX: 130, hitY: 152, hitW: 225, hitH: 20 }),
-        Object.freeze({ channel: "b", label: "B", x: 145, y: 190, w: 190, h: 8, hitX: 130, hitY: 182, hitW: 225, hitH: 20 })
+        Object.freeze({ channel: "r", label: "R", x: 239, y: 110, w: 142, h: 8, hitX: 216, hitY: 100, hitW: 211, hitH: 24 }),
+        Object.freeze({ channel: "g", label: "G", x: 239, y: 145, w: 142, h: 8, hitX: 216, hitY: 135, hitW: 211, hitH: 24 }),
+        Object.freeze({ channel: "b", label: "B", x: 239, y: 180, w: 142, h: 8, hitX: 216, hitY: 170, hitW: 211, hitH: 24 })
       ]),
-      useButton: Object.freeze({ x: 88, y: 220, w: 90, h: 22 }),
-      backButton: Object.freeze({ x: 184, y: 220, w: 90, h: 22 }),
-      undoButton: Object.freeze({ x: 280, y: 220, w: 36, h: 22 }),
-      redoButton: Object.freeze({ x: 322, y: 220, w: 36, h: 22 })
+      useButton: Object.freeze({ x: 46, y: 219, w: 118, h: 24 }),
+      backButton: Object.freeze({ x: 172, y: 219, w: 92, h: 24 }),
+      undoButton: Object.freeze({ x: 274, y: 219, w: 36, h: 24 }),
+      redoButton: Object.freeze({ x: 318, y: 219, w: 36, h: 24 })
     });
 
     const ACHIEVEMENT_UI = Object.freeze({
@@ -370,8 +372,8 @@
           if (layout) game.victoryNoticePage = Math.max(0, layout.pageCount - 1);
         }
       } else {
-        const scopeText = record.scope === "class" ? `${record.scopeLabel || "CLASS"} FIRST PLACE` : "ALL PLAYERS FIRST PLACE";
-        queueAchievementToast({ type: "generic", text: `NEW ${scopeText}: ${levelLabel}${metricLabel}` });
+        const scopeText = record.scope === "class" ? `${record.scopeLabel || "CLASS"} LEADER` : "FRIENDS LEADER";
+        queueAchievementToast({ type: "generic", text: `${scopeText}: ${levelLabel}${metricLabel}` });
       }
       tone(784, 0.09, 0.021, 95);
       tone(1047, 0.12, 0.017, 120, 0.075);

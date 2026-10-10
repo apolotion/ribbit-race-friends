@@ -360,7 +360,7 @@
       sandboxPreview.flySlots.forEach((p,i)=>{
         if(game.elapsed<p.due||flies.some(f=>f.sandboxSlot===i))return;
         flies.push({id:nextFlyId++,sandboxTest:true,sandboxSlot:i,baseX:p.x,baseY:p.y,x:p.x,y:p.y,
-          phase:i*1.2,spawnAge:1,vocabIndex:-1,state:"active",touchLocked:false,blockedPromptSerial:-1});
+          phase:i*1.2,spawnAge:0,vocabIndex:-1,state:"active",touchLocked:false,blockedPromptSerial:-1});
       });
     }
     function catchSandboxFly(f) {

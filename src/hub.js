@@ -120,7 +120,7 @@ export class FriendsHub extends DurableObject {
      if(!/^\d{4}$/.test(pin))return error('INVALID_LOGIN','Enter your username and 4-digit PIN.');
      const u=this.one('SELECT * FROM users WHERE username=?',username);
      if(!u)return error('INVALID_LOGIN','Username or PIN was not recognized.');
-     if(!u.pinhash)return error('LEGACY_KEY_REQUIRED','This account still uses an old private key. Choose Migrate Old Account below.');
+     if(!u.pinhash)return error('LEGACY_KEY_REQUIRED','This account uses an obsolete private key. Contact the game owner for recovery or deletion.');
      if(!equal(u.pinhash,pinHash(u.id,pin,u.pinsalt)))return error('INVALID_LOGIN','Username or PIN was not recognized.');
      if(auth)this.sql.exec('DELETE FROM sessions WHERE hash=?',auth.hash);
      const ss=this.createSession(u.id,u.name);setCookie=sessionCookie(request.url,ss.token,ss.seconds);return this.authResponse(ss.auth);
@@ -154,7 +154,7 @@ export class FriendsHub extends DurableObject {
      if(auth.guest)return error('GUEST','Sign in to a saved account.');
      if(!this.limit('manage:'+auth.uid,10,600))return error('RATE_LIMIT','Too many PIN attempts. Wait ten minutes.');
      const u=this.one('SELECT * FROM users WHERE id=?',auth.uid),pin=String(payload.pin||'').trim();
-     if(!u.pinhash)return error('LEGACY_KEY_REQUIRED','Migrate this account to a PIN from the game login screen first.');
+     if(!u.pinhash)return error('LEGACY_KEY_REQUIRED','This legacy account requires owner recovery before it can use a PIN.');
      if(!/^\d{4}$/.test(pin)||!equal(u.pinhash,pinHash(u.id,pin,u.pinsalt)))return error('INVALID_PIN','The current PIN was not recognized.');
      if(method==='apiDeleteAccount'){
       if(payload.confirm!==u.name)return error('CONFIRM','Type your exact username to confirm deletion.');

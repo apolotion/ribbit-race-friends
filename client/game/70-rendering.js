@@ -799,27 +799,7 @@
         });
       });
 
-      // A small snake coils around one of the central trunks.
-      const snakeBaseX = 228;
-      const snakeTop = 52;
-      const snakeSegments = [
-        [2, 0, 6, 4], [0, 5, 10, 4], [2, 10, 6, 4],
-        [0, 15, 10, 4], [2, 20, 6, 4], [0, 25, 10, 4],
-        [2, 30, 6, 4], [0, 35, 10, 4], [2, 40, 6, 4]
-      ];
-      snakeSegments.forEach(([dx, dy, w, h], index) => {
-        ctx.fillStyle = index % 2 ? "#4f9239" : "#73bc4e";
-        ctx.fillRect(snakeBaseX + dx, snakeTop + dy, w, h);
-        ctx.fillStyle = "#2f5d24";
-        ctx.fillRect(snakeBaseX + dx + 1, snakeTop + dy + 1, Math.max(2, w - 2), 1);
-      });
-      ctx.fillStyle = "#73bc4e";
-      ctx.fillRect(snakeBaseX + 1, snakeTop - 4, 8, 5);
-      ctx.fillStyle = "#2f5d24";
-      ctx.fillRect(snakeBaseX + 7, snakeTop - 3, 1, 1);
-      ctx.fillRect(snakeBaseX + 4, snakeTop - 1, 4, 1);
-      ctx.fillStyle = "#d34d4d";
-      ctx.fillRect(snakeBaseX + 9, snakeTop - 2, 2, 1);
+      // The center trunk is intentionally clear; no decorative snake is drawn.
 
       function bananaLeaf(x, y, w, h, colorA, colorB) {
         ctx.fillStyle = colorA;
@@ -1749,6 +1729,42 @@
       return stableRect;
     }
 
+    function drawStableFlyLabelTextToSprite(targetContext, layout, width, textTop, lineHeight) {
+      const lines = Array.isArray(layout?.lines) && layout.lines.length ? layout.lines : [""];
+      const logicalScale = Number(layout?.scale) || 1;
+      const cell = Math.max(1, Math.round(logicalScale * RENDER_SCALE));
+      targetContext.save();
+      targetContext.setTransform(1, 0, 0, 1, 0, 0);
+      targetContext.fillStyle = "#34484f";
+      lines.forEach((line, lineIndex) => {
+        const value = normalizeBitmapText(line).toUpperCase();
+        const visibleWidth = Math.round(measureBitmapText(value, logicalScale) * RENDER_SCALE);
+        let cursorX = Math.round((width * RENDER_SCALE - visibleWidth) / 2);
+        const lineY = Math.round((textTop + lineIndex * lineHeight) * RENDER_SCALE);
+        for (const character of value) {
+          if (character === " ") {
+            cursorX += 4 * cell;
+            continue;
+          }
+          const glyph = getBitmapGlyph(character);
+          const glyphYOffset = glyph.length > 7 ? -cell : 0;
+          for (let row = 0; row < glyph.length; row += 1) {
+            for (let column = 0; column < glyph[row].length; column += 1) {
+              if (glyph[row][column] !== "1") continue;
+              targetContext.fillRect(
+                cursorX + column * cell,
+                lineY + glyphYOffset + row * cell,
+                cell,
+                cell
+              );
+            }
+          }
+          cursorX += 6 * cell;
+        }
+      });
+      targetContext.restore();
+    }
+
     function getFlyLabelSprite(currentFly, term, layout, width, height) {
       const cacheKey = flyLabelCacheKey(currentFly);
       const stripeColor = getSelectedSkin().mid;
@@ -1775,10 +1791,18 @@
       const lineHeight = Math.max(7, Math.ceil(8 * layout.scale + 1));
       const textHeight = layout.lines.length * lineHeight - 1;
       const textTop = Math.round(5 + Math.max(0, (height - 7 - textHeight) / 2));
-      drawBitmapTextLayoutToContext(spriteContext, layout, width / 2, textTop, "center", "#34484f", null, 1);
+      drawStableFlyLabelTextToSprite(spriteContext, layout, width, textTop, lineHeight);
 
       flyLabelSpriteCache.set(cacheKey, { signature, canvas: sprite });
       return sprite;
+    }
+
+    function getCriticalCatchWordFade() {
+      let progress = null;
+      if (game.mode === "solo" && game.soloCriticalCatchActive) progress = getSoloCriticalCatchVisuals().progress;
+      else if (game.mode === "pvp" && game.pvpCriticalCatchActive) progress = getPvpCriticalCatchVisuals().progress;
+      if (progress === null) return 1;
+      return 1 - clamp((progress - 0.08) / 0.52, 0, 1);
     }
 
     function drawFlyNameTag(currentFly) {
@@ -1793,12 +1817,27 @@
       const rect = chooseFlyLabelRect(currentFly, anchor, width, height);
       const sprite = getFlyLabelSprite(currentFly, term, layout, width, height);
       const appear = clamp(currentFly.spawnAge / CONFIG.flyGrowDuration, 0, 1);
+      const cinematic = game.soloCriticalCatchActive || game.pvpCriticalCatchActive;
+      const alpha = appear * getCriticalCatchWordFade();
+      if (alpha <= 0.01) return;
 
       ctx.save();
-      ctx.setTransform(1, 0, 0, 1, 0, 0);
       ctx.imageSmoothingEnabled = false;
-      ctx.globalAlpha = appear;
-      ctx.drawImage(sprite, Math.round(rect.x * RENDER_SCALE), Math.round(rect.y * RENDER_SCALE));
+      ctx.globalAlpha = alpha;
+      if (cinematic) {
+        // During the final-catch camera move the plate stays in world space,
+        // follows the fly's current bob/spit offset, and fades with the action.
+        const currentX = Number.isFinite(Number(currentFly.x)) ? Number(currentFly.x) : anchor.x;
+        const currentY = Number.isFinite(Number(currentFly.y)) ? Number(currentFly.y) : anchor.y;
+        const drawX = rect.x + (currentX - anchor.x);
+        const drawY = rect.y + (currentY - anchor.y);
+        ctx.drawImage(sprite, drawX, drawY, width, height);
+      } else {
+        // Outside cinematics keep the existing physical-pixel lock for maximum
+        // stability on high-DPI and scaled displays.
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
+        ctx.drawImage(sprite, Math.round(rect.x * RENDER_SCALE), Math.round(rect.y * RENDER_SCALE));
+      }
       ctx.restore();
     }
 
@@ -3966,7 +4005,7 @@
       ctx.fillStyle = backdrop;
       ctx.fillRect(0, 0, W, H);
 
-      const panel = { x: 70, y: 12, w: 340, h: 239 };
+      const panel = { x: 28, y: 10, w: 424, h: 250 };
       ctx.fillStyle = "rgba(12,26,33,0.34)";
       ctx.fillRect(panel.x + 7, panel.y + 8, panel.w, panel.h);
       ctx.fillStyle = COLORS.ink;
@@ -3984,6 +4023,28 @@
       ctx.fillRect(panel.x + 17, panel.y + 13, panel.w - 34, 4);
       drawBitmapText("CUSTOM FROG", W / 2, panel.y + 16, 2, "center", COLORS.white, skin.dark);
 
+      // Large live preview modeled after the main Frog Color selector.
+      const preview = CUSTOM_UI.preview;
+      ctx.fillStyle = "rgba(25,43,52,0.24)";
+      ctx.fillRect(preview.x + 4, preview.y + 4, preview.w, preview.h);
+      ctx.fillStyle = COLORS.ink;
+      ctx.fillRect(preview.x, preview.y, preview.w, preview.h);
+      ctx.fillStyle = mixHexColors(skin.belly, "#ffffff", 0.12);
+      ctx.fillRect(preview.x + 3, preview.y + 3, preview.w - 6, preview.h - 6);
+      ctx.fillStyle = skin.light;
+      ctx.fillRect(preview.x + 7, preview.y + 7, preview.w - 14, 4);
+      ctx.save();
+      drawMiniFrogSwatchFacing(
+        preview.x + preview.w / 2,
+        preview.y + 52 + getTwoFrameMenuBob(0.08),
+        { ...skin, previewHatYOffset: 1, previewHatRenderScreen: true },
+        2.35,
+        1
+      );
+      ctx.restore();
+      drawBitmapText(`CUSTOM ${game.customSlotIndex + 1}`, preview.x + preview.w / 2, preview.y + 90, 0.82, "center", skin.dark);
+      drawBitmapText("LIVE PREVIEW", preview.x + preview.w / 2, preview.y + 103, 0.58, "center", "#617177");
+
       CUSTOM_UI.slotButtons.forEach((slotButton) => {
         const unlocked = isCustomFrogSlotUnlocked(slotButton.index);
         const selected = unlocked && game.customSlotIndex === slotButton.index;
@@ -3998,9 +4059,10 @@
         ctx.fillRect(slotButton.x + 5, slotButton.y + 4, slotButton.w - 10, 3);
         ctx.save();
         if (!unlocked) ctx.globalAlpha = 0.26;
-        drawMiniFrogSwatchFacing(slotButton.x + slotButton.w / 2, slotButton.y + 10 + getTwoFrameMenuBob(slotButton.index * 0.21), { ...slotSkin, previewHatYOffset: 1 }, 0.75, 1);
+        drawMiniFrogSwatchFacing(slotButton.x + slotButton.w / 2, slotButton.y + 8, { ...slotSkin, previewHatYOffset: 1 }, 0.66, 1);
         ctx.restore();
-        if (!unlocked) drawMiniLockIcon(slotButton.x + slotButton.w - 10, slotButton.y + 7, 0.72);
+        drawBitmapText(String(slotButton.index + 1), slotButton.x + slotButton.w / 2, slotButton.y + 17, 0.50, "center", unlocked ? slotSkin.dark : "#7b878b");
+        if (!unlocked) drawMiniLockIcon(slotButton.x + slotButton.w - 9, slotButton.y + 5, 0.60);
       });
 
       const [bodyButton, bellyButton, accentsButton] = CUSTOM_UI.partButtons;
@@ -4013,7 +4075,7 @@
       drawCustomColorActionButton(CUSTOM_UI.backButton, "BACK", game.customFocusArea === "back", { dark: "#4b565b", mid: "#7d8a90", light: "#d8e1e4" });
       drawCustomHistoryButton(CUSTOM_UI.undoButton, -1, game.customFocusArea === "undo", game.customUndoStack.length > 0 || Boolean(game.customHistoryTransaction), skin);
       drawCustomHistoryButton(CUSTOM_UI.redoButton, 1, game.customFocusArea === "redo", game.customRedoStack.length > 0, skin);
-      drawBitmapText("CLICK A FROG • SELECT A PART • ADJUST R G B", W / 2, 264, 0.68, "center", "#617177");
+      drawBitmapText("SELECT A PART • ADJUST R G B • SAVE YOUR FROG", W / 2, 250, 0.58, "center", "#617177");
       const hoveredLockedSlot = Number.isInteger(game.customHoveredSlotIndex) && !isCustomFrogSlotUnlocked(game.customHoveredSlotIndex)
         ? game.customHoveredSlotIndex
         : null;
@@ -5173,7 +5235,7 @@
       });
 
       drawBitmapText("CLICK OR ARROWS • ENTER TO SELECT", W / 2, 202, 0.78, "center", "#48555a");
-      drawBitmapText("MADE BY MR. MANAHAN", W / 2, 228, 1, "center", "#617177");
+      drawBitmapText(RIBBIT_CREDIT_TEXT, W / 2, RIBBIT_CREDIT_Y, 1, "center", "#617177");
     }
 
     function drawStageBackButton() {
@@ -5270,7 +5332,7 @@
       drawHomeTimeControls();
 
       drawBitmapText("CLICK OR ARROWS • ENTER TO PLAY", W / 2, 210, 0.75, "center", "#48555a");
-      drawBitmapText("MADE BY MR. MANAHAN", W / 2, 229, 1, "center", "#617177");
+      drawBitmapText(RIBBIT_CREDIT_TEXT, W / 2, RIBBIT_CREDIT_Y, 1, "center", "#617177");
 
       const recordLevelId = game.hoveredLevelId || (game.homeFocusVisible && LEVELS[game.homeSelection] ? game.homeSelection : null);
       if (recordLevelId && isLevelUnlocked(recordLevelId)) drawHomeLevelRecordTooltip(recordLevelId);
@@ -5505,19 +5567,30 @@
       ctx.fillStyle = helpActive ? COLORS.ink : "#4b565b"; ctx.fillRect(help.x, help.y, help.w, help.h);
       ctx.fillStyle = helpActive ? "#f7f1c9" : "#f7fdff"; ctx.fillRect(help.x + 2, help.y + 2, help.w - 4, help.h - 4);
       drawMiniBookIcon(help.x + help.w / 2, help.y + help.h / 2, helpActive ? "#9f7d2c" : "#7a5a2a");
-      drawVersionLabel(399, 218, "right");
       if (game.pauseHelpOpen) drawPauseHowToOverlay();
     }
 
     function drawMiniBookIcon(cx, cy, color = "#7a5a2a") {
+      // A compact open instruction book with visible covers, pages, spine,
+      // page lines and a small bookmark. It reads clearly at the 20×20 size.
+      ctx.fillStyle = COLORS.ink;
+      ctx.fillRect(cx - 8, cy - 7, 16, 14);
       ctx.fillStyle = color;
+      ctx.fillRect(cx - 7, cy - 6, 7, 12);
+      ctx.fillRect(cx + 1, cy - 6, 7, 12);
+      ctx.fillStyle = "#fff7d6";
       ctx.fillRect(cx - 6, cy - 5, 5, 10);
-      ctx.fillRect(cx + 1, cy - 5, 5, 10);
-      ctx.fillStyle = "#f7fdff";
-      ctx.fillRect(cx - 5, cy - 4, 3, 8);
-      ctx.fillRect(cx + 2, cy - 4, 3, 8);
+      ctx.fillRect(cx + 2, cy - 5, 5, 10);
+      ctx.fillStyle = "#d8c58a";
+      ctx.fillRect(cx - 5, cy - 2, 3, 1);
+      ctx.fillRect(cx - 5, cy + 1, 3, 1);
+      ctx.fillRect(cx + 3, cy - 2, 3, 1);
+      ctx.fillRect(cx + 3, cy + 1, 3, 1);
       ctx.fillStyle = color;
-      ctx.fillRect(cx - 1, cy - 5, 2, 10);
+      ctx.fillRect(cx - 1, cy - 6, 2, 12);
+      ctx.fillStyle = getSelectedSkin().mid;
+      ctx.fillRect(cx + 4, cy - 6, 2, 5);
+      ctx.fillRect(cx + 5, cy - 1, 1, 2);
     }
 
     function drawPauseHowToOverlay() {
@@ -5550,6 +5623,9 @@
       ctx.fillStyle = "#b8dfe8"; ctx.fillRect(panel.x + 4, panel.y + 4, panel.w - 8, 22);
       drawBitmapText("HOW TO PLAY", panel.x + panel.w / 2, panel.y + 9, 1, "center", "#34484f");
       lines.forEach((line, index) => drawBitmapText(line, panel.x + panel.w / 2, panel.y + 38 + index * 16, 0.68, "center", "#48555a"));
+      ctx.fillStyle = "#d6e0e3";
+      ctx.fillRect(panel.x + 18, panel.y + panel.h - 21, panel.w - 36, 1);
+      drawVersionLabel(panel.x + panel.w / 2, panel.y + panel.h - 14, "center", "#68787e");
       const close = PAUSE_UI.helpCloseButton;
       const closeActive = game.pauseHoveredSelection === "help-close" || game.pausePressedSelection === "help-close";
       ctx.fillStyle = "rgba(25,43,52,0.28)";
@@ -5590,6 +5666,17 @@
       ctx.restore();
     }
 
+    function achievementToastHasFlyBehind(toastRect) {
+      if (game.soloCriticalCatchActive || game.pvpCriticalCatchActive) return false;
+      for (const currentFly of flies) {
+        const flyRect = { x: currentFly.x - 8, y: currentFly.y - 8, w: 16, h: 16 };
+        if (overlapArea(toastRect, flyRect) > 0) return true;
+        const placement = flyLabelPlacementCache.get(flyLabelCacheKey(currentFly));
+        if (placement?.rect && overlapArea(toastRect, placement.rect) > 0) return true;
+      }
+      return false;
+    }
+
     function drawAchievementToast() {
       if (game.achievementToastTimer <= 0) return;
       const pvpToastPlayer = Number.isInteger(game.achievementToastPvpPlayerIndex)
@@ -5613,8 +5700,12 @@
       const life = game.achievementToastTimer / CONFIG.achievementToastDuration;
       const fade = Math.min(1, life * 4, (1 - life) * 5 + 0.1);
 
+      const toastRect = { x: left, y: top, w: width, h: height };
+      const opacityCap = achievementToastHasFlyBehind(toastRect)
+        ? CONFIG.achievementToastObstructedOpacity
+        : 1;
       ctx.save();
-      ctx.globalAlpha = clamp(fade, 0, 1);
+      ctx.globalAlpha = clamp(fade, 0, opacityCap);
       ctx.fillStyle = "rgba(18,31,38,0.38)";
       ctx.fillRect(left + 3, top + 3, width, height);
       ctx.fillStyle = skin.dark;
@@ -5633,7 +5724,7 @@
         drawBitmapText("ACHIEVEMENT!", left + 124, top + 5, 1, "center", skin.dark);
         drawBitmapText(definition.name, left + 124, top + 16, 1, "center", skin.dark);
       } else {
-        if (/^NEW .*#1/.test(genericText)) drawPixelTrophy(left + 18, top + 8, false);
+        if (/FRIENDS LEADER|FIRST PLACE|#1/.test(genericText)) drawPixelTrophy(left + 18, top + 8, false);
         else drawMiniSun(left + 18, top + 15, false);
         drawBitmapText(genericText, left + width / 2 + 10, top + 10, 1, "center", skin.dark);
       }

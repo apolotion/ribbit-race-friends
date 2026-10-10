@@ -1,6 +1,6 @@
-RIBBIT RACE FRIENDS EDITION — LABEL AND COLLISION POLISH
-Build: 2026.10.10-friends-label-collision-polish-1
-Displayed version: VERSION 1.2.0
+RIBBIT RACE FRIENDS EDITION — VISUAL POLISH 1.3.0
+Build: 2026.10.10-friends-visual-polish-1
+Displayed version: VERSION 1.3.0
 
 THIS UPDATES THE EXISTING FRIENDS WORKER.
 Do not create another Worker, repository, FriendsHub, FriendsRoom, or database.
@@ -11,15 +11,20 @@ Do not create another Worker, repository, FriendsHub, FriendsRoom, or database.
 4. Wait for Cloudflare to run:
      npm run check && npm test
      npx wrangler deploy
-5. Confirm /api/health reports build 2026.10.10-friends-label-collision-polish-1.
+5. Confirm /api/health reports build 2026.10.10-friends-visual-polish-1.
 6. Hard-refresh all test devices.
 
 VERIFY:
-- Every word plate appears above its fly.
-- Solo and online signs do not jitter.
-- NEW FRIENDS #1! renders correctly.
-- The CPU/VS hover popup explains how to enable Local PvP.
-- Horizontal frog contact rebounds; vertical contact bonks; high-speed frogs do not tunnel through.
-- VERSION 1.2.0 appears in Solo Settings, Versus Settings, and Pause.
+- Achievement toasts become translucent when covering a fly or vocabulary plate.
+- Jungle has no decorative snake around the center tree.
+- Final Catch vocabulary plates follow flies and fade out.
+- Friends leaderboard first-place notices say FRIENDS LEADER.
+- PvP leaderboard displays 1 WIN, not 1 WINS.
+- Main and Single Player menus show MADE BY NICK at the same baseline.
+- Lake labels are visibly centered.
+- Pause > How To Play displays VERSION 1.3.0 in the book footer.
+- Custom Frog shows a large live preview.
+- Sandbox flies use the normal grow-and-spark spawn animation.
+- The public login screen has no old-private-key migration button.
 
 See UPDATE_INSTRUCTIONS.md and TEST_REPORT.md for details.

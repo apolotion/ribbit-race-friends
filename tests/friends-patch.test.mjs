@@ -32,8 +32,8 @@ test("PIN hashing stays within Cloudflare PBKDF2 limit and matches 100000 rounds
 });
 
 test("Friends release exposes the new build marker",()=>{
-  assert.equal(BUILD,"2026.10.10-friends-label-collision-polish-1");
-  assert.match(browserSource,/2026\.10\.10\-friends\-label\-collision\-polish\-1/);
+  assert.equal(BUILD,"2026.10.10-friends-visual-polish-1");
+  assert.match(browserSource,/2026\.10\.10\-friends\-visual\-polish\-1/);
 });
 
 test("server vocabulary is exactly the requested 15 entries",()=>{
@@ -312,17 +312,17 @@ test("every fly word plate uses top-only candidate rows",()=>{
   assert.doesNotMatch(source,/anchorX \+ 11/);
 });
 
-test("Friends first-place achievement renders a real number sign instead of a fallback question mark",()=>{
-  assert.match(html,/"#": \["01010", "11111"/);
-  assert.match(html,/title: "NEW FRIENDS #1!"/);
+test("Friends first-place notice clearly identifies a leaderboard lead",()=>{
+  assert.match(html,/title: "FRIENDS LEADER!"/);
+  assert.match(html,/FRIENDS LEADER/);
+  assert.doesNotMatch(indexHtml,/MIGRATE OLD PRIVATE-KEY ACCOUNT/);
 });
 
-test("version 1.2.0 appears in both settings screens and the pause menu",()=>{
-  assert.match(html,/const RIBBIT_DISPLAY_VERSION = "VERSION 1\.2\.0"/);
-  assert.match(html,/function drawVersionLabel\(/);
-  const calls=html.match(/drawVersionLabel\(/g)||[];
-  assert.ok(calls.length>=4,`expected helper plus three visible placements, got ${calls.length}`);
-  assert.match(html,/drawVersionLabel\(399, 218, "right"\)/);
+test("version 1.3.0 remains in settings and moves into the How To Play book footer",()=>{
+  assert.match(html,/const RIBBIT_DISPLAY_VERSION = "VERSION 1\.3\.0"/);
+  assert.match(html,/drawVersionLabel\(panel\.x \+ panel\.w \/ 2, panel\.y \+ panel\.h - 14, "center"/);
+  assert.doesNotMatch(html,/drawVersionLabel\(399, 218, "right"\)/);
+  assert.match(html,/function drawMiniBookIcon[\s\S]{0,900}bookmark/);
 });
 
 test("frog overlap axis is deterministic and cooldown separation removes intersections",()=>{
@@ -377,4 +377,61 @@ test("Versus collision code cannot silently ignore overlapping frogs",()=>{
   assert.doesNotMatch(block,/separatePvpPlayersWithoutRebound/);
   assert.match(block,/resolvePvpOverlapByAxis\(a, b, overlapMetrics\)/);
   assert.match(html,/else \{\s*const reboundSpeed = CONFIG\.minimumJumpX \* 0\.55;/);
+});
+
+
+test("achievement toast becomes translucent when a fly or word plate is behind it",()=>{
+  assert.match(html,/achievementToastObstructedOpacity: 0\.62/);
+  assert.match(html,/function achievementToastHasFlyBehind\(toastRect\)/);
+  assert.match(html,/opacityCap = achievementToastHasFlyBehind\(toastRect\)/);
+  assert.match(html,/ctx\.globalAlpha = clamp\(fade, 0, opacityCap\)/);
+});
+
+test("jungle center trunk no longer draws the decorative snake",()=>{
+  assert.doesNotMatch(html,/snakeBaseX|snakeSegments|small snake coils/);
+  assert.match(html,/center trunk is intentionally clear/);
+});
+
+test("final-catch word plates stay in camera space and fade with their flies",()=>{
+  const block=extractFunctionSource(html,"drawFlyNameTag");
+  assert.match(html,/function getCriticalCatchWordFade\(\)/);
+  assert.match(block,/currentFly\.x/);
+  assert.match(block,/ctx\.drawImage\(sprite, drawX, drawY, width, height\)/);
+  assert.match(block,/const alpha = appear \* getCriticalCatchWordFade\(\)/);
+});
+
+test("PvP leaderboard uses singular grammar for exactly one win",()=>{
+  assert.match(browserSource,/wins === 1 \? "WIN" : "WINS"/);
+});
+
+test("menu credit is Made by Nick on one shared baseline",()=>{
+  assert.match(html,/const RIBBIT_CREDIT_TEXT = "MADE BY NICK"/);
+  assert.match(html,/const RIBBIT_CREDIT_Y = 228/);
+  assert.ok((html.match(/RIBBIT_CREDIT_Y/g)||[]).length>=3);
+  assert.doesNotMatch(html,/MR\. MANAHAN/);
+});
+
+test("fly-label sprite text is centered in physical pixels",()=>{
+  assert.match(html,/function drawStableFlyLabelTextToSprite/);
+  assert.match(html,/Math\.round\(\(width \* RENDER_SCALE - visibleWidth\) \/ 2\)/);
+  assert.match(html,/const cell = Math\.max\(1, Math\.round\(logicalScale \* RENDER_SCALE\)\)/);
+});
+
+test("custom frog editor includes a large live preview and relocated controls",()=>{
+  assert.match(html,/preview: Object\.freeze\(\{ x: 44, y: 52, w: 146, h: 148 \}\)/);
+  assert.match(html,/drawMiniFrogSwatchFacing[\s\S]{0,220}2\.35/);
+  assert.match(html,/LIVE PREVIEW/);
+});
+
+test("sandbox flies begin with the normal Single Player spawn animation",()=>{
+  assert.match(html,/sandboxTest:true[\s\S]{0,120}spawnAge:0/);
+  assert.doesNotMatch(html,/sandboxTest:true[\s\S]{0,120}spawnAge:1/);
+  assert.match(html,/drawFlySpawnSparks\(currentFly\)/);
+  assert.match(html,/getFlySpawnScale\(currentFly\)/);
+});
+
+test("public legacy-key migration controls are retired",()=>{
+  assert.doesNotMatch(indexHtml,/friends-show-migrate|friends-migrate-view|MIGRATE OLD PRIVATE-KEY ACCOUNT/);
+  assert.doesNotMatch(browserSource,/apiMigrateLegacyKey|friends-migrate-button/);
+  assert.match(fs.readFileSync(new URL("../public/help.html",import.meta.url),"utf8"),/Public private-key migration has been retired/);
 });

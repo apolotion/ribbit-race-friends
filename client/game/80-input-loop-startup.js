@@ -52,7 +52,7 @@
         }
       );
       drawPauseControls();
-      drawBitmapText("MADE BY MR. MANAHAN", W / 2, 216, 1, "center", "#48555a");
+      drawBitmapText(RIBBIT_CREDIT_TEXT, W / 2, 216, 1, "center", "#48555a");
     }
 
     function drawScene() {
@@ -241,7 +241,7 @@
         const levelLabel = record.level && record.level !== "all" ? String(record.level).toUpperCase() : "FRIENDS";
         items.push({
           type: "leaderboard",
-          title: "NEW FRIENDS #1!",
+          title: "FRIENDS LEADER!",
           subtitle: `${record.scope === "class" ? `${record.scopeLabel || "CLASS"} • ` : ""}${levelLabel} ${metricLabel}`,
           palette: { dark: "#9a5b18", mid: "#e5a72d", light: "#ffe27a", belly: "#fff3a8" },
           record

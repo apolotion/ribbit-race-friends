@@ -1,13 +1,13 @@
 # Test report — Nick legacy-delete repair
 
-Build: `2026.10.10-friends-fly-pause-disconnect-1`
+Build: `2026.10.10-friends-visual-polish-1`
 
 ## Passed
 
 - Complete browser bundle rebuilt from the eight modular game source files.
 - Server and browser modules parse.
 - All required external assets are present.
-- 38/38 automated tests passed.
+- 59/59 automated tests passed in the current complete project.
 - Recovery variable is read from `OWNER_DELETE_LEGACY_USERNAME`.
 - Recovery runs during Durable Object construction and at the start of every Hub request.
 - V2 one-shot marker prevents a later replacement PIN account from being deleted.

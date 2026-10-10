@@ -36,6 +36,7 @@
       timeSelectFlyTarget: 25,
       emberFlyTarget: 100,
       achievementToastDuration: 3.0,
+      achievementToastObstructedOpacity: 0.62,
       achievementItemsPerPage: 3 * 5,
       victoryNoticesPerPage: 2,
       pvpTargetScore: 5,
@@ -63,7 +64,9 @@
     const canvas = document.getElementById("game");
     const gameFrame = document.getElementById("game-frame");
     const friendsGameInputLocked = () => window.RibbitFriendsGameInputLocked?.() === true;
-    const RIBBIT_DISPLAY_VERSION = "VERSION 1.2.0";
+    const RIBBIT_DISPLAY_VERSION = "VERSION 1.3.0";
+    const RIBBIT_CREDIT_TEXT = "MADE BY NICK";
+    const RIBBIT_CREDIT_Y = 228;
     const rgbValueEditor = document.getElementById("rgb-value-editor");
     const fullscreenButton = document.getElementById("fullscreen-button");
     const fullscreenFallback = document.getElementById("fullscreen-fallback");
