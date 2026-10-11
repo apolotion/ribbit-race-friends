@@ -5,88 +5,129 @@ import {readFileSync} from "node:fs";
 const read = (path) => readFileSync(new URL(`../${path}`, import.meta.url), "utf8");
 const engine = read("client/game/120-engine-tutorial.js");
 
-test("1.7.6 cinematic tutorial build and first-boot marker are installed", () => {
-  assert.equal(JSON.parse(read("package.json")).version, "1.7.6");
-  assert.match(read("src/common.js"), /2026\.10\.11-friends-tutorial-cinematic-1/);
-  assert.match(engine, /rrFriendsEngineTutorialSoloSeenV6/);
+const block = (start, end) => engine.slice(engine.indexOf(start), engine.indexOf(end, engine.indexOf(start)));
+
+test("1.7.7 scripted tutorial build and first-boot marker are installed", () => {
+  assert.equal(JSON.parse(read("package.json")).version, "1.7.7");
+  assert.match(read("src/common.js"), /2026\.10\.11-friends-tutorial-scripted-1/);
+  assert.match(engine, /rrFriendsEngineTutorialSoloSeenV7/);
 });
 
-test("Ember portraits preload before tutorial start and never fall back to the gameplay frog", () => {
+test("Ember portraits preload and the tutorial never falls back to a map mentor", () => {
   assert.match(engine, /EMBER_PORTRAITS_READY/);
   assert.match(engine, /emberPortraitsReady/);
-  assert.match(engine, /Never substitute the small gameplay frog/);
-  const block = engine.slice(engine.indexOf("function drawTutorialDialogue"), engine.indexOf("function drawTutorialStatus"));
-  assert.doesNotMatch(block, /drawGameplayFrogSpriteLocal/);
+  assert.match(engine, /No second frog is rendered in the playable tutorial arena/);
+  assert.doesNotMatch(block("function drawTutorialDialogue", "function drawTutorialStatus"), /drawGameplayFrogSpriteLocal/);
 });
 
-test("dialogue advances one fitted line at a time", () => {
-  assert.match(engine, /dialogueLineIndex/);
-  assert.match(engine, /measureBitmapText\(line, 1\)/);
+test("dialogue uses a real typewriter and advances one line at a time", () => {
+  assert.match(engine, /TYPEWRITER_MS_PER_CHARACTER = 28/);
+  assert.match(engine, /visibleDialogueCharacterCount/);
+  assert.match(engine, /dialogueForceComplete/);
+  assert.match(engine, /tutorial\.dialogueLineIndex \+= 1/);
   assert.match(engine, /SPACE FOR NEXT/);
   assert.match(engine, /SPACE TO PLAY/);
-  assert.match(engine, /tutorial\.dialogueLineIndex \+= 1/);
+  assert.match(engine, /TAP FOR NEXT/);
+  assert.match(engine, /TAP TO PLAY/);
 });
 
-test("tutorial flies stay hidden during dialogue and spawn with the normal sparkle afterwards", () => {
+test("dialogue box is compact, top-centered between HUD corners and has no faux scroll control", () => {
+  assert.match(engine, /const panel = \{ x: 92, y: 7, w: 300, h: 42 \}/);
+  assert.match(engine, /const portrait = \{ x: 337, y: 9, w: 51, h: 38 \}/);
+  assert.match(engine, /Even light-blue frame on every edge; no faux scrollbar or continue arrow/);
+  const dialogue = block("function drawTutorialDialogue", "function drawTutorialStatus");
+  assert.doesNotMatch(dialogue, /drawPixelArrow|strokeRect\(/i);
+});
+
+test("tutorial starts only after authentication and its first dialogue is explicitly opened", () => {
+  const polish = read("public/scripts/rr-170-polish.js");
+  assert.match(polish, /authReady=false/);
+  assert.match(polish, /rr-authenticated/);
+  assert.match(polish, /authenticatedProfileReady/);
+  assert.match(polish, /engine\.start\(forcedKind\|\|"solo"\)/);
+  assert.match(engine, /function openDialogue/);
+  assert.match(engine, /dialogueOpenedAt = performance\.now\(\)/);
+  assert.match(engine, /requestAnimationFrame/);
+});
+
+test("tutorial flies are hidden during dialogue and visibly spawn after it closes", () => {
   assert.match(engine, /tutorialArmed:false/);
-  assert.match(engine, /spawnAge:-0\.08/);
   assert.match(engine, /function armTutorialFlies/);
   assert.match(engine, /currentFly\.spawnAge = 0/);
   assert.match(engine, /playFlySpawnSound/);
   assert.match(engine, /originalDrawFlySpawnSparksForTutorial/);
 });
 
-test("failed attempts use two poofs separated by half a second", () => {
+test("failed attempts hide the frog, clear the tongue and use two poofs separated by half a second", () => {
   assert.match(engine, /tutorial\.resetAt = performance\.now\(\) \+ 500/);
+  assert.match(engine, /tutorial\.frogHidden = true/);
+  assert.match(engine, /function resetTutorialTongue/);
   assert.match(engine, /playTutorialPoofSound\("out"\)/);
   assert.match(engine, /playTutorialPoofSound\("in"\)/);
-  assert.match(engine, /tutorial\.frogHidden = true/);
-  assert.match(engine, /completePendingReset/);
+  assert.match(engine, /function completePendingReset/);
 });
 
-test("undercharged max jumps wait until landing before resetting", () => {
-  const launch = engine.slice(engine.indexOf("launchJump = function"), engine.indexOf("// Hide the normal first-jump"));
-  assert.doesNotMatch(launch, /setup === "maxJump"/);
-  assert.match(engine, /step === "maxJump"[\s\S]{0,250}else if \(attemptEnded\) failAttempt/);
+test("scripted scenes match the requested twelve-scene curriculum", () => {
+  for (const setup of [
+    "intro","longJumps","threeCatches","rangeCatch","wrongFly","comboMixed","comboTwo","comboThree",
+    "wallTurn","reboundCatch","quickDrop","bufferDrop","doubleBuffer","normalRound"
+  ]) assert.match(engine, new RegExp(`setup: "${setup}"`));
+  assert.match(engine, /Show me three long jumps in a row!/);
+  assert.match(engine, /Let's get three points - one matching fly per jump!/);
+  assert.match(engine, /This time, catch a fly that doesn't match your English clue!/);
+  assert.match(engine, /catch all three matching flies before you land!/i);
 });
 
-test("tongue lesson uses a normal upper Park spawn and blocks body completion", () => {
-  assert.match(engine, /case "rangeCatch"[\s\S]{0,500}makeParkFly\(4, 0, 0\)/);
+test("max-jump failure waits for landing, while the lesson requires three 90-percent jumps", () => {
+  assert.match(engine, /longJumpStreak/);
+  assert.match(engine, /lastJumpPower >= \.90/);
+  assert.match(engine, /attemptEnded/);
+  const launch = block("launchJump = function", "// Hide the normal first-jump");
+  assert.doesNotMatch(launch, /failAttempt\("CHARGE/);
+});
+
+test("tongue lesson rejects body contact and applies slow motion after a tongue catch", () => {
+  assert.match(engine, /case "rangeCatch"/);
+  assert.match(engine, /makeFly\(360, 75/);
   assert.match(engine, /activeSetup === "rangeCatch" && wasCorrect && source !== "tongue"/);
-  assert.match(engine, /source === "tongue"\) tutorial\.rangeTongueCaught = true/);
+  assert.match(engine, /source === "tongue"/);
+  assert.match(engine, /slowMoUntil/);
 });
 
-test("wrong-fly lesson uses normal Park spawns and rejects the wrong order", () => {
-  assert.match(engine, /case "wrongFly"[\s\S]{0,350}makeParkFly\(3, 1, 0\)/);
-  assert.match(engine, /makeParkFly\(2, 0, 1\)/);
-  assert.match(engine, /tutorial\.wrongOrderInvalid = true/);
+test("wrong and multi-fly lessons validate catch order and same-jump sequences", () => {
+  assert.match(engine, /case "wrongFly"/);
+  assert.match(engine, /tutorial\.wrongFlyCaught/);
+  assert.match(engine, /comboMixed/);
+  assert.match(engine, /comboTwo/);
+  assert.match(engine, /comboThree/);
+  assert.match(engine, /tutorial\.catchEvents\.push\(wasCorrect\)/);
 });
 
-test("drop tutorials retain the original Park platform geometry", () => {
-  for (const setup of ["quickDrop", "bufferDrop", "doubleBuffer"]) {
-    const index = engine.indexOf(`case "${setup}"`);
-    assert.ok(index >= 0, setup);
-    assert.match(engine.slice(index, index + 850), /platforms = cloneParkPlatforms\(\)/, setup);
+test("wall, rebound and Park drop layouts preserve authored checks", () => {
+  assert.match(engine, /case "wallTurn"/);
+  assert.match(engine, /WITHIN 2 JUMPS/);
+  assert.match(engine, /case "reboundCatch"/);
+  assert.match(engine, /positionSoloFrog\(350/);
+  for (const setup of ["quickDrop","bufferDrop","doubleBuffer"]) {
+    const i = engine.indexOf(`case "${setup}"`);
+    assert.ok(i >= 0, setup);
+    assert.match(engine.slice(i, i + 1200), /platforms = cloneParkPlatforms\(\)/, setup);
   }
-  assert.match(engine, /makeParkFly\(7, 0, 0\)/);
-  assert.match(engine, /makeParkFly\(4, 0, 0\)/);
-  assert.match(engine, /makeParkFly\(2, 0, 0\)[\s\S]{0,200}makeParkFly\(4, 1, 1\)[\s\S]{0,200}makeParkFly\(6, 2, 2\)/);
+  assert.match(engine, /bufferEventCount >= 2 && caught >= 3/);
 });
 
-test("current goal uses a trophy panel and owns the failure flash", () => {
-  assert.match(engine, /drawPixelTrophy\(x \+ 14/);
-  assert.match(engine, /failureFlashStartedAt/);
-  assert.match(engine, /ctx\.fillStyle = "#d92727"/);
-  const overlay = engine.slice(engine.indexOf("function drawTutorialOverlay"), engine.indexOf("function drawCompletionScreen"));
-  assert.ok(overlay.indexOf("drawCurrentGoalHud()") < overlay.indexOf("drawTutorialDialogue()"));
-  const status = engine.slice(engine.indexOf("function drawTutorialStatus"), engine.indexOf("function drawTutorialSmoke"));
-  assert.doesNotMatch(status, /failureText/);
+test("current goal owns smooth failure feedback and tutorial status text is suppressed", () => {
+  assert.match(engine, /drawPixelTrophy\(x \+ 16/);
+  assert.match(engine, /failureFlashDuration: 1450/);
+  assert.match(engine, /const fadeStart = duration \* \.68/);
+  assert.match(engine, /flashAlpha/);
+  assert.match(block("function drawTutorialStatus", "function drawTutorialSmoke"), /Scene completion transitions directly/);
+  assert.doesNotMatch(block("function drawTutorialStatus", "function drawTutorialSmoke"), /NICE WORK/);
 });
 
-test("tutorial completion reuses the normal Single Player victory screen and jingle", () => {
-  assert.match(engine, /game\.state === "won"[\s\S]{0,100}beginCompletionScreen\(\)/);
-  assert.match(engine, /const alreadyWon = game\.state === "won"/);
+test("tutorial completion reuses the normal Single Player victory screen and achievement", () => {
   assert.match(engine, /chooseVictoryMessage\("park"\)/);
   assert.match(engine, /playWinSound\(\)/);
-  assert.match(engine, /The tutorial now uses Ribbit Race's normal Single Player victory screen/);
+  assert.match(engine, /tutorial-graduate/);
+  assert.match(engine, /normal Single Player victory screen/);
 });

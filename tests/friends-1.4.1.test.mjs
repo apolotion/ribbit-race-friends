@@ -21,7 +21,7 @@ function extractFunctionSource(source,name){
   throw new Error(`Unclosed ${name}`);
 }
 
-test("1.7.6 keeps a right-edge Lake word plate exactly centered over its fly",()=>{
+test("1.7.7 keeps a right-edge Lake word plate exactly centered over its fly",()=>{
   const names=["flyLabelCacheKey","overlapArea","chooseFlyLabelRect"];
   const source=names.map(name=>extractFunctionSource(rendering,name)).join("\n");
   const make=new Function("game",`${source}\nconst flyLabelPlacementCache=new Map();return {chooseFlyLabelRect};`);

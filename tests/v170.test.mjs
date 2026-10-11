@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import {readFileSync,existsSync} from "node:fs";
 const read=p=>readFileSync(new URL(`../${p}`,import.meta.url),"utf8");
 
-test("v1.7.6 engine tutorial project additions exist",()=>{
+test("v1.7.7 engine tutorial project additions exist",()=>{
   for(const p of [
     "client/game/99-v170-hooks.js",
     "client/game/120-engine-tutorial.js",
@@ -16,7 +16,7 @@ test("v1.7.6 engine tutorial project additions exist",()=>{
     "public/tutorial/ember-laughing.png",
     "public/tutorial/ember-thinking.png"
   ])assert.ok(existsSync(new URL(`../${p}`,import.meta.url)),p);
-  assert.equal(JSON.parse(read("package.json")).version,"1.7.6");
+  assert.equal(JSON.parse(read("package.json")).version,"1.7.7");
 });
 
 test("tutorial uses the real Park engine instead of a popup practice canvas",()=>{
@@ -68,7 +68,7 @@ test("tutorial hides legacy floating controls and preserves cloud progress",()=>
 });
 
 
-test("1.7.6 tutorial uses Ember speech bubbles and authored engine checks",()=>{
+test("1.7.7 tutorial uses Ember speech bubbles and authored engine checks",()=>{
   const engine=read("client/game/120-engine-tutorial.js");
   for(const word of [
     'FROG_SKINS.ember',
@@ -86,9 +86,9 @@ test("tutorial scenarios enforce requested one-attempt and platform layouts",()=
   const engine=read("client/game/120-engine-tutorial.js");
   assert.match(engine,/oneAttempt:\s*true/);
   assert.match(engine,/platforms = cloneParkPlatforms\(\)/);
-  assert.match(engine,/makeParkFly\(4, 0, 0\)/);
-  assert.match(engine,/bufferedPlatforms\.size\s*>=\s*2/);
-  assert.match(engine,/CATCH ALL THREE FLIES/);
+  assert.match(engine,/makeFly\(360, 75/);
+  assert.match(engine,/bufferEventCount >= 2/);
+  assert.match(engine,/catch all three matching flies before you land!/i);
   assert.match(engine,/positionSoloFrog\(350/);
 });
 
@@ -110,9 +110,9 @@ test("Ember dialogue is right-sided, modal, and closes on Space before play resu
     "blockJumpUntilRelease",
     "closeDialogue",
     'portrait: "smile"',
-    "HEY THERE! I'M EMBER. WELCOME TO RIBBIT RACE!"
+    "Hey there, tadpole! Welcome to Ribbit Race!"
   ]) assert.match(engine,new RegExp(word.replace(/[.*+?^${}()|[\]\\]/g,"\\$&")));
-  assert.match(engine,/const portrait = \{ x: 399/);
+  assert.match(engine,/const portrait = \{ x: 337/);
   assert.match(engine,/if \(tutorial\.active && tutorial\.dialogueOpen\)/);
   assert.match(engine,/armScenarioAfterDialogue\(\)/);
 });

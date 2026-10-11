@@ -3,12 +3,12 @@
     // Friends Edition: accounts, matchmaking, and live human gameplay use the
     // same-origin Cloudflare Worker/Durable Object service. The historical
     // directOnlyVersion field is retained only as a protocol compatibility marker.
-    const RIBBIT_DIRECT_BUILD = "2026.10.11-friends-tutorial-cinematic-1";
+    const RIBBIT_DIRECT_BUILD = "2026.10.11-friends-tutorial-scripted-1";
     const RIBBIT_DIRECT_POLICY_VERSION = 2;
     const RIBBIT_ONLINE_PROTOCOL_VERSION = 3;
     const RIBBIT_QUICKPLAY_VERSION = 3;
 
-    const RIBBIT_CLOUD_CLIENT_VERSION = "2026.10.11-friends-tutorial-cinematic-1";
+    const RIBBIT_CLOUD_CLIENT_VERSION = "2026.10.11-friends-tutorial-scripted-1";
     const RIBBIT_CLOUD_SAVE_SCHEMA_VERSION = 2;
     // Preserve every current and future Ribbit Race key, including legacy one-button keys.
     const RIBBIT_GAME_KEY = /^(?:ribbitRace|oneButtonFrog)/;
@@ -702,7 +702,12 @@
         clearInterval(periodicTimer);
         periodicTimer = setInterval(() => { if (dirty) flushSave(); }, autosaveSeconds * 1000);
       
-    setTimeout(() => { if (window.RibbitApplyPendingGuestSave?.()) { try { flushSave(true); } catch (_) {} window.dispatchEvent(new Event("rr-authenticated")); } }, 0);
+    setTimeout(() => {
+      if (window.RibbitApplyPendingGuestSave?.()) {
+        try { flushSave(true); } catch (_) {}
+      }
+      window.dispatchEvent(new Event("rr-authenticated"));
+    }, 0);
 }
 
       function handleAuthResponse(response) {
@@ -787,6 +792,7 @@
         setGameInputLocked(false);
         elements["cloud-gate"].hidden = true;
         requestAnimationFrame(() => document.getElementById("game")?.focus({ preventScroll: true }));
+        setTimeout(() => window.dispatchEvent(new Event("rr-authenticated")), 0);
       }
 
       function readLeaderboardRecordDate(levelId = "park") {

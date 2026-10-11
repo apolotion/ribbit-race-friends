@@ -1,34 +1,40 @@
-# Engine Tutorial Notes — 1.7.6
+# Ribbit Race Friends 1.7.7 — Scripted Tutorial
 
-The tutorial runs inside the real Park engine. It does not use a separate practice canvas.
+## Runtime design
+
+The tutorial runs inside the real Park engine rather than in a detached practice canvas. It wraps the existing jump, update, catch, render, input, and victory functions while the tutorial is active.
+
+## Entry and authentication
+
+First-boot tutorial startup waits until the player has signed in, created an account, or explicitly entered guest mode. The `rr-authenticated` event arms the startup check. The login page is never dismissed merely to start the tutorial.
 
 ## Dialogue
 
-- Approved Ember close-up portraits are preloaded before first boot.
-- Portraits use the black-and-cream frog, orange markings, orange patterned shirt, sunglasses, gold chain, and right-side placement.
-- The small gameplay frog is never used as a portrait fallback.
-- One dialogue line is displayed at a time and dynamically scaled to the available panel width.
-- The final close input is consumed before gameplay resumes.
+- Ember’s five approved portrait assets preload before tutorial startup.
+- The dialogue box fits between the fly counter and Pause corner.
+- One sentence is shown at a time with a 28 ms-per-character typewriter effect.
+- Pressing Space/Enter once during typing reveals the complete sentence; the next press advances.
+- The final press closes the dialogue, is consumed, and waits for key release before gameplay charging can begin.
+- Mobile uses tap-and-release with the same reveal/advance behavior.
 
-## Scenario spawning
+## Scenario lifecycle
 
-- Authored flies remain hidden during dialogue.
-- Closing the final dialogue line arms the flies at `spawnAge = 0` and plays the normal fly-spawn sound.
-- Flies retain normal bobbing and horizontal hover movement after spawning.
+1. Configure the real Park platforms, player start, prompt, and authored flies.
+2. Keep authored flies hidden while Ember speaks.
+3. Close the final dialogue line.
+4. Arm flies at `spawnAge = 0` so the normal grow/sparkle animation plays.
+5. Monitor real engine events until the exercise passes or fails.
+6. On failure, clear the tongue and afterimages, poof out, wait 500 ms, restore, and poof in.
+7. Move directly to the next Ember conversation without a separate “Nice work” banner.
 
-## Failure reset
+## HUD and visual safeguards
 
-- Failure is detected immediately when the prerequisite is known to be missed.
-- For the max-charge exercise, failure waits for landing so the jump can finish naturally.
-- The frog poofs out and is hidden.
-- The authored scenario resets 500 milliseconds later.
-- A second smoke cloud and sound accompany the reappearance.
-- The Current Goal panel flashes red instead of creating a separate failure banner.
+- Tutorial Pause input is intercepted.
+- The Current Goal panel replaces Time/Jumps/Best and remains present through dialogue transitions.
+- Failure feedback is a smooth red pulse/fade in the Current Goal panel.
+- A hidden frog stays at a valid world coordinate; it is not teleported far offscreen, preventing direction arrows.
+- The dialogue panel uses an even light-blue border and no scrollbar/arrow affordance.
 
-## Park geometry
+## Save safety
 
-Quick Drop, Buffer Drop, and Double Buffer all use the original `PARK_PLATFORMS` geometry. Their flies use normal `PARK_FLY_SPAWNS` coordinates.
-
-## Completion
-
-The final lesson completes through Ribbit Race's ordinary Single Player win state. The normal victory message, dance, rounded pixel panel, buttons, and victory melody are shown. The reversible tutorial snapshot remains active until the player leaves the victory screen, then the legitimate save is restored and `RIBBIT READY` is awarded.
+The tutorial enters the reversible Playtest snapshot lifecycle. Temporary tutorial catches, jumps, records, and unlocks are discarded when the tutorial ends. The legitimate state is restored before the permanent **RIBBIT READY** completion achievement is applied.

@@ -1,5 +1,5 @@
 
-/* Ribbit Race Friends 1.7.6 — account modal, mobile touch, tutorials, and UI polish. */
+/* Ribbit Race Friends 1.7.7 — account modal, mobile touch, tutorials, and UI polish. */
 html, body {
   -webkit-touch-callout: none;
   -webkit-user-select: none;
@@ -189,4 +189,24 @@ body.rr-mobile-mode #rr170-pause.rr170-versus {
   border:0;
   box-shadow:none;
   opacity:.001;
+}
+
+
+/* Tutorial owns the full play surface. Hide unrelated corner controls and prevent
+   the page/game shell from exposing scrollbars or resize-looking affordances. */
+body.rr-tutorial-active,
+body.rr-tutorial-active #game-frame {
+  overflow: hidden !important;
+  scrollbar-width: none !important;
+}
+body.rr-tutorial-active::-webkit-scrollbar,
+body.rr-tutorial-active #game-frame::-webkit-scrollbar {
+  width: 0 !important;
+  height: 0 !important;
+  display: none !important;
+}
+body.rr-tutorial-active #corner-controls,
+body.rr-tutorial-active #fullscreen-button,
+body.rr-tutorial-active #rr170-overlay-root {
+  display: none !important;
 }

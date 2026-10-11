@@ -1,93 +1,144 @@
-# Ember Tutorial Dialogue — Version 1.7.6
+# Ember Tutorial Dialogue Script — Version 1.7.7
 
-Each entry appears one line at a time. Space/Enter—or tap-release on mobile—advances to the next line. Closing the final line starts the playable exercise.
+The tutorial begins only after a player signs in, creates an account, or chooses **Play Without Saving**. Ember speaks one line at a time from a compact panel at the top of the real Park game. Text appears with a Generation-II-style typewriter effect. Press **Space** or **Enter**—or tap and release on mobile—to reveal/advance the line. The final line closes the conversation and begins the checked exercise.
 
-## 1. Welcome to Ribbit Race
+## Scene 1 — Welcome
 
-1. `HEY THERE! I'M EMBER. WELCOME TO RIBBIT RACE!`
-2. `I'LL TEACH YOU TO HOP, CATCH, AND COMPETE.`
-3. `CLOSE THIS BOX, THEN MAKE ONE JUMP.`
+1. Hey there, tadpole! Welcome to Ribbit Race!
+2. I’m Ember—a Ribbit Race pro from this side of the pond.
+3. I’ll show you the ropes so you can hop, catch, and compete with the best.
+4. Who knows? Maybe you’ll even keep up with me someday!
+5. Your goal is simple…
+6. Catch the most flies and be the best!
 
-Goal: Make one jump.
+**Exercise:** None. The tutorial advances automatically to Scene 2.
 
-## 2. Match the Term
+## Scene 2 — Three Long Jumps
 
-1. `THE ENGLISH TERM APPEARS AT THE BOTTOM.`
-2. `CATCH THE FLY WITH THE MATCHING SPANISH WORD.`
+1. Let’s put those frog legs to work!
+2. Hold the jump button to charge, then release to leap.
+3. The more you charge, the farther you’ll go—but timing is everything!
+4. Hold too long, and you’ll lose some of that distance.
+5. Try releasing just as your charge gets close to full.
+6. Show me three long jumps in a row!
 
-Goal: Catch the matching fly.
+**Exercise:** Perform three consecutive jumps at 90% charge or higher. The streak resets after a weaker jump.
 
-## 3. Charge a Full Jump
+## Scene 3 — Three Matching Catches
 
-1. `HOLD JUMP UNTIL THE METER IS COMPLETELY FULL.`
-2. `RELEASE AND CATCH THE FLY IN THAT ONE JUMP.`
+1. Not bad, tadpole! You’ve got some spring in those legs.
+2. Looks like dinner is ready!
+3. Every fly has a term above its head.
+4. Your English clue appears at the bottom of the screen.
+5. Catch the fly with the matching translation to score a point.
+6. Let’s get three points—one matching fly per jump!
 
-Goal: Max charge plus catch. A weak jump is allowed to finish before the smoke reset.
+**Exercise:** Complete three authored matching-fly catches, one per jump.
 
-## 4. Automatic Catch Range
+## Scene 4 — Tongue Range
 
-1. `YOUR FROG CATCHES FLIES AUTOMATICALLY IN RANGE.`
-2. `THIS FLY IS JUST BEYOND BODY-CATCH RANGE.`
-3. `GET CLOSE ENOUGH AND YOUR TONGUE WILL GRAB IT.`
+1. Enjoy your meal? Don’t forget to leave a tip!
+2. Speaking of tips… here’s a good one!
+3. You don’t have to land right on a fly to catch it.
+4. Get close enough, and your tongue will grab it automatically.
+5. This fly is a little too far away for even my frog legs.
+6. Charge a long jump and let your tongue handle the rest!
 
-Goal: Complete a real tongue catch.
+**Exercise:** Catch a fly just outside body-contact range with the tongue. The successful catch receives a brief slow-motion emphasis.
 
-## 5. Wrong Flies Are Safe
+## Scene 5 — Wrong Fly
 
-1. `WRONG FLY? NO PROBLEM—YOU'LL SPIT IT BACK OUT.`
-2. `CATCH THE WRONG FLY, THEN THE RIGHT FLY.`
-3. `DO BOTH IN THE SAME JUMP.`
+1. Now you’re catching in style!
+2. But dinner won’t always be served one fly at a time.
+3. There can be up to four flies on the screen at once, so check your clue!
+4. Catch the wrong fly, and you’ll spit it right back out.
+5. Let’s see what that looks like.
+6. This time, catch a fly that doesn’t match your English clue!
 
-Goal: Wrong fly first, correct fly second, before landing.
+**Exercise:** Catch one incorrect fly and observe the spit-back behavior.
 
-## 6. Turn Around with a Wall
+## Scene 6A — One Match and One Spit-Out
 
-1. `YOU CAN'T TURN AROUND IN MID-AIR.`
-2. `HIT THE RIGHT WALL, THEN COME BACK FOR THE FLY.`
-3. `ONE OR TWO JUMPS WILL WORK.`
+1. I don’t know about you, but all this jumping sure does work up my appetite.
+2. So why stop at one fly per jump?
+3. Line up your leap, and you can catch several before you land!
+4. Not every fly along the way will be a match, though.
+5. Try catching both of these flies in one jump.
 
-Goal: Wall turn and catch within two jumps. A successful one-jump catch also passes.
+**Exercise:** Catch the matching fly and the nonmatching fly in one jump.
 
-## 7. Rebound Catch
+## Scene 6B — Two Matching Flies
 
-1. `NOW DO THE WALL TURN IN ONE JUMP.`
-2. `HIT THE WALL, REBOUND, AND CATCH THE FLY.`
+1. One match and one spit-out!
+2. Let’s try turning both catches into points.
+3. Watch your English clue as you go.
+4. This time, catch two matching flies in a single jump!
 
-Goal: One-jump rebound catch.
+**Exercise:** Catch two matching flies before landing.
 
-## 8. Quick Platform Drop
+## Scene 6C — Three Matching Flies
 
-1. `TAP JUMP QUICKLY WHILE STANDING ON A PLATFORM.`
-2. `DROP THROUGH AND CATCH THE FLY BELOW.`
+1. Two for two! Okay, that was pretty good.
+2. But how about a bigger helping?
+3. Line up your jump and catch all three matching flies before you land!
 
-Goal: Quick drop plus catch in one attempt.
+**Exercise:** Catch three matching flies before landing.
 
-## 9. Buffer a Platform Drop
+## Scene 7 — Wall Turn
 
-1. `CHARGE FROM THE LOW PLATFORM TO THE TOP.`
-2. `TAP JUST BEFORE LANDING TO BUFFER THROUGH IT.`
-3. `CATCH THE FLY NEAR THE MIDDLE PLATFORM.`
+1. Three flies in one jump?! Okay, now you’re showing off!
+2. There’s just one catch to this all-you-can-eat buffet…
+3. The only way to turn around is by hitting a wall.
+4. Miss a fly, and you’ll need to bounce off a wall to head back for it.
+5. Let’s practice! Use your first jump to hit the wall and turn around.
+6. Then jump back and catch the fly you passed.
 
-Goal: Buffered drop through the top Park platform.
+**Exercise:** Touch the wall and return for the fly within two jumps. A successful one-jump turn-and-catch also passes.
 
-## 10. Double Buffer Drop
+## Scene 8 — One-Jump Rebound
 
-1. `BUFFER THROUGH THE TOP, THEN THE MIDDLE.`
-2. `CATCH ALL THREE FLIES ON THE WAY DOWN.`
+1. Nice turnaround! Now let’s turn those two jumps into one.
+2. You don’t have to land before making your comeback!
+3. Jump into the wall, bounce back, and catch the fly before you touch the ground.
+4. Make it all happen in one jump!
 
-Goal: Two buffered drops and three catches.
+**Exercise:** Complete a one-jump wall rebound catch.
 
-## 11. Two Flies in One Arc
+## Scene 9 — Quick Platform Drop
 
-1. `LINE UP TWO FLIES ALONG ONE JUMP ARC.`
-2. `CATCH BOTH BEFORE YOU LAND.`
+1. You’re a natural, tadpole!
+2. Now, what happens when dinner is downstairs?
+3. While you’re standing on a platform, give the jump button a quick tap—press and release.
+4. Instead of charging a jump, you’ll drop straight through!
+5. Give it a try and catch the fly underneath you.
 
-Goal: Two flies in one jump.
+**Exercise:** Quick-drop through a Park platform and catch the fly in one attempt.
 
-## 12. Final Practice Round
+## Scene 10 — Buffered Platform Drop
 
-1. `THAT'S THE BASICS—NOW PUT IT ALL TOGETHER.`
-2. `CATCH FIVE FLIES IN A NORMAL PARK ROUND.`
-3. `I'LL BE CHEERING FOR YOU!`
+1. What if you want to eat as soon as possible?
+2. Press jump just before you land on the platform.
+3. Time it right, and you’ll drop straight through while keeping your momentum!
+4. This is called buffering—getting your next move ready before you land.
+5. Let’s use a buffered drop to catch this fly!
 
-Goal: Complete a normal five-fly Park round. The standard Single Player victory screen and jingle are used.
+**Exercise:** Jump from the lower-left Park platform toward the top platform, buffer through it, and catch the authored fly.
+
+## Scene 11 — Double Buffer Drop
+
+1. Looking smooth!
+2. You can chain those drops together, too.
+3. Press jump just before each landing to drop through one platform, then the next.
+4. Keep that rhythm going and catch all three flies!
+
+**Exercise:** Complete two distinct buffered drops and catch all three flies.
+
+## Scene 12 — Final Round
+
+1. You’re moving so fast, I thought you were a dart frog for a second!
+2. You’ve got the basics. Now let’s put them all together.
+3. Catch five matching flies to complete a normal round.
+4. Pick your matches, time your jumps, and make those walls and platforms work for you!
+5. I’ll be cheering you on from the lily pads!
+
+**Exercise:** Complete a normal five-fly Park round. Ribbit Race uses the normal Single Player victory screen and jingle, then awards **RIBBIT READY**.

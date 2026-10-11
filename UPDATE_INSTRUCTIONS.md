@@ -1,18 +1,18 @@
-# Ribbit Race Friends 1.7.6 — Tutorial Cinematic Update
+# Ribbit Race Friends 1.7.7 — Scripted Tutorial Update
 
 ## Build
 
-- Displayed version: `VERSION 1.7.6`
-- Server build: `2026.10.11-friends-tutorial-cinematic-1`
+- Displayed version: `VERSION 1.7.7`
+- Server build: `2026.10.11-friends-tutorial-scripted-1`
 
-## Recommended installation
+## Installation
 
-Use the complete repository ZIP if your GitHub repository has ever reported a missing file during Cloudflare Builds.
+Use the complete repository ZIP when the GitHub repository has previously reported missing source or public files.
 
-1. Back up the current `apolotion/ribbit-race-friends` repository.
+1. Back up `apolotion/ribbit-race-friends`.
 2. Extract the complete update ZIP.
-3. Copy the extracted **contents** into the repository root, preserving all paths.
-4. Confirm that these are directly at the root:
+3. Copy the extracted **contents** into the repository root, preserving every directory.
+4. Confirm the repository root directly contains:
 
    ```text
    package.json
@@ -27,10 +27,10 @@ Use the complete repository ZIP if your GitHub repository has ever reported a mi
 5. Commit to `main`, for example:
 
    ```text
-   Refine Ember tutorial dialogue, scenarios and victory flow
+   Ribbit Race Friends 1.7.7 scripted tutorial fixes
    ```
 
-6. Keep the existing Cloudflare settings:
+6. Keep Cloudflare configured as:
 
    ```text
    Build command:  npm run check && npm test
@@ -38,7 +38,7 @@ Use the complete repository ZIP if your GitHub repository has ever reported a mi
    Root directory: /
    ```
 
-7. Keep the current bindings:
+7. Keep the existing bindings:
 
    ```text
    HUB     → FriendsHub
@@ -47,33 +47,35 @@ Use the complete repository ZIP if your GitHub repository has ever reported a mi
    ```
 
 8. Do not recreate or delete either Durable Object.
-9. After deployment, open `/api/health` and confirm the build contains:
-
-   ```text
-   2026.10.11-friends-tutorial-cinematic-1
-   ```
-
-10. Hard-refresh desktop browsers. Fully close and reopen the iPhone Home Screen app.
+9. Wait for the build and tests to succeed.
+10. Check `/api/health` for `2026.10.11-friends-tutorial-scripted-1`.
+11. Hard-refresh desktop browsers; fully close and reopen the iPhone Home Screen app.
 
 ## Tutorial retest
 
-Append this to the deployed game URL:
+Append:
 
 ```text
 ?tutorial=solo
 ```
 
-## What to verify
+## Verification checklist
 
-- Ember's approved sunglasses/orange-shirt portrait is visible in the first dialogue frame.
-- Dialogue advances one large line at a time.
-- The last dialogue line closes into gameplay rather than charging a jump.
-- Tutorial flies appear with the normal sparkle/grow animation after dialogue closes.
-- An undercharged max jump resets only after the frog lands.
-- Failed attempts poof out, wait about half a second, and poof back in with two sounds.
-- The tongue lesson uses a normal upper Park fly location.
-- Wrong-then-right must be completed in one jump and in that order.
-- Wall Turn accepts either one or two jumps.
-- Quick Drop, Buffer Drop, and Double Buffer use the unchanged Park platform layout.
-- The Current Goal panel remains visible during dialogue and flashes red smoothly after failure.
-- The final practice round uses the normal Single Player victory animation, message, buttons, and jingle.
+- Login/create/guest selection completes before the tutorial starts.
+- The first Ember line appears immediately.
+- Text types one sentence at a time and advances correctly.
+- Space used to close dialogue does not charge a jump.
+- The compact top panel does not cover the fly counter or Pause corner.
+- No scrollbar, lower-right arrow, or detached “Nice work” message appears.
+- Flies sparkle into existence after the final dialogue line.
+- Failed attempts clear the tongue and use two poofs with a 0.5-second gap.
+- No offscreen frog-direction arrow appears during a poof.
+- Three 90%-plus jumps are required in Scene 2.
+- Scene 3 awards three one-jump matching catches.
+- Scene 4 requires a true tongue catch and shows a brief slow-motion emphasis.
+- Scene 5 demonstrates an incorrect catch and spit-back.
+- Scene 6 checks mixed, two-match, and three-match arcs.
+- Wall Turn accepts one or two jumps; Rebound Catch remains one jump.
+- Buffer and Double Buffer recognize distinct platform transitions.
+- Current Goal fully replaces Time/Jumps/Best and fades smoothly after failure.
+- The final round uses the normal Single Player victory screen and jingle.

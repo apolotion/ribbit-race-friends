@@ -1,40 +1,36 @@
-# Ribbit Race Friends 1.7.6 — Test Report
+# Ribbit Race Friends 1.7.7 — Test Report
 
-## Commands run
+## Result
 
-```text
-npm run check
-npm test
-```
+- `npm run check`: **PASS**
+- `npm test`: **148 passed, 0 failed**
+- Game bundle: **13 modules**
+- Required external public assets: **21 present**
 
-## Final result
+## Tutorial-focused coverage
 
-```text
-Built game bundle from 13 modules
-Server and browser modules parse; 21 external assets are present
+Automated checks verify:
 
-146 tests
-146 passed
-0 failed
-```
-
-## Tutorial-specific coverage
-
-The automated checks verify:
-
-- 1.7.6 build and V6 first-boot marker;
-- portrait preloading and no gameplay-frog portrait fallback;
-- one-line dialogue progression and dynamic text scaling;
-- hidden authored flies during dialogue;
-- normal sparkle/grow spawning after dialogue;
-- 500 ms two-stage smoke reset and both poof sounds;
-- max-charge failure only after landing;
-- tongue-only completion on a normal Park spawn;
-- wrong-then-right order enforcement;
-- unchanged Park platform geometry for drop lessons;
-- trophy Current Goal panel and red failure flash;
-- normal Single Player victory screen and melody reuse.
+- current version/build markers and V7 first-boot key;
+- authentication-gated tutorial startup;
+- portrait preload and no map Ember fallback;
+- compact top dialogue geometry between HUD corners;
+- one-line typewriter timing and line advancement;
+- no faux scrollbar/continue-arrow rendering;
+- post-dialogue fly sparkle/spawn lifecycle;
+- tongue and afterimage cleanup during resets;
+- 500 ms two-poof reset timing;
+- no offscreen frog sentinel coordinates;
+- all requested scripted scene/setup identifiers;
+- three-long-jump and three-matching-catch progression;
+- tongue-only range lesson and slow-motion emphasis;
+- wrong-fly and multi-fly sequence checks;
+- wall/rebound and unchanged Park platform layouts;
+- robust distinct buffered-drop counting;
+- trophy Current Goal panel and smooth red fade;
+- suppression of the old “Nice Work” transition;
+- normal Single Player victory/jingle and RIBBIT READY registration.
 
 ## Limits
 
-No files were deployed to the user's Cloudflare account. Exact feel on a physical iPhone, Promethean board, and the full twelve-step production tutorial still requires a manual post-deployment playthrough.
+The automated suite validates source structure, parsing, build output, and scenario state logic. It does not replace a complete physical playthrough on the deployed Cloudflare build. After deployment, manually test the tongue position, all multi-fly arcs, the wall/rebound shots, and buffered-drop timing on both desktop and iPhone.

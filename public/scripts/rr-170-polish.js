@@ -370,6 +370,14 @@
     const forcedKind=/^pvp$/i.test(requested)?"pvp":/^solo$/i.test(requested)?"solo":"";
     let starting=false;
     let finished=false;
+    let authReady=false;
+
+    const authenticatedProfileReady=()=>{
+      try {
+        const profile=window.RibbitCloud?.profile?.();
+        return Boolean(profile?.signedIn || profile?.guestMode);
+      } catch (_) { return false; }
+    };
 
     const check=()=> {
       if(finished || starting) return;
@@ -378,6 +386,7 @@
       const gateOpen=gate && gate.hidden !== true;
       const portraitsReady=engine?.portraitsReady !== false;
       const gameReady=Boolean(engine && canvas && Number(canvas.width) > 0 && Number(canvas.height) > 0 && portraitsReady);
+      if(!authReady && !authenticatedProfileReady()){setTimeout(check,250);return;}
       if(gateOpen || !gameReady){setTimeout(check,250);return;}
       if(!forcedKind && engine.seen("solo")){finished=true;return;}
 
@@ -395,7 +404,7 @@
       }));
     };
 
-    window.addEventListener("rr-authenticated",()=>setTimeout(check,60));
+    window.addEventListener("rr-authenticated",()=>{authReady=true;setTimeout(check,60);});
     document.addEventListener("visibilitychange",()=>{if(!document.hidden)setTimeout(check,60);});
     setTimeout(check,250);
   }
