@@ -1,19 +1,24 @@
 # Ribbit Race Friends Edition
 
-Build: `2026.10.11-friends-engine-tutorial-2`  
-Displayed game version: `VERSION 1.7.2`
+Build: `2026.10.11-friends-ember-dialogue-1`  
+Displayed game version: `VERSION 1.7.4`
 
 This is the independent public Cloudflare Friends Edition. It retains four-digit PIN accounts, cloud saves, private rooms, Quickplay, spectators, CPU takeover, leaderboard record replays, post-unlock hat progression, the current 15-word Spanish vocabulary, clean sign-out reloads, stable fly labels, and the responsibility-based browser-client organization.
 
 
-## Changes in 1.7.2
+## Changes in 1.7.4
 
-- Replaced the separate tutorial popup/practice canvas with scenario checks inside the real Park game engine.
-- First boot now opens the actual Park level and uses the normal frog, flies, tongue, walls, platforms, drops, HUD, pause control, and five-fly round lifecycle.
-- Failed tutorial requirements reset their authored Park scenario.
-- Tutorial activity is isolated through the reversible playtest snapshot system so legitimate cloud progress and records are restored afterward.
-- Removed the legacy floating tutorial controls and floating Live Matches button. Spectating remains inside the normal Online → Spectate flow.
-- Added URL-only tutorial retesting with `?tutorial=solo` or `?tutorial=pvp`, avoiding additional menu clutter.
+- Added five close-up Ember portrait assets based on the approved black-frog/orange-shirt concept.
+- Ember keeps the orange patterned shirt, sunglasses, gold chain, and expressive hand poses.
+- Each checked Park tutorial scenario begins with a dark teal dialogue panel whose portrait and nameplate are on the right.
+- Space/Enter or mobile tap-release closes the dialogue.
+- The closing Space press is consumed until key-up so it cannot accidentally trigger a jump.
+- The game simulation remains frozen while Ember is speaking.
+- After dialogue closes, the normal game engine resumes until the current scenario goal is completed.
+- Completing a goal opens Ember's next conversation and the next authored scenario.
+- Failed one-attempt scenarios reset without replaying the full speech.
+- The existing Current Goal HUD, disabled tutorial Pause, authored Park layouts, reversible save isolation, congratulations screen, and `RIBBIT READY` achievement remain intact.
+- The full conversation is documented in `EMBER_DIALOGUE_SCRIPT.md`.
 
 ## Changes in 1.6.0
 

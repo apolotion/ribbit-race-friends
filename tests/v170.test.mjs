@@ -3,15 +3,20 @@ import assert from "node:assert/strict";
 import {readFileSync,existsSync} from "node:fs";
 const read=p=>readFileSync(new URL(`../${p}`,import.meta.url),"utf8");
 
-test("v1.7.2 engine tutorial project additions exist",()=>{
+test("v1.7.4 engine tutorial project additions exist",()=>{
   for(const p of [
     "client/game/99-v170-hooks.js",
     "client/game/120-engine-tutorial.js",
     "public/scripts/rr-170-polish.js",
     "public/scripts/rr-170-online.js",
-    "public/styles/rr-170.css"
+    "public/styles/rr-170.css",
+    "public/tutorial/ember-confident.png",
+    "public/tutorial/ember-smile.png",
+    "public/tutorial/ember-cool.png",
+    "public/tutorial/ember-laughing.png",
+    "public/tutorial/ember-thinking.png"
   ])assert.ok(existsSync(new URL(`../${p}`,import.meta.url)),p);
-  assert.equal(JSON.parse(read("package.json")).version,"1.7.2");
+  assert.equal(JSON.parse(read("package.json")).version,"1.7.4");
 });
 
 test("tutorial uses the real Park engine instead of a popup practice canvas",()=>{
@@ -22,7 +27,7 @@ test("tutorial uses the real Park engine instead of a popup practice canvas",()=
     "FINAL PRACTICE ROUND",
     "resetGame(true)",
     'game.selectedLevelId = "park"',
-    "COMPLETE THE SCENARIO"
+    "CURRENT GOAL"
   ])assert.match(engine,new RegExp(word.replace(/[.*+?^${}()|[\]\\]/g,"\\$&")));
   assert.doesNotMatch(polish,/rr170-tutorial-canvas|rr170-tutorial-shell|Tutorial\.open/);
   assert.doesNotMatch(polish,/rr170-solo-tutorial|rr170-pvp-tutorial/);
@@ -60,4 +65,54 @@ test("tutorial hides legacy floating controls and preserves cloud progress",()=>
   assert.match(polish,/medal\.hidden = inTutorial/);
   assert.match(css,/\.rr170-button\[hidden\]/);
   assert.match(css,/display:\s*none\s*!important/);
+});
+
+
+test("1.7.4 tutorial uses Ember speech bubbles and authored engine checks",()=>{
+  const engine=read("client/game/120-engine-tutorial.js");
+  for(const word of [
+    'FROG_SKINS.ember',
+    'drawTutorialDialogue',
+    'drawCurrentGoalHud',
+    'DOUBLE BUFFER DROP',
+    'PARK TUTORIAL COMPLETE',
+    'tutorial-graduate',
+    'THE TUTORIAL CANNOT BE PAUSED'
+  ]) assert.match(engine,new RegExp(word.replace(/[.*+?^${}()|[\]\\]/g,"\\$&")));
+  assert.doesNotMatch(engine,/COMPLETE THE SCENARIO/);
+});
+
+test("tutorial scenarios enforce requested one-attempt and platform layouts",()=>{
+  const engine=read("client/game/120-engine-tutorial.js");
+  assert.match(engine,/oneAttempt:\s*true/);
+  assert.match(engine,/buffer-top/);
+  assert.match(engine,/double-top/);
+  assert.match(engine,/bufferedPlatforms\.size\s*>=\s*2/);
+  assert.match(engine,/CATCH ALL THREE FLIES/);
+  assert.match(engine,/positionSoloFrog\(386/);
+});
+
+test("tutorial completion achievement is registered in the shared gallery",()=>{
+  const core=read("client/game/10-core-config.js");
+  assert.match(core,/id:\s*"tutorial-graduate"/);
+  assert.match(core,/name:\s*"RIBBIT READY"/);
+  assert.match(core,/"level-garden","tutorial-graduate"/);
+});
+
+
+test("Ember dialogue is right-sided, modal, and closes on Space before play resumes",()=>{
+  const engine=read("client/game/120-engine-tutorial.js");
+  for(const word of [
+    "EMBER_PORTRAIT_SOURCES",
+    "dialogueOpen",
+    "PRESS SPACE TO CONTINUE",
+    "TAP TO CONTINUE",
+    "blockJumpUntilRelease",
+    "closeDialogue",
+    'portrait: "smile"',
+    "HEY THERE! I'M EMBER. WELCOME TO RIBBIT RACE!"
+  ]) assert.match(engine,new RegExp(word.replace(/[.*+?^${}()|[\]\\]/g,"\\$&")));
+  assert.match(engine,/const portrait = \{ x: 374/);
+  assert.match(engine,/if \(tutorial\.active && tutorial\.dialogueOpen\)/);
+  assert.match(engine,/configureStep\(false\)/);
 });

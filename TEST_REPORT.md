@@ -1,58 +1,71 @@
-# Ribbit Race Friends 1.7.2 — Test Report
+# Ribbit Race Friends 1.7.4 — Ember Dialogue Test Report
 
-Build: `2026.10.11-friends-engine-tutorial-2`
+Build: `2026.10.11-friends-ember-dialogue-1`
 
-## Automated project pipeline
+## Automated pipeline
 
 | Check | Result |
 |---|---|
 | `npm run build` | PASS |
 | `node scripts/check.mjs` | PASS |
 | `npm run check` | PASS |
-| `npm test` | PASS — 121/121 |
+| `npm test` | PASS — 125/125 |
 | Game bundle module count | 13 |
 | Required public assets | 21 |
 
-The automated checks cover the existing Friends server, PIN accounts, saves, Quickplay, spectators, mobile controls, records/replays, hats, collisions, fly labels, and the new tutorial behavior.
+## Dialogue-specific checks
 
-## Tutorial-specific checks
+- Five required Ember portrait assets are included under `public/tutorial/`.
+- The portrait frame is positioned on the right side of the dialogue panel.
+- The Ember nameplate and speech notch are also right-aligned.
+- Every Single Player tutorial scenario contains dialogue text and a selected portrait expression.
+- The game input lock remains active while a dialogue is open.
+- Space, Enter, and mobile tap-release can close the dialogue.
+- A Space close sets a block-until-release guard, preventing the same keypress from triggering a jump.
+- Scenario state is armed only after the dialogue closes.
+- The simulation does not advance while dialogue is open.
+- Completing a checked scenario advances to the next scenario and opens its dialogue.
+- The existing authored Park scenarios, save isolation, completion screen, and `RIBBIT READY` achievement remain installed.
 
-- The tutorial source selects `park` and invokes the normal `resetGame(true)` path.
-- The former `rr170-tutorial-shell`, isolated tutorial canvas, and floating tutorial buttons are absent.
-- The floating Live Matches button is absent; the normal in-canvas Spectate flow remains.
-- Scenario definitions cover charged jumps, automatic catches, wrong-fly spit-back, wall turns, wall rebound catches, quick drops, buffered drops, two-fly arcs, and a normal five-fly round.
-- The tutorial invokes the reversible playtest snapshot lifecycle.
-- CSS explicitly hides overlay buttons carrying the `hidden` attribute, preventing inactive account/device/medal controls from appearing over the tutorial.
+## Existing regression coverage
 
-## Browser runtime check
+The full suite also covers the existing account, save, Quickplay, spectator, mobile, replay, hat, collision, fly-label, Cloudflare, and engine-tutorial systems.
 
-The final production HTML/CSS/scripts were assembled into a self-contained Chromium test page with test-only storage and same-origin API adapters.
+## Visual inspection
 
-Observed state after entering as a guest:
+The generated portrait crops were inspected as a five-image set. They retain the approved concept’s:
 
-```json
-{
-  "tutorialActive": true,
-  "tutorialKind": "solo",
-  "tutorialStep": 0,
-  "gameState": "playing",
-  "mode": "solo",
-  "level": "park",
-  "oldTutorialPopupPresent": false,
-  "floatingSoloTutorialButtonPresent": false,
-  "floatingPvpTutorialButtonPresent": false,
-  "floatingLiveMatchesButtonPresent": false,
-  "accountButtonHidden": true,
-  "deviceButtonHidden": true,
-  "achievementMedalHidden": true,
-  "javascriptPageErrors": 0
-}
+- black frog skin;
+- orange markings and orange Hawaiian-style shirt;
+- sunglasses;
+- gold chain;
+- distinct confident, smiling, cool, laughing, and thinking gestures.
+
+A constructed layout preview is included as:
+
+```text
+PREVIEWS/Ember_Dialogue_Welcome.png
 ```
 
-See `PREVIEWS/Tutorial_Engine_Park.png` for the rendered first scenario.
+## Browser-runtime limitation
 
-## Limits
+A full interactive browser run was attempted, but the managed Chromium environment available here blocks locally hosted, `file:`, and `data:` test pages by organization policy. Therefore, no claim is made that a complete deployed browser playthrough was performed in this environment.
 
-- No deployment to the user’s Cloudflare account was performed.
-- The test API and storage were local adapters; live Durable Object storage and production WebSocket traffic were not modified.
-- The full sequence still needs one manual playthrough after deployment, particularly on iPhone and a classroom touchscreen.
+The source parsing, bundle build, asset checks, and 125 automated tests passed. The deployed build should still receive a manual desktop and iPhone check, especially for Space-close input consumption, tap-release dialogue closing, and the complete twelve-step tutorial sequence.
+
+## Deployment status
+
+Nothing was deployed to the user’s Cloudflare account from this environment.
+
+## Packaged-repository verification
+
+The final complete repository ZIP was extracted into a fresh directory and run through the same commands. It again completed with:
+
+```text
+Built game bundle from 13 modules
+Server and browser modules parse; 21 external assets are present
+
+125 tests
+125 passed
+0 failed
+```

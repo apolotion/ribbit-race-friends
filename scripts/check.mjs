@@ -31,6 +31,14 @@ const assets=[...html.matchAll(/(?:src|href)="(\/(?:scripts|styles|icons)\/[^"?]
 for(const asset of assets)if(!existsSync(join(root,'public',asset)))throw new Error('Missing referenced browser asset: '+asset);
 const requiredMobileAssets=['manifest.webmanifest','icons/ribbit-race-180.png','icons/ribbit-race-512.png','scripts/mobile-experience.js'];
 for(const asset of requiredMobileAssets)if(!existsSync(join(root,'public',asset)))throw new Error('Missing Mobile/PWA asset: '+asset);
+const requiredTutorialAssets=[
+  'tutorial/ember-confident.png',
+  'tutorial/ember-smile.png',
+  'tutorial/ember-cool.png',
+  'tutorial/ember-laughing.png',
+  'tutorial/ember-thinking.png'
+];
+for(const asset of requiredTutorialAssets)if(!existsSync(join(root,'public',asset)))throw new Error('Missing Ember tutorial portrait: '+asset);
 const manifest=JSON.parse(readFileSync('public/manifest.webmanifest','utf8'));
 if(manifest.display!=='standalone'||manifest.orientation!=='landscape')throw new Error('Mobile manifest must launch standalone in landscape.');
 

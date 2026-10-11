@@ -64,7 +64,7 @@
     const canvas = document.getElementById("game");
     const gameFrame = document.getElementById("game-frame");
     const friendsGameInputLocked = () => window.RibbitFriendsGameInputLocked?.() === true;
-    const RIBBIT_DISPLAY_VERSION = "VERSION 1.7.2";
+    const RIBBIT_DISPLAY_VERSION = "VERSION 1.7.4";
     const RIBBIT_CREDIT_TEXT = "MADE BY NICK M.";
     const RIBBIT_CREDIT_Y = 228;
     const rgbValueEditor = document.getElementById("rgb-value-editor");
@@ -1550,6 +1550,7 @@
       Object.freeze({ id: "level-pond", name: "CANOPY CLEAR", icon: "jungle", lines: ["BEAT JUNGLE IN 30 SECONDS", "OR LESS TO UNLOCK POND"], unlockType: "level", target: "pond" }),
       Object.freeze({ id: "level-lake", name: "POND PASS", icon: "pond", lines: ["BEAT POND IN 30 SECONDS", "OR LESS TO UNLOCK LAKE"], unlockType: "level", target: "lake" }),
       Object.freeze({ id: "level-garden", name: "LAKE LEAP", icon: "lake", lines: ["BEAT LAKE IN 30 SECONDS", "OR LESS TO UNLOCK GARDEN"], unlockType: "level", target: "garden" }),
+      Object.freeze({ id: "tutorial-graduate", name: "RIBBIT READY", icon: "park", lines: ["COMPLETE THE", "PARK TUTORIAL"], unlockType: "general", target: null }),
       Object.freeze({ id: "quick-finish", name: "QUICK CROAK", icon: "stopwatch", lines: ["BEAT ANY LEVEL", "IN 25 SECONDS OR LESS"], unlockType: "general", target: null }),
       Object.freeze({ id: "double-dinner", name: "DOUBLE DINNER", icon: "double-fly", lines: ["CATCH 2 FLIES", "IN ONE JUMP"], unlockType: "general", target: null }),
       Object.freeze({ id: "fresh-catch", name: "FRESH CATCH", icon: "spark-fly", lines: ["CATCH A FLY WITHIN 1 SECOND", "OF IT SPAWNING"], unlockType: "general", target: null }),
@@ -1625,7 +1626,7 @@
     const PVP_ACHIEVEMENT_ID_SET = new Set(PVP_ACHIEVEMENT_DEFINITIONS.map((item) => item.id));
     // The shared gallery list already contains both solo and 1V1 entries.
     const ACHIEVEMENT_DISPLAY_ORDER = Object.freeze([
-      "level-swamp","level-jungle","level-pond","level-lake","level-garden",
+      "level-swamp","level-jungle","level-pond","level-lake","level-garden","tutorial-graduate",
       "quick-finish","flash-finish","few-hops","double-dinner","fresh-catch","century-hop","sky-snack","fly-feast","five-jump-finish","solo-endless-20","buffered-drop-catch","bonus-six","bonus-seven",
       "time-select","custom-colors","custom-slot-two","custom-slot-three","custom-created","all-frog-colors",
       "pvp-footstool","pvp-bounce-catch","pvp-rebound-denial","pvp-wall-bonk","pvp-double-bonk","pvp-drop-bonk","pvp-buffered-drop-bonk","pvp-double-fly-jump","pvp-close-call","pvp-low-profile","pvp-first-jump-bonk","pvp-sky-bonk","pvp-max-bonk","pvp-ten-bonks","pvp-self-bonk-three","pvp-bonk-50","pvp-fast-rebonk","pvp-shutout","pvp-level9-bo3","pvp-photo-finish","pvp-contested-fly","pvp-after-hours","pvp-sudden-victory"

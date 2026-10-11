@@ -1,22 +1,26 @@
 {
   "verified": true,
-  "version": "1.7.2",
-  "build": "2026.10.11-friends-engine-tutorial-2",
+  "version": "1.7.4",
+  "build": "2026.10.11-friends-ember-dialogue-1",
   "bundleModules": 13,
   "requiredPublicAssets": 21,
   "npmCheck": 0,
   "npmTest": 0,
-  "tests": 121,
-  "passed": 121,
+  "tests": 125,
+  "passed": 125,
   "failed": 0,
+  "dialogue": {
+    "portraitSide": "right",
+    "portraitAssets": 5,
+    "keyboardClose": ["Space", "Enter", "NumpadEnter"],
+    "mobileClose": "pointer release",
+    "spaceReleaseGuard": true,
+    "simulationFrozenWhileOpen": true,
+    "nextDialogueAfterGoal": true
+  },
   "browserRuntime": {
-    "tutorialActive": true,
-    "mode": "solo",
-    "level": "park",
-    "oldPopupPresent": false,
-    "floatingTutorialButtonsPresent": false,
-    "floatingLiveMatchesButtonPresent": false,
-    "legacyLeftControlsVisible": false,
-    "pageErrors": 0
-  }
+    "completed": false,
+    "reason": "Managed Chromium policy blocked local, file, and data test pages."
+  },
+  "deployed": false
 }

@@ -1,26 +1,24 @@
-RIBBIT RACE FRIENDS 1.7.2 — ENGINE TUTORIAL VALIDATION
-Build: 2026.10.11-friends-engine-tutorial-2
+RIBBIT RACE FRIENDS 1.7.4
+Build: 2026.10.11-friends-ember-dialogue-1
 
 SOURCE PROJECT
-- npm run check: PASS
-- Game bundle: 13 modules
-- Required public assets: 21
-- npm test: 121 passed, 0 failed
+npm run check: PASS
+npm test: PASS
+Tests: 125
+Passed: 125
+Failed: 0
 
-BROWSER RUNTIME
-- First boot entered the real Park level: PASS
-- Tutorial active inside normal Solo gameplay: PASS
-- Separate popup/tutorial canvas absent: PASS
-- Floating tutorial buttons absent: PASS
-- Floating Live Matches button absent: PASS
-- Legacy left account/device/medal overlays hidden: PASS
-- JavaScript page errors: 0
+FRESHLY EXTRACTED COMPLETE ZIP
+npm run check: PASS
+npm test: PASS
+Tests: 125
+Passed: 125
+Failed: 0
 
-FINAL PACKAGED ZIP
-- Complete ZIP extracted into a fresh directory: PASS
-- npm run check from extracted ZIP: PASS
-- npm test from extracted ZIP: 121 passed, 0 failed
+Bundle modules: 13
+Required public assets: 21
+Portrait assets: 5
 
-LIMITS
-- No live Cloudflare deployment was performed.
-- Physical iPhone, Promethean hardware, and full manual tutorial completion remain production checks.
+Dialogue-specific coverage includes right-side portraits, modal input locking, Space/Enter close behavior, mobile pointer-release closing, Space key-up protection, frozen simulation while dialogue is open, and next-dialogue progression after completed goals.
+
+Full local browser playthrough: NOT COMPLETED. The managed Chromium environment blocked local/file/data pages by organization policy. Manual deployed testing remains required.

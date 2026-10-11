@@ -1,46 +1,78 @@
-# Engine Tutorial Design
+# Ribbit Race Friends 1.7.4 — Ember Dialogue Tutorial
 
-Ribbit Race Friends 1.7.2 no longer uses an isolated practice popup. Tutorial scenarios run inside the same Park engine used by normal play.
+Build: `2026.10.11-friends-ember-dialogue-1`
+
+The tutorial runs inside the normal Park engine. It does not use a separate popup minigame.
+
+## Conversation-to-practice loop
+
+Each scenario follows this exact sequence:
+
+1. Park is reset into the authored exercise layout.
+2. The simulation freezes and Ember speaks from a right-sided portrait panel.
+3. Pressing **Space** or **Enter**—or tapping and releasing on mobile—closes the conversation.
+4. The closing input is consumed, so Space cannot also start a jump.
+5. The simulation resumes and the player attempts the current goal.
+6. Success advances to the next exercise and opens the next Ember conversation.
+7. A failed one-attempt exercise resets in place without repeatedly replaying the speech.
+
+See `EMBER_DIALOGUE_SCRIPT.md` for the exact conversation and portrait expression used at every step.
+
+## Presentation
+
+- Ember is the black-and-cream frog with orange markings.
+- Close-up Ember portraits retain the orange patterned shirt, sunglasses, gold chain, and expressive hand poses.
+- The portrait and Ember nameplate appear on the right side of the panel.
+- The panel is dark teal with bright cyan pixel borders and a speech notch pointing toward Ember.
+- The lower-right normal Time/Jumps/Best panel is replaced by the current tutorial goal after the dialogue closes.
+- The normal Hold Space instruction bubble is suppressed during tutorial play.
+- Pause, Escape, and the onscreen Pause control cannot open the Pause menu during the tutorial.
+- Authored flies remain fixed at their lesson positions and their word cards remain centered above them.
 
 ## Single Player sequence
 
-1. **Welcome to Ribbit Race** — make one jump.
-2. **Match the term** — catch the Spanish fly matching the English prompt.
-3. **Charge a full jump** — hold until the jump reaches full charge.
-4. **Automatic catch range** — catch with the body or tongue while in range.
-5. **Wrong flies are safe** — intentionally catch a wrong fly and see it spat back out.
-6. **Turn around with a wall** — use a wall collision to reach a fly behind the frog.
-7. **Rebound catch** — turn at the wall and catch the fly during the same jump.
-8. **Quick platform drop** — tap jump quickly from a platform and catch the fly below.
-9. **Buffered platform drop** — charge toward a platform and tap just before landing to pass through.
-10. **Two flies in one arc** — catch two consecutive matching flies before landing.
-11. **Final practice round** — complete a normal five-fly Park round.
+1. Welcome — make one normal jump.
+2. Match the term — catch the Spanish fly matching the English term.
+3. Full jump — max-charge and catch the authored fly in one attempt.
+4. Catch range — use the normal body or tongue range.
+5. Wrong fly — observe normal spit-back behavior.
+6. Wall turn — pass the fly, touch the right wall, turn, and catch it.
+7. Rebound catch — complete the catch in one wall-rebound jump.
+8. Quick platform drop — drop through and catch the fly in one attempt.
+9. Buffered drop — charge to the top platform, buffer through it, and catch the fly below.
+10. Double buffer — pass through two platforms and catch three sequential flies.
+11. Two flies in one arc — catch two terms during one jump.
+12. Final practice — complete a normal five-fly Park round.
 
-Each authored scenario uses the actual game objects and resets after a failed requirement.
+## Completion
 
-## PvP engine sequence
-
-The same controller contains a real-engine Park PvP tutorial for forced/manual testing:
-
-1. Charged-jump introduction.
-2. Falling bonk from above.
-3. Higher sky bonk.
-4. Wait for stun recovery, then bonk again.
-5. Horizontal rebound.
-6. Offensive rebound into a fly catch.
-
-No floating tutorial button is shown. A test can be started with `?tutorial=pvp`.
-
-## Save and leaderboard isolation
-
-Starting a tutorial enters the existing reversible playtest snapshot system. On completion or exit, Ribbit Race restores the pre-tutorial storage/runtime snapshot and ends the playtest session. Tutorial catches, jumps, records, unlocks, achievements, and settings are not intended to overwrite the legitimate cloud save.
-
-## First-boot behavior
-
-The new tutorial uses a new completion key:
+The final practice round opens a normal-style congratulations screen and awards:
 
 ```text
-rrFriendsEngineTutorialSoloSeenV2
+RIBBIT READY
+Complete the Park Tutorial
 ```
 
-This means an existing browser may see the corrected real-engine tutorial once even if it completed the older popup version. Once completed, it no longer opens automatically on that browser/profile.
+## Save isolation
+
+Tutorial play uses the reversible Playtest snapshot lifecycle. Temporary tutorial catches, jumps, resets, and authored records do not replace the legitimate cloud save. The pre-tutorial state is restored before the permanent completion achievement is awarded.
+
+## First-boot and retest behavior
+
+The updated tutorial uses:
+
+```text
+rrFriendsEngineTutorialSoloSeenV4
+```
+
+To deliberately retest it, append:
+
+```text
+?tutorial=solo
+```
+
+The checked PvP tutorial remains available for testing through:
+
+```text
+?tutorial=pvp
+```
