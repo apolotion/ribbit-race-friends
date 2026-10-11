@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import {readFileSync,existsSync} from "node:fs";
 const read=p=>readFileSync(new URL(`../${p}`,import.meta.url),"utf8");
 
-test("v1.7.4 engine tutorial project additions exist",()=>{
+test("v1.7.5 engine tutorial project additions exist",()=>{
   for(const p of [
     "client/game/99-v170-hooks.js",
     "client/game/120-engine-tutorial.js",
@@ -16,7 +16,7 @@ test("v1.7.4 engine tutorial project additions exist",()=>{
     "public/tutorial/ember-laughing.png",
     "public/tutorial/ember-thinking.png"
   ])assert.ok(existsSync(new URL(`../${p}`,import.meta.url)),p);
-  assert.equal(JSON.parse(read("package.json")).version,"1.7.4");
+  assert.equal(JSON.parse(read("package.json")).version,"1.7.5");
 });
 
 test("tutorial uses the real Park engine instead of a popup practice canvas",()=>{
@@ -68,7 +68,7 @@ test("tutorial hides legacy floating controls and preserves cloud progress",()=>
 });
 
 
-test("1.7.4 tutorial uses Ember speech bubbles and authored engine checks",()=>{
+test("1.7.5 tutorial uses Ember speech bubbles and authored engine checks",()=>{
   const engine=read("client/game/120-engine-tutorial.js");
   for(const word of [
     'FROG_SKINS.ember',
@@ -105,14 +105,14 @@ test("Ember dialogue is right-sided, modal, and closes on Space before play resu
   for(const word of [
     "EMBER_PORTRAIT_SOURCES",
     "dialogueOpen",
-    "PRESS SPACE TO CONTINUE",
+    "SPACE TO CONTINUE",
     "TAP TO CONTINUE",
     "blockJumpUntilRelease",
     "closeDialogue",
     'portrait: "smile"',
     "HEY THERE! I'M EMBER. WELCOME TO RIBBIT RACE!"
   ]) assert.match(engine,new RegExp(word.replace(/[.*+?^${}()|[\]\\]/g,"\\$&")));
-  assert.match(engine,/const portrait = \{ x: 374/);
+  assert.match(engine,/const portrait = \{ x: 394/);
   assert.match(engine,/if \(tutorial\.active && tutorial\.dialogueOpen\)/);
   assert.match(engine,/configureStep\(false\)/);
 });

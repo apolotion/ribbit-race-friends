@@ -1,24 +1,25 @@
 # Ribbit Race Friends Edition
 
-Build: `2026.10.11-friends-ember-dialogue-1`  
-Displayed game version: `VERSION 1.7.4`
+Build: `2026.10.11-friends-tutorial-refinement-1`  
+Displayed game version: `VERSION 1.7.5`
 
 This is the independent public Cloudflare Friends Edition. It retains four-digit PIN accounts, cloud saves, private rooms, Quickplay, spectators, CPU takeover, leaderboard record replays, post-unlock hat progression, the current 15-word Spanish vocabulary, clean sign-out reloads, stable fly labels, and the responsibility-based browser-client organization.
 
 
-## Changes in 1.7.4
+## Changes in 1.7.5
 
-- Added five close-up Ember portrait assets based on the approved black-frog/orange-shirt concept.
-- Ember keeps the orange patterned shirt, sunglasses, gold chain, and expressive hand poses.
-- Each checked Park tutorial scenario begins with a dark teal dialogue panel whose portrait and nameplate are on the right.
-- Space/Enter or mobile tap-release closes the dialogue.
-- The closing Space press is consumed until key-up so it cannot accidentally trigger a jump.
-- The game simulation remains frozen while Ember is speaking.
-- After dialogue closes, the normal game engine resumes until the current scenario goal is completed.
-- Completing a goal opens Ember's next conversation and the next authored scenario.
-- Failed one-attempt scenarios reset without replaying the full speech.
-- The existing Current Goal HUD, disabled tutorial Pause, authored Park layouts, reversible save isolation, congratulations screen, and `RIBBIT READY` achievement remain intact.
-- The full conversation is documented in `EMBER_DIALOGUE_SCRIPT.md`.
+- The corrected Park tutorial auto-starts the first time a player enters the game on that browser/profile.
+- Ember’s five approved black-and-orange portraits are mirrored and remain on the right side of the dialogue.
+- The dialogue panel is compact, proportionally scaled, and positioned at the top of the game.
+- The first dialogue is drawn immediately when tutorial play begins.
+- The separate on-map Ember frog is removed; Ember teaches only through the portrait dialogue.
+- Authored flies use normal Ribbit Race hover/bob animation and their word cards remain attached.
+- Failed attempts reset immediately with an out-and-in ninja smoke effect.
+- The tongue-range lesson requires a real tongue catch beyond normal body-contact range.
+- The wrong-fly lesson requires the wrong fly followed by the correct fly during one jump.
+- The wall-turn lesson allows two jumps; rebound and quick-drop lessons remain one-attempt checks.
+- Releasing a short max-jump charge or charging during the quick-drop lesson resets immediately.
+- Reversible save isolation, the congratulations screen, and the `RIBBIT READY` achievement remain intact.
 
 ## Changes in 1.6.0
 

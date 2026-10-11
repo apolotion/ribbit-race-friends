@@ -1,24 +1,837 @@
-RIBBIT RACE FRIENDS 1.7.4
-Build: 2026.10.11-friends-ember-dialogue-1
+RIBBIT RACE FRIENDS 1.7.5
+Build: 2026.10.11-friends-tutorial-refinement-1
 
-SOURCE PROJECT
-npm run check: PASS
-npm test: PASS
-Tests: 125
-Passed: 125
-Failed: 0
 
-FRESHLY EXTRACTED COMPLETE ZIP
-npm run check: PASS
-npm test: PASS
-Tests: 125
-Passed: 125
-Failed: 0
+> ribbit-race-friends@1.7.5 check
+> npm run build && node scripts/check.mjs
 
-Bundle modules: 13
-Required public assets: 21
-Portrait assets: 5
 
-Dialogue-specific coverage includes right-side portraits, modal input locking, Space/Enter close behavior, mobile pointer-release closing, Space key-up protection, frozen simulation while dialogue is open, and next-dialogue progression after completed goals.
+> ribbit-race-friends@1.7.5 build
+> node scripts/build-game.mjs
 
-Full local browser playthrough: NOT COMPLETED. The managed Chromium environment blocked local/file/data pages by organization policy. Manual deployed testing remains required.
+Built game bundle from 13 modules (1151689 bytes).
+Server and browser modules parse; 21 external assets are present; no Google or WebRTC runtime dependency.
+
+> ribbit-race-friends@1.7.5 test
+> node --test tests/*.test.mjs
+
+TAP version 13
+# Subtest: PIN derivation is salted and cookie is Secure/HttpOnly
+ok 1 - PIN derivation is salted and cookie is Secure/HttpOnly
+  ---
+  duration_ms: 114.541503
+  type: 'test'
+  ...
+# Subtest: JSON request size limit rejects oversized streamed input
+ok 2 - JSON request size limit rejects oversized streamed input
+  ---
+  duration_ms: 28.779945
+  type: 'test'
+  ...
+# Subtest: save keeps Endless maxima, time minima, PvP maxima and result journal
+ok 3 - save keeps Endless maxima, time minima, PvP maxima and result journal
+  ---
+  duration_ms: 1.861467
+  type: 'test'
+  ...
+# Subtest: save ignores unrelated keys and bounds payloads
+ok 4 - save ignores unrelated keys and bounds payloads
+  ---
+  duration_ms: 0.388499
+  type: 'test'
+  ...
+# Subtest: achievements merge without deleting prior unlocks
+ok 5 - achievements merge without deleting prior unlocks
+  ---
+  duration_ms: 1.405887
+  type: 'test'
+  ...
+# Subtest: old clients and untested preflight rejected
+ok 6 - old clients and untested preflight rejected
+  ---
+  duration_ms: 1.911924
+  type: 'test'
+  ...
+# Subtest: private room rejects same account and wrong account token
+ok 7 - private room rejects same account and wrong account token
+  ---
+  duration_ms: 7.423485
+  type: 'test'
+  ...
+# Subtest: Ready and a fabricated flag cannot start without authenticated sockets
+ok 8 - Ready and a fabricated flag cannot start without authenticated sockets
+  ---
+  duration_ms: 3.86841
+  type: 'test'
+  ...
+# Subtest: two fresh socket confirmations admit a private match
+ok 9 - two fresh socket confirmations admit a private match
+  ---
+  duration_ms: 3.959604
+  type: 'test'
+  ...
+# Subtest: wrong partner challenge does not admit
+ok 10 - wrong partner challenge does not admit
+  ---
+  duration_ms: 3.913935
+  type: 'test'
+  ...
+# Subtest: Google-style audit snapshots and inputs never returned for live human playback
+ok 11 - Google-style audit snapshots and inputs never returned for live human playback
+  ---
+  duration_ms: 2.090603
+  type: 'test'
+  ...
+# Subtest: private lobby leave invalidates old room capability
+ok 12 - private lobby leave invalidates old room capability
+  ---
+  duration_ms: 1.780209
+  type: 'test'
+  ...
+# Subtest: in-progress opponent departure produces one server-authorized CPU slot
+ok 13 - in-progress opponent departure produces one server-authorized CPU slot
+  ---
+  duration_ms: 3.397233
+  type: 'test'
+  ...
+# Subtest: host departure transfers simulation authority to surviving guest
+ok 14 - host departure transfers simulation authority to surviving guest
+  ---
+  duration_ms: 2.803122
+  type: 'test'
+  ...
+# Subtest: unstarted failed pairing is closed without awarding any result
+ok 15 - unstarted failed pairing is closed without awarding any result
+  ---
+  duration_ms: 2.240645
+  type: 'test'
+  ...
+# Subtest: Quickplay pairs with fixed best-of-three Endless rules
+ok 16 - Quickplay pairs with fixed best-of-three Endless rules
+  ---
+  duration_ms: 3.663448
+  type: 'test'
+  ...
+# Subtest: guest spectator capability survives subsequent polls
+ok 17 - guest spectator capability survives subsequent polls
+  ---
+  duration_ms: 1.518234
+  type: 'test'
+  ...
+# Subtest: spectator capability cannot be reused by a different account
+ok 18 - spectator capability cannot be reused by a different account
+  ---
+  duration_ms: 1.250021
+  type: 'test'
+  ...
+# Subtest: private ratings are absent from public profile
+ok 19 - private ratings are absent from public profile
+  ---
+  duration_ms: 0.503808
+  type: 'test'
+  ...
+# Subtest: guest display names stay in expiring storage
+ok 20 - guest display names stay in expiring storage
+  ---
+  duration_ms: 0.334647
+  type: 'test'
+  ...
+# Subtest: Quickplay player replaced by CPU can immediately enter a new queue
+ok 21 - Quickplay player replaced by CPU can immediately enter a new queue
+  ---
+  duration_ms: 4.625589
+  type: 'test'
+  ...
+# Subtest: 1.7.5 build and thirteen modular gameplay sources are present
+ok 22 - 1.7.5 build and thirteen modular gameplay sources are present
+  ---
+  duration_ms: 1.635295
+  type: 'test'
+  ...
+# Subtest: obsolete apolotion unlock code is absent and Playtest is reversible
+ok 23 - obsolete apolotion unlock code is absent and Playtest is reversible
+  ---
+  duration_ms: 2.806886
+  type: 'test'
+  ...
+# Subtest: world-record label, hover details and repeat suppression remain installed
+ok 24 - world-record label, hover details and repeat suppression remain installed
+  ---
+  duration_ms: 0.38051
+  type: 'test'
+  ...
+# Subtest: fastest-time and fewest-jumps replay paths remain available
+ok 25 - fastest-time and fewest-jumps replay paths remain available
+  ---
+  duration_ms: 0.341072
+  type: 'test'
+  ...
+# Subtest: hat progression uses a post-unlock baseline and no online/human-only requirements
+ok 26 - hat progression uses a post-unlock baseline and no online/human-only requirements
+  ---
+  duration_ms: 0.693363
+  type: 'test'
+  ...
+# Subtest: hatstest exposes Hats without directly unlocking individual hats
+ok 27 - hatstest exposes Hats without directly unlocking individual hats
+  ---
+  duration_ms: 0.829397
+  type: 'test'
+  ...
+# Subtest: custom palette tools and revised Custom Frog 3 requirements remain installed
+ok 28 - custom palette tools and revised Custom Frog 3 requirements remain installed
+  ---
+  duration_ms: 0.204417
+  type: 'test'
+  ...
+# Subtest: Mobile Mode owns independent simultaneous P1 and P2 pointer slots
+ok 29 - Mobile Mode owns independent simultaneous P1 and P2 pointer slots
+  ---
+  duration_ms: 0.186786
+  type: 'test'
+  ...
+# Subtest: word plates stay horizontally centered above flies
+ok 30 - word plates stay horizontally centered above flies
+  ---
+  duration_ms: 0.585077
+  type: 'test'
+  ...
+# Subtest: bonks require a falling upper frog or a rising lower frog
+ok 31 - bonks require a falling upper frog or a rising lower frog
+  ---
+  duration_ms: 0.67983
+  type: 'test'
+  ...
+# Subtest: PvP achievements and bounce stats accept the eligible active human on either side
+ok 32 - PvP achievements and bounce stats accept the eligible active human on either side
+  ---
+  duration_ms: 0.849062
+  type: 'test'
+  ...
+# Subtest: Versus entry persists the preferred selected frog skin
+ok 33 - Versus entry persists the preferred selected frog skin
+  ---
+  duration_ms: 0.254393
+  type: 'test'
+  ...
+# Subtest: replay routes are forwarded through the Worker
+ok 34 - replay routes are forwarded through the Worker
+  ---
+  duration_ms: 0.161402
+  type: 'test'
+  ...
+# Subtest: 1.7.5 keeps a right-edge Lake word plate exactly centered over its fly
+ok 35 - 1.7.5 keeps a right-edge Lake word plate exactly centered over its fly
+  ---
+  duration_ms: 2.075832
+  type: 'test'
+  ...
+# Subtest: running pause button is deliberately translucent
+ok 36 - running pause button is deliberately translucent
+  ---
+  duration_ms: 0.677372
+  type: 'test'
+  ...
+# Subtest: pause book and How To Play pages inherit the selected frog palette
+ok 37 - pause book and How To Play pages inherit the selected frog palette
+  ---
+  duration_ms: 2.341273
+  type: 'test'
+  ...
+# Subtest: record replay API is backed by SQLite and same-origin Worker forwarding
+ok 38 - record replay API is backed by SQLite and same-origin Worker forwarding
+  ---
+  duration_ms: 0.601712
+  type: 'test'
+  ...
+# Subtest: iPhone Home Screen metadata, manifest and installation help ship together
+ok 39 - iPhone Home Screen metadata, manifest and installation help ship together
+  ---
+  duration_ms: 1.453912
+  type: 'test'
+  ...
+# Subtest: Mobile Mode confirmation and repeat iPhone instructions are explicit
+ok 40 - Mobile Mode confirmation and repeat iPhone instructions are explicit
+  ---
+  duration_ms: 0.365496
+  type: 'test'
+  ...
+# Subtest: main menu has canvas-native account and phone-computer controls
+ok 41 - main menu has canvas-native account and phone-computer controls
+  ---
+  duration_ms: 0.176549
+  type: 'test'
+  ...
+# Subtest: Mobile Mode hides the legacy guest/fullscreen DOM toolbar
+ok 42 - Mobile Mode hides the legacy guest/fullscreen DOM toolbar
+  ---
+  duration_ms: 0.121486
+  type: 'test'
+  ...
+# Subtest: iOS long-press magnifier and native selection are suppressed on the game canvas
+ok 43 - iOS long-press magnifier and native selection are suppressed on the game canvas
+  ---
+  duration_ms: 0.34482
+  type: 'test'
+  ...
+# Subtest: Mobile meters retain gradient charge and independent pointer ownership
+ok 44 - Mobile meters retain gradient charge and independent pointer ownership
+  ---
+  duration_ms: 0.159415
+  type: 'test'
+  ...
+# Subtest: mobile pause is drawn in Versus and routes through pauseGame
+ok 45 - mobile pause is drawn in Versus and routes through pauseGame
+  ---
+  duration_ms: 0.256419
+  type: 'test'
+  ...
+# Subtest: letterboxed touchscreen coordinates are mapped into the 480 by 270 game area
+ok 46 - letterboxed touchscreen coordinates are mapped into the 480 by 270 game area
+  ---
+  duration_ms: 1.42517
+  type: 'test'
+  ...
+# Subtest: mobile instructions do not tell players to use keyboard controls
+ok 47 - mobile instructions do not tell players to use keyboard controls
+  ---
+  duration_ms: 2.142808
+  type: 'test'
+  ...
+# Subtest: opponent frogs and flies lower the first-jump instruction bubble opacity
+ok 48 - opponent frogs and flies lower the first-jump instruction bubble opacity
+  ---
+  duration_ms: 0.705384
+  type: 'test'
+  ...
+# Subtest: Versus round results are awarded once and transition through a real result state
+ok 49 - Versus round results are awarded once and transition through a real result state
+  ---
+  duration_ms: 0.430915
+  type: 'test'
+  ...
+# Subtest: Mobile performance mode reduces render pixels, video recording and catch-up work
+ok 50 - Mobile performance mode reduces render pixels, video recording and catch-up work
+  ---
+  duration_ms: 0.207767
+  type: 'test'
+  ...
+# Subtest: hatstest unlocks only the Hats feature and no requirement needs online/human opponents
+ok 51 - hatstest unlocks only the Hats feature and no requirement needs online/human opponents
+  ---
+  duration_ms: 0.307176
+  type: 'test'
+  ...
+# Subtest: no-hat selection uses a dashed empty top-hat outline
+ok 52 - no-hat selection uses a dashed empty top-hat outline
+  ---
+  duration_ms: 0.216836
+  type: 'test'
+  ...
+# Subtest: runtime loops are throttled and replay recording is disabled on mobile
+ok 53 - runtime loops are throttled and replay recording is disabled on mobile
+  ---
+  duration_ms: 0.588586
+  type: 'test'
+  ...
+# Subtest: PIN hashing stays within Cloudflare PBKDF2 limit and matches 100000 rounds
+ok 54 - PIN hashing stays within Cloudflare PBKDF2 limit and matches 100000 rounds
+  ---
+  duration_ms: 62.458857
+  type: 'test'
+  ...
+# Subtest: Friends release exposes the new build marker
+ok 55 - Friends release exposes the new build marker
+  ---
+  duration_ms: 0.175349
+  type: 'test'
+  ...
+# Subtest: server vocabulary is exactly the requested 15 entries
+ok 56 - server vocabulary is exactly the requested 15 entries
+  ---
+  duration_ms: 1.30265
+  type: 'test'
+  ...
+# Subtest: offline fallback vocabulary matches the server vocabulary
+ok 57 - offline fallback vocabulary matches the server vocabulary
+  ---
+  duration_ms: 7.780232
+  type: 'test'
+  ...
+# Subtest: logout confirms the server session and reloads the exact initial login document
+ok 58 - logout confirms the server session and reloads the exact initial login document
+  ---
+  duration_ms: 1.126415
+  type: 'test'
+  ...
+# Subtest: auth boundary hides and inerts the runtime until sign-in or guest play
+ok 59 - auth boundary hides and inerts the runtime until sign-in or guest play
+  ---
+  duration_ms: 0.263461
+  type: 'test'
+  ...
+# Subtest: index is presentation-only and gameplay source is separated by responsibility
+ok 60 - index is presentation-only and gameplay source is separated by responsibility
+  ---
+  duration_ms: 0.533341
+  type: 'test'
+  ...
+# Subtest: AuthScreenController owns runtime locking and clean-login navigation
+ok 61 - AuthScreenController owns runtime locking and clean-login navigation
+  ---
+  duration_ms: 1.817977
+  type: 'test'
+  ...
+# Subtest: global gameplay hotkeys are gated while the login screen owns focus
+ok 62 - global gameplay hotkeys are gated while the login screen owns focus
+  ---
+  duration_ms: 2.409902
+  type: 'test'
+  ...
+# Subtest: Quickplay partner connection check is capped at 30 seconds
+ok 63 - Quickplay partner connection check is capped at 30 seconds
+  ---
+  duration_ms: 1.396638
+  type: 'test'
+  ...
+# Subtest: queued device-check status is centered inside Play While Waiting
+ok 64 - queued device-check status is centered inside Play While Waiting
+  ---
+  duration_ms: 0.931085
+  type: 'test'
+  ...
+# Subtest: single-player fly labels keep persistent placements instead of re-solving every frame
+ok 65 - single-player fly labels keep persistent placements instead of re-solving every frame
+  ---
+  duration_ms: 3.740754
+  type: 'test'
+  ...
+# Subtest: fly vocabulary text is rasterized once on quarter-step pixel scales
+ok 66 - fly vocabulary text is rasterized once on quarter-step pixel scales
+  ---
+  duration_ms: 1.645466
+  type: 'test'
+  ...
+# Subtest: actual label-placement function keeps existing fly rectangles stable as flies spawn and leave
+ok 67 - actual label-placement function keeps existing fly rectangles stable as flies spawn and leave
+  ---
+  duration_ms: 3.179145
+  type: 'test'
+  ...
+# Subtest: online PvP label rectangles survive rebuilt snapshot flies and tiny anchor drift
+ok 68 - online PvP label rectangles survive rebuilt snapshot flies and tiny anchor drift
+  ---
+  duration_ms: 2.93434
+  type: 'test'
+  ...
+# Subtest: failed connection Local Play opens the single-player level menu without auto-starting
+ok 69 - failed connection Local Play opens the single-player level menu without auto-starting
+  ---
+  duration_ms: 0.732707
+  type: 'test'
+  ...
+# Subtest: local Versus VS hover explains how to enable local PvP
+ok 70 - local Versus VS hover explains how to enable local PvP
+  ---
+  duration_ms: 1.678245
+  type: 'test'
+  ...
+# Subtest: owner legacy recovery is request-triggered, one-shot and refuses PIN accounts
+ok 71 - owner legacy recovery is request-triggered, one-shot and refuses PIN accounts
+  ---
+  duration_ms: 0.475364
+  type: 'test'
+  ...
+# Subtest: untimed Single Player top-center fly keeps its word plate above the fly
+ok 72 - untimed Single Player top-center fly keeps its word plate above the fly
+  ---
+  duration_ms: 2.475087
+  type: 'test'
+  ...
+# Subtest: Single Player pause and resume countdown reuse one frozen world bitmap
+ok 73 - Single Player pause and resume countdown reuse one frozen world bitmap
+  ---
+  duration_ms: 4.128088
+  type: 'test'
+  ...
+# Subtest: CPU takeover leaves an explicit disconnected-player notice
+ok 74 - CPU takeover leaves an explicit disconnected-player notice
+  ---
+  duration_ms: 1.257867
+  type: 'test'
+  ...
+# Subtest: replaced Quickplay participant is released and routed back to requeue
+ok 75 - replaced Quickplay participant is released and routed back to requeue
+  ---
+  duration_ms: 2.039501
+  type: 'test'
+  ...
+# Subtest: every fly word plate uses top-only candidate rows
+ok 76 - every fly word plate uses top-only candidate rows
+  ---
+  duration_ms: 2.463911
+  type: 'test'
+  ...
+# Subtest: Friends first-place notice is a world-record notice with hover details
+ok 77 - Friends first-place notice is a world-record notice with hover details
+  ---
+  duration_ms: 1.38034
+  type: 'test'
+  ...
+# Subtest: version 1.7.5 remains in settings and the How To Play book footer
+ok 78 - version 1.7.5 remains in settings and the How To Play book footer
+  ---
+  duration_ms: 2.121721
+  type: 'test'
+  ...
+# Subtest: frog overlap axis is deterministic and cooldown separation removes intersections
+ok 79 - frog overlap axis is deterministic and cooldown separation removes intersections
+  ---
+  duration_ms: 0.936683
+  type: 'test'
+  ...
+# Subtest: overlap resolution rebounds horizontally and bonks vertically only with valid motion
+ok 80 - overlap resolution rebounds horizontally and bonks vertically only with valid motion
+  ---
+  duration_ms: 0.902839
+  type: 'test'
+  ...
+# Subtest: fast-moving frogs use swept collision detection instead of tunneling through
+ok 81 - fast-moving frogs use swept collision detection instead of tunneling through
+  ---
+  duration_ms: 1.253788
+  type: 'test'
+  ...
+# Subtest: Versus collision code cannot silently ignore overlapping frogs
+ok 82 - Versus collision code cannot silently ignore overlapping frogs
+  ---
+  duration_ms: 1.461377
+  type: 'test'
+  ...
+# Subtest: achievement toast becomes translucent when a fly or word plate is behind it
+ok 83 - achievement toast becomes translucent when a fly or word plate is behind it
+  ---
+  duration_ms: 1.218493
+  type: 'test'
+  ...
+# Subtest: jungle center trunk no longer draws the decorative snake
+ok 84 - jungle center trunk no longer draws the decorative snake
+  ---
+  duration_ms: 2.472174
+  type: 'test'
+  ...
+# Subtest: final-catch word plates stay in camera space and fade with their flies
+ok 85 - final-catch word plates stay in camera space and fade with their flies
+  ---
+  duration_ms: 0.771052
+  type: 'test'
+  ...
+# Subtest: PvP leaderboard uses singular grammar for exactly one win
+ok 86 - PvP leaderboard uses singular grammar for exactly one win
+  ---
+  duration_ms: 0.136375
+  type: 'test'
+  ...
+# Subtest: menu credit is Made by Nick M. on one shared baseline
+ok 87 - menu credit is Made by Nick M. on one shared baseline
+  ---
+  duration_ms: 1.534795
+  type: 'test'
+  ...
+# Subtest: fly-label sprite text is centered in physical pixels
+ok 88 - fly-label sprite text is centered in physical pixels
+  ---
+  duration_ms: 0.917521
+  type: 'test'
+  ...
+# Subtest: custom frog editor includes a large live preview and relocated controls
+ok 89 - custom frog editor includes a large live preview and relocated controls
+  ---
+  duration_ms: 1.864442
+  type: 'test'
+  ...
+# Subtest: sandbox flies begin with the normal Single Player spawn animation
+ok 90 - sandbox flies begin with the normal Single Player spawn animation
+  ---
+  duration_ms: 1.605757
+  type: 'test'
+  ...
+# Subtest: public legacy-key migration controls are retired
+ok 91 - public legacy-key migration controls are retired
+  ---
+  duration_ms: 2.074777
+  type: 'test'
+  ...
+# Subtest: 1.7.5 tutorial refinement build is wired
+ok 92 - 1.7.5 tutorial refinement build is wired
+  ---
+  duration_ms: 1.511461
+  type: 'test'
+  ...
+# Subtest: first boot tutorial retries automatically after authentication
+ok 93 - first boot tutorial retries automatically after authentication
+  ---
+  duration_ms: 0.517172
+  type: 'test'
+  ...
+# Subtest: Ember dialogue is compact at the top and uses right-side portraits
+ok 94 - Ember dialogue is compact at the top and uses right-side portraits
+  ---
+  duration_ms: 0.233655
+  type: 'test'
+  ...
+# Subtest: tutorial arena no longer draws the map Ember frog
+ok 95 - tutorial arena no longer draws the map Ember frog
+  ---
+  duration_ms: 0.218841
+  type: 'test'
+  ...
+# Subtest: authored tutorial flies retain normal hover movement
+ok 96 - authored tutorial flies retain normal hover movement
+  ---
+  duration_ms: 0.359499
+  type: 'test'
+  ...
+# Subtest: failed authored attempts reset immediately with ninja smoke
+ok 97 - failed authored attempts reset immediately with ninja smoke
+  ---
+  duration_ms: 0.255819
+  type: 'test'
+  ...
+# Subtest: tongue lesson requires a tongue catch beyond body-contact range
+ok 98 - tongue lesson requires a tongue catch beyond body-contact range
+  ---
+  duration_ms: 0.257969
+  type: 'test'
+  ...
+# Subtest: wrong fly lesson requires wrong then right in one jump
+ok 99 - wrong fly lesson requires wrong then right in one jump
+  ---
+  duration_ms: 0.120901
+  type: 'test'
+  ...
+# Subtest: wall-turn lesson allows two jumps and rebound stays one attempt
+ok 100 - wall-turn lesson allows two jumps and rebound stays one attempt
+  ---
+  duration_ms: 0.322917
+  type: 'test'
+  ...
+# Subtest: all five mirrored Ember portraits are packaged
+ok 101 - all five mirrored Ember portraits are packaged
+  ---
+  duration_ms: 0.738431
+  type: 'test'
+  ...
+# Subtest: release touch updates online hover index
+ok 102 - release touch updates online hover index
+  ---
+  duration_ms: 2.908126
+  type: 'test'
+  ...
+# Subtest: final catch tongue assist calls normal catch candidates
+ok 103 - final catch tongue assist calls normal catch candidates
+  ---
+  duration_ms: 0.171002
+  type: 'test'
+  ...
+# Subtest: replay begins on active run and only uploads records
+ok 104 - replay begins on active run and only uploads records
+  ---
+  duration_ms: 0.118812
+  type: 'test'
+  ...
+# Subtest: pause fullscreen DOM option exists
+ok 105 - pause fullscreen DOM option exists
+  ---
+  duration_ms: 0.113902
+  type: 'test'
+  ...
+# Subtest: reset and platform drop functions are wrapped
+ok 106 - reset and platform drop functions are wrapped
+  ---
+  duration_ms: 0.154928
+  type: 'test'
+  ...
+# Subtest: online appearance and Frog Tags are separated
+ok 107 - online appearance and Frog Tags are separated
+  ---
+  duration_ms: 0.442217
+  type: 'test'
+  ...
+# Subtest: CPU takeover counts down without reset
+ok 108 - CPU takeover counts down without reset
+  ---
+  duration_ms: 0.090302
+  type: 'test'
+  ...
+# Subtest: version and build are 1.7.5
+ok 109 - version and build are 1.7.5
+  ---
+  duration_ms: 1.066529
+  type: 'test'
+  ...
+# Subtest: touch menus activate on release
+ok 110 - touch menus activate on release
+  ---
+  duration_ms: 0.216776
+  type: 'test'
+  ...
+# Subtest: countdown touch precharge has separate pointers
+ok 111 - countdown touch precharge has separate pointers
+  ---
+  duration_ms: 0.107739
+  type: 'test'
+  ...
+# Subtest: final catch labels cannot reappear
+ok 112 - final catch labels cannot reappear
+  ---
+  duration_ms: 0.148698
+  type: 'test'
+  ...
+# Subtest: remote audio and countdown beeps are monitored
+ok 113 - remote audio and countdown beeps are monitored
+  ---
+  duration_ms: 0.266009
+  type: 'test'
+  ...
+# Subtest: CPU takeover is a three second frozen interruption
+ok 114 - CPU takeover is a three second frozen interruption
+  ---
+  duration_ms: 0.11731
+  type: 'test'
+  ...
+# Subtest: Frog Tags and history exist
+ok 115 - Frog Tags and history exist
+  ---
+  duration_ms: 0.152472
+  type: 'test'
+  ...
+# Subtest: guest save conversion and close warning exist
+ok 116 - guest save conversion and close warning exist
+  ---
+  duration_ms: 0.238411
+  type: 'test'
+  ...
+# Subtest: record replay starts timesliced and discards non-records
+ok 117 - record replay starts timesliced and discards non-records
+  ---
+  duration_ms: 0.344992
+  type: 'test'
+  ...
+# Subtest: platform buffer preserves momentum without extra jump
+ok 118 - platform buffer preserves momentum without extra jump
+  ---
+  duration_ms: 0.575635
+  type: 'test'
+  ...
+# Subtest: app manifest and icons exist
+ok 119 - app manifest and icons exist
+  ---
+  duration_ms: 0.345243
+  type: 'test'
+  ...
+# Subtest: credit says Nick M.
+ok 120 - credit says Nick M.
+  ---
+  duration_ms: 4.410266
+  type: 'test'
+  ...
+# Subtest: IndexedDB replay archive exists
+ok 121 - IndexedDB replay archive exists
+  ---
+  duration_ms: 1.715143
+  type: 'test'
+  ...
+# Subtest: Frog Tags supports selecting opponent and all games
+ok 122 - Frog Tags supports selecting opponent and all games
+  ---
+  duration_ms: 0.189139
+  type: 'test'
+  ...
+# Subtest: online matches record full replay from match start
+ok 123 - online matches record full replay from match start
+  ---
+  duration_ms: 0.13187
+  type: 'test'
+  ...
+# Subtest: record notice remembers prior holder and suppresses repeated aggregate leaders
+ok 124 - record notice remembers prior holder and suppresses repeated aggregate leaders
+  ---
+  duration_ms: 0.22636
+  type: 'test'
+  ...
+# Subtest: Frog Tags uses frog appearance and disabled arrows
+ok 125 - Frog Tags uses frog appearance and disabled arrows
+  ---
+  duration_ms: 0.45999
+  type: 'test'
+  ...
+# Subtest: v1.7.5 engine tutorial project additions exist
+ok 126 - v1.7.5 engine tutorial project additions exist
+  ---
+  duration_ms: 2.796461
+  type: 'test'
+  ...
+# Subtest: tutorial uses the real Park engine instead of a popup practice canvas
+ok 127 - tutorial uses the real Park engine instead of a popup practice canvas
+  ---
+  duration_ms: 0.977834
+  type: 'test'
+  ...
+# Subtest: mobile touch support remains present
+ok 128 - mobile touch support remains present
+  ---
+  duration_ms: 0.690668
+  type: 'test'
+  ...
+# Subtest: spectator picker remains available without a floating live-matches button
+ok 129 - spectator picker remains available without a floating live-matches button
+  ---
+  duration_ms: 0.45444
+  type: 'test'
+  ...
+# Subtest: safety guards are present
+ok 130 - safety guards are present
+  ---
+  duration_ms: 0.323434
+  type: 'test'
+  ...
+# Subtest: tutorial hides legacy floating controls and preserves cloud progress
+ok 131 - tutorial hides legacy floating controls and preserves cloud progress
+  ---
+  duration_ms: 0.398285
+  type: 'test'
+  ...
+# Subtest: 1.7.5 tutorial uses Ember speech bubbles and authored engine checks
+ok 132 - 1.7.5 tutorial uses Ember speech bubbles and authored engine checks
+  ---
+  duration_ms: 1.236788
+  type: 'test'
+  ...
+# Subtest: tutorial scenarios enforce requested one-attempt and platform layouts
+ok 133 - tutorial scenarios enforce requested one-attempt and platform layouts
+  ---
+  duration_ms: 0.330755
+  type: 'test'
+  ...
+# Subtest: tutorial completion achievement is registered in the shared gallery
+ok 134 - tutorial completion achievement is registered in the shared gallery
+  ---
+  duration_ms: 1.099981
+  type: 'test'
+  ...
+# Subtest: Ember dialogue is right-sided, modal, and closes on Space before play resumes
+ok 135 - Ember dialogue is right-sided, modal, and closes on Space before play resumes
+  ---
+  duration_ms: 0.598351
+  type: 'test'
+  ...
+1..135
+# tests 135
+# suites 0
+# pass 135
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 482.383032

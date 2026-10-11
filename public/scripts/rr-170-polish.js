@@ -368,13 +368,35 @@
     const gate=qs("#cloud-gate");
     const requested=(()=>{try{return new URLSearchParams(location.search).get("tutorial")||"";}catch(_){return "";}})();
     const forcedKind=/^pvp$/i.test(requested)?"pvp":/^solo$/i.test(requested)?"solo":"";
+    let starting=false;
+    let finished=false;
+
     const check=()=> {
-      if(!gate?.hidden){setTimeout(check,800);return;}
+      if(finished || starting) return;
       const engine=window.RibbitRaceTutorialEngine;
-      if(!engine){setTimeout(check,300);return;}
-      if(forcedKind || !engine.seen("solo")) setTimeout(()=>engine.start(forcedKind||"solo"),350);
+      const canvas=qs("#game");
+      const gateOpen=gate && gate.hidden !== true;
+      const gameReady=Boolean(engine && canvas && Number(canvas.width) > 0 && Number(canvas.height) > 0);
+      if(gateOpen || !gameReady){setTimeout(check,250);return;}
+      if(!forcedKind && engine.seen("solo")){finished=true;return;}
+
+      starting=true;
+      requestAnimationFrame(()=>requestAnimationFrame(()=>{
+        try {
+          const started=engine.start(forcedKind||"solo");
+          finished=Boolean(started || engine.active);
+        } catch (error) {
+          console.warn("Ribbit Race tutorial auto-start retry", error);
+          finished=false;
+        }
+        starting=false;
+        if(!finished)setTimeout(check,250);
+      }));
     };
-    setTimeout(check,900);
+
+    window.addEventListener("rr-authenticated",()=>setTimeout(check,60));
+    document.addEventListener("visibilitychange",()=>{if(!document.hidden)setTimeout(check,60);});
+    setTimeout(check,250);
   }
 
   ready(() => {

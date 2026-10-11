@@ -1,26 +1,31 @@
 {
   "verified": true,
-  "version": "1.7.4",
-  "build": "2026.10.11-friends-ember-dialogue-1",
+  "version": "1.7.5",
+  "build": "2026.10.11-friends-tutorial-refinement-1",
   "bundleModules": 13,
   "requiredPublicAssets": 21,
   "npmCheck": 0,
   "npmTest": 0,
-  "tests": 125,
-  "passed": 125,
+  "tests": 135,
+  "passed": 135,
   "failed": 0,
-  "dialogue": {
+  "tutorial": {
+    "firstBootMarker": "rrFriendsEngineTutorialSoloSeenV5",
+    "autoStart": true,
+    "dialoguePosition": "top",
     "portraitSide": "right",
     "portraitAssets": 5,
-    "keyboardClose": ["Space", "Enter", "NumpadEnter"],
-    "mobileClose": "pointer release",
-    "spaceReleaseGuard": true,
-    "simulationFrozenWhileOpen": true,
-    "nextDialogueAfterGoal": true
+    "portraitsMirrored": true,
+    "mapMentorRemoved": true,
+    "fliesAnimated": true,
+    "immediateSmokeReset": true,
+    "tongueCatchRequired": true,
+    "wrongThenRightOneJump": true,
+    "wallTurnJumpLimit": 2
   },
   "browserRuntime": {
     "completed": false,
-    "reason": "Managed Chromium policy blocked local, file, and data test pages."
+    "reason": "Managed Chromium blocked local HTTP navigation with ERR_BLOCKED_BY_ADMINISTRATOR."
   },
   "deployed": false
 }

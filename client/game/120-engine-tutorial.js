@@ -1,10 +1,10 @@
-// Ribbit Race Friends 1.7.4  -  checked tutorial scenarios inside the real Park engine.
+// Ribbit Race Friends 1.7.5  -  checked tutorial scenarios inside the real Park engine.
 (() => {
   "use strict";
 
-  const SOLO_SEEN_KEY = "rrFriendsEngineTutorialSoloSeenV4";
-  const PVP_SEEN_KEY = "rrFriendsEngineTutorialPvpSeenV4";
-  const TUTORIAL_BUILD = "2026.10.11-friends-ember-dialogue-1";
+  const SOLO_SEEN_KEY = "rrFriendsEngineTutorialSoloSeenV5";
+  const PVP_SEEN_KEY = "rrFriendsEngineTutorialPvpSeenV5";
+  const TUTORIAL_BUILD = "2026.10.11-friends-tutorial-refinement-1";
   const TUTORIAL_ACHIEVEMENT_ID = "tutorial-graduate";
   const EMBER_SKIN = Object.freeze({ ...FROG_SKINS.ember, hat: "none" });
   const EMBER_PORTRAIT_SOURCES = Object.freeze({
@@ -51,6 +51,12 @@
     lastJumpPower: 0,
     failedAttemptAt: 0,
     failureText: "",
+    failureMessageUntil: 0,
+    smokeClouds: [],
+    wrongFlyCaught: false,
+    rightFlyCaught: false,
+    rangeTongueCaught: false,
+    jumpAttempts: 0,
     attemptStarted: false,
     attemptWasAirborne: false,
     attemptEnded: false,
@@ -116,31 +122,31 @@
       title: "AUTOMATIC CATCH RANGE",
       dialogue: [
         "FLIES ARE CAUGHT AUTOMATICALLY WHEN YOU'RE CLOSE.",
-        "YOUR TONGUE CAN REACH A LITTLE FARTHER TOO - ",
-        "YOU DON'T HAVE TO LAND DIRECTLY ON THE FLY."
+        "THIS ONE IS JUST BEYOND YOUR NORMAL JUMP.",
+        "GET CLOSE ENOUGH AND YOUR TONGUE WILL REACH IT."
       ],
       portrait: "confident",
-      goal: ["GET WITHIN", "CATCH RANGE"], setup: "rangeCatch", mentor: "right"
+      goal: ["USE YOUR TONGUE", "TO CATCH THE FLY"], setup: "rangeCatch", mentor: "right", oneAttempt: true
     }),
     Object.freeze({
       title: "WRONG FLIES ARE SAFE",
       dialogue: [
         "GRAB THE WRONG FLY? NO WORRIES!",
-        "YOUR FROG WILL SPIT IT BACK OUT.",
-        "TRY THE WRONG ONE ON PURPOSE THIS TIME."
+        "YOU'LL SPIT IT BACK OUT. CATCH THE WRONG FLY,",
+        "THEN THE RIGHT FLY IN THE SAME JUMP."
       ],
       portrait: "laughing",
-      goal: ["CATCH THE", "WRONG FLY"], setup: "wrongFly", mentor: "right"
+      goal: ["WRONG, THEN RIGHT", "IN ONE JUMP"], setup: "wrongFly", mentor: "right", oneAttempt: true
     }),
     Object.freeze({
       title: "TURN AROUND WITH A WALL",
       dialogue: [
         "ONE CATCH: YOU CAN'T TURN AROUND IN MID-AIR.",
-        "HIT A WALL TO FLIP DIRECTION, THEN COME BACK",
-        "FOR THE FLY YOU PASSED."
+        "USE YOUR FIRST JUMP TO HIT THE WALL, THEN USE",
+        "YOUR SECOND JUMP TO COME BACK FOR THE FLY."
       ],
       portrait: "thinking",
-      goal: ["WALL TURN", "THEN CATCH"], setup: "wallTurn", mentor: "left", oneAttempt: true
+      goal: ["TURN AND CATCH", "WITHIN 2 JUMPS"], setup: "wallTurn", mentor: "left"
     }),
     Object.freeze({
       title: "REBOUND CATCH",
@@ -347,6 +353,11 @@
     tutorial.lastJumpPower = 0;
     tutorial.failedAttemptAt = 0;
     tutorial.failureText = "";
+    tutorial.failureMessageUntil = 0;
+    tutorial.wrongFlyCaught = false;
+    tutorial.rightFlyCaught = false;
+    tutorial.rangeTongueCaught = false;
+    tutorial.jumpAttempts = 0;
     tutorial.attemptStarted = false;
     tutorial.attemptWasAirborne = false;
     tutorial.attemptEnded = false;
@@ -363,7 +374,7 @@
   function makeFly(x, y, vocabIndex, spawnIndex = -100) {
     const fly = {
       id: nextFlyId++, baseX:x, baseY:y, x, y,
-      phase:0, spawnIndex, spawnAge:1,
+      phase:Math.max(0, spawnIndex) * 1.37, spawnIndex, spawnAge:1,
       vocabIndex, state:"active", touchLocked:false,
       blockedPromptSerial:-1,
       pvpBlockedPromptSerials:[-1,-1],
@@ -470,22 +481,25 @@
       }
 
       case "rangeCatch":
-        positionSoloFrog(55, CONFIG.groundY - frog.h, 1);
+        positionSoloFrog(42, CONFIG.groundY - frog.h, 1);
         setPrompt(0);
-        makeFly(165, 154, 0, 0);
+        // Just beyond a maximum body-contact jump, but reachable by the tongue.
+        makeFly(356, 190, 0, 0);
         break;
 
       case "wrongFly":
-        positionSoloFrog(55, CONFIG.groundY - frog.h, 1);
+        positionSoloFrog(45, CONFIG.groundY - frog.h, 1);
         setPrompt(0);
-        makeFly(150, 158, 1, 0);
-        makeFly(300, 105, 0, 1);
+        // Both flies sit on the same natural jump arc: wrong first, then right.
+        makeFly(140, 151, 1, 0);
+        makeFly(225, 94, 0, 1);
         break;
 
       case "wallTurn":
-        positionSoloFrog(286, CONFIG.groundY - frog.h, 1);
+        // Start just past the center fly, facing the right wall. Two jumps are allowed.
+        positionSoloFrog(292, CONFIG.groundY - frog.h, 1);
         setPrompt(0);
-        makeFly(247, 162, 0, 0);
+        makeFly(244, 164, 0, 0);
         break;
 
       case "reboundCatch":
@@ -499,7 +513,7 @@
         usePlatforms([dropPlatform, { x: 331, y: 126, w: 70, h: 12 }]);
         positionOnPlatform(platforms[1], 24, 1);
         setPrompt(0);
-        makeFly(194, 158, 0, 0);
+        makeFly(188, 158, 0, 0);
         break;
       }
 
@@ -631,10 +645,27 @@
     if (showDialogue) openDialogue();
   }
 
+  function addTutorialPoof(x, y, kind = "out") {
+    tutorial.smokeClouds.push({
+      x: Math.round(x),
+      y: Math.round(y),
+      kind,
+      born: performance.now()
+    });
+    if (tutorial.smokeClouds.length > 8) tutorial.smokeClouds.splice(0, tutorial.smokeClouds.length - 8);
+  }
+
   function failAttempt(message) {
-    if (!tutorial.active || tutorial.failedAttemptAt || tutorial.passed) return;
+    if (!tutorial.active || tutorial.passed) return;
+    const oldX = tutorial.kind === "pvp" ? Number(pvpPlayers[0]?.x || 0) : Number(frog.x || 0);
+    const oldY = tutorial.kind === "pvp" ? Number(pvpPlayers[0]?.y || 0) : Number(frog.y || 0);
+    addTutorialPoof(oldX + frog.w / 2, oldY + frog.h / 2, "out");
+    configureStep(false);
+    const newX = tutorial.kind === "pvp" ? Number(pvpPlayers[0]?.x || 0) : Number(frog.x || 0);
+    const newY = tutorial.kind === "pvp" ? Number(pvpPlayers[0]?.y || 0) : Number(frog.y || 0);
+    addTutorialPoof(newX + frog.w / 2, newY + frog.h / 2, "in");
     tutorial.failureText = message || "TRY AGAIN";
-    tutorial.failedAttemptAt = performance.now();
+    tutorial.failureMessageUntil = performance.now() + 1150;
     tone(150, .08, .018, -35);
   }
 
@@ -747,6 +778,8 @@
     tutorial.snapshot = RibbitCloud.beginPlaytestSession?.() || {};
     game.tutorialActive = true;
     configureStep();
+    try { drawScene(); } catch (_) {}
+    requestAnimationFrame(() => { try { drawScene(); } catch (_) {} });
     canvas?.focus?.();
     return true;
   }
@@ -761,20 +794,10 @@
     return false;
   }
 
-  function alignTutorialFlies() {
-    if (!tutorial.active) return;
-    for (const currentFly of flies) {
-      if (!currentFly?.tutorialAuthored || currentFly.state !== "active") continue;
-      currentFly.phase = 0;
-      currentFly.x = currentFly.baseX;
-      currentFly.y = currentFly.baseY;
-    }
-  }
 
   function monitorSolo() {
     const step = SOLO_STEPS[tutorial.step]?.setup;
     maintainSequencePrompt();
-    alignTutorialFlies();
     tutorial.maxCatchesOneJump = Math.max(tutorial.maxCatchesOneJump, Number(game.currentJumpCorrectCatches || 0));
 
     if (!frog.grounded && frog.dir !== tutorial.lastDir) {
@@ -796,11 +819,15 @@
     else if (step === "maxJump") {
       if (caught >= 1 && tutorial.lastJumpPower >= .95) passStep();
       else if (attemptEnded) failAttempt(tutorial.lastJumpPower < .95 ? "FILL THE METER BEFORE RELEASING" : "CATCH THE FLY IN THAT ONE JUMP");
-    } else if (step === "rangeCatch" && caught >= 1) passStep();
-    else if (step === "wrongFly" && (frog.wrongCatchBubbleTimer > 0 || flies.some(fly => fly.state === "spitting"))) passStep();
-    else if (step === "wallTurn") {
-      if (tutorial.wallTouchedThisJump && caught >= 1) passStep();
-      else if (attemptEnded) failAttempt("ONE WALL TURN, THEN CATCH THE FLY");
+    } else if (step === "rangeCatch") {
+      if (caught >= 1 && tutorial.rangeTongueCaught) passStep();
+      else if (attemptEnded) failAttempt("GET CLOSE ENOUGH FOR YOUR TONGUE TO REACH");
+    } else if (step === "wrongFly") {
+      if (tutorial.wrongFlyCaught && tutorial.rightFlyCaught && !frog.grounded) passStep();
+      else if (attemptEnded) failAttempt("CATCH THE WRONG FLY, THEN THE RIGHT FLY IN ONE JUMP");
+    } else if (step === "wallTurn") {
+      if (tutorial.wallTouched && caught >= 1) passStep();
+      else if (attemptEnded && tutorial.jumpAttempts >= 2) failAttempt("USE ONE JUMP TO TURN, THEN ONE TO CATCH");
     } else if (step === "reboundCatch") {
       if (tutorial.wallTouchedThisJump && caught >= 1 && !frog.grounded) passStep();
       else if (attemptEnded) failAttempt("ONE JUMP ONLY  -  REBOUND AND CATCH");
@@ -851,10 +878,6 @@
       monitorSolo();
     }
 
-    if (tutorial.failedAttemptAt && performance.now() - tutorial.failedAttemptAt > 900) {
-      configureStep(false);
-      return;
-    }
     if (tutorial.passed && performance.now() - tutorial.passAt > 800) nextStep();
   }
 
@@ -864,17 +887,8 @@
   }
 
   function drawMentorFrog() {
-    if (!tutorial.active || tutorial.kind !== "solo") return;
-    const centerX = Math.round(tutorial.mentorX + frog.w / 2);
-    const baseY = Math.round(tutorial.mentorY + frog.h);
-    const blink = Math.floor(game.visualTime * 1.8) % 11 === 0;
-    ctx.save();
-    ctx.translate(centerX, baseY);
-    ctx.scale(tutorial.mentorSide === "left" ? 1 : -1, 1);
-    ctx.translate(-11, -14);
-    drawGameplayFrogSpriteLocal(EMBER_SKIN, false, blink);
-    ctx.restore();
-    drawBitmapText("EMBER", centerX, baseY + 4, .42, "center", EMBER_SKIN.dark);
+    // Ember teaches through the close-up dialogue portrait only.
+    // No second frog is rendered in the playable tutorial arena.
   }
 
   function drawTutorialDialogue() {
@@ -883,92 +897,78 @@
     const lines = Array.isArray(step.dialogue) && step.dialogue.length
       ? step.dialogue.slice(0, 3)
       : [step.title];
-    const panel = { x: 12, y: 144, w: 456, h: 78 };
-    const portrait = { x: 374, y: 149, w: 86, h: 68 };
-    const textLeft = panel.x + 14;
-    const textCenter = (textLeft + portrait.x - 10) / 2;
+    // Compact top-of-screen conversation panel based on the approved concept art.
+    const panel = { x: 18, y: 8, w: 444, h: 58 };
+    const portrait = { x: 394, y: 12, w: 62, h: 50 };
+    const textLeft = panel.x + 12;
+    const textRight = portrait.x - 10;
+    const textCenter = (textLeft + textRight) / 2;
     const mobile = typeof isRibbitMobileMode === "function" && isRibbitMobileMode();
-    const prompt = mobile ? "TAP TO CONTINUE" : "PRESS SPACE TO CONTINUE";
+    const prompt = mobile ? "TAP TO CONTINUE" : "SPACE TO CONTINUE";
     const portraitImage = EMBER_PORTRAITS[step.portrait] || EMBER_PORTRAITS.confident;
 
     ctx.save();
-    ctx.globalAlpha = .96;
-
-    // Pixel shadow and dark Dave-the-Diver-inspired dialogue frame.
-    ctx.fillStyle = "rgba(8,25,35,.45)";
-    ctx.fillRect(panel.x + 4, panel.y + 5, panel.w, panel.h);
+    ctx.globalAlpha = .97;
+    ctx.fillStyle = "rgba(8,25,35,.42)";
+    ctx.fillRect(panel.x + 3, panel.y + 4, panel.w, panel.h);
     ctx.fillStyle = "#052f45";
     ctx.fillRect(panel.x, panel.y, panel.w, panel.h);
     ctx.fillStyle = "#37d9ef";
-    ctx.fillRect(panel.x + 2, panel.y + 2, panel.w - 4, 3);
-    ctx.fillRect(panel.x + 2, panel.y + panel.h - 5, panel.w - 4, 3);
-    ctx.fillRect(panel.x + 2, panel.y + 2, 3, panel.h - 4);
-    ctx.fillRect(panel.x + panel.w - 5, panel.y + 2, 3, panel.h - 4);
+    ctx.fillRect(panel.x + 2, panel.y + 2, panel.w - 4, 2);
+    ctx.fillRect(panel.x + 2, panel.y + panel.h - 4, panel.w - 4, 2);
+    ctx.fillRect(panel.x + 2, panel.y + 2, 2, panel.h - 4);
+    ctx.fillRect(panel.x + panel.w - 4, panel.y + 2, 2, panel.h - 4);
     ctx.fillStyle = "#073b55";
-    ctx.fillRect(panel.x + 7, panel.y + 8, portrait.x - panel.x - 15, panel.h - 16);
+    ctx.fillRect(panel.x + 6, panel.y + 6, portrait.x - panel.x - 12, panel.h - 12);
 
-    // Speech notch points toward Ember's portrait on the right.
+    // Notch points to Ember on the right side.
     ctx.fillStyle = "#37d9ef";
-    ctx.fillRect(portrait.x - 8, panel.y + 31, 8, 16);
+    ctx.fillRect(portrait.x - 7, panel.y + 22, 7, 14);
     ctx.fillStyle = "#073b55";
-    ctx.fillRect(portrait.x - 8, panel.y + 34, 8, 10);
+    ctx.fillRect(portrait.x - 7, panel.y + 25, 7, 8);
 
-    // Portrait frame.
     ctx.fillStyle = COLORS.ink;
     ctx.fillRect(portrait.x, portrait.y, portrait.w, portrait.h);
     ctx.fillStyle = "#2a6d8e";
-    ctx.fillRect(portrait.x + 3, portrait.y + 3, portrait.w - 6, portrait.h - 6);
+    ctx.fillRect(portrait.x + 2, portrait.y + 2, portrait.w - 4, portrait.h - 4);
     if (portraitImage?.complete && portraitImage.naturalWidth > 0) {
       const oldSmoothing = ctx.imageSmoothingEnabled;
       ctx.imageSmoothingEnabled = false;
-      ctx.drawImage(
-        portraitImage,
-        portrait.x + 4,
-        portrait.y + 4,
-        portrait.w - 8,
-        portrait.h - 8
-      );
+      ctx.drawImage(portraitImage, portrait.x + 3, portrait.y + 3, portrait.w - 6, portrait.h - 6);
       ctx.imageSmoothingEnabled = oldSmoothing;
     } else {
       ctx.save();
-      ctx.translate(portrait.x + portrait.w / 2, portrait.y + portrait.h - 10);
-      ctx.scale(2.1, 2.1);
+      ctx.translate(portrait.x + portrait.w / 2, portrait.y + portrait.h - 7);
+      ctx.scale(1.6, 1.6);
       ctx.translate(-11, -14);
       drawGameplayFrogSpriteLocal(EMBER_SKIN, false, false);
       ctx.restore();
     }
 
-    // Orange nameplate overlays the portrait's lower edge.
-    const nameX = portrait.x + 9;
-    const nameY = portrait.y + portrait.h - 14;
-    const nameW = portrait.w - 18;
+    const nameX = portrait.x + 6;
+    const nameY = portrait.y + portrait.h - 11;
+    const nameW = portrait.w - 12;
     ctx.fillStyle = COLORS.ink;
-    ctx.fillRect(nameX - 2, nameY - 2, nameW + 4, 14);
+    ctx.fillRect(nameX - 1, nameY - 1, nameW + 2, 11);
     ctx.fillStyle = "#ff9b45";
-    ctx.fillRect(nameX, nameY, nameW, 10);
-    drawBitmapText("EMBER", nameX + nameW / 2, nameY + 1, .46, "center", "#3d2417");
+    ctx.fillRect(nameX, nameY, nameW, 8);
+    drawBitmapText("EMBER", nameX + nameW / 2, nameY, .35, "center", "#3d2417");
 
-    // Dialogue copy.
-    drawBitmapText(step.title, textCenter, panel.y + 10, .44, "center", "#74e6f5");
-    const lineYs = [panel.y + 25, panel.y + 38, panel.y + 51];
+    drawBitmapText(step.title, textCenter, panel.y + 7, .36, "center", "#74e6f5");
+    const lineYs = [panel.y + 20, panel.y + 31, panel.y + 42];
     for (let index = 0; index < lines.length; index += 1) {
-      drawBitmapText(lines[index], textLeft, lineYs[index], .37, "left", COLORS.white);
+      drawBitmapText(lines[index], textLeft, lineYs[index], .29, "left", COLORS.white);
     }
-    drawBitmapText(prompt, textLeft, panel.y + 65, .34, "left", "#bdeef5");
-
-    // Continue indicator.
-    const arrowX = portrait.x - 18;
-    const arrowY = panel.y + panel.h - 14;
+    drawBitmapText(prompt, textRight, panel.y + 48, .25, "right", "#bdeef5");
     ctx.fillStyle = "#dff8ff";
-    ctx.fillRect(arrowX, arrowY, 8, 3);
-    ctx.fillRect(arrowX + 2, arrowY + 3, 4, 3);
-    ctx.fillRect(arrowX + 3, arrowY + 6, 2, 2);
+    ctx.fillRect(portrait.x - 15, panel.y + panel.h - 10, 7, 2);
+    ctx.fillRect(portrait.x - 13, panel.y + panel.h - 8, 3, 2);
     ctx.restore();
   }
 
   function drawTutorialStatus() {
     if (!tutorial.active || tutorial.dialogueOpen) return;
-    const failed = Boolean(tutorial.failedAttemptAt);
+    const failed = performance.now() < tutorial.failureMessageUntil;
     const success = tutorial.passed;
     if (!failed && !success) return;
     const text = failed
@@ -984,6 +984,32 @@
     ctx.fillStyle = failed ? "#f8d8df" : EMBER_SKIN.belly;
     ctx.fillRect(x + 3, y + 3, w - 6, 12);
     drawBitmapText(text, W / 2, y + 5, .43, "center", failed ? "#a51f1c" : EMBER_SKIN.dark);
+    ctx.restore();
+  }
+
+  function drawTutorialSmoke() {
+    if (!tutorial.smokeClouds.length) return;
+    const now = performance.now();
+    tutorial.smokeClouds = tutorial.smokeClouds.filter(cloud => now - cloud.born < 520);
+    const offsets = [[0,0],[-7,-2],[7,-3],[-4,-8],[5,-10],[-10,-9],[11,-8],[0,-14]];
+    ctx.save();
+    for (const cloud of tutorial.smokeClouds) {
+      const progress = clamp((now - cloud.born) / 520, 0, 1);
+      const alpha = (1 - progress) * .88;
+      const spread = 1 + progress * 1.8;
+      ctx.globalAlpha = alpha;
+      offsets.forEach(([ox, oy], index) => {
+        const size = Math.max(2, Math.round((index % 3 === 0 ? 6 : 4) * (1 + progress * .55)));
+        const x = Math.round(cloud.x + ox * spread - size / 2);
+        const y = Math.round(cloud.y + oy * spread - size / 2);
+        ctx.fillStyle = index % 2 ? "#d9e1e4" : "#f7fdff";
+        ctx.fillRect(x, y, size, size);
+        if (size >= 5) {
+          ctx.fillStyle = "#aebcc2";
+          ctx.fillRect(x + size - 2, y + size - 2, 2, 2);
+        }
+      });
+    }
     ctx.restore();
   }
 
@@ -1027,8 +1053,8 @@
 
   function drawTutorialOverlay() {
     if (!tutorial.active) return;
-    drawMentorFrog();
-    drawTutorialProgress();
+    drawTutorialSmoke();
+    if (!tutorial.dialogueOpen) drawTutorialProgress();
     if (tutorial.dialogueOpen) {
       drawTutorialDialogue();
     } else {
@@ -1076,6 +1102,21 @@
     ctx.restore();
   }
 
+  // Record how tutorial flies were caught so authored lessons can verify the intended technique.
+  const originalAttemptFlyCatch = attemptFlyCatch;
+  attemptFlyCatch = function(targetFly, source = "body", ...rest) {
+    const activeSetup = tutorial.active && tutorial.kind === "solo" ? tutorialStep()?.setup : "";
+    const wasCorrect = Boolean(targetFly && targetFly.vocabIndex === game.targetVocabIndex);
+    const result = originalAttemptFlyCatch.call(this, targetFly, source, ...rest);
+    if (!result || !activeSetup) return result;
+    if (activeSetup === "rangeCatch" && wasCorrect && source === "tongue") tutorial.rangeTongueCaught = true;
+    if (activeSetup === "wrongFly") {
+      if (!wasCorrect) tutorial.wrongFlyCaught = true;
+      else if (tutorial.wrongFlyCaught) tutorial.rightFlyCaught = true;
+    }
+    return result;
+  };
+
   // Capture real-engine jump outcomes for scenario checks.
   tutorial.originalLaunchJump = launchJump;
   launchJump = function(...args) {
@@ -1089,8 +1130,15 @@
       tutorial.quickDrop = tutorial.quickDrop || quick;
       tutorial.wallTouchedThisJump = false;
       tutorial.attemptStarted = true;
+      tutorial.jumpAttempts += 1;
       tutorial.attemptWasAirborne = true;
       tutorial.attemptEnded = false;
+      const setup = tutorialStep()?.setup;
+      if (setup === "maxJump" && power < .95) {
+        failAttempt("FILL THE METER BEFORE RELEASING");
+      } else if (setup === "quickDrop" && !quick) {
+        failAttempt("TAP QUICKLY  -  DO NOT CHARGE");
+      }
     }
     return result;
   };

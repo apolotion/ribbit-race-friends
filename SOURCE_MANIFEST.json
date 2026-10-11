@@ -1,8 +1,8 @@
 {
   "project": "Ribbit Race Friends Edition",
-  "version": "1.7.4",
-  "build": "2026.10.11-friends-ember-dialogue-1",
-  "fileCount": 100,
+  "version": "1.7.5",
+  "build": "2026.10.11-friends-tutorial-refinement-1",
+  "fileCount": 101,
   "files": [
     {
       "path": ".gitignore",
@@ -26,18 +26,18 @@
     },
     {
       "path": "BUILD_STATUS.json",
-      "bytes": 656,
-      "sha256": "9b2ee9a067e1b28da94a8e45dbdcff1efc522dcd388a700c02049bc3ad8dffd9"
+      "bytes": 809,
+      "sha256": "0e3abed995a8d953b80fdad31ddcb9204a2e1b547ea302b8e7150d61a679b141"
     },
     {
       "path": "EMBER_DIALOGUE_SCRIPT.md",
-      "bytes": 4490,
-      "sha256": "3d99ffb2b322808e73ee9824302e5f162f58379c013d7bb049ce3fac4b073ab6"
+      "bytes": 3718,
+      "sha256": "1a38768d7d9ea80fbdc040acabc78b2068c7d7695666c676f6dfbc732c50c67b"
     },
     {
       "path": "ENGINE_TUTORIAL.md",
-      "bytes": 3193,
-      "sha256": "d0e781e6372a9b519a4b6355cb5d03f54ee16150a1b545d4364cad41142e4fa7"
+      "bytes": 902,
+      "sha256": "c73c4761b685f6de20b61ec034e5d65a2f82009b916da377170ba870494a516e"
     },
     {
       "path": "HAT_REQUIREMENTS.md",
@@ -61,13 +61,13 @@
     },
     {
       "path": "PACKAGED_TESTS_PASSED.txt",
-      "bytes": 756,
-      "sha256": "7c58dfd1de88005c6aa118653b5708be2223966c46b220c86eb89c1875b38c57"
+      "bytes": 26419,
+      "sha256": "a4d37ef5ca6e17815fbaa8a780cc005f6f24b9b56566da23d48c4fdd878fee05"
     },
     {
       "path": "PIPELINE_OUTPUT.txt",
-      "bytes": 756,
-      "sha256": "7c58dfd1de88005c6aa118653b5708be2223966c46b220c86eb89c1875b38c57"
+      "bytes": 26419,
+      "sha256": "a4d37ef5ca6e17815fbaa8a780cc005f6f24b9b56566da23d48c4fdd878fee05"
     },
     {
       "path": "PREVIEWS/Ember_Dialogue_Welcome.png",
@@ -91,8 +91,8 @@
     },
     {
       "path": "README.md",
-      "bytes": 6761,
-      "sha256": "2d2b701ace867966e0c3a6a1fbd6feb864ee9eaafe9913621d79821aea2f4fe1"
+      "bytes": 6867,
+      "sha256": "78550e0d9f0a58248291e88bb09296ac01be64e2a3b3b6532af402c1024c4df5"
     },
     {
       "path": "README_PIN_UPDATE.md",
@@ -111,18 +111,18 @@
     },
     {
       "path": "TEST_OUTPUT.txt",
-      "bytes": 756,
-      "sha256": "7c58dfd1de88005c6aa118653b5708be2223966c46b220c86eb89c1875b38c57"
+      "bytes": 26419,
+      "sha256": "a4d37ef5ca6e17815fbaa8a780cc005f6f24b9b56566da23d48c4fdd878fee05"
     },
     {
       "path": "TEST_REPORT.md",
-      "bytes": 2844,
-      "sha256": "c327026477802e05fd707c891d153eec6e4275c5a3fee7ddaf2774f8db34649c"
+      "bytes": 1400,
+      "sha256": "4d1b33121291a316612b0c230a29dccd9997053c63f9160a1fdb73075f058de9"
     },
     {
       "path": "TEST_REPORT.txt",
-      "bytes": 2844,
-      "sha256": "c327026477802e05fd707c891d153eec6e4275c5a3fee7ddaf2774f8db34649c"
+      "bytes": 1400,
+      "sha256": "4d1b33121291a316612b0c230a29dccd9997053c63f9160a1fdb73075f058de9"
     },
     {
       "path": "TEST_REPORT_NICK_DELETE.md",
@@ -136,18 +136,18 @@
     },
     {
       "path": "TUTORIALS.md",
-      "bytes": 3193,
-      "sha256": "d0e781e6372a9b519a4b6355cb5d03f54ee16150a1b545d4364cad41142e4fa7"
+      "bytes": 3198,
+      "sha256": "7e3422aacc4b2668f0fc4b1aeaada1f10d5c9f8ac21b948c00c8353e3c350cf4"
     },
     {
       "path": "UPDATE_INSTRUCTIONS.md",
-      "bytes": 3664,
-      "sha256": "edaa02f4e0adb0a1d899116a26c373d8cf1089589735b12cf3c22dfee03f5a40"
+      "bytes": 2325,
+      "sha256": "d189f12d288b297d9843c3aa4bc04094d9788b445d8eebfa9bb0e8034aa4ec69"
     },
     {
       "path": "UPDATE_NOTE.txt",
-      "bytes": 600,
-      "sha256": "8a552f458a7c51a652634b1ee5302a9f18cbfbbe23fe9ae707ddbe9e2562d5ad"
+      "bytes": 479,
+      "sha256": "976a72355dcd65c8a94cc00219dc8cab561196e3408f42d97878852e86b381f7"
     },
     {
       "path": "UPDATE_PIN_INSTRUCTIONS.txt",
@@ -162,7 +162,7 @@
     {
       "path": "client/game/10-core-config.js",
       "bytes": 85763,
-      "sha256": "8a9fcf3548cfcbd25538f5f974c8f1df750ea3cf6dc5119669dffad1f525b275"
+      "sha256": "3850a8104abbabf0a0a02b7bbcc66163f3446cb6878fac2d227a6262b43303d8"
     },
     {
       "path": "client/game/100-mobile-experience.js",
@@ -171,13 +171,13 @@
     },
     {
       "path": "client/game/110-online-mobile-polish.js",
-      "bytes": 32873,
-      "sha256": "fac2a172c67aa9f47c325a2946349bc09629bb61355324110d2874113d652923"
+      "bytes": 32878,
+      "sha256": "3d6e75688afdf758c633da4def9d344f2f0cf8239843a70724e4cedafae88e66"
     },
     {
       "path": "client/game/120-engine-tutorial.js",
-      "bytes": 45413,
-      "sha256": "c62f3d512bea022975672cb9eae89b25ff3bff025e52600fe6f610b53af69327"
+      "bytes": 48407,
+      "sha256": "74b9cb99a44f9e23901e021d275e01dc46a3706a78819faf726bcf0be883e8de"
     },
     {
       "path": "client/game/20-models-and-state.js",
@@ -216,13 +216,13 @@
     },
     {
       "path": "client/game/90-extended-features.js",
-      "bytes": 11673,
-      "sha256": "db615f134e1473127d7974a28322c7dce464dce7d17d26923c7a320d05112e1f"
+      "bytes": 11678,
+      "sha256": "f68e58c226b00561f3e694338cd250ad727f33c1d94944c8e9f39066f3bef795"
     },
     {
       "path": "client/game/99-v170-hooks.js",
       "bytes": 19888,
-      "sha256": "c274ab99e4a15ead02491eddb4eba6638c38c3f7026a0d9fec088d6d6b5aff02"
+      "sha256": "eafb36023dfe0c4612c65b4dcb7d70d61e3998cd2a6d034186fc1fa337cbb12d"
     },
     {
       "path": "client/game/README.md",
@@ -232,7 +232,7 @@
     {
       "path": "package.json",
       "bytes": 456,
-      "sha256": "e99bb83e65f1de2ba8903896b531bc8b45bd15241007705cf9b07151dacef146"
+      "sha256": "bc3742b432f7a80bbb25fa53701ae0053c0b2f4182efff4ab5700da6b51d6b1c"
     },
     {
       "path": "public/_headers",
@@ -311,8 +311,8 @@
     },
     {
       "path": "public/scripts/cloud-client.js",
-      "bytes": 58350,
-      "sha256": "2637e1a67355f72381a4dce8840385ebba8bdcd98535b963d688f52be7d0c55c"
+      "bytes": 58360,
+      "sha256": "1fbfd069d6808c84f44f58d610aa079c9e18cec64fce1d8d23b17e38e43d764f"
     },
     {
       "path": "public/scripts/extended-features.js",
@@ -326,8 +326,8 @@
     },
     {
       "path": "public/scripts/game.bundle.js",
-      "bytes": 1148685,
-      "sha256": "269f5ea77d57f4ad23c6806cd561979030a5b0dc3b78a0e481713cbc9df4882b"
+      "bytes": 1151689,
+      "sha256": "f7e2224d8dfceb32d83f471d76949edc264b35d5d4d1516690c1fd84b7aca82b"
     },
     {
       "path": "public/scripts/mobile-experience.js",
@@ -346,8 +346,8 @@
     },
     {
       "path": "public/scripts/rr-170-polish.js",
-      "bytes": 15537,
-      "sha256": "fc398d2f3630f1b6f8fe09ea34a2cca33a08138aad5b696b8a1112512b79c037"
+      "bytes": 16338,
+      "sha256": "c9e0f2eb8cd705c67c8d5527655da248c9077adc9aff0acb56e9442fff6243af"
     },
     {
       "path": "public/scripts/v160-page-polish.js",
@@ -377,32 +377,32 @@
     {
       "path": "public/styles/rr-170.css",
       "bytes": 4939,
-      "sha256": "46839faf502b9b19066d5e6a57eadf507e5ca3cc3a22138e34278342b61a596e"
+      "sha256": "b15e4a387c8aed2ca2bd46bfdcb4eaf7beca0985eeac7d3f46a6a62fd3316572"
     },
     {
       "path": "public/tutorial/ember-confident.png",
-      "bytes": 54992,
-      "sha256": "791cefc112e127077f3548e55f89a4a9ece689920bf7f10b68c0d6bde4ed9eb9"
+      "bytes": 57408,
+      "sha256": "32f1d76c267c9f8e4c68070d1a632d721cc6484701ba91df62482d0e5b92819f"
     },
     {
       "path": "public/tutorial/ember-cool.png",
-      "bytes": 58815,
-      "sha256": "30397b9c21e5badc61a26d68ea73f4018818f60af5c89473c0637cf64b0baba6"
+      "bytes": 61488,
+      "sha256": "2552bf4aeca5239a2dff8e642de65e61842975b9cafea5b59bbe2df450fba75d"
     },
     {
       "path": "public/tutorial/ember-laughing.png",
-      "bytes": 58607,
-      "sha256": "8e0e3ecc91dc348c3deaf456761f0669517b588a46aca228d7264daf4511f1ed"
+      "bytes": 61087,
+      "sha256": "63098020e2fcb7708334e1014b3b9498daaae4a1e7cc1e662364ad4fda51d111"
     },
     {
       "path": "public/tutorial/ember-smile.png",
-      "bytes": 60281,
-      "sha256": "f16c49215c6ee53760f7bdf454caa794c4eca777ef6602baf2a00ee9e6271325"
+      "bytes": 62925,
+      "sha256": "6a3557f09012f76d60f3c6170c5ba0a98e4ca26698f907c757763623db18f80d"
     },
     {
       "path": "public/tutorial/ember-thinking.png",
-      "bytes": 57969,
-      "sha256": "6f74ecdf04acb27f6c0e94e850dbe34b44d4f4922de5e418fc27d9f2b6016193"
+      "bytes": 60807,
+      "sha256": "46950535d92d5aaf7d628725d5cc719a780855aad787e2b0b9b951ce0e77e1a9"
     },
     {
       "path": "scripts/build-game.mjs",
@@ -421,8 +421,8 @@
     },
     {
       "path": "src/common.js",
-      "bytes": 2265,
-      "sha256": "fa00fadc1120afa2ea23153d6bb949af2a571c0df14f3c741325c95cc9c0c31d"
+      "bytes": 2270,
+      "sha256": "4040a1dc6966ceaae708cb38b5d07f7b9601f9ba8eacbcff3de4aba010d42fcb"
     },
     {
       "path": "src/hub.js",
@@ -461,13 +461,13 @@
     },
     {
       "path": "tests/friends-1.4.0.test.mjs",
-      "bytes": 5293,
-      "sha256": "e4d5c3ceb01fd028683629f7460b8dfa1e5bcd76e6ae7fc6a9040d93e8b8cc34"
+      "bytes": 5298,
+      "sha256": "43ab8ffdf89700de718b6668da680b7e655a791b50c0c64ee0f03a657bd59fb3"
     },
     {
       "path": "tests/friends-1.4.1.test.mjs",
       "bytes": 2768,
-      "sha256": "7c92cb880af5e7f6664599a2d9aad901e231adc1a5434f91a519289523848e3a"
+      "sha256": "7d28780dd081fa96d60e265f480d3ec17f455e0001873ffe93bff6b68edef787"
     },
     {
       "path": "tests/friends-1.5.0.test.mjs",
@@ -476,8 +476,13 @@
     },
     {
       "path": "tests/friends-patch.test.mjs",
-      "bytes": 24938,
-      "sha256": "ba0580391b642ae8451b8f8ba88ad900c23286a490a48ae475b52da0c32ab1e5"
+      "bytes": 24948,
+      "sha256": "3c186c96f593b711a7c0f18dc0da61f2a70aa9363921ae35a0fabc3b7a9b8bf5"
+    },
+    {
+      "path": "tests/tutorial-refinement.test.mjs",
+      "bytes": 3482,
+      "sha256": "ba990f43e60cfe6f19408888d2221f309480daed4bfd3a06b98c4f66e761db0d"
     },
     {
       "path": "tests/v160-deep-integration.test.mjs",
@@ -486,8 +491,8 @@
     },
     {
       "path": "tests/v160-polish.test.mjs",
-      "bytes": 2396,
-      "sha256": "8c32d5f52108fcf54c82f1a60b32bd48ca12593c4e2404c105825bbe05bb5779"
+      "bytes": 2401,
+      "sha256": "e16275976f6e4fce114efd6561cd2eb1e5f695dea77799cfbdb8393d742ad2c4"
     },
     {
       "path": "tests/v160-replay-tags-records.test.mjs",
@@ -496,8 +501,8 @@
     },
     {
       "path": "tests/v170.test.mjs",
-      "bytes": 4666,
-      "sha256": "cb8b1216514341b5c661c897ac7305ec4b46349f72f3c4dbcd3330a4cc07689d"
+      "bytes": 4660,
+      "sha256": "21c170d8bad4e59d5fded651332f7f8311634c2ba171043fd6500c292f3948cf"
     },
     {
       "path": "wrangler.jsonc",

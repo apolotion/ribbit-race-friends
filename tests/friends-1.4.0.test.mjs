@@ -9,9 +9,9 @@ const mobile=read("client/game/100-mobile-experience.js");
 const render=read("client/game/70-rendering.js");
 const versus=read("client/game/60-versus-gameplay.js");
 
-test("1.7.4 build and thirteen modular gameplay sources are present",()=>{
-  assert.match(read("src/common.js"),/2026\.10\.11-friends-ember-dialogue-1/);
-  assert.match(read("package.json"),/"version": "1\.7\.4"/);
+test("1.7.5 build and thirteen modular gameplay sources are present",()=>{
+  assert.match(read("src/common.js"),/2026\.10\.11-friends-tutorial-refinement-1/);
+  assert.match(read("package.json"),/"version": "1\.7\.5"/);
   assert.match(read("scripts/build-game.mjs"),/100-mobile-experience\.js/);
   assert.match(read("public/index.html"),/mobile-experience\.js/);
 });
