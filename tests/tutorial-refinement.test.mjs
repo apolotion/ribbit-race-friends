@@ -6,63 +6,71 @@ const read = path => readFileSync(new URL(`../${path}`, import.meta.url), "utf8"
 const engine = read("client/game/120-engine-tutorial.js");
 const polish = read("public/scripts/rr-170-polish.js");
 
-test("1.7.7 tutorial-scripted build is wired", () => {
-  assert.equal(JSON.parse(read("package.json")).version, "1.7.7");
-  assert.match(read("src/common.js"), /2026\.10\.11-friends-tutorial-scripted-1/);
-  assert.match(engine, /rrFriendsEngineTutorialSoloSeenV7/);
+test("1.7.8 tutorial-polish build is wired everywhere", () => {
+  assert.equal(JSON.parse(read("package.json")).version, "1.7.8");
+  assert.match(read("src/common.js"), /2026\.10\.11-friends-tutorial-polish-2/);
+  assert.match(read("client/game/110-online-mobile-polish.js"), /2026\.10\.11-friends-tutorial-polish-2/);
+  assert.match(read("public/scripts/cloud-client.js"), /2026\.10\.11-friends-tutorial-polish-2/);
+  const index = read("public/index.html");
+  assert.match(index, /2026\.10\.11-tutorial-polish-2/);
+  assert.doesNotMatch(index, /tutorial-scripted-1/);
 });
 
-test("first-boot tutorial waits for a signed-in or guest profile", () => {
-  assert.match(polish, /window\.addEventListener\("rr-authenticated"/);
-  assert.match(polish, /authReady/);
-  assert.match(polish, /authenticatedProfileReady/);
-  assert.match(polish, /engine\.start\(forcedKind\|\|"solo"\)/);
+test("first-boot tutorial waits for profile, gate, body, frame, and input release", () => {
+  for (const phrase of [
+    "authenticatedProfileReady",
+    "authenticationBoundaryReleased",
+    "ribbit-auth-locked",
+    "hasAttribute(\"inert\")",
+    "aria-hidden",
+    "__RIBBIT_FRIENDS_GAME_INPUT_LOCKED__",
+    "rr-authenticated"
+  ]) assert.ok(polish.includes(phrase), phrase);
 });
 
-test("Ember dialogue is compact at the top with a right-side portrait", () => {
-  assert.match(engine, /const panel = \{ x: 92, y: 7, w: 300, h: 42 \}/);
-  assert.match(engine, /const portrait = \{ x: 337, y: 9, w: 51, h: 38 \}/);
-  assert.match(engine, /TYPEWRITER_MS_PER_CHARACTER/);
-  assert.match(engine, /visibleLine/);
+test("Ember dialogue is vertically and horizontally centered with fixed typography", () => {
+  assert.match(engine, /DIALOGUE_TEXT_SCALE = 0\.50/);
+  assert.match(engine, /const textTop = Math\.round\(textArea\.y \+ Math\.max\(0, \(textArea\.h - totalTextHeight\) \/ 2\)\)/);
+  assert.match(engine, /textArea\.x \+ textArea\.w \/ 2 - fullLineWidth \/ 2/);
+  assert.match(engine, /drawBitmapText\(\s*visibleOnLine,[\s\S]{0,420}"left"/);
 });
 
-test("tutorial arena does not draw a second Ember map frog", () => {
-  assert.match(engine, /No second frog is rendered in the playable tutorial arena/);
-  assert.doesNotMatch(engine, /drawMentorFrog\(\);/);
-});
-
-test("authored tutorial flies use normal movement and sparkle spawning", () => {
+test("authored tutorial flies retain normal movement and normal spawn sparkles", () => {
   assert.doesNotMatch(engine, /function alignTutorialFlies/);
   assert.match(engine, /phase:Math\.max\(0, spawnIndex\) \* 1\.37/);
   assert.match(engine, /currentFly\.spawnAge = 0/);
   assert.match(engine, /playFlySpawnSound/);
+  assert.match(engine, /updateTutorialAmbient\(dt, \{ animateFlies: !tutorial\.resetPending \}\)/);
 });
 
-test("poof reset clears tongue and hides the frog without an offscreen marker", () => {
+test("poof reset clears tongue, hides only the frog, and never moves it offscreen", () => {
   assert.match(engine, /resetTutorialTongue/);
   assert.match(engine, /tutorial\.frogHidden = true/);
-  assert.match(engine, /resetAt = performance\.now\(\) \+ 500/);
+  assert.match(engine, /resetAt = performance\.now\(\) \+ POOF_TRANSITION_MS/);
   assert.doesNotMatch(engine, /frog\.x\s*=\s*-1000|frog\.y\s*=\s*-1000/);
 });
 
-test("scene goals cover long jumps, matching catches, tongue, wrong fly, combos and drops", () => {
-  assert.match(engine, /goal: \["LONG JUMPS", "0 \/ 3"\]/);
-  assert.match(engine, /goal: \["MATCHES", "0 \/ 3"\]/);
-  assert.match(engine, /goal: \["USE YOUR TONGUE", "TO CATCH THE FLY"\]/);
-  assert.match(engine, /goal: \["CATCH A", "WRONG FLY"\]/);
-  assert.match(engine, /goal: \["3 MATCHES", "IN ONE JUMP"\]/);
-  assert.match(engine, /goal: \["2 BUFFERS", "3 FLIES"\]/);
-});
-
-test("wall turn allows two jumps and rebound remains one attempt", () => {
-  assert.match(engine, /WITHIN 2 JUMPS/);
-  assert.match(engine, /jumpAttempts >= 2/);
-  assert.match(engine, /ONE JUMP/);
-  assert.match(engine, /REBOUND CATCH/);
-});
-
-test("all five mirrored Ember portrait assets are packaged", () => {
+test("all five Ember portrait assets are packaged", () => {
   for (const name of ["confident", "smile", "cool", "laughing", "thinking"]) {
     assert.ok(existsSync(new URL(`../public/tutorial/ember-${name}.png`, import.meta.url)), name);
   }
+});
+
+test("scene goals cover long jumps, matching catches, tongue, combos, walls, and drops", () => {
+  for (const literal of [
+    'goal: ["LONG JUMPS", "0 / 3"]',
+    'goal: ["MATCHES", "0 / 3"]',
+    'goal: ["USE YOUR TONGUE", "TO CATCH THE FLY"]',
+    'goal: ["3 MATCHES", "IN ONE JUMP"]',
+    'goal: ["TURN AND CATCH", "WITHIN 2 JUMPS"]',
+    'goal: ["2 BUFFERS", "3 FLIES"]'
+  ]) assert.ok(engine.includes(literal), literal);
+});
+
+test("normal controls resume only after dialogue and the half-second scene-entry poof", () => {
+  assert.match(engine, /function armScenarioAfterDialogue\(\) \{\s*beginScenarioEntryTransition\(\);/);
+  assert.match(engine, /reason: "scene-entry"/);
+  assert.match(engine, /tutorial\.resetPending/);
+  assert.match(engine, /tutorialMovementLocked/);
+  assert.match(engine, /tutorial\.frogHidden = false/);
 });

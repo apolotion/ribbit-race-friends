@@ -1,12 +1,16 @@
-// Ribbit Race Friends 1.7.7  -  typed Ember dialogue and scripted checked Park scenarios.
+// Ribbit Race Friends 1.7.8 - polished typed Ember dialogue and scripted checked Park scenarios.
 (() => {
   "use strict";
 
   const SOLO_SEEN_KEY = "rrFriendsEngineTutorialSoloSeenV7";
   const PVP_SEEN_KEY = "rrFriendsEngineTutorialPvpSeenV7";
-  const TUTORIAL_BUILD = "2026.10.11-friends-tutorial-scripted-1";
+  const TUTORIAL_BUILD = "2026.10.11-friends-tutorial-polish-2";
   const TUTORIAL_ACHIEVEMENT_ID = "tutorial-graduate";
   const TYPEWRITER_MS_PER_CHARACTER = 28;
+  const DIALOGUE_TEXT_SCALE = 0.50;
+  const DIALOGUE_SPACE_HOLD_THRESHOLD_MS = 180;
+  const POOF_TRANSITION_MS = 500;
+  const FLY_REFERENCE_FLASH_MS = 440;
   const EMBER_SKIN = Object.freeze({ ...FROG_SKINS.ember, hat: "none" });
   const EMBER_PORTRAIT_SOURCES = Object.freeze({
     confident: "/tutorial/ember-confident.png",
@@ -41,7 +45,11 @@
     dialogueLineIndex: 0,
     dialogueOpenedAt: 0,
     dialogueLineStartedAt: 0,
+    dialoguePreLineDelayUntil: 0,
     dialogueForceComplete: false,
+    dialogueSpaceHeld: false,
+    dialogueSpaceHeldAt: 0,
+    dialogueFastForwardExtraMs: 0,
     dialoguePointerId: null,
     blockJumpUntilRelease: false,
     startQueued: false,
@@ -74,6 +82,11 @@
     resetPending: false,
     resetAt: 0,
     resetMessage: "",
+    resetAction: null,
+    resetShowFailure: true,
+    resetArmFlies: true,
+    resetPreserveFlyKeys: null,
+    resetReason: "",
     frogHidden: false,
     wrongFlyCaught: false,
     wrongFlyCaughtAt: 0,
@@ -91,11 +104,13 @@
     sceneCatchCount: 0,
     sceneAttemptIndex: 0,
     sceneAttemptCaught: false,
-    slowMoUntil: 0,
+    pendingStartPose: null,
+    goalHovered: false,
+    authStartQueued: false,
+    authQueuedKind: "solo",
     mentorSide: "right",
     mentorX: PVP_START_X[1],
     mentorY: CONFIG.groundY - frog.h,
-    pauseNoticeUntil: 0,
     pvpBonks: 0,
     pvpRebounds: 0,
     pvpLastStun: 0,
@@ -376,6 +391,32 @@
     })
   ]);
 
+  // Ember changes expression from sentence to sentence instead of holding one
+  // static portrait for an entire lesson. Every sequence intentionally contains
+  // at least two different faces, even when a scene is only a few lines long.
+  const EMBER_PORTRAIT_SEQUENCE_BY_SETUP = Object.freeze({
+    intro: Object.freeze(["smile", "confident", "cool", "laughing", "thinking", "confident"]),
+    longJumps: Object.freeze(["confident", "cool", "thinking", "thinking", "confident", "laughing"]),
+    threeCatches: Object.freeze(["smile", "laughing", "thinking", "cool", "confident", "smile"]),
+    rangeCatch: Object.freeze(["laughing", "cool", "thinking", "confident", "thinking", "cool"]),
+    wrongFly: Object.freeze(["smile", "thinking", "cool", "laughing", "confident", "laughing"]),
+    comboMixed: Object.freeze(["thinking", "laughing", "confident", "cool", "smile"]),
+    comboTwo: Object.freeze(["laughing", "confident", "thinking", "smile"]),
+    comboThree: Object.freeze(["cool", "laughing", "confident"]),
+    wallTurn: Object.freeze(["laughing", "thinking", "cool", "confident", "thinking", "smile"]),
+    reboundCatch: Object.freeze(["smile", "thinking", "cool", "confident"]),
+    quickDrop: Object.freeze(["confident", "thinking", "cool", "laughing", "smile"]),
+    bufferDrop: Object.freeze(["thinking", "confident", "cool", "thinking", "smile"]),
+    doubleBuffer: Object.freeze(["cool", "confident", "thinking", "laughing"]),
+    normalRound: Object.freeze(["laughing", "smile", "confident", "cool", "smile"]),
+    pvpWelcome: Object.freeze(["confident", "smile", "cool"]),
+    pvpBonk: Object.freeze(["cool", "laughing", "thinking"]),
+    pvpSkyBonk: Object.freeze(["smile", "cool", "confident"]),
+    pvpDoubleBonk: Object.freeze(["thinking", "cool", "confident"]),
+    pvpRebound: Object.freeze(["cool", "thinking", "laughing"]),
+    pvpOffense: Object.freeze(["laughing", "confident", "cool"])
+  });
+
 
   const GROUND = () => ({ x: 0, y: CONFIG.groundY, w: W, h: 15, ground: true, tutorialId: "ground" });
   const cloneParkPlatforms = () => PARK_PLATFORMS.map((platform, index) => ({ ...platform, tutorialId: `park-${index}` }));
@@ -432,6 +473,118 @@
     game.platformDropBufferUntil = -Infinity;
   }
 
+  function controlledTutorialEntity() {
+    return tutorial.kind === "pvp" ? pvpPlayers[0] : frog;
+  }
+
+  function captureControlledPose(entity = controlledTutorialEntity()) {
+    if (!entity) return null;
+    return {
+      x: Number(entity.x) || 0,
+      y: Number(entity.y) || 0,
+      vx: Number(entity.vx) || 0,
+      vy: Number(entity.vy) || 0,
+      dir: Number(entity.dir) < 0 ? -1 : 1,
+      grounded: Boolean(entity.grounded),
+      charging: Boolean(entity.charging),
+      charge: Number(entity.charge) || 0.08,
+      chargeDirection: Number(entity.chargeDirection) || 1,
+      chargeHoldTime: Number(entity.chargeHoldTime) || 0,
+      departurePlatform: entity.departurePlatform || null,
+      dropThroughPlatform: entity.dropThroughPlatform || null,
+      firstJumpMade: Boolean(entity.firstJumpMade),
+      landingSquash: Number(entity.landingSquash) || 0,
+      inputHeld: Boolean(entity.inputHeld),
+      previousY: Number.isFinite(Number(entity.previousY)) ? Number(entity.previousY) : undefined,
+      highestY: Number.isFinite(Number(entity.highestY)) ? Number(entity.highestY) : undefined
+    };
+  }
+
+  function applyControlledPose(pose, entity = controlledTutorialEntity()) {
+    if (!pose || !entity) return;
+    Object.assign(entity, {
+      x: pose.x,
+      y: pose.y,
+      vx: pose.vx,
+      vy: pose.vy,
+      dir: pose.dir,
+      grounded: pose.grounded,
+      charging: pose.charging,
+      charge: pose.charge,
+      chargeDirection: pose.chargeDirection,
+      chargeHoldTime: pose.chargeHoldTime,
+      departurePlatform: pose.departurePlatform,
+      dropThroughPlatform: pose.dropThroughPlatform,
+      firstJumpMade: pose.firstJumpMade,
+      landingSquash: pose.landingSquash
+    });
+    if ("inputHeld" in entity) entity.inputHeld = Boolean(pose.inputHeld);
+    if (pose.previousY !== undefined && "previousY" in entity) entity.previousY = pose.previousY;
+    if (pose.highestY !== undefined && "highestY" in entity) entity.highestY = pose.highestY;
+  }
+
+  function freezeControlledEntity() {
+    const entity = controlledTutorialEntity();
+    if (!entity) return;
+    entity.vx = 0;
+    entity.vy = 0;
+    entity.charging = false;
+    entity.chargeHoldTime = 0;
+    if ("inputHeld" in entity) entity.inputHeld = false;
+    clearHeldInput();
+  }
+
+  function getNormalParkStartX() {
+    return Number(LEVELS?.park?.startX ?? 25) + Number(CONFIG.initialFrogOffsetX || 36);
+  }
+
+  function restoreExactParkStage() {
+    platforms = cloneParkPlatforms();
+    flySpawns = LEVELS.park.flySpawns;
+  }
+
+  function tutorialAuthenticationReady() {
+    if (typeof document === "undefined") return true;
+    const gate = document.getElementById("cloud-gate");
+    const frame = document.getElementById("game-frame");
+    let profileReady = false;
+    try {
+      // cloud-client.js declares RibbitCloud as a global lexical binding rather
+      // than a window property, so prefer the identifier and keep the window
+      // fallback for compatible hosted builds.
+      const cloud = typeof RibbitCloud !== "undefined" ? RibbitCloud : window.RibbitCloud;
+      const profile = cloud?.getProfile?.() || cloud?.profile?.();
+      profileReady = Boolean(profile?.signedIn || profile?.guestMode);
+    } catch (_) {}
+    const gateReleased = !gate || gate.hidden === true;
+    const bodyReleased = !document.body?.classList?.contains("ribbit-auth-locked");
+    const frameReleased = !frame || (!frame.hasAttribute("inert") && frame.getAttribute("aria-hidden") !== "true");
+    let functionLockReleased = true;
+    try {
+      functionLockReleased = typeof window.RibbitFriendsGameInputLocked !== "function" ||
+        window.RibbitFriendsGameInputLocked() !== true;
+    } catch (_) { functionLockReleased = false; }
+    const inputReleased = window.__RIBBIT_FRIENDS_GAME_INPUT_LOCKED__ !== true && functionLockReleased;
+    return profileReady && gateReleased && bodyReleased && frameReleased && inputReleased;
+  }
+
+  function queueTutorialAfterAuthentication(kind) {
+    tutorial.authQueuedKind = kind === "pvp" ? "pvp" : "solo";
+    if (tutorial.authStartQueued) return;
+    tutorial.authStartQueued = true;
+    const retry = () => {
+      if (!tutorial.authStartQueued || tutorial.active || tutorial.completeScreen) return;
+      if (!tutorialAuthenticationReady()) {
+        setTimeout(retry, 180);
+        return;
+      }
+      tutorial.authStartQueued = false;
+      start(tutorial.authQueuedKind);
+    };
+    window.addEventListener("rr-authenticated", retry, { once:true });
+    setTimeout(retry, 220);
+  }
+
   function clearLabelCaches() {
     try { flyLabelPlacementCache.clear(); } catch (_) {}
     try { flyLabelSpriteCache.clear(); } catch (_) {}
@@ -454,10 +607,33 @@
     return String(lines[Math.min(tutorial.dialogueLineIndex, lines.length - 1)] || "");
   }
 
+  function currentEmberPortraitKey() {
+    const step = tutorialStep();
+    const sequence = EMBER_PORTRAIT_SEQUENCE_BY_SETUP[step?.setup] || [];
+    if (sequence.length) return sequence[tutorial.dialogueLineIndex % sequence.length];
+    return step?.portrait || "confident";
+  }
+
+  function resetDialogueSpaceHold() {
+    tutorial.dialogueSpaceHeld = false;
+    tutorial.dialogueSpaceHeldAt = 0;
+    tutorial.dialogueFastForwardExtraMs = 0;
+  }
+
+  function dialogueTypingAge(now = performance.now()) {
+    const typingStart = Math.max(tutorial.dialogueLineStartedAt, tutorial.dialoguePreLineDelayUntil || 0);
+    const normalAge = Math.max(0, now - typingStart);
+    const heldExtra = tutorial.dialogueSpaceHeld
+      ? Math.max(0, now - Math.max(typingStart, tutorial.dialogueSpaceHeldAt || now))
+      : 0;
+    // Normal time already counts once. Adding held time once more makes holding
+    // Space exactly twice as fast without changing the base typewriter rhythm.
+    return normalAge + Math.max(0, tutorial.dialogueFastForwardExtraMs) + heldExtra;
+  }
+
   function visibleDialogueCharacterCount(line = currentDialogueLine()) {
     if (tutorial.dialogueForceComplete) return line.length;
-    const age = Math.max(0, performance.now() - tutorial.dialogueLineStartedAt);
-    return Math.min(line.length, Math.floor(age / TYPEWRITER_MS_PER_CHARACTER));
+    return Math.min(line.length, Math.floor(dialogueTypingAge() / TYPEWRITER_MS_PER_CHARACTER));
   }
 
   function dialogueLineIsComplete() {
@@ -465,43 +641,95 @@
     return visibleDialogueCharacterCount(line) >= line.length;
   }
 
-  function openDialogue() {
-    tutorial.dialogueOpen = true;
-    tutorial.dialogueLineIndex = 0;
-    tutorial.dialogueOpenedAt = performance.now();
-    tutorial.dialogueLineStartedAt = tutorial.dialogueOpenedAt;
+  function beginDialogueLine(index, options = {}) {
+    const now = performance.now();
+    tutorial.dialogueLineIndex = Math.max(0, Math.floor(index));
+    tutorial.dialogueOpenedAt = now;
+    tutorial.dialogueLineStartedAt = now + Math.max(0, Number(options.delayMs) || 0);
+    tutorial.dialoguePreLineDelayUntil = tutorial.dialogueLineStartedAt;
     tutorial.dialogueForceComplete = false;
     tutorial.dialoguePointerId = null;
+    resetDialogueSpaceHold();
+  }
+
+  function openDialogue() {
+    tutorial.dialogueOpen = true;
+    beginDialogueLine(0);
     tutorial.blockJumpUntilRelease = false;
     game.state = "playing";
     game.pauseHelpOpen = false;
     clearHeldInput();
+    freezeControlledEntity();
+    // New scene flies use their normal poof animation while Ember is talking.
+    // The matching lesson is the deliberate exception: its first fly is timed
+    // to finish poofing in immediately before "Looks like dinner is ready!".
+    if (tutorialStep()?.setup !== "threeCatches") armTutorialFlies();
     try { drawScene(); } catch (_) {}
   }
 
-  function armTutorialFlies() {
-    let armed = 0;
+  function tutorialFlyKey(currentFly) {
+    if (!currentFly) return "";
+    if (currentFly.tutorialKey) return String(currentFly.tutorialKey);
+    return [
+      Number(currentFly.spawnIndex) || 0,
+      Number(currentFly.vocabIndex) || 0,
+      Math.round(Number(currentFly.baseX ?? currentFly.x) || 0),
+      Math.round(Number(currentFly.baseY ?? currentFly.y) || 0)
+    ].join(":");
+  }
+
+  function collectVisibleTutorialFlyKeys() {
+    return new Set(
+      flies
+        .filter((currentFly) => currentFly?.tutorialAuthored && currentFly.tutorialArmed !== false)
+        .map(tutorialFlyKey)
+        .filter(Boolean)
+    );
+  }
+
+  function armTutorialFlies(options = {}) {
+    const preserveKeys = options.preserveKeys instanceof Set ? options.preserveKeys : null;
+    let spawned = 0;
     for (const currentFly of flies) {
-      if (!currentFly?.tutorialAuthored) continue;
+      if (!currentFly?.tutorialAuthored || currentFly.tutorialArmed !== false) continue;
       currentFly.tutorialArmed = true;
-      currentFly.spawnAge = 0;
-      armed += 1;
+      if (preserveKeys?.has(tutorialFlyKey(currentFly))) {
+        // This fly was already present before a frog-only reset. Keep it visible
+        // instead of replaying its poof animation.
+        currentFly.spawnAge = Math.max(
+          Number(currentFly.spawnAge) || 0,
+          CONFIG.flySpawnEffectDuration + 0.08,
+          CONFIG.flyGrowDuration + 0.08
+        );
+      } else {
+        currentFly.spawnAge = 0;
+        spawned += 1;
+      }
     }
-    if (armed > 0) {
+    if (spawned > 0) {
       try { playFlySpawnSound(); } catch (_) { tone(760, .045, .012, 80); }
     }
+    return spawned;
+  }
+
+  function prepareDialogueLine(nextIndex) {
+    const setup = tutorialStep()?.setup;
+    let delayMs = 0;
+    // The first dinner fly appears, completes its poof, and only then does Ember
+    // say that dinner is ready. Ambient fly animation keeps running behind her.
+    if (setup === "threeCatches" && nextIndex === 1) {
+      armTutorialFlies();
+      delayMs = POOF_TRANSITION_MS;
+    }
+    beginDialogueLine(nextIndex, { delayMs });
   }
 
   function armScenarioAfterDialogue() {
-    restoreStepSequence();
-    armTutorialFlies();
-    tutorial.enteredAt = performance.now();
-    game.state = "playing";
-    game.pauseHelpOpen = false;
+    beginScenarioEntryTransition();
   }
 
   function closeDialogue(source = "keyboard") {
-    if (!tutorial.active || !tutorial.dialogueOpen) return false;
+    if (!tutorial.active || !tutorial.dialogueOpen || game.state === "paused" || game.state === "countdown") return false;
     if (performance.now() - tutorial.dialogueOpenedAt < 90) return false;
 
     if (!dialogueLineIsComplete()) {
@@ -512,11 +740,7 @@
 
     const lines = dialogueLinesForCurrentStep();
     if (tutorial.dialogueLineIndex < Math.max(0, lines.length - 1)) {
-      tutorial.dialogueLineIndex += 1;
-      tutorial.dialogueOpenedAt = performance.now();
-      tutorial.dialogueLineStartedAt = tutorial.dialogueOpenedAt;
-      tutorial.dialogueForceComplete = false;
-      tutorial.dialoguePointerId = null;
+      prepareDialogueLine(tutorial.dialogueLineIndex + 1);
       tone(470, .025, .007, 35);
       try { drawScene(); } catch (_) {}
       return true;
@@ -527,7 +751,9 @@
     tutorial.dialogueLineIndex = 0;
     tutorial.dialogueForceComplete = false;
     tutorial.dialoguePointerId = null;
-    tutorial.blockJumpUntilRelease = source === "space";
+    tutorial.dialoguePreLineDelayUntil = 0;
+    tutorial.blockJumpUntilRelease = false;
+    resetDialogueSpaceHold();
     clearHeldInput();
     game.state = "playing";
     game.pauseHelpOpen = false;
@@ -595,7 +821,7 @@
     tutorial.sceneCatchCount = 0;
     tutorial.sceneAttemptIndex = 0;
     tutorial.sceneAttemptCaught = false;
-    tutorial.slowMoUntil = 0;
+    tutorial.goalHovered = false;
     tutorial.pvpBonks = 0;
     tutorial.pvpRebounds = 0;
     tutorial.pvpLastStun = 0;
@@ -617,7 +843,8 @@
       pvpPursuitPromptSerial:-1,
       spitElapsed:0, spitDelay:0, spitDuration:.34, spitStarted:false,
       spitOwnerIndex:null, spitStartX:x, spitStartY:y, returnX:x, returnY:y,
-      tutorialAuthored:true, tutorialArmed:false, tutorialRequiresRebound:false
+      tutorialAuthored:true, tutorialArmed:false, tutorialRequiresRebound:false,
+      tutorialKey:[spawnIndex, vocabIndex, Math.round(x), Math.round(y)].join(":")
     };
     flies.push(fly);
     return fly;
@@ -681,7 +908,7 @@
     game.timeOfDay = "afternoon";
     game.sandboxMode = false;
     resetGame(true);
-    platforms = cloneParkPlatforms();
+    restoreExactParkStage();
     game.sandboxMode = false;
     game.state = "playing";
     flies.length = 0;
@@ -691,9 +918,11 @@
     game.jumps = 0;
     game.winPending = false;
     game.finishTime = null;
+    game.soloCriticalCatchActive = false;
+    game.soloCriticalCatchElapsed = 0;
     nextFlyId = 1;
     tongue.active = false;
-    positionSoloFrog(35);
+    positionSoloFrog(getNormalParkStartX());
     setPrompt(0);
   }
 
@@ -733,11 +962,11 @@
 
     switch (step.setup) {
       case "intro":
-        positionSoloFrog(72, CONFIG.groundY - frog.h, 1);
+        positionSoloFrog(getNormalParkStartX(), CONFIG.groundY - frog.h, 1);
         break;
 
       case "longJumps":
-        positionSoloFrog(48, CONFIG.groundY - frog.h, 1);
+        positionSoloFrog(getNormalParkStartX(), CONFIG.groundY - frog.h, 1);
         break;
 
       case "threeCatches":
@@ -745,12 +974,12 @@
         break;
 
       case "rangeCatch": {
-        // Begin on the normal left-middle Park platform. This authored target
-        // sits just beyond body contact along a full-jump arc, but inside the
-        // normal tongue reach during the descending half of that jump.
-        positionOnPlatform(platforms[2], 6, 1);
+        // Begin on Park's lower-left platform. The target is visibly across the
+        // stage and remains outside body-contact range, but a near-full long jump
+        // brings it inside the normal 64px tongue reach on the descent.
+        positionOnPlatform(platforms[1], 8, 1);
         setPrompt(0);
-        makeFly(360, 75, 0, 4);
+        makeFly(300, 68, 0, 4);
         break;
       }
 
@@ -764,21 +993,24 @@
         positionSoloFrog(42, CONFIG.groundY - frog.h, 1);
         setPrompt(0);
         makeParkFly(3, 0, 0);
-        makeParkFly(2, 1, 1);
+        makeParkFly(7, 1, 1);
         break;
 
       case "comboTwo":
         positionSoloFrog(42, CONFIG.groundY - frog.h, 1);
         makeParkFly(3, 0, 0);
-        makeParkFly(2, 1, 1);
+        makeParkFly(7, 1, 1);
         setSequence([0, 1]);
         break;
 
       case "comboThree":
         positionSoloFrog(42, CONFIG.groundY - frog.h, 1);
-        makeParkFly(3, 0, 0);
-        makeParkFly(2, 1, 1);
-        makeParkFly(4, 2, 2);
+        // Three points are laid along one reachable Park arc. The final fly is
+        // still directly above the middle platform, so the lesson remains easy
+        // to read while no catch requires an impossible extra jump.
+        makeFly(145, 110, 0, 0);
+        makeFly(190, 120, 1, 1);
+        makeFly(235, 155, 2, 2);
         setSequence([0, 1, 2]);
         break;
 
@@ -797,14 +1029,14 @@
       }
 
       case "quickDrop":
-        platforms = cloneParkPlatforms();
+        restoreExactParkStage();
         positionOnPlatform(platforms[2], 10, 1);
         setPrompt(0);
         makeParkFly(7, 0, 0);
         break;
 
       case "bufferDrop":
-        platforms = cloneParkPlatforms();
+        restoreExactParkStage();
         // Start at the forward edge of the lower-left platform so the normal
         // charged arc reaches the top-center platform consistently.
         positionOnPlatform(platforms[1], platforms[1].w - frog.w - 2, 1);
@@ -813,7 +1045,7 @@
         break;
 
       case "doubleBuffer":
-        platforms = cloneParkPlatforms();
+        restoreExactParkStage();
         positionOnPlatform(platforms[1], platforms[1].w - frog.w - 2, 1);
         makeParkFly(2, 0, 0);
         makeParkFly(4, 1, 1);
@@ -822,10 +1054,11 @@
         break;
 
       case "normalRound":
-        platforms = cloneParkPlatforms();
+        restoreExactParkStage();
         game.sandboxMode = false;
         game.soloCatchGoal = 5;
         resetGame(true);
+        restoreExactParkStage();
         game.state = "playing";
         break;
 
@@ -834,6 +1067,7 @@
     }
 
     setMentor(step.mentor || "right");
+    restoreExactParkStage();
   }
 
   function basePvpScenario() {
@@ -906,14 +1140,26 @@
     clearScenarioState();
   }
 
-  function configureStep(showDialogue = true) {
+  function configureStep(showDialogue = true, options = {}) {
+    const preservedVisualPose = options.preserveVisualPose || null;
     if (tutorial.kind === "pvp") configurePvpStep(tutorial.step);
     else configureSoloStep(tutorial.step);
+    tutorial.pendingStartPose = captureControlledPose();
+    if (preservedVisualPose) {
+      applyControlledPose(preservedVisualPose);
+      freezeControlledEntity();
+    }
     tutorial.dialogueOpen = false;
     tutorial.dialoguePointerId = null;
     tutorial.blockJumpUntilRelease = false;
     if (showDialogue) openDialogue();
-    else armScenarioAfterDialogue();
+    else {
+      restoreStepSequence();
+      armTutorialFlies();
+      tutorial.enteredAt = performance.now();
+      game.state = "playing";
+      game.pauseHelpOpen = false;
+    }
   }
 
   function addTutorialPoof(x, y, kind = "out") {
@@ -936,31 +1182,9 @@
     }
   }
 
-  function completePendingReset() {
-    if (!tutorial.resetPending) return;
-    const message = tutorial.resetMessage || "TRY AGAIN";
-    tutorial.resetPending = false;
-    tutorial.resetAt = 0;
-    tutorial.resetMessage = "";
-    configureStep(false);
-    tutorial.frogHidden = false;
-    resetTutorialTongue();
-    const entity = tutorial.kind === "pvp" ? pvpPlayers[0] : frog;
-    addTutorialPoof(
-      Number(entity?.x || 0) + Number(entity?.w || frog.w) / 2,
-      Number(entity?.y || 0) + Number(entity?.h || frog.h) / 2,
-      "in"
-    );
-    playTutorialPoofSound("in");
-    tutorial.failureText = message;
-    tutorial.failureFlashStartedAt = performance.now();
-    tutorial.failureMessageUntil = tutorial.failureFlashStartedAt + tutorial.failureFlashDuration;
-    game.state = "playing";
-  }
-
-  function failAttempt(message) {
-    if (!tutorial.active || tutorial.passed || tutorial.resetPending) return;
-    const entity = tutorial.kind === "pvp" ? pvpPlayers[0] : frog;
+  function beginPoofTransition(options = {}) {
+    if (!tutorial.active || tutorial.resetPending) return false;
+    const entity = controlledTutorialEntity();
     const oldX = Number(entity?.x || 0);
     const oldY = Number(entity?.y || 0);
     addTutorialPoof(
@@ -971,27 +1195,114 @@
     playTutorialPoofSound("out");
     resetTutorialTongue();
     try { clearFrogAfterimages(entity); } catch (_) {}
-    tutorial.resetPending = true;
-    tutorial.resetAt = performance.now() + 500;
-    tutorial.resetMessage = message || "TRY AGAIN";
-    tutorial.frogHidden = true;
-    clearHeldInput();
 
-    // Keep the entity at its real location while the simulation is frozen.
-    // Drawing is suppressed by frogHidden, so no off-screen indicator can appear
-    // and a tongue that was active cannot stretch from a sentinel coordinate.
-    if (entity) {
-      entity.vx = 0;
-      entity.vy = 0;
-      entity.charging = false;
-      if ("inputHeld" in entity) entity.inputHeld = false;
+    tutorial.resetPending = true;
+    tutorial.resetAt = performance.now() + POOF_TRANSITION_MS;
+    tutorial.resetMessage = String(options.message || "");
+    tutorial.resetAction = typeof options.action === "function" ? options.action : null;
+    tutorial.resetShowFailure = options.showFailure !== false;
+    tutorial.resetArmFlies = options.armFlies !== false;
+    tutorial.resetPreserveFlyKeys = options.preserveExistingFlies
+      ? collectVisibleTutorialFlyKeys()
+      : null;
+    tutorial.resetReason = String(options.reason || "reset");
+    tutorial.frogHidden = true;
+    tutorial.goalHovered = false;
+    clearHeldInput();
+    freezeControlledEntity();
+    return true;
+  }
+
+  function rebuildCurrentScenarioForRetry() {
+    if (tutorial.kind === "pvp") configurePvpStep(tutorial.step);
+    else configureSoloStep(tutorial.step);
+    tutorial.pendingStartPose = captureControlledPose();
+    tutorial.dialogueOpen = false;
+    tutorial.dialoguePointerId = null;
+    tutorial.blockJumpUntilRelease = false;
+    restoreStepSequence();
+    game.pauseHelpOpen = false;
+    game.state = "playing";
+  }
+
+  function beginScenarioEntryTransition() {
+    const intendedStartPose = tutorial.pendingStartPose || captureControlledPose();
+    beginPoofTransition({
+      reason: "scene-entry",
+      showFailure: false,
+      preserveExistingFlies: false,
+      action: () => {
+        applyControlledPose(intendedStartPose);
+        tutorial.pendingStartPose = null;
+        restoreStepSequence();
+        tutorial.enteredAt = performance.now();
+      }
+    });
+  }
+
+  function completePendingReset() {
+    if (!tutorial.resetPending) return;
+    const action = tutorial.resetAction;
+    const message = tutorial.resetMessage || "TRY AGAIN";
+    const showFailure = tutorial.resetShowFailure;
+    const armFlies = tutorial.resetArmFlies;
+    const preserveFlyKeys = tutorial.resetPreserveFlyKeys;
+
+    tutorial.resetPending = false;
+    tutorial.resetAt = 0;
+    tutorial.resetMessage = "";
+    tutorial.resetAction = null;
+    tutorial.resetShowFailure = true;
+    tutorial.resetArmFlies = true;
+    tutorial.resetPreserveFlyKeys = null;
+    tutorial.resetReason = "";
+
+    try {
+      if (action) action();
+      else rebuildCurrentScenarioForRetry();
+    } catch (error) {
+      console.warn("Ribbit Race tutorial reset recovered", error);
+      rebuildCurrentScenarioForRetry();
     }
+
+    resetTutorialTongue();
+    if (armFlies) armTutorialFlies({ preserveKeys: preserveFlyKeys });
+    tutorial.frogHidden = false;
+    freezeControlledEntity();
+    const entity = controlledTutorialEntity();
+    addTutorialPoof(
+      Number(entity?.x || 0) + Number(entity?.w || frog.w) / 2,
+      Number(entity?.y || 0) + Number(entity?.h || frog.h) / 2,
+      "in"
+    );
+    playTutorialPoofSound("in");
+
+    if (showFailure) {
+      tutorial.failureText = message;
+      tutorial.failureFlashStartedAt = performance.now();
+      tutorial.failureMessageUntil = tutorial.failureFlashStartedAt + tutorial.failureFlashDuration;
+    }
+    tutorial.enteredAt = performance.now();
+    game.state = "playing";
+    game.pauseHelpOpen = false;
+  }
+
+  function failAttempt(message) {
+    if (!tutorial.active || tutorial.passed || tutorial.resetPending) return;
+    beginPoofTransition({
+      reason: "failed-attempt",
+      message: message || "TRY AGAIN",
+      showFailure: true,
+      preserveExistingFlies: true,
+      action: rebuildCurrentScenarioForRetry
+    });
   }
 
   function passStep() {
     if (!tutorial.active || tutorial.passed) return;
     tutorial.passed = true;
     tutorial.passAt = performance.now();
+    freezeControlledEntity();
     tone(620, .07, .018, 85);
   }
 
@@ -1027,7 +1338,13 @@
     tutorial.dialogueOpen = false;
     tutorial.blockJumpUntilRelease = false;
     tutorial.resetPending = false;
+    tutorial.resetAction = null;
+    tutorial.resetPreserveFlyKeys = null;
+    tutorial.pendingStartPose = null;
+    tutorial.goalHovered = false;
+    tutorial.dialoguePointerId = null;
     tutorial.frogHidden = false;
+    resetDialogueSpaceHold();
     game.tutorialActive = false;
     tutorial.completeScreen = true;
     game.winPending = false;
@@ -1067,6 +1384,10 @@
   function dismissCompletionScreen() {
     if (!tutorial.completeScreen) return;
     tutorial.completeScreen = false;
+    tutorial.goalHovered = false;
+    tutorial.pendingStartPose = null;
+    tutorial.authStartQueued = false;
+    resetDialogueSpaceHold();
     try { document.body.classList.remove("rr-tutorial-active"); } catch (_) {}
     const runtime = restoreLegitimateState(true);
     restoreRuntime(runtime);
@@ -1085,6 +1406,15 @@
     tutorial.active = false;
     tutorial.dialogueOpen = false;
     tutorial.blockJumpUntilRelease = false;
+    tutorial.resetPending = false;
+    tutorial.resetAction = null;
+    tutorial.resetPreserveFlyKeys = null;
+    tutorial.pendingStartPose = null;
+    tutorial.goalHovered = false;
+    tutorial.dialoguePointerId = null;
+    tutorial.frogHidden = false;
+    tutorial.authStartQueued = false;
+    resetDialogueSpaceHold();
     try { document.body.classList.remove("rr-tutorial-active"); } catch (_) {}
     game.tutorialActive = false;
     game.sandboxMode = false;
@@ -1102,12 +1432,18 @@
       finish(true);
       return;
     }
+    const visualPose = captureControlledPose();
+    freezeControlledEntity();
     tutorial.step += 1;
-    configureStep();
+    configureStep(true, { preserveVisualPose: visualPose });
   }
 
   function start(kind = "solo") {
     if (tutorial.active || tutorial.completeScreen) return true;
+    if (!tutorialAuthenticationReady()) {
+      queueTutorialAfterAuthentication(kind);
+      return false;
+    }
     if (!emberPortraitsReady) {
       if (!tutorial.startQueued) {
         tutorial.startQueued = true;
@@ -1120,13 +1456,18 @@
     }
     tutorial.active = true;
     tutorial.completeScreen = false;
+    tutorial.authStartQueued = false;
     try { document.body.classList.add("rr-tutorial-active"); } catch (_) {}
     tutorial.kind = kind === "pvp" ? "pvp" : "solo";
     tutorial.step = 0;
     tutorial.runtime = saveRuntime();
     tutorial.snapshot = RibbitCloud.beginPlaytestSession?.() || {};
     game.tutorialActive = true;
-    configureStep();
+    tutorial.resetPending = false;
+    tutorial.resetAction = null;
+    tutorial.pendingStartPose = null;
+    tutorial.goalHovered = false;
+    configureStep(true);
     try { drawScene(); } catch (_) {}
     requestAnimationFrame(() => { try { drawScene(); } catch (_) {} });
     canvas?.focus?.();
@@ -1154,14 +1495,30 @@
   }
 
   function advanceThreeCatchAttempt() {
-    const oldX = frog.x + frog.w / 2;
-    const oldY = frog.y + frog.h / 2;
-    addTutorialPoof(oldX, oldY, "out");
-    playTutorialPoofSound("out");
-    setupThreeCatchAttempt(tutorial.sceneAttemptIndex + 1, true);
-    addTutorialPoof(frog.x + frog.w / 2, frog.y + frog.h / 2, "in");
-    playTutorialPoofSound("in");
-    resetAttemptForNextJump();
+    const nextAttemptIndex = tutorial.sceneAttemptIndex + 1;
+    beginPoofTransition({
+      reason: "next-matching-fly",
+      showFailure: false,
+      preserveExistingFlies: false,
+      action: () => {
+        setupThreeCatchAttempt(nextAttemptIndex, false);
+        resetAttemptForNextJump();
+      }
+    });
+  }
+
+  function retryThreeCatchAttempt() {
+    const missedAttemptIndex = tutorial.sceneAttemptIndex;
+    beginPoofTransition({
+      reason: "retry-missed-fly",
+      message: "CATCH THIS MATCHING FLY IN ONE JUMP",
+      showFailure: true,
+      preserveExistingFlies: true,
+      action: () => {
+        setupThreeCatchAttempt(missedAttemptIndex, false);
+        resetAttemptForNextJump();
+      }
+    });
   }
 
   function observeBufferedDrop(setup) {
@@ -1204,6 +1561,8 @@
       if (!attemptEnded) return;
       if (tutorial.lastJumpPower >= .90) {
         tutorial.longJumpStreak += 1;
+        frog.catchSparkleTimer = Math.max(frog.catchSparkleTimer, CONFIG.catchSparkleDuration);
+        try { playCorrectFlySound(); } catch (_) { tone(720, .055, .014, 90); }
         if (tutorial.longJumpStreak >= 3) passStep();
         else resetAttemptForNextJump();
       } else {
@@ -1220,13 +1579,13 @@
         if (tutorial.sceneCatchCount >= 3) passStep();
         else advanceThreeCatchAttempt();
       } else {
-        failAttempt("CATCH THE MATCHING FLY IN ONE JUMP");
+        retryThreeCatchAttempt();
       }
       return;
     }
 
     if (setup === "rangeCatch") {
-      if (tutorial.rangeTongueCaught && now - tutorial.rangeTongueCaughtAt >= 520) passStep();
+      if (tutorial.rangeTongueCaught && !game.soloCriticalCatchActive && now - tutorial.rangeTongueCaughtAt >= 250) passStep();
       else if (attemptEnded && !tutorial.rangeTongueCaught) failAttempt("GET CLOSE ENOUGH FOR YOUR TONGUE TO REACH");
       return;
     }
@@ -1319,9 +1678,29 @@
     else if (step === "pvpOffense" && tutorial.pvpRebounds >= 1 && Number(p1?.score || 0) > tutorial.pvpScoreStart) passStep();
   }
 
+  function tutorialMovementLocked() {
+    return Boolean(
+      tutorial.active &&
+      (tutorial.dialogueOpen || tutorial.resetPending || tutorial.frogHidden || tutorial.passed)
+    );
+  }
+
+  function updateTutorialAmbient(dt, options = {}) {
+    const safeDt = Math.max(0, Math.min(0.1, Number(dt) || 0));
+    if (safeDt <= 0 || game.state === "paused" || game.state === "countdown") return;
+    game.visualTime += safeDt;
+    game.worldTime += safeDt;
+    game.messageTimer += safeDt;
+    frog.catchSparkleTimer = Math.max(0, frog.catchSparkleTimer - safeDt);
+    frog.wrongCatchBubbleTimer = Math.max(0, frog.wrongCatchBubbleTimer - safeDt);
+    frog.landingSquash = Math.max(0, frog.landingSquash - safeDt * 4.5);
+    if (options.animateFlies !== false) animateFlies(safeDt);
+  }
+
   function updateTutorial() {
     if (!tutorial.active) return;
-    if (game.state === "paused") game.state = "playing";
+    if (game.state === "paused" || game.state === "countdown") return;
+
     if (tutorial.resetPending) {
       if (performance.now() >= tutorial.resetAt) completePendingReset();
       return;
@@ -1332,13 +1711,16 @@
       return;
     }
 
+    if (tutorial.passed) {
+      if (performance.now() - tutorial.passAt > 350) nextStep();
+      return;
+    }
+
     if (tutorial.kind === "pvp") monitorPvp();
     else {
       if (SOLO_STEPS[tutorial.step]?.setup !== "normalRound") game.spawnQueue.length = 0;
       monitorSolo();
     }
-
-    if (tutorial.passed && performance.now() - tutorial.passAt > 350) nextStep();
   }
 
   function tutorialStep() {
@@ -1359,73 +1741,93 @@
     return Array.isArray(step.goal) ? step.goal : [step.title];
   }
 
-  function drawTutorialDialogue() {
-    if (!tutorial.active || !tutorial.dialogueOpen) return;
+  function drawDialogueContinueTriangle(x, y) {
+    const frameOffset = Math.floor(performance.now() / 260) % 2;
+    const top = Math.round(y + frameOffset);
+    const left = Math.round(x - 3);
+    ctx.fillStyle = "#bdeef5";
+    ctx.fillRect(left, top, 7, 1);
+    ctx.fillRect(left + 1, top + 1, 5, 1);
+    ctx.fillRect(left + 2, top + 2, 3, 1);
+    ctx.fillRect(left + 3, top + 3, 1, 1);
+  }
 
-    const step = tutorialStep();
+  function drawTutorialDialogue() {
+    if (!tutorial.active || !tutorial.dialogueOpen || game.state === "paused" || game.state === "countdown") return;
+
     const lines = dialogueLinesForCurrentStep();
     const fullLine = currentDialogueLine();
     const visibleCount = visibleDialogueCharacterCount(fullLine);
-    const visibleLine = fullLine.slice(0, visibleCount);
     const lastLine = tutorial.dialogueLineIndex >= lines.length - 1;
-    const mobile = typeof isRibbitMobileMode === "function" && isRibbitMobileMode();
-    const prompt = mobile
-      ? (lastLine ? "TAP TO PLAY" : "TAP FOR NEXT")
-      : (lastLine ? "SPACE TO PLAY" : "SPACE FOR NEXT");
 
-    // Sized to sit cleanly between the fly counter and Pause button.
+    // Keep the compact dimensions the user approved, but return to the thinner
+    // two-pixel cyan border from the earlier dialogue treatment.
     const panel = { x: 92, y: 7, w: 300, h: 42 };
-    const portrait = { x: 337, y: 9, w: 51, h: 38 };
-    const textLeft = panel.x + 11;
-    const textRight = portrait.x - 10;
-    const textWidth = Math.max(40, textRight - textLeft);
-    const fullWidthAtOne = Math.max(1, measureBitmapText(fullLine, 1));
-    const textScale = clamp(textWidth / fullWidthAtOne, .34, .66);
-    const portraitImage = EMBER_PORTRAITS[step.portrait] || EMBER_PORTRAITS.confident;
+    const portrait = { x: 338, y: 9, w: 51, h: 38 };
+    const textArea = { x: panel.x + 8, y: panel.y + 6, w: portrait.x - panel.x - 16, h: panel.h - 12 };
+    const portraitImage = EMBER_PORTRAITS[currentEmberPortraitKey()] || EMBER_PORTRAITS.confident;
+    const wrappedLines = wrapBitmapTextAtScale(fullLine, textArea.w, DIALOGUE_TEXT_SCALE).slice(0, 2);
+    const lineHeight = Math.max(5, Math.ceil(8 * DIALOGUE_TEXT_SCALE + 1));
+    const totalTextHeight = wrappedLines.length * lineHeight - 1;
+    const textTop = Math.round(textArea.y + Math.max(0, (textArea.h - totalTextHeight) / 2));
 
     ctx.save();
     ctx.globalAlpha = .99;
 
-    // Even light-blue frame on every edge; no faux scrollbar or continue arrow.
-    ctx.fillStyle = "rgba(8,25,35,.38)";
-    ctx.fillRect(panel.x + 3, panel.y + 3, panel.w, panel.h);
+    ctx.fillStyle = "rgba(8,25,35,.34)";
+    ctx.fillRect(panel.x + 2, panel.y + 2, panel.w, panel.h);
     ctx.fillStyle = "#78e8f5";
     ctx.fillRect(panel.x, panel.y, panel.w, panel.h);
     ctx.fillStyle = "#052f45";
-    ctx.fillRect(panel.x + 3, panel.y + 3, panel.w - 6, panel.h - 6);
+    ctx.fillRect(panel.x + 2, panel.y + 2, panel.w - 4, panel.h - 4);
     ctx.fillStyle = "#073b55";
-    ctx.fillRect(panel.x + 7, panel.y + 7, portrait.x - panel.x - 17, panel.h - 14);
+    ctx.fillRect(textArea.x - 2, textArea.y - 2, textArea.w + 4, textArea.h + 4);
 
-    // Speech notch points to Ember on the right.
-    ctx.fillStyle = "#78e8f5";
-    ctx.fillRect(portrait.x - 7, panel.y + 15, 7, 12);
-    ctx.fillStyle = "#073b55";
-    ctx.fillRect(portrait.x - 7, panel.y + 18, 7, 6);
-
+    // Ember's portrait uses the same two-pixel frame on all four sides. There is
+    // no speech-notch/scroll-wheel shape and no black edge around the artwork.
     ctx.fillStyle = "#78e8f5";
     ctx.fillRect(portrait.x, portrait.y, portrait.w, portrait.h);
     ctx.fillStyle = "#2a6d8e";
-    ctx.fillRect(portrait.x + 3, portrait.y + 3, portrait.w - 6, portrait.h - 6);
+    ctx.fillRect(portrait.x + 2, portrait.y + 2, portrait.w - 4, portrait.h - 4);
     if (portraitImage?.complete && portraitImage.naturalWidth > 0) {
       const oldSmoothing = ctx.imageSmoothingEnabled;
       ctx.imageSmoothingEnabled = false;
-      ctx.drawImage(portraitImage, portrait.x + 3, portrait.y + 3, portrait.w - 6, portrait.h - 6);
+      ctx.drawImage(portraitImage, portrait.x + 2, portrait.y + 2, portrait.w - 4, portrait.h - 4);
       ctx.imageSmoothingEnabled = oldSmoothing;
     } else {
       ctx.fillStyle = EMBER_SKIN.dark;
-      ctx.fillRect(portrait.x + 9, portrait.y + 7, portrait.w - 18, portrait.h - 13);
+      ctx.fillRect(portrait.x + 8, portrait.y + 6, portrait.w - 16, portrait.h - 12);
     }
 
-    const nameX = portrait.x + 4;
-    const nameY = portrait.y + portrait.h - 9;
-    const nameW = portrait.w - 8;
+    const nameX = portrait.x + 2;
+    const nameY = portrait.y + portrait.h - 12;
+    const nameW = portrait.w - 4;
+    const nameH = 10;
     ctx.fillStyle = "#ff9b45";
-    ctx.fillRect(nameX, nameY, nameW, 7);
-    drawBitmapText("EMBER", nameX + nameW / 2, nameY, .29, "center", "#3d2417");
+    ctx.fillRect(nameX, nameY, nameW, nameH);
+    drawBitmapText("EMBER", nameX + nameW / 2, nameY + 3, .62, "center", "#3d2417");
 
-    // Scale from the complete sentence so the typewriter does not resize as it types.
-    drawBitmapText(visibleLine, textLeft, panel.y + 15, textScale, "left", COLORS.white);
-    drawBitmapText(prompt, textRight, panel.y + 32, .23, "right", "#bdeef5");
+    let remaining = visibleCount;
+    wrappedLines.forEach((wrappedLine, index) => {
+      const visibleOnLine = wrappedLine.slice(0, Math.max(0, Math.min(wrappedLine.length, remaining)));
+      const fullLineWidth = measureBitmapText(wrappedLine, DIALOGUE_TEXT_SCALE);
+      const lineLeft = textArea.x + textArea.w / 2 - fullLineWidth / 2;
+      drawBitmapText(
+        visibleOnLine,
+        lineLeft,
+        textTop + index * lineHeight,
+        DIALOGUE_TEXT_SCALE,
+        "left",
+        COLORS.white
+      );
+      remaining -= wrappedLine.length + 1;
+    });
+
+    // A two-frame down arrow appears only when another sentence is waiting.
+    // The final instruction has no input label and no arrow.
+    if (!lastLine && dialogueLineIsComplete()) {
+      drawDialogueContinueTriangle(textArea.x + textArea.w - 5, panel.y + panel.h - 9);
+    }
     ctx.restore();
   }
 
@@ -1459,6 +1861,52 @@
     ctx.restore();
   }
 
+  function drawFlashingReferenceFrame(rect) {
+    if (!rect) return;
+    const phase = (performance.now() % FLY_REFERENCE_FLASH_MS) / FLY_REFERENCE_FLASH_MS;
+    const bright = phase < .5;
+    const color = bright ? "#ffe36d" : "#78e8f5";
+    const alpha = bright ? .96 : .76;
+    const x = Math.round(rect.x - 3);
+    const y = Math.round(rect.y - 3);
+    const w = Math.round(rect.w + 6);
+    const h = Math.round(rect.h + 6);
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    ctx.fillStyle = color;
+    ctx.fillRect(x, y, w, 2);
+    ctx.fillRect(x, y + h - 2, w, 2);
+    ctx.fillRect(x, y + 2, 2, h - 4);
+    ctx.fillRect(x + w - 2, y + 2, 2, h - 4);
+    ctx.globalAlpha = bright ? .12 : .07;
+    ctx.fillRect(rect.x, rect.y, rect.w, rect.h);
+    ctx.restore();
+  }
+
+  function getTutorialFlyLabelRect(currentFly) {
+    if (!currentFly) return null;
+    const term = normalizeVocabularyCellText(VOCABULARY[currentFly.vocabIndex]?.spanish || "?", 80);
+    const anchor = getFlyLabelAnchor(currentFly);
+    if (!anchor) return null;
+    const layout = layoutStableFlyLabelText(term, 120);
+    if (!layout) return null;
+    const widest = Math.max(...layout.lines.map((line) => measureBitmapText(line, layout.scale)), 0);
+    const lineHeight = Math.max(7, Math.ceil(8 * layout.scale + 1));
+    const width = Math.round(clamp(Math.max(32, widest + 10), 32, 132));
+    const height = Math.round(Math.max(17, 8 + layout.lines.length * lineHeight));
+    return chooseFlyLabelRect(currentFly, anchor, width, height);
+  }
+
+  function drawTutorialReferenceHighlights() {
+    if (!tutorial.active || !tutorial.dialogueOpen || tutorialStep()?.setup !== "threeCatches") return;
+    if (tutorial.dialogueLineIndex === 2) {
+      const target = flies.find((currentFly) => currentFly?.tutorialAuthored && currentFly.tutorialArmed !== false);
+      drawFlashingReferenceFrame(getTutorialFlyLabelRect(target));
+    } else if (tutorial.dialogueLineIndex === 3) {
+      drawFlashingReferenceFrame({ x:154, y:234, w:172, h:33 });
+    }
+  }
+
   function drawTutorialProgress() {
     if (!tutorial.active) return;
     const scene = tutorial.kind === "pvp"
@@ -1478,13 +1926,76 @@
     ctx.restore();
   }
 
+  function getTutorialGoalRect() {
+    return { x:320, y:CONFIG.playBottom, w:W - 320, h:H - CONFIG.playBottom };
+  }
+
+  function currentGoalHowToLines() {
+    const setup = tutorialStep()?.setup;
+    const instructions = {
+      intro: ["READ EMBER'S TIPS"],
+      longJumps: ["HOLD JUMP TO CHARGE", "RELEASE NEAR FULL POWER"],
+      threeCatches: ["READ THE ENGLISH CLUE", "CATCH ITS MATCHING TERM"],
+      rangeCatch: ["CHARGE A LONG JUMP", "LET YOUR TONGUE REACH"],
+      wrongFly: ["READ THE CLUE", "TOUCH A NON-MATCH"],
+      comboMixed: ["LINE UP ONE JUMP", "MATCH FIRST, WRONG SECOND"],
+      comboTwo: ["LINE UP BOTH FLIES", "CATCH BOTH BEFORE LANDING"],
+      comboThree: ["FOLLOW THE FLY ARC", "CATCH ALL 3 BEFORE LANDING"],
+      wallTurn: ["JUMP INTO A WALL", "RETURN FOR THE FLY"],
+      reboundCatch: ["HIT THE WALL IN MIDAIR", "CATCH BEFORE LANDING"],
+      quickDrop: ["TAP JUMP QUICKLY", "WHILE ON THE PLATFORM"],
+      bufferDrop: ["PRESS JUMP BEFORE LANDING", "DROP THROUGH ON CONTACT"],
+      doubleBuffer: ["BUFFER BEFORE EACH LANDING", "KEEP YOUR MOMENTUM"],
+      normalRound: ["READ EACH ENGLISH CLUE", "CATCH 5 MATCHING TERMS"],
+      pvpWelcome: ["HOLD, THEN RELEASE", "TO MAKE A CHARGED JUMP"],
+      pvpBonk: ["FALL ON TOP OF EMBER"],
+      pvpSkyBonk: ["JUMP HIGH", "THEN LAND ON EMBER"],
+      pvpDoubleBonk: ["WAIT FOR RECOVERY", "THEN BONK AGAIN"],
+      pvpRebound: ["COLLIDE SIDE-TO-SIDE"],
+      pvpOffense: ["REBOUND OFF EMBER", "THEN CATCH THE FLY"]
+    };
+    return instructions[setup] || ["COMPLETE THE CURRENT GOAL"];
+  }
+
+  function drawGoalHowToTooltip() {
+    if (!tutorial.active || !tutorial.goalHovered || tutorial.dialogueOpen || tutorial.resetPending || game.state !== "playing") return;
+    const lines = currentGoalHowToLines();
+    const panel = { x:304, y:183, w:172, h:40 };
+    const skin = getSelectedSkin();
+
+    ctx.save();
+    ctx.fillStyle = "rgba(25,43,52,.34)";
+    ctx.fillRect(panel.x + 3, panel.y + 3, panel.w, panel.h);
+    ctx.fillStyle = COLORS.ink;
+    ctx.fillRect(panel.x, panel.y, panel.w, panel.h);
+    ctx.fillStyle = COLORS.white;
+    ctx.fillRect(panel.x + 2, panel.y + 2, panel.w - 4, panel.h - 4);
+    ctx.fillStyle = skin.mid;
+    ctx.fillRect(panel.x + 4, panel.y + 4, panel.w - 8, 7);
+    drawBitmapText("HOW TO", panel.x + panel.w / 2, panel.y + 5, .52, "center", COLORS.white, skin.dark);
+
+    const lineScale = .46;
+    const lineHeight = 7;
+    const firstY = lines.length > 1 ? panel.y + 18 : panel.y + 22;
+    lines.slice(0, 2).forEach((line, index) => {
+      const fitted = Math.min(lineScale, (panel.w - 12) / Math.max(1, measureBitmapText(line, 1)));
+      drawBitmapText(line, panel.x + panel.w / 2, firstY + index * lineHeight, fitted, "center", "#34484f");
+    });
+
+    // Small main-menu-style pointer aimed at the Current Goal card.
+    const pointerX = 400;
+    ctx.fillStyle = COLORS.ink;
+    ctx.fillRect(pointerX - 4, panel.y + panel.h, 9, 2);
+    ctx.fillRect(pointerX - 3, panel.y + panel.h + 2, 7, 2);
+    ctx.fillRect(pointerX - 2, panel.y + panel.h + 4, 5, 2);
+    ctx.fillRect(pointerX - 1, panel.y + panel.h + 6, 3, 1);
+    ctx.restore();
+  }
+
   function drawCurrentGoalHud() {
     if (!tutorial.active) return;
     const goal = currentGoalLines();
-    const x = 320;
-    const y = CONFIG.playBottom;
-    const w = W - x;
-    const h = H - y;
+    const { x, y, w, h } = getTutorialGoalRect();
     const now = performance.now();
     const flashAge = Math.max(0, now - tutorial.failureFlashStartedAt);
     const duration = Math.max(1, tutorial.failureFlashDuration || 1450);
@@ -1502,7 +2013,6 @@
     ctx.fillStyle = EMBER_SKIN.belly;
     ctx.fillRect(x + 3, y + 3, w - 6, h - 6);
 
-    // Header text is centered inside the dark line; the orange accent sits above it.
     ctx.fillStyle = EMBER_SKIN.mid;
     ctx.fillRect(x + 6, y + 4, w - 12, 2);
     ctx.fillStyle = EMBER_SKIN.dark;
@@ -1510,16 +2020,18 @@
     drawBitmapText("CURRENT GOAL", x + w / 2, y + 9, .38, "center", COLORS.white);
 
     drawPixelTrophy(x + 16, y + 20, false, .70);
-    const goalLeft = x + 33;
-    const goalWidth = w - 40;
+    // Goal copy is centered on the full card, not on the leftover space beside
+    // the trophy. This keeps LONG JUMPS and every other objective truly centered.
+    const goalCenterX = x + w / 2;
+    const goalWidth = w - 18;
     if (goal.length > 1) {
       const scale0 = Math.min(.50, goalWidth / Math.max(1, measureBitmapText(goal[0], 1)));
       const scale1 = Math.min(.50, goalWidth / Math.max(1, measureBitmapText(goal[1], 1)));
-      drawBitmapText(goal[0], goalLeft + goalWidth / 2, y + 19, scale0, "center", "#34484f");
-      drawBitmapText(goal[1], goalLeft + goalWidth / 2, y + 29, scale1, "center", "#34484f");
+      drawBitmapText(goal[0], goalCenterX, y + 19, scale0, "center", "#34484f");
+      drawBitmapText(goal[1], goalCenterX, y + 29, scale1, "center", "#34484f");
     } else {
       const scale = Math.min(.54, goalWidth / Math.max(1, measureBitmapText(goal[0], 1)));
-      drawBitmapText(goal[0], goalLeft + goalWidth / 2, y + 24, scale, "center", "#34484f");
+      drawBitmapText(goal[0], goalCenterX, y + 24, scale, "center", "#34484f");
     }
 
     if (flashAlpha > 0) {
@@ -1535,14 +2047,13 @@
   }
 
   function drawTutorialOverlay() {
-    if (!tutorial.active) return;
+    if (!tutorial.active || game.state === "paused" || game.state === "countdown") return;
     drawCurrentGoalHud();
     drawTutorialSmoke();
+    drawTutorialReferenceHighlights();
     if (!tutorial.dialogueOpen) drawTutorialProgress();
+    if (!tutorial.dialogueOpen) drawGoalHowToTooltip();
     if (tutorial.dialogueOpen) drawTutorialDialogue();
-    if (performance.now() < tutorial.pauseNoticeUntil) {
-      drawBitmapText("THE TUTORIAL CANNOT BE PAUSED", W / 2, 218, .48, "center", "#a51f1c", COLORS.white);
-    }
   }
 
   function drawCompletionScreen() {
@@ -1566,6 +2077,27 @@
     return originalGetFlySpawnScaleForTutorial.call(this, currentFly, ...rest);
   };
 
+  // Trigger the tongue lesson's cinematic at the same moment as a normal
+  // Single Player final catch: when the tongue commits to the matching fly.
+  // Temporarily presenting this as the goal catch lets the stock zoom, camera,
+  // overlay, sounds, and slow-motion timing run without any tutorial duplicate.
+  const originalBeginTongueCatchForTutorial = beginTongueCatch;
+  beginTongueCatch = function(targetFly, ...rest) {
+    const activeSetup = tutorial.active && tutorial.kind === "solo" ? tutorialStep()?.setup : "";
+    const isRangeMatch = activeSetup === "rangeCatch" &&
+      targetFly && targetFly.vocabIndex === game.targetVocabIndex;
+    if (!isRangeMatch || game.soloCriticalCatchActive) {
+      return originalBeginTongueCatchForTutorial.call(this, targetFly, ...rest);
+    }
+    const previousGoal = game.soloCatchGoal;
+    try {
+      game.soloCatchGoal = Math.max(1, Number(game.score || 0) + 1);
+      return originalBeginTongueCatchForTutorial.call(this, targetFly, ...rest);
+    } finally {
+      game.soloCatchGoal = previousGoal;
+    }
+  };
+
   // Record how tutorial flies were caught so authored lessons can verify the intended technique.
   const originalAttemptFlyCatch = attemptFlyCatch;
   attemptFlyCatch = function(targetFly, source = "body", ...rest) {
@@ -1574,13 +2106,26 @@
     if (activeSetup === "rangeCatch" && wasCorrect && source !== "tongue") return false;
     if (activeSetup === "reboundCatch" && targetFly?.tutorialRequiresRebound && !tutorial.wallTouchedThisJump) return false;
 
+    // Use the exact normal Single Player final-catch camera, zoom, overlay and
+    // simulation slowdown instead of a separate tutorial-only slow-motion effect.
+    if (activeSetup === "rangeCatch" && wasCorrect && source === "tongue" && !game.soloCriticalCatchActive) {
+      const previousGoal = game.soloCatchGoal;
+      try {
+        game.soloCatchGoal = Math.max(1, Number(game.score || 0) + 1);
+        startSoloCriticalCatch(targetFly);
+      } finally {
+        game.soloCatchGoal = previousGoal;
+      }
+    }
+
     const result = originalAttemptFlyCatch.call(this, targetFly, source, ...rest);
     if (!result || !activeSetup) return result;
 
     if (activeSetup === "rangeCatch" && wasCorrect && source === "tongue") {
       tutorial.rangeTongueCaught = true;
       tutorial.rangeTongueCaughtAt = performance.now();
-      tutorial.slowMoUntil = tutorial.rangeTongueCaughtAt + 700;
+      game.spawnQueue.length = 0;
+      game.targetVocabIndex = null;
     }
 
     if (activeSetup === "wrongFly" && !wasCorrect) {
@@ -1630,32 +2175,114 @@
     return originalDrawSpeechBubble.apply(this, args);
   };
 
-  // Pause is intentionally disabled inside authored tutorial checks.
-  const originalPauseGame = pauseGame;
-  pauseGame = function(...args) {
-    if (tutorial.active || tutorial.completeScreen) {
-      tutorial.pauseNoticeUntil = performance.now() + 1200;
-      return;
-    }
-    return originalPauseGame.apply(this, args);
+  // Keep the normal pause flow available during the tutorial. The two lower
+  // buttons are repainted and repurposed as Retry Scene and Skip Tutorial.
+  const originalDrawPauseControlsForTutorial = drawPauseControls;
+  drawPauseControls = function(...args) {
+    const result = originalDrawPauseControlsForTutorial.apply(this, args);
+    if (!tutorial.active || game.state !== "paused") return result;
+
+    const skin = getSelectedSkin();
+    const restartButton = PAUSE_UI.restartButton;
+    const homeButton = PAUSE_UI.homeButton;
+    drawSelectablePauseButton(
+      restartButton,
+      game.pauseFocusVisible && game.pauseSelection === "restart",
+      game.pauseHoveredSelection === "restart",
+      game.pausePressedSelection === "restart",
+      { dark: "#6b4c21", mid: "#b78634", light: "#f2cf70" },
+      "RETRY SCENE",
+      (full) => drawMiniRestartIcon(restartButton.x + 8, restartButton.y + 3, full ? COLORS.white : "#7a5a2a"),
+      restartButton.x + restartButton.w / 2 + 10
+    );
+    drawSelectablePauseButton(
+      homeButton,
+      game.pauseFocusVisible && game.pauseSelection === "home",
+      game.pauseHoveredSelection === "home",
+      game.pausePressedSelection === "home",
+      { dark: skin.dark, mid: "#d76b31", light: "#ffb45f" },
+      "SKIP TUTORIAL",
+      () => drawMiniHouseIcon(homeButton.x + 7, homeButton.y + 3),
+      homeButton.x + homeButton.w / 2 + 10
+    );
+    return result;
   };
 
-  const originalTogglePauseFromHud = togglePauseFromHud;
-  togglePauseFromHud = function(...args) {
-    if (tutorial.active || tutorial.completeScreen) {
-      tutorial.pauseNoticeUntil = performance.now() + 1200;
+  const originalActivatePauseSelectionForTutorial = activatePauseSelection;
+  activatePauseSelection = function(...args) {
+    if (!tutorial.active || game.state !== "paused") {
+      return originalActivatePauseSelectionForTutorial.apply(this, args);
+    }
+    if (game.pauseSelection === "home") {
+      finish(false);
       return;
     }
-    return originalTogglePauseFromHud.apply(this, args);
+    if (game.pauseSelection === "restart") {
+      game.state = "playing";
+      game.pauseHelpOpen = false;
+      game.pauseChargeSnapshot = null;
+      game.resumeChargeAfterCountdown = false;
+      beginPoofTransition({
+        reason: "pause-retry",
+        showFailure: false,
+        preserveExistingFlies: true,
+        action: rebuildCurrentScenarioForRetry
+      });
+      return;
+    }
+    return originalActivatePauseSelectionForTutorial.apply(this, args);
   };
 
-  const originalHandleGameEscapeAction = handleGameEscapeAction;
-  handleGameEscapeAction = function(...args) {
-    if (tutorial.active || tutorial.completeScreen) {
-      tutorial.pauseNoticeUntil = performance.now() + 1200;
+  function tutorialBlocksLiveInput() {
+    return Boolean(tutorial.active && game.state === "playing" && tutorialMovementLocked());
+  }
+
+  const originalPressMainButtonForTutorial = pressMainButton;
+  pressMainButton = function(...args) {
+    if (tutorialBlocksLiveInput()) {
+      game.buttonHeld = false;
+      frog.charging = false;
+      frog.chargeHoldTime = 0;
       return;
     }
-    return originalHandleGameEscapeAction.apply(this, args);
+    return originalPressMainButtonForTutorial.apply(this, args);
+  };
+
+  const originalReleaseMainButtonForTutorial = releaseMainButton;
+  releaseMainButton = function(...args) {
+    if (tutorialBlocksLiveInput()) {
+      game.buttonHeld = false;
+      frog.charging = false;
+      frog.chargeHoldTime = 0;
+      return;
+    }
+    return originalReleaseMainButtonForTutorial.apply(this, args);
+  };
+
+  const originalPressPvpButtonForTutorial = pressPvpButton;
+  pressPvpButton = function(index, ...rest) {
+    if (tutorialBlocksLiveInput()) {
+      const player = pvpPlayers[index];
+      if (player) { player.inputHeld = false; player.charging = false; player.chargeHoldTime = 0; }
+      return;
+    }
+    return originalPressPvpButtonForTutorial.call(this, index, ...rest);
+  };
+
+  const originalReleasePvpButtonForTutorial = releasePvpButton;
+  releasePvpButton = function(index, ...rest) {
+    if (tutorialBlocksLiveInput()) {
+      const player = pvpPlayers[index];
+      if (player) { player.inputHeld = false; player.charging = false; player.chargeHoldTime = 0; }
+      return;
+    }
+    return originalReleasePvpButtonForTutorial.call(this, index, ...rest);
+  };
+
+  const originalDrawArcPreviewForTutorial = drawArcPreview;
+  drawArcPreview = function(...args) {
+    if (tutorial.active && (tutorialMovementLocked() || tutorial.frogHidden || tutorial.resetPending)) return;
+    return originalDrawArcPreviewForTutorial.apply(this, args);
   };
 
   const originalDrawFrogForTutorial = drawFrog;
@@ -1674,69 +2301,91 @@
 
   const originalUpdate = update;
   update = function(dt, ...rest) {
-    if (tutorial.active && (tutorial.dialogueOpen || tutorial.resetPending)) {
-      game.state = "playing";
-      game.pauseHelpOpen = false;
+    // Let the built-in pause/countdown machinery run normally so the pause menu
+    // remains interactive. Tutorial monitoring simply waits until play resumes.
+    if (tutorial.active && (game.state === "paused" || game.state === "countdown")) {
+      const result = originalUpdate.call(this, dt, ...rest);
+      updateTutorial();
+      return result;
+    }
+
+    // During dialogue, poofs, and the brief success hold, keep the Park sky,
+    // scenery clock, particles, and already-spawned flies alive while freezing
+    // only the controlled frog. Flies stay still during a poof transition.
+    if (tutorial.active && tutorialMovementLocked()) {
+      updateTutorialAmbient(dt, { animateFlies: !tutorial.resetPending });
+      freezeControlledEntity();
       updateTutorial();
       return undefined;
     }
-    const slowScale = tutorial.active && performance.now() < tutorial.slowMoUntil ? .28 : 1;
-    const result = originalUpdate.call(this, dt * slowScale, ...rest);
+
+    const result = originalUpdate.call(this, dt, ...rest);
     updateTutorial();
     return result;
   };
 
   window.addEventListener("keydown", (event) => {
-    if (tutorial.active && tutorial.blockJumpUntilRelease && event.code === "Space") {
-      event.preventDefault();
-      event.stopImmediatePropagation();
-      return;
-    }
     if (tutorial.completeScreen && ["Enter", "NumpadEnter", "Space", "Escape"].includes(event.code)) {
       event.preventDefault();
       event.stopImmediatePropagation();
       dismissCompletionScreen();
       return;
     }
-    if (tutorial.active && tutorial.dialogueOpen && ["Space", "Enter", "NumpadEnter"].includes(event.code)) {
-      event.preventDefault();
-      event.stopImmediatePropagation();
-      if (!event.repeat) closeDialogue(event.code === "Space" ? "space" : "keyboard");
-      return;
-    }
-    if (tutorial.active && ["Escape", "Backspace"].includes(event.code)) {
-      event.preventDefault();
-      event.stopImmediatePropagation();
-      tutorial.pauseNoticeUntil = performance.now() + 1200;
+
+    if (tutorial.active && tutorial.dialogueOpen && game.state !== "paused" && game.state !== "countdown") {
+      if (event.code === "Space") {
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        if (!event.repeat && !tutorial.dialogueSpaceHeld) {
+          tutorial.dialogueSpaceHeld = true;
+          tutorial.dialogueSpaceHeldAt = performance.now();
+        }
+        return;
+      }
+      if (["Enter", "NumpadEnter"].includes(event.code)) {
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        if (!event.repeat) closeDialogue("keyboard");
+      }
     }
   }, { capture:true, passive:false });
 
   window.addEventListener("keyup", (event) => {
-    if (!tutorial.blockJumpUntilRelease || event.code !== "Space") return;
+    if (event.code !== "Space" || !tutorial.active || !tutorial.dialogueOpen || !tutorial.dialogueSpaceHeld) return;
     event.preventDefault();
     event.stopImmediatePropagation();
-    tutorial.blockJumpUntilRelease = false;
+    const now = performance.now();
+    const heldFor = Math.max(0, now - (tutorial.dialogueSpaceHeldAt || now));
+    const typingStart = Math.max(tutorial.dialogueLineStartedAt, tutorial.dialoguePreLineDelayUntil || 0);
+    tutorial.dialogueFastForwardExtraMs += Math.max(0, now - Math.max(typingStart, tutorial.dialogueSpaceHeldAt || now));
+    tutorial.dialogueSpaceHeld = false;
+    tutorial.dialogueSpaceHeldAt = 0;
     clearHeldInput();
+    // A quick tap keeps the familiar advance action; a real hold is reserved
+    // for the requested 2x typewriter speed and does not skip the sentence.
+    if (heldFor < DIALOGUE_SPACE_HOLD_THRESHOLD_MS) closeDialogue("space");
   }, { capture:true, passive:false });
 
   canvas.addEventListener("pointerdown", (event) => {
-    if (tutorial.active && tutorial.dialogueOpen) {
+    if (tutorial.active && tutorial.dialogueOpen && game.state !== "paused" && game.state !== "countdown") {
       event.preventDefault();
       event.stopImmediatePropagation();
       tutorial.dialoguePointerId = event.pointerId;
-      return;
-    }
-    if (!tutorial.active) return;
-    const point = getCanvasPoint(event);
-    if (pointInsideRect(point, HUD_UI.pauseButton)) {
-      event.preventDefault();
-      event.stopImmediatePropagation();
-      tutorial.pauseNoticeUntil = performance.now() + 1200;
     }
   }, { capture:true, passive:false });
 
+  canvas.addEventListener("pointermove", (event) => {
+    if (!tutorial.active || game.state !== "playing" || tutorial.dialogueOpen || tutorial.resetPending) {
+      tutorial.goalHovered = false;
+      return;
+    }
+    tutorial.goalHovered = pointInsideRect(getCanvasPoint(event), getTutorialGoalRect());
+  }, { passive:true });
+
+  canvas.addEventListener("pointerleave", () => { tutorial.goalHovered = false; }, { passive:true });
+
   canvas.addEventListener("pointerup", (event) => {
-    if (tutorial.active && tutorial.dialogueOpen && tutorial.dialoguePointerId === event.pointerId) {
+    if (tutorial.active && tutorial.dialogueOpen && game.state !== "paused" && game.state !== "countdown" && tutorial.dialoguePointerId === event.pointerId) {
       event.preventDefault();
       event.stopImmediatePropagation();
       tutorial.dialoguePointerId = null;
@@ -1753,6 +2402,7 @@
   }, { capture:true, passive:false });
 
   canvas.addEventListener("pointercancel", (event) => {
+    tutorial.goalHovered = false;
     if (tutorial.dialoguePointerId !== event.pointerId) return;
     tutorial.dialoguePointerId = null;
   }, { capture:true, passive:false });

@@ -1,6 +1,6 @@
-# Ember Tutorial Dialogue Script — Version 1.7.7
+# Ember Tutorial Dialogue Script — Version 1.7.8
 
-The tutorial begins only after a player signs in, creates an account, or chooses **Play Without Saving**. Ember speaks one line at a time from a compact panel at the top of the real Park game. Text appears with a Generation-II-style typewriter effect. Press **Space** or **Enter**—or tap and release on mobile—to reveal/advance the line. The final line closes the conversation and begins the checked exercise.
+The tutorial begins only after a player signs in, creates an account, or chooses **Play Without Saving**. Ember speaks one line at a time from a compact panel at the top of the real Park game. Text appears with a Generation-II-style typewriter effect. Hold **Space** to type at 2× speed; quick-tap **Space** or press **Enter**—or tap and release on mobile—to reveal/advance the line. A two-frame down triangle appears only when another sentence remains. The final line has no prompt or triangle and begins the checked exercise.
 
 ## Scene 1 — Welcome
 
@@ -22,7 +22,7 @@ The tutorial begins only after a player signs in, creates an account, or chooses
 5. Try releasing just as your charge gets close to full.
 6. Show me three long jumps in a row!
 
-**Exercise:** Perform three consecutive jumps at 90% charge or higher. The streak resets after a weaker jump.
+**Exercise:** Perform three consecutive jumps at 90% charge or higher. Each proper landing plays the normal catch sparkle and success sound. The streak resets after a weaker jump.
 
 ## Scene 3 — Three Matching Catches
 
@@ -33,7 +33,7 @@ The tutorial begins only after a player signs in, creates an account, or chooses
 5. Catch the fly with the matching translation to score a point.
 6. Let’s get three points—one matching fly per jump!
 
-**Exercise:** Complete three authored matching-fly catches, one per jump.
+**Exercise:** Complete three authored matching-fly catches, one per jump. A miss retries only the missed fly instead of resetting all three catches.
 
 ## Scene 4 — Tongue Range
 
@@ -44,7 +44,7 @@ The tutorial begins only after a player signs in, creates an account, or chooses
 5. This fly is a little too far away for even my frog legs.
 6. Charge a long jump and let your tongue handle the rest!
 
-**Exercise:** Catch a fly just outside body-contact range with the tongue. The successful catch receives a brief slow-motion emphasis.
+**Exercise:** Begin on Park’s lower-left platform and catch the distant fly with the tongue. The successful catch uses the exact normal Single Player final-catch slow-motion camera and zoom.
 
 ## Scene 5 — Wrong Fly
 

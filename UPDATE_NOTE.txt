@@ -1,1 +1,13 @@
-Ribbit Race Friends 1.7.7: rebuilt the Park tutorial around the requested twelve-scene Ember script; added authentication-gated startup, one-line Pokemon-style typewriter dialogue, correct line replacement, compact top dialogue framing, post-dialogue fly spawn sparkles, safe tongue-clearing smoke resets, three long-jump and three-catch lessons, multi-fly sequence checks, robust buffered-drop detection, and smooth Current Goal failure feedback.
+1. Added a normal fly-catch sparkle and success sound to every correctly completed long-jump landing.
+2. Made Ember change expressions between dialogue lines, enlarged and centered her name plate, and centered all dialogue with consistent two-line typography.
+3. Restored the thinner cyan dialogue border, boxed the portrait symmetrically, removed the black notch/scroll-wheel shape, and replaced text prompts with a two-frame down triangle only when more dialogue remains.
+4. Kept Park scenery and authored flies running behind dialogue while locking only frog movement; holding Space now doubles typewriter speed.
+5. Timed the dinner fly to poof in before Ember announces it and added flashing callouts for the fly term and bottom English clue.
+6. Standardized frog poof transitions to a 0.5-second gap, kept the background running, preserved existing flies, and suppressed the trajectory preview during poofs.
+7. Preserved the frog’s completed position through the next dialogue and moved it only during the scripted poof-in transition.
+8. Restored an exact copy of Park’s platform layout and normal starting position.
+9. Rebuilt the tongue-range lesson from the lower-left platform and reused the normal Single Player final-catch slow-motion zoom.
+10. Moved the multi-fly targets into reachable one-jump positions and made the three-catch lesson retry only the missed fly.
+11. Centered Current Goal across the full card and added an objective-specific HOW TO tooltip on hover.
+12. Re-enabled Pause with Retry Scene and Skip Tutorial, and prevented the tutorial from starting before sign-in or Play Without Saving.
+Everything else remains unchanged.

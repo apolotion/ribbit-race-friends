@@ -1,0 +1,24 @@
+{
+  "ok": true,
+  "browser": "Chromium (local in-memory API shim)",
+  "initial": {
+    "gateHidden": false,
+    "authLocked": true,
+    "tutorialEngineLoaded": false
+  },
+  "afterGuest": {
+    "tutorialActive": true,
+    "dialogueOpen": true,
+    "step": 0,
+    "build": "2026.10.11-friends-tutorial-polish-2"
+  },
+  "afterDialogue": {
+    "tutorialActive": true,
+    "dialogueOpen": false,
+    "step": 1
+  },
+  "afterSkip": {
+    "tutorialActive": false
+  },
+  "pageErrors": []
+}

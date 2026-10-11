@@ -1,34 +1,36 @@
-RIBBIT RACE FRIENDS EDITION — MOBILE / IPHONE / TOUCH 1.6.0
-Build: 2026.10.11-friends-tutorial-spectator-polish-1
-Displayed version: VERSION 1.7.0
+RIBBIT RACE FRIENDS EDITION — TUTORIAL POLISH 1.7.8
+Build: 2026.10.11-friends-tutorial-polish-2
+Displayed version: VERSION 1.7.8
 
-THIS UPDATES THE EXISTING FRIENDS WORKER.
+THIS UPDATES THE EXISTING CLOUDFLARE FRIENDS WORKER.
 Do not create another Worker, repository, FriendsHub, FriendsRoom, or database.
+No Apps Script or code.gs replacement is needed.
 
-1. Extract the patch ZIP, or use the complete repository ZIP if the GitHub project is missing files.
-2. Copy the extracted contents into the root of apolotion/ribbit-race-friends, preserving folders.
-3. Commit to main.
-4. Wait for Cloudflare to run:
-     npm run check && npm test
+1. Back up the current project.
+2. Extract the complete repository ZIP.
+3. Copy the extracted contents into the repository root, preserving folders.
+4. Run:
+     npm install
+     npm run check
+     npm test
+5. Deploy with:
+     npm run deploy
+   or:
      npx wrangler deploy
-5. Confirm /api/health reports build 2026.10.11-friends-tutorial-spectator-polish-1.
-6. Hard-refresh desktop browsers.
+6. Confirm /api/health reports build 2026.10.11-friends-tutorial-polish-2.
+7. Hard-refresh desktop browsers; fully close and reopen an installed iPhone Home Screen app.
 
-IPHONE:
-- Open the deployed game in Safari.
-- Tap PLAYING ON MOBILE? for the in-game instructions.
-- Share > Add to Home Screen > Add.
-- Launch from the new icon and rotate sideways.
-- Use the phone/computer icon on the main menu to enable Mobile Mode.
+VERIFY THE TUTORIAL:
+- Login/create/guest selection appears before the tutorial.
+- Ember dialogue is thin-framed, centered, and changes portraits between lines.
+- Holding Space doubles typewriter speed.
+- Park animation continues behind dialogue while frog movement is locked.
+- The dinner fly appears before its announcement.
+- Poof-out and poof-in are separated by 0.5 seconds.
+- Long-jump successes sparkle on landing.
+- Current Goal is centered and displays HOW TO help on hover.
+- Pause includes RETRY SCENE and SKIP TUTORIAL.
+- The final round uses the normal Single Player victory flow.
 
-VERIFY:
-- Mobile Mode asks for confirmation and repeats the iPhone instructions.
-- The main-menu avatar opens account/save/leaderboard controls.
-- Single Player and Versus use the gradient touch meters.
-- Two Local Versus players can hold P1 and P2 simultaneously.
-- The upper-right Versus pause button responds to touch.
-- Long-pressing the game does not open the iOS magnifier/callout.
-- Mobile instructions do not mention Space, WASD, or arrow keys.
-- Existing PIN accounts, saves, vocabulary, Quickplay, hats, replays, and Custom Frogs remain available.
-
-See UPDATE_INSTRUCTIONS.md, HAT_REQUIREMENTS.md, and TEST_REPORT.md for details.
+Existing PIN accounts, saves, vocabulary, Quickplay, hats, replays, and Custom Frogs remain available.
+See UPDATE_INSTRUCTIONS.md and TEST_REPORT.md for full details.

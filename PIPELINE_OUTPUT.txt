@@ -1,913 +1,927 @@
 
-> ribbit-race-friends@1.7.7 check
+> ribbit-race-friends@1.7.8 check
 > npm run build && node scripts/check.mjs
 
 
-> ribbit-race-friends@1.7.7 build
+> ribbit-race-friends@1.7.8 build
 > node scripts/build-game.mjs
 
-Built game bundle from 13 modules (1167761 bytes).
+Built game bundle from 13 modules (1195386 bytes).
 Server and browser modules parse; 21 external assets are present; no Google or WebRTC runtime dependency.
 
 
-> ribbit-race-friends@1.7.7 test
+> ribbit-race-friends@1.7.8 test
 > node --test tests/*.test.mjs
 
 TAP version 13
 # Subtest: PIN derivation is salted and cookie is Secure/HttpOnly
 ok 1 - PIN derivation is salted and cookie is Secure/HttpOnly
   ---
-  duration_ms: 99.059797
+  duration_ms: 93.620178
   type: 'test'
   ...
 # Subtest: JSON request size limit rejects oversized streamed input
 ok 2 - JSON request size limit rejects oversized streamed input
   ---
-  duration_ms: 25.29299
+  duration_ms: 19.185957
   type: 'test'
   ...
 # Subtest: save keeps Endless maxima, time minima, PvP maxima and result journal
 ok 3 - save keeps Endless maxima, time minima, PvP maxima and result journal
   ---
-  duration_ms: 1.596411
+  duration_ms: 0.907731
   type: 'test'
   ...
 # Subtest: save ignores unrelated keys and bounds payloads
 ok 4 - save ignores unrelated keys and bounds payloads
   ---
-  duration_ms: 0.266586
+  duration_ms: 0.179601
   type: 'test'
   ...
 # Subtest: achievements merge without deleting prior unlocks
 ok 5 - achievements merge without deleting prior unlocks
   ---
-  duration_ms: 1.371887
+  duration_ms: 0.851956
   type: 'test'
   ...
 # Subtest: old clients and untested preflight rejected
 ok 6 - old clients and untested preflight rejected
   ---
-  duration_ms: 1.011168
+  duration_ms: 0.70868
   type: 'test'
   ...
 # Subtest: private room rejects same account and wrong account token
 ok 7 - private room rejects same account and wrong account token
   ---
-  duration_ms: 4.414006
+  duration_ms: 3.40471
   type: 'test'
   ...
 # Subtest: Ready and a fabricated flag cannot start without authenticated sockets
 ok 8 - Ready and a fabricated flag cannot start without authenticated sockets
   ---
-  duration_ms: 3.487968
+  duration_ms: 2.07965
   type: 'test'
   ...
 # Subtest: two fresh socket confirmations admit a private match
 ok 9 - two fresh socket confirmations admit a private match
   ---
-  duration_ms: 2.064981
+  duration_ms: 1.582459
   type: 'test'
   ...
 # Subtest: wrong partner challenge does not admit
 ok 10 - wrong partner challenge does not admit
   ---
-  duration_ms: 2.822401
+  duration_ms: 1.850354
   type: 'test'
   ...
 # Subtest: Google-style audit snapshots and inputs never returned for live human playback
 ok 11 - Google-style audit snapshots and inputs never returned for live human playback
   ---
-  duration_ms: 1.131486
+  duration_ms: 0.892638
   type: 'test'
   ...
 # Subtest: private lobby leave invalidates old room capability
 ok 12 - private lobby leave invalidates old room capability
   ---
-  duration_ms: 1.086786
+  duration_ms: 0.738756
   type: 'test'
   ...
 # Subtest: in-progress opponent departure produces one server-authorized CPU slot
 ok 13 - in-progress opponent departure produces one server-authorized CPU slot
   ---
-  duration_ms: 1.615473
+  duration_ms: 1.329508
   type: 'test'
   ...
 # Subtest: host departure transfers simulation authority to surviving guest
 ok 14 - host departure transfers simulation authority to surviving guest
   ---
-  duration_ms: 4.039629
+  duration_ms: 1.277199
   type: 'test'
   ...
 # Subtest: unstarted failed pairing is closed without awarding any result
 ok 15 - unstarted failed pairing is closed without awarding any result
   ---
-  duration_ms: 1.416364
+  duration_ms: 1.105109
   type: 'test'
   ...
 # Subtest: Quickplay pairs with fixed best-of-three Endless rules
 ok 16 - Quickplay pairs with fixed best-of-three Endless rules
   ---
-  duration_ms: 3.001679
+  duration_ms: 2.027461
   type: 'test'
   ...
 # Subtest: guest spectator capability survives subsequent polls
 ok 17 - guest spectator capability survives subsequent polls
   ---
-  duration_ms: 0.956054
+  duration_ms: 0.701949
   type: 'test'
   ...
 # Subtest: spectator capability cannot be reused by a different account
 ok 18 - spectator capability cannot be reused by a different account
   ---
-  duration_ms: 0.629744
+  duration_ms: 0.49648
   type: 'test'
   ...
 # Subtest: private ratings are absent from public profile
 ok 19 - private ratings are absent from public profile
   ---
-  duration_ms: 0.358177
+  duration_ms: 0.217178
   type: 'test'
   ...
 # Subtest: guest display names stay in expiring storage
 ok 20 - guest display names stay in expiring storage
   ---
-  duration_ms: 0.174424
+  duration_ms: 0.182015
   type: 'test'
   ...
 # Subtest: Quickplay player replaced by CPU can immediately enter a new queue
 ok 21 - Quickplay player replaced by CPU can immediately enter a new queue
   ---
-  duration_ms: 3.681318
+  duration_ms: 2.300783
   type: 'test'
   ...
-# Subtest: 1.7.7 build and thirteen modular gameplay sources are present
-ok 22 - 1.7.7 build and thirteen modular gameplay sources are present
+# Subtest: 1.7.8 build and thirteen modular gameplay sources are present
+ok 22 - 1.7.8 build and thirteen modular gameplay sources are present
   ---
-  duration_ms: 1.770155
+  duration_ms: 0.898907
   type: 'test'
   ...
 # Subtest: obsolete apolotion unlock code is absent and Playtest is reversible
 ok 23 - obsolete apolotion unlock code is absent and Playtest is reversible
   ---
-  duration_ms: 2.82839
+  duration_ms: 1.75523
   type: 'test'
   ...
 # Subtest: world-record label, hover details and repeat suppression remain installed
 ok 24 - world-record label, hover details and repeat suppression remain installed
   ---
-  duration_ms: 0.342868
+  duration_ms: 0.138158
   type: 'test'
   ...
 # Subtest: fastest-time and fewest-jumps replay paths remain available
 ok 25 - fastest-time and fewest-jumps replay paths remain available
   ---
-  duration_ms: 0.409448
+  duration_ms: 0.144848
   type: 'test'
   ...
 # Subtest: hat progression uses a post-unlock baseline and no online/human-only requirements
 ok 26 - hat progression uses a post-unlock baseline and no online/human-only requirements
   ---
-  duration_ms: 0.899397
+  duration_ms: 0.288135
   type: 'test'
   ...
 # Subtest: hatstest exposes Hats without directly unlocking individual hats
 ok 27 - hatstest exposes Hats without directly unlocking individual hats
   ---
-  duration_ms: 0.816047
+  duration_ms: 0.41732
   type: 'test'
   ...
 # Subtest: custom palette tools and revised Custom Frog 3 requirements remain installed
 ok 28 - custom palette tools and revised Custom Frog 3 requirements remain installed
   ---
-  duration_ms: 0.219757
+  duration_ms: 0.110928
   type: 'test'
   ...
 # Subtest: Mobile Mode owns independent simultaneous P1 and P2 pointer slots
 ok 29 - Mobile Mode owns independent simultaneous P1 and P2 pointer slots
   ---
-  duration_ms: 0.216274
+  duration_ms: 0.095835
   type: 'test'
   ...
 # Subtest: word plates stay horizontally centered above flies
 ok 30 - word plates stay horizontally centered above flies
   ---
-  duration_ms: 0.545039
+  duration_ms: 0.278791
   type: 'test'
   ...
 # Subtest: bonks require a falling upper frog or a rising lower frog
 ok 31 - bonks require a falling upper frog or a rising lower frog
   ---
-  duration_ms: 0.704994
+  duration_ms: 0.378411
   type: 'test'
   ...
 # Subtest: PvP achievements and bounce stats accept the eligible active human on either side
 ok 32 - PvP achievements and bounce stats accept the eligible active human on either side
   ---
-  duration_ms: 0.923634
+  duration_ms: 0.474657
   type: 'test'
   ...
 # Subtest: Versus entry persists the preferred selected frog skin
 ok 33 - Versus entry persists the preferred selected frog skin
   ---
-  duration_ms: 0.246658
+  duration_ms: 0.121193
   type: 'test'
   ...
 # Subtest: replay routes are forwarded through the Worker
 ok 34 - replay routes are forwarded through the Worker
   ---
-  duration_ms: 0.164855
+  duration_ms: 0.078318
   type: 'test'
   ...
-# Subtest: 1.7.7 keeps a right-edge Lake word plate exactly centered over its fly
-ok 35 - 1.7.7 keeps a right-edge Lake word plate exactly centered over its fly
+# Subtest: 1.7.8 keeps a right-edge Lake word plate exactly centered over its fly
+ok 35 - 1.7.8 keeps a right-edge Lake word plate exactly centered over its fly
   ---
-  duration_ms: 2.710188
+  duration_ms: 1.089385
   type: 'test'
   ...
 # Subtest: running pause button is deliberately translucent
 ok 36 - running pause button is deliberately translucent
   ---
-  duration_ms: 0.515667
+  duration_ms: 0.267584
   type: 'test'
   ...
 # Subtest: pause book and How To Play pages inherit the selected frog palette
 ok 37 - pause book and How To Play pages inherit the selected frog palette
   ---
-  duration_ms: 3.410391
+  duration_ms: 1.572294
   type: 'test'
   ...
 # Subtest: record replay API is backed by SQLite and same-origin Worker forwarding
 ok 38 - record replay API is backed by SQLite and same-origin Worker forwarding
   ---
-  duration_ms: 0.457629
+  duration_ms: 0.265501
   type: 'test'
   ...
 # Subtest: iPhone Home Screen metadata, manifest and installation help ship together
 ok 39 - iPhone Home Screen metadata, manifest and installation help ship together
   ---
-  duration_ms: 1.989866
+  duration_ms: 1.201334
   type: 'test'
   ...
 # Subtest: Mobile Mode confirmation and repeat iPhone instructions are explicit
 ok 40 - Mobile Mode confirmation and repeat iPhone instructions are explicit
   ---
-  duration_ms: 0.652456
+  duration_ms: 0.240203
   type: 'test'
   ...
 # Subtest: main menu has canvas-native account and phone-computer controls
 ok 41 - main menu has canvas-native account and phone-computer controls
   ---
-  duration_ms: 0.210621
+  duration_ms: 0.136717
   type: 'test'
   ...
 # Subtest: Mobile Mode hides the legacy guest/fullscreen DOM toolbar
 ok 42 - Mobile Mode hides the legacy guest/fullscreen DOM toolbar
   ---
-  duration_ms: 0.219066
+  duration_ms: 0.102605
   type: 'test'
   ...
 # Subtest: iOS long-press magnifier and native selection are suppressed on the game canvas
 ok 43 - iOS long-press magnifier and native selection are suppressed on the game canvas
   ---
-  duration_ms: 0.623028
+  duration_ms: 0.237829
   type: 'test'
   ...
 # Subtest: Mobile meters retain gradient charge and independent pointer ownership
 ok 44 - Mobile meters retain gradient charge and independent pointer ownership
   ---
-  duration_ms: 0.367046
+  duration_ms: 0.17218
   type: 'test'
   ...
 # Subtest: mobile pause is drawn in Versus and routes through pauseGame
 ok 45 - mobile pause is drawn in Versus and routes through pauseGame
   ---
-  duration_ms: 0.576796
+  duration_ms: 0.19177
   type: 'test'
   ...
 # Subtest: letterboxed touchscreen coordinates are mapped into the 480 by 270 game area
 ok 46 - letterboxed touchscreen coordinates are mapped into the 480 by 270 game area
   ---
-  duration_ms: 0.230755
+  duration_ms: 0.128534
   type: 'test'
   ...
 # Subtest: mobile instructions do not tell players to use keyboard controls
 ok 47 - mobile instructions do not tell players to use keyboard controls
   ---
-  duration_ms: 3.310016
+  duration_ms: 0.562129
   type: 'test'
   ...
 # Subtest: opponent frogs and flies lower the first-jump instruction bubble opacity
 ok 48 - opponent frogs and flies lower the first-jump instruction bubble opacity
   ---
-  duration_ms: 0.708445
+  duration_ms: 1.314024
   type: 'test'
   ...
 # Subtest: Versus round results are awarded once and transition through a real result state
 ok 49 - Versus round results are awarded once and transition through a real result state
   ---
-  duration_ms: 0.877058
+  duration_ms: 0.286813
   type: 'test'
   ...
 # Subtest: Mobile performance mode reduces render pixels, video recording and catch-up work
 ok 50 - Mobile performance mode reduces render pixels, video recording and catch-up work
   ---
-  duration_ms: 0.197705
+  duration_ms: 0.137278
   type: 'test'
   ...
 # Subtest: hatstest unlocks only the Hats feature and no requirement needs online/human opponents
 ok 51 - hatstest unlocks only the Hats feature and no requirement needs online/human opponents
   ---
-  duration_ms: 0.934026
+  duration_ms: 0.247544
   type: 'test'
   ...
 # Subtest: no-hat selection uses a dashed empty top-hat outline
 ok 52 - no-hat selection uses a dashed empty top-hat outline
   ---
-  duration_ms: 0.398308
+  duration_ms: 0.15292
   type: 'test'
   ...
 # Subtest: runtime loops are throttled and replay recording is disabled on mobile
 ok 53 - runtime loops are throttled and replay recording is disabled on mobile
   ---
-  duration_ms: 0.148274
+  duration_ms: 0.096196
   type: 'test'
   ...
 # Subtest: PIN hashing stays within Cloudflare PBKDF2 limit and matches 100000 rounds
 ok 54 - PIN hashing stays within Cloudflare PBKDF2 limit and matches 100000 rounds
   ---
-  duration_ms: 102.936933
+  duration_ms: 43.017989
   type: 'test'
   ...
 # Subtest: Friends release exposes the new build marker
 ok 55 - Friends release exposes the new build marker
   ---
-  duration_ms: 0.15593
+  duration_ms: 0.123566
   type: 'test'
   ...
 # Subtest: server vocabulary is exactly the requested 15 entries
 ok 56 - server vocabulary is exactly the requested 15 entries
   ---
-  duration_ms: 1.150436
+  duration_ms: 0.655409
   type: 'test'
   ...
 # Subtest: offline fallback vocabulary matches the server vocabulary
 ok 57 - offline fallback vocabulary matches the server vocabulary
   ---
-  duration_ms: 3.484513
+  duration_ms: 2.265721
   type: 'test'
   ...
 # Subtest: logout confirms the server session and reloads the exact initial login document
 ok 58 - logout confirms the server session and reloads the exact initial login document
   ---
-  duration_ms: 0.969642
+  duration_ms: 0.637663
   type: 'test'
   ...
 # Subtest: auth boundary hides and inerts the runtime until sign-in or guest play
 ok 59 - auth boundary hides and inerts the runtime until sign-in or guest play
   ---
-  duration_ms: 0.199529
+  duration_ms: 0.200963
   type: 'test'
   ...
 # Subtest: index is presentation-only and gameplay source is separated by responsibility
 ok 60 - index is presentation-only and gameplay source is separated by responsibility
   ---
-  duration_ms: 0.458068
+  duration_ms: 0.372953
   type: 'test'
   ...
 # Subtest: AuthScreenController owns runtime locking and clean-login navigation
 ok 61 - AuthScreenController owns runtime locking and clean-login navigation
   ---
-  duration_ms: 1.517659
+  duration_ms: 1.11898
   type: 'test'
   ...
 # Subtest: global gameplay hotkeys are gated while the login screen owns focus
 ok 62 - global gameplay hotkeys are gated while the login screen owns focus
   ---
-  duration_ms: 2.056488
+  duration_ms: 1.515018
   type: 'test'
   ...
 # Subtest: Quickplay partner connection check is capped at 30 seconds
 ok 63 - Quickplay partner connection check is capped at 30 seconds
   ---
-  duration_ms: 1.008906
+  duration_ms: 0.851475
   type: 'test'
   ...
 # Subtest: queued device-check status is centered inside Play While Waiting
 ok 64 - queued device-check status is centered inside Play While Waiting
   ---
-  duration_ms: 0.90309
+  duration_ms: 0.614868
   type: 'test'
   ...
 # Subtest: single-player fly labels keep persistent placements instead of re-solving every frame
 ok 65 - single-player fly labels keep persistent placements instead of re-solving every frame
   ---
-  duration_ms: 3.402395
+  duration_ms: 2.403779
   type: 'test'
   ...
 # Subtest: fly vocabulary text is rasterized once on quarter-step pixel scales
 ok 66 - fly vocabulary text is rasterized once on quarter-step pixel scales
   ---
-  duration_ms: 1.26608
+  duration_ms: 0.95355
   type: 'test'
   ...
 # Subtest: actual label-placement function keeps existing fly rectangles stable as flies spawn and leave
 ok 67 - actual label-placement function keeps existing fly rectangles stable as flies spawn and leave
   ---
-  duration_ms: 2.543495
+  duration_ms: 2.008552
   type: 'test'
   ...
 # Subtest: online PvP label rectangles survive rebuilt snapshot flies and tiny anchor drift
 ok 68 - online PvP label rectangles survive rebuilt snapshot flies and tiny anchor drift
   ---
-  duration_ms: 2.469249
+  duration_ms: 1.812687
   type: 'test'
   ...
 # Subtest: failed connection Local Play opens the single-player level menu without auto-starting
 ok 69 - failed connection Local Play opens the single-player level menu without auto-starting
   ---
-  duration_ms: 0.705772
+  duration_ms: 0.334815
   type: 'test'
   ...
 # Subtest: local Versus VS hover explains how to enable local PvP
 ok 70 - local Versus VS hover explains how to enable local PvP
   ---
-  duration_ms: 1.27402
+  duration_ms: 0.824154
   type: 'test'
   ...
 # Subtest: owner legacy recovery is request-triggered, one-shot and refuses PIN accounts
 ok 71 - owner legacy recovery is request-triggered, one-shot and refuses PIN accounts
   ---
-  duration_ms: 0.29356
+  duration_ms: 0.213703
   type: 'test'
   ...
 # Subtest: untimed Single Player top-center fly keeps its word plate above the fly
 ok 72 - untimed Single Player top-center fly keeps its word plate above the fly
   ---
-  duration_ms: 2.196815
+  duration_ms: 1.667998
   type: 'test'
   ...
 # Subtest: Single Player pause and resume countdown reuse one frozen world bitmap
 ok 73 - Single Player pause and resume countdown reuse one frozen world bitmap
   ---
-  duration_ms: 2.496033
+  duration_ms: 1.94732
   type: 'test'
   ...
 # Subtest: CPU takeover leaves an explicit disconnected-player notice
 ok 74 - CPU takeover leaves an explicit disconnected-player notice
   ---
-  duration_ms: 0.451505
+  duration_ms: 0.337069
   type: 'test'
   ...
 # Subtest: replaced Quickplay participant is released and routed back to requeue
 ok 75 - replaced Quickplay participant is released and routed back to requeue
   ---
-  duration_ms: 1.336457
+  duration_ms: 1.036825
   type: 'test'
   ...
 # Subtest: every fly word plate uses top-only candidate rows
 ok 76 - every fly word plate uses top-only candidate rows
   ---
-  duration_ms: 2.034525
+  duration_ms: 1.542409
   type: 'test'
   ...
 # Subtest: Friends first-place notice is a world-record notice with hover details
 ok 77 - Friends first-place notice is a world-record notice with hover details
   ---
-  duration_ms: 1.160497
+  duration_ms: 1.048003
   type: 'test'
   ...
-# Subtest: version 1.7.7 remains in settings and the How To Play book footer
-ok 78 - version 1.7.7 remains in settings and the How To Play book footer
+# Subtest: version 1.7.8 remains in settings and the How To Play book footer
+ok 78 - version 1.7.8 remains in settings and the How To Play book footer
   ---
-  duration_ms: 1.748881
+  duration_ms: 1.221404
   type: 'test'
   ...
 # Subtest: frog overlap axis is deterministic and cooldown separation removes intersections
 ok 79 - frog overlap axis is deterministic and cooldown separation removes intersections
   ---
-  duration_ms: 0.800394
+  duration_ms: 0.628569
   type: 'test'
   ...
 # Subtest: overlap resolution rebounds horizontally and bonks vertically only with valid motion
 ok 80 - overlap resolution rebounds horizontally and bonks vertically only with valid motion
   ---
-  duration_ms: 1.039619
+  duration_ms: 0.631113
   type: 'test'
   ...
 # Subtest: fast-moving frogs use swept collision detection instead of tunneling through
 ok 81 - fast-moving frogs use swept collision detection instead of tunneling through
   ---
-  duration_ms: 1.088699
+  duration_ms: 0.777543
   type: 'test'
   ...
 # Subtest: Versus collision code cannot silently ignore overlapping frogs
 ok 82 - Versus collision code cannot silently ignore overlapping frogs
   ---
-  duration_ms: 1.175784
+  duration_ms: 1.349237
   type: 'test'
   ...
 # Subtest: achievement toast becomes translucent when a fly or word plate is behind it
 ok 83 - achievement toast becomes translucent when a fly or word plate is behind it
   ---
-  duration_ms: 0.86818
+  duration_ms: 0.841841
   type: 'test'
   ...
 # Subtest: jungle center trunk no longer draws the decorative snake
 ok 84 - jungle center trunk no longer draws the decorative snake
   ---
-  duration_ms: 1.726919
+  duration_ms: 1.09322
   type: 'test'
   ...
 # Subtest: final-catch word plates stay in camera space and fade with their flies
 ok 85 - final-catch word plates stay in camera space and fade with their flies
   ---
-  duration_ms: 0.651081
+  duration_ms: 0.464001
   type: 'test'
   ...
 # Subtest: PvP leaderboard uses singular grammar for exactly one win
 ok 86 - PvP leaderboard uses singular grammar for exactly one win
   ---
-  duration_ms: 0.097936
+  duration_ms: 0.06669
   type: 'test'
   ...
 # Subtest: menu credit is Made by Nick M. on one shared baseline
 ok 87 - menu credit is Made by Nick M. on one shared baseline
   ---
-  duration_ms: 1.18254
+  duration_ms: 1.055103
   type: 'test'
   ...
 # Subtest: fly-label sprite text is centered in physical pixels
 ok 88 - fly-label sprite text is centered in physical pixels
   ---
-  duration_ms: 0.686514
+  duration_ms: 0.456209
   type: 'test'
   ...
 # Subtest: custom frog editor includes a large live preview and relocated controls
 ok 89 - custom frog editor includes a large live preview and relocated controls
   ---
-  duration_ms: 1.022396
+  duration_ms: 0.864875
   type: 'test'
   ...
 # Subtest: sandbox flies begin with the normal Single Player spawn animation
 ok 90 - sandbox flies begin with the normal Single Player spawn animation
   ---
-  duration_ms: 1.153462
+  duration_ms: 0.939198
   type: 'test'
   ...
 # Subtest: public legacy-key migration controls are retired
 ok 91 - public legacy-key migration controls are retired
   ---
-  duration_ms: 1.294275
+  duration_ms: 1.035884
   type: 'test'
   ...
-# Subtest: 1.7.7 scripted tutorial build and first-boot marker are installed
-ok 92 - 1.7.7 scripted tutorial build and first-boot marker are installed
+# Subtest: 1.7.8 polished tutorial build and first-boot marker are installed
+ok 92 - 1.7.8 polished tutorial build and first-boot marker are installed
   ---
-  duration_ms: 1.740581
+  duration_ms: 0.932758
   type: 'test'
   ...
-# Subtest: Ember portraits preload and the tutorial never falls back to a map mentor
-ok 93 - Ember portraits preload and the tutorial never falls back to a map mentor
+# Subtest: Ember portraits preload and rotate within every dialogue scene
+ok 93 - Ember portraits preload and rotate within every dialogue scene
   ---
-  duration_ms: 0.346378
+  duration_ms: 0.241144
   type: 'test'
   ...
-# Subtest: dialogue uses a real typewriter and advances one line at a time
-ok 94 - dialogue uses a real typewriter and advances one line at a time
+# Subtest: dialogue uses one consistent typewriter scale, two-line wrapping, hold-to-speed, and a two-frame arrow
+ok 94 - dialogue uses one consistent typewriter scale, two-line wrapping, hold-to-speed, and a two-frame arrow
   ---
-  duration_ms: 0.536682
+  duration_ms: 0.429569
   type: 'test'
   ...
-# Subtest: dialogue box is compact, top-centered between HUD corners and has no faux scroll control
-ok 95 - dialogue box is compact, top-centered between HUD corners and has no faux scroll control
+# Subtest: dialogue box keeps approved dimensions with thin symmetric framing and a larger centered Ember name
+ok 95 - dialogue box keeps approved dimensions with thin symmetric framing and a larger centered Ember name
   ---
-  duration_ms: 0.609801
+  duration_ms: 0.397991
   type: 'test'
   ...
-# Subtest: tutorial starts only after authentication and its first dialogue is explicitly opened
-ok 96 - tutorial starts only after authentication and its first dialogue is explicitly opened
+# Subtest: first boot waits for the complete login boundary rather than merely hiding the gate
+ok 96 - first boot waits for the complete login boundary rather than merely hiding the gate
   ---
-  duration_ms: 0.612224
+  duration_ms: 0.285612
   type: 'test'
   ...
-# Subtest: tutorial flies are hidden during dialogue and visibly spawn after it closes
-ok 97 - tutorial flies are hidden during dialogue and visibly spawn after it closes
+# Subtest: background and fly animation continue through dialogue while movement alone is locked
+ok 97 - background and fly animation continue through dialogue while movement alone is locked
   ---
-  duration_ms: 0.353302
+  duration_ms: 0.196817
   type: 'test'
   ...
-# Subtest: failed attempts hide the frog, clear the tongue and use two poofs separated by half a second
-ok 98 - failed attempts hide the frog, clear the tongue and use two poofs separated by half a second
+# Subtest: the dinner fly poofs in before Ember's dinner line and both UI references flash
+ok 98 - the dinner fly poofs in before Ember's dinner line and both UI references flash
   ---
-  duration_ms: 0.327113
+  duration_ms: 0.23859
   type: 'test'
   ...
-# Subtest: scripted scenes match the requested twelve-scene curriculum
-ok 99 - scripted scenes match the requested twelve-scene curriculum
+# Subtest: poof transitions are exactly half a second and preserve already-visible flies
+ok 99 - poof transitions are exactly half a second and preserve already-visible flies
   ---
-  duration_ms: 0.356069
+  duration_ms: 0.369578
   type: 'test'
   ...
-# Subtest: max-jump failure waits for landing, while the lesson requires three 90-percent jumps
-ok 100 - max-jump failure waits for landing, while the lesson requires three 90-percent jumps
+# Subtest: the tutorial uses a carbon copy of Park and the normal Park start position
+ok 100 - the tutorial uses a carbon copy of Park and the normal Park start position
   ---
-  duration_ms: 0.884844
+  duration_ms: 0.347965
   type: 'test'
   ...
-# Subtest: tongue lesson rejects body contact and applies slow motion after a tongue catch
-ok 101 - tongue lesson rejects body contact and applies slow motion after a tongue catch
+# Subtest: each proper long-jump landing gets the same catch sparkle and success sound
+ok 101 - each proper long-jump landing gets the same catch sparkle and success sound
   ---
-  duration_ms: 0.618989
+  duration_ms: 0.958848
   type: 'test'
   ...
-# Subtest: wrong and multi-fly lessons validate catch order and same-jump sequences
-ok 102 - wrong and multi-fly lessons validate catch order and same-jump sequences
+# Subtest: tongue lesson starts on the lower-left platform and uses the stock final-catch zoom cinematic
+ok 102 - tongue lesson starts on the lower-left platform and uses the stock final-catch zoom cinematic
   ---
-  duration_ms: 0.271048
+  duration_ms: 0.272151
   type: 'test'
   ...
-# Subtest: wall, rebound and Park drop layouts preserve authored checks
-ok 103 - wall, rebound and Park drop layouts preserve authored checks
+# Subtest: multi-fly lessons are reachable and a missed matching fly retries only that fly
+ok 103 - multi-fly lessons are reachable and a missed matching fly retries only that fly
   ---
-  duration_ms: 0.390728
+  duration_ms: 0.201865
   type: 'test'
   ...
-# Subtest: current goal owns smooth failure feedback and tutorial status text is suppressed
-ok 104 - current goal owns smooth failure feedback and tutorial status text is suppressed
+# Subtest: scene completion freezes the frog and keeps its pose until the scripted poof
+ok 104 - scene completion freezes the frog and keeps its pose until the scripted poof
   ---
-  duration_ms: 1.562118
+  duration_ms: 0.165219
   type: 'test'
   ...
-# Subtest: tutorial completion reuses the normal Single Player victory screen and achievement
-ok 105 - tutorial completion reuses the normal Single Player victory screen and achievement
+# Subtest: Current Goal text is centered on the full card and exposes a how-to hover panel
+ok 105 - Current Goal text is centered on the full card and exposes a how-to hover panel
   ---
-  duration_ms: 0.212461
+  duration_ms: 0.147503
   type: 'test'
   ...
-# Subtest: 1.7.7 tutorial-scripted build is wired
-ok 106 - 1.7.7 tutorial-scripted build is wired
+# Subtest: pause remains functional with Retry Scene and Skip Tutorial actions
+ok 106 - pause remains functional with Retry Scene and Skip Tutorial actions
   ---
-  duration_ms: 1.078074
+  duration_ms: 0.299582
   type: 'test'
   ...
-# Subtest: first-boot tutorial waits for a signed-in or guest profile
-ok 107 - first-boot tutorial waits for a signed-in or guest profile
+# Subtest: trajectory preview is suppressed through dialogue and poofs
+ok 107 - trajectory preview is suppressed through dialogue and poofs
   ---
-  duration_ms: 0.181338
+  duration_ms: 0.084838
   type: 'test'
   ...
-# Subtest: Ember dialogue is compact at the top with a right-side portrait
-ok 108 - Ember dialogue is compact at the top with a right-side portrait
+# Subtest: tutorial completion still reuses the normal Single Player victory screen and achievement
+ok 108 - tutorial completion still reuses the normal Single Player victory screen and achievement
   ---
-  duration_ms: 0.329706
+  duration_ms: 0.097457
   type: 'test'
   ...
-# Subtest: tutorial arena does not draw a second Ember map frog
-ok 109 - tutorial arena does not draw a second Ember map frog
+# Subtest: 1.7.8 tutorial-polish build is wired everywhere
+ok 109 - 1.7.8 tutorial-polish build is wired everywhere
   ---
-  duration_ms: 0.163643
+  duration_ms: 1.306743
   type: 'test'
   ...
-# Subtest: authored tutorial flies use normal movement and sparkle spawning
-ok 110 - authored tutorial flies use normal movement and sparkle spawning
+# Subtest: first-boot tutorial waits for profile, gate, body, frame, and input release
+ok 110 - first-boot tutorial waits for profile, gate, body, frame, and input release
   ---
-  duration_ms: 0.286515
+  duration_ms: 0.234293
   type: 'test'
   ...
-# Subtest: poof reset clears tongue and hides the frog without an offscreen marker
-ok 111 - poof reset clears tongue and hides the frog without an offscreen marker
+# Subtest: Ember dialogue is vertically and horizontally centered with fixed typography
+ok 111 - Ember dialogue is vertically and horizontally centered with fixed typography
   ---
-  duration_ms: 0.235811
+  duration_ms: 0.223377
   type: 'test'
   ...
-# Subtest: scene goals cover long jumps, matching catches, tongue, wrong fly, combos and drops
-ok 112 - scene goals cover long jumps, matching catches, tongue, wrong fly, combos and drops
+# Subtest: authored tutorial flies retain normal movement and normal spawn sparkles
+ok 112 - authored tutorial flies retain normal movement and normal spawn sparkles
   ---
-  duration_ms: 0.50525
+  duration_ms: 0.308556
   type: 'test'
   ...
-# Subtest: wall turn allows two jumps and rebound remains one attempt
-ok 113 - wall turn allows two jumps and rebound remains one attempt
+# Subtest: poof reset clears tongue, hides only the frog, and never moves it offscreen
+ok 113 - poof reset clears tongue, hides only the frog, and never moves it offscreen
   ---
-  duration_ms: 0.139035
+  duration_ms: 0.367425
   type: 'test'
   ...
-# Subtest: all five mirrored Ember portrait assets are packaged
-ok 114 - all five mirrored Ember portrait assets are packaged
+# Subtest: all five Ember portrait assets are packaged
+ok 114 - all five Ember portrait assets are packaged
   ---
-  duration_ms: 0.481595
+  duration_ms: 0.239912
+  type: 'test'
+  ...
+# Subtest: scene goals cover long jumps, matching catches, tongue, combos, walls, and drops
+ok 115 - scene goals cover long jumps, matching catches, tongue, combos, walls, and drops
+  ---
+  duration_ms: 0.255075
+  type: 'test'
+  ...
+# Subtest: normal controls resume only after dialogue and the half-second scene-entry poof
+ok 116 - normal controls resume only after dialogue and the half-second scene-entry poof
+  ---
+  duration_ms: 0.249667
   type: 'test'
   ...
 # Subtest: release touch updates online hover index
-ok 115 - release touch updates online hover index
+ok 117 - release touch updates online hover index
   ---
-  duration_ms: 2.428686
+  duration_ms: 1.587026
   type: 'test'
   ...
 # Subtest: final catch tongue assist calls normal catch candidates
-ok 116 - final catch tongue assist calls normal catch candidates
+ok 118 - final catch tongue assist calls normal catch candidates
   ---
-  duration_ms: 0.206941
+  duration_ms: 0.116786
   type: 'test'
   ...
 # Subtest: replay begins on active run and only uploads records
-ok 117 - replay begins on active run and only uploads records
+ok 119 - replay begins on active run and only uploads records
   ---
-  duration_ms: 0.194317
+  duration_ms: 0.098609
   type: 'test'
   ...
 # Subtest: pause fullscreen DOM option exists
-ok 118 - pause fullscreen DOM option exists
+ok 120 - pause fullscreen DOM option exists
   ---
-  duration_ms: 0.193512
+  duration_ms: 0.101283
   type: 'test'
   ...
 # Subtest: reset and platform drop functions are wrapped
-ok 119 - reset and platform drop functions are wrapped
+ok 121 - reset and platform drop functions are wrapped
   ---
-  duration_ms: 0.293409
+  duration_ms: 0.136305
   type: 'test'
   ...
 # Subtest: online appearance and Frog Tags are separated
-ok 120 - online appearance and Frog Tags are separated
+ok 122 - online appearance and Frog Tags are separated
   ---
-  duration_ms: 0.195117
+  duration_ms: 0.166171
   type: 'test'
   ...
 # Subtest: CPU takeover counts down without reset
-ok 121 - CPU takeover counts down without reset
+ok 123 - CPU takeover counts down without reset
   ---
-  duration_ms: 0.165727
+  duration_ms: 0.304861
   type: 'test'
   ...
-# Subtest: version and build are 1.7.7
-ok 122 - version and build are 1.7.7
+# Subtest: version and build are 1.7.8
+ok 124 - version and build are 1.7.8
   ---
-  duration_ms: 0.979826
+  duration_ms: 1.168785
   type: 'test'
   ...
 # Subtest: touch menus activate on release
-ok 123 - touch menus activate on release
+ok 125 - touch menus activate on release
   ---
-  duration_ms: 0.4631
+  duration_ms: 0.223878
   type: 'test'
   ...
 # Subtest: countdown touch precharge has separate pointers
-ok 124 - countdown touch precharge has separate pointers
+ok 126 - countdown touch precharge has separate pointers
   ---
-  duration_ms: 0.143396
+  duration_ms: 0.146261
   type: 'test'
   ...
 # Subtest: final catch labels cannot reappear
-ok 125 - final catch labels cannot reappear
+ok 127 - final catch labels cannot reappear
   ---
-  duration_ms: 0.118639
+  duration_ms: 0.177678
   type: 'test'
   ...
 # Subtest: remote audio and countdown beeps are monitored
-ok 126 - remote audio and countdown beeps are monitored
+ok 128 - remote audio and countdown beeps are monitored
   ---
-  duration_ms: 0.325525
+  duration_ms: 0.303959
   type: 'test'
   ...
 # Subtest: CPU takeover is a three second frozen interruption
-ok 127 - CPU takeover is a three second frozen interruption
+ok 129 - CPU takeover is a three second frozen interruption
   ---
-  duration_ms: 0.128556
+  duration_ms: 0.150728
   type: 'test'
   ...
 # Subtest: Frog Tags and history exist
-ok 128 - Frog Tags and history exist
+ok 130 - Frog Tags and history exist
   ---
-  duration_ms: 0.19541
+  duration_ms: 0.204528
   type: 'test'
   ...
 # Subtest: guest save conversion and close warning exist
-ok 129 - guest save conversion and close warning exist
+ok 131 - guest save conversion and close warning exist
   ---
-  duration_ms: 0.21164
+  duration_ms: 0.285881
   type: 'test'
   ...
 # Subtest: record replay starts timesliced and discards non-records
-ok 130 - record replay starts timesliced and discards non-records
+ok 132 - record replay starts timesliced and discards non-records
   ---
-  duration_ms: 0.42456
+  duration_ms: 0.380104
   type: 'test'
   ...
 # Subtest: platform buffer preserves momentum without extra jump
-ok 131 - platform buffer preserves momentum without extra jump
+ok 133 - platform buffer preserves momentum without extra jump
   ---
-  duration_ms: 0.365919
+  duration_ms: 0.504472
   type: 'test'
   ...
 # Subtest: app manifest and icons exist
-ok 132 - app manifest and icons exist
+ok 134 - app manifest and icons exist
   ---
-  duration_ms: 0.166636
+  duration_ms: 0.216988
   type: 'test'
   ...
 # Subtest: credit says Nick M.
-ok 133 - credit says Nick M.
+ok 135 - credit says Nick M.
   ---
-  duration_ms: 4.593881
+  duration_ms: 3.090176
   type: 'test'
   ...
 # Subtest: IndexedDB replay archive exists
-ok 134 - IndexedDB replay archive exists
+ok 136 - IndexedDB replay archive exists
   ---
-  duration_ms: 1.746252
+  duration_ms: 1.863503
   type: 'test'
   ...
 # Subtest: Frog Tags supports selecting opponent and all games
-ok 135 - Frog Tags supports selecting opponent and all games
+ok 137 - Frog Tags supports selecting opponent and all games
   ---
-  duration_ms: 0.169644
+  duration_ms: 0.237218
   type: 'test'
   ...
 # Subtest: online matches record full replay from match start
-ok 136 - online matches record full replay from match start
+ok 138 - online matches record full replay from match start
   ---
-  duration_ms: 0.126583
+  duration_ms: 0.180002
   type: 'test'
   ...
 # Subtest: record notice remembers prior holder and suppresses repeated aggregate leaders
-ok 137 - record notice remembers prior holder and suppresses repeated aggregate leaders
+ok 139 - record notice remembers prior holder and suppresses repeated aggregate leaders
   ---
-  duration_ms: 0.240162
+  duration_ms: 0.263168
   type: 'test'
   ...
 # Subtest: Frog Tags uses frog appearance and disabled arrows
-ok 138 - Frog Tags uses frog appearance and disabled arrows
+ok 140 - Frog Tags uses frog appearance and disabled arrows
   ---
-  duration_ms: 0.175296
+  duration_ms: 0.21907
   type: 'test'
   ...
-# Subtest: v1.7.7 engine tutorial project additions exist
-ok 139 - v1.7.7 engine tutorial project additions exist
+# Subtest: v1.7.8 engine tutorial project additions exist
+ok 141 - v1.7.8 engine tutorial project additions exist
   ---
-  duration_ms: 2.846872
+  duration_ms: 1.829282
   type: 'test'
   ...
 # Subtest: tutorial uses the real Park engine instead of a popup practice canvas
-ok 140 - tutorial uses the real Park engine instead of a popup practice canvas
+ok 142 - tutorial uses the real Park engine instead of a popup practice canvas
   ---
-  duration_ms: 0.757997
+  duration_ms: 0.707528
   type: 'test'
   ...
 # Subtest: mobile touch support remains present
-ok 141 - mobile touch support remains present
+ok 143 - mobile touch support remains present
   ---
-  duration_ms: 0.294047
+  duration_ms: 0.227864
   type: 'test'
   ...
 # Subtest: spectator picker remains available without a floating live-matches button
-ok 142 - spectator picker remains available without a floating live-matches button
+ok 144 - spectator picker remains available without a floating live-matches button
   ---
-  duration_ms: 0.373037
+  duration_ms: 0.257188
   type: 'test'
   ...
 # Subtest: safety guards are present
-ok 143 - safety guards are present
+ok 145 - safety guards are present
   ---
-  duration_ms: 0.299554
+  duration_ms: 0.513735
   type: 'test'
   ...
 # Subtest: tutorial hides legacy floating controls and preserves cloud progress
-ok 144 - tutorial hides legacy floating controls and preserves cloud progress
+ok 146 - tutorial hides legacy floating controls and preserves cloud progress
   ---
-  duration_ms: 0.389314
+  duration_ms: 0.833458
   type: 'test'
   ...
-# Subtest: 1.7.7 tutorial uses Ember speech bubbles and authored engine checks
-ok 145 - 1.7.7 tutorial uses Ember speech bubbles and authored engine checks
+# Subtest: 1.7.8 tutorial uses Ember dialogue, checked engine scenes, and a working pause menu
+ok 147 - 1.7.8 tutorial uses Ember dialogue, checked engine scenes, and a working pause menu
   ---
-  duration_ms: 1.125751
+  duration_ms: 0.418682
   type: 'test'
   ...
-# Subtest: tutorial scenarios enforce requested one-attempt and platform layouts
-ok 146 - tutorial scenarios enforce requested one-attempt and platform layouts
+# Subtest: tutorial scenarios use Park layouts and reachable authored fly placement
+ok 148 - tutorial scenarios use Park layouts and reachable authored fly placement
   ---
-  duration_ms: 0.333134
+  duration_ms: 0.394676
   type: 'test'
   ...
 # Subtest: tutorial completion achievement is registered in the shared gallery
-ok 147 - tutorial completion achievement is registered in the shared gallery
+ok 149 - tutorial completion achievement is registered in the shared gallery
   ---
-  duration_ms: 0.852067
+  duration_ms: 0.624894
   type: 'test'
   ...
-# Subtest: Ember dialogue is right-sided, modal, and closes on Space before play resumes
-ok 148 - Ember dialogue is right-sided, modal, and closes on Space before play resumes
+# Subtest: Ember dialogue is right-sided, modal, centered, and uses a down triangle instead of text prompts
+ok 150 - Ember dialogue is right-sided, modal, centered, and uses a down triangle instead of text prompts
   ---
-  duration_ms: 0.581597
+  duration_ms: 0.633586
   type: 'test'
   ...
-1..148
-# tests 148
+1..150
+# tests 150
 # suites 0
-# pass 148
+# pass 150
 # fail 0
 # cancelled 0
 # skipped 0
 # todo 0
-# duration_ms 481.741966
+# duration_ms 319.181707
+
+Browser runtime smoke: PASS

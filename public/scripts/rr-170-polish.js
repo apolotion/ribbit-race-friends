@@ -366,6 +366,7 @@
 
   function firstBootTutorial() {
     const gate=qs("#cloud-gate");
+    const frame=qs("#game-frame");
     const requested=(()=>{try{return new URLSearchParams(location.search).get("tutorial")||"";}catch(_){return "";}})();
     const forcedKind=/^pvp$/i.test(requested)?"pvp":/^solo$/i.test(requested)?"solo":"";
     let starting=false;
@@ -374,20 +375,30 @@
 
     const authenticatedProfileReady=()=>{
       try {
-        const profile=window.RibbitCloud?.profile?.();
+        const cloud=typeof RibbitCloud!=="undefined"?RibbitCloud:window.RibbitCloud;
+        const profile=cloud?.getProfile?.()||cloud?.profile?.();
         return Boolean(profile?.signedIn || profile?.guestMode);
       } catch (_) { return false; }
+    };
+
+    const authenticationBoundaryReleased=()=>{
+      if(!authenticatedProfileReady()) return false;
+      if(gate && gate.hidden !== true) return false;
+      if(document.body?.classList?.contains("ribbit-auth-locked")) return false;
+      if(frame && (frame.hasAttribute("inert") || frame.getAttribute("aria-hidden") === "true")) return false;
+      if(window.__RIBBIT_FRIENDS_GAME_INPUT_LOCKED__ === true) return false;
+      try { if(window.RibbitFriendsGameInputLocked?.() === true) return false; } catch (_) { return false; }
+      return true;
     };
 
     const check=()=> {
       if(finished || starting) return;
       const engine=window.RibbitRaceTutorialEngine;
       const canvas=qs("#game");
-      const gateOpen=gate && gate.hidden !== true;
       const portraitsReady=engine?.portraitsReady !== false;
       const gameReady=Boolean(engine && canvas && Number(canvas.width) > 0 && Number(canvas.height) > 0 && portraitsReady);
-      if(!authReady && !authenticatedProfileReady()){setTimeout(check,250);return;}
-      if(gateOpen || !gameReady){setTimeout(check,250);return;}
+      if(!authReady && authenticationBoundaryReleased()) authReady=true;
+      if(!authReady || !authenticationBoundaryReleased() || !gameReady){setTimeout(check,250);return;}
       if(!forcedKind && engine.seen("solo")){finished=true;return;}
 
       starting=true;
@@ -404,7 +415,7 @@
       }));
     };
 
-    window.addEventListener("rr-authenticated",()=>{authReady=true;setTimeout(check,60);});
+    window.addEventListener("rr-authenticated",()=>{authReady=authenticationBoundaryReleased();setTimeout(check,60);});
     document.addEventListener("visibilitychange",()=>{if(!document.hidden)setTimeout(check,60);});
     setTimeout(check,250);
   }

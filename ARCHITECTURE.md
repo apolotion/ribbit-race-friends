@@ -1,7 +1,7 @@
 # Ribbit Race Friends Edition architecture
 
-Build: `2026.10.11-friends-tutorial-spectator-polish-1`  
-Displayed game version: `VERSION 1.7.0`
+Build: `2026.10.11-friends-tutorial-polish-2`  
+Displayed game version: `VERSION 1.7.8`
 
 ## Browser responsibilities
 
@@ -14,6 +14,8 @@ Displayed game version: `VERSION 1.7.0`
 - `public/scripts/mobile-experience.js` — Mobile/Computer confirmation, iPhone installation help, account-panel bridge, standalone detection, and native-gesture suppression.
 - `public/scripts/extended-features.js` — replay capture/viewing, palette tools, hat progression, and world-record notices.
 - `client/game/100-mobile-experience.js` — canvas-native avatar/device buttons, gradient jump meters, upper-right Versus pause, independent pointer ownership, and touch diagnostics.
+- `client/game/120-engine-tutorial.js` — authentication-gated real-engine Park/PvP tutorial, Ember dialogue, checked scenarios, poof lifecycle, goal help, and pause overrides.
+- `public/scripts/rr-170-polish.js` — first-boot tutorial startup and Friends Edition interface polish.
 - `public/scripts/game.bundle.js` — generated closure-preserving browser runtime.
 
 ## Touch-input responsibility
@@ -43,6 +45,6 @@ The account/device controls are rendered inside the game canvas on the main menu
 
 ## Why the game bundle is generated
 
-The historical game uses one large private lexical scope. Ten responsibility-focused source modules are assembled during the Cloudflare build, preserving scope and execution order without exposing internal state globally.
+The historical game uses one large private lexical scope. Thirteen responsibility-focused source modules are assembled during the Cloudflare build, preserving scope and execution order without exposing internal state globally.
 
 Run `npm run build` after editing a game module. `npm run check` does this automatically.

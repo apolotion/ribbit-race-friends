@@ -1,36 +1,29 @@
-# Ribbit Race Friends 1.7.7 — Test Report
+# Ribbit Race Friends 1.7.8 — Test Report
 
 ## Result
 
 - `npm run check`: **PASS**
-- `npm test`: **148 passed, 0 failed**
+- `npm test`: **150 passed, 0 failed**
+- Browser runtime smoke: **PASS**
 - Game bundle: **13 modules**
 - Required external public assets: **21 present**
 
-## Tutorial-focused coverage
+## Browser runtime smoke
 
-Automated checks verify:
+A Chromium smoke harness verified that:
 
-- current version/build markers and V7 first-boot key;
-- authentication-gated tutorial startup;
-- portrait preload and no map Ember fallback;
-- compact top dialogue geometry between HUD corners;
-- one-line typewriter timing and line advancement;
-- no faux scrollbar/continue-arrow rendering;
-- post-dialogue fly sparkle/spawn lifecycle;
-- tongue and afterimage cleanup during resets;
-- 500 ms two-poof reset timing;
-- no offscreen frog sentinel coordinates;
-- all requested scripted scene/setup identifiers;
-- three-long-jump and three-matching-catch progression;
-- tongue-only range lesson and slow-motion emphasis;
-- wrong-fly and multi-fly sequence checks;
-- wall/rebound and unchanged Park platform layouts;
-- robust distinct buffered-drop counting;
-- trophy Current Goal panel and smooth red fade;
-- suppression of the old “Nice Work” transition;
-- normal Single Player victory/jingle and RIBBIT READY registration.
+- the login gate is visible and input remains locked before authentication;
+- the tutorial becomes active only after **Play Without Saving**;
+- the polished Ember dialogue renders without page errors;
+- the intro advances into the long-jump scene;
+- the Current Goal hover explanation appears;
+- Pause opens during the tutorial;
+- selecting **Skip Tutorial** exits the tutorial cleanly.
+
+## Tutorial-focused automated coverage
+
+Automated checks verify the 1.7.8/build markers, auth boundary, global lexical cloud-profile lookup, five portrait assets and per-line expression sequences, fixed centered typography, 2× hold-to-type behavior, two-frame continue triangle, thin symmetrical framing, live background/fly animation, pre-line dinner-fly spawn timing, flashing term/clue references, exact 500 ms poof timing, preserved flies, exact Park geometry, normal Park start, long-jump landing sparkles, stock final-catch zoom, reachable multi-fly layouts, missed-fly-only retries, frozen success poses, centered Current Goal copy, hover help, pause retry/skip actions, trajectory suppression, reversible cloud snapshots, and the normal victory/achievement flow.
 
 ## Limits
 
-The automated suite validates source structure, parsing, build output, and scenario state logic. It does not replace a complete physical playthrough on the deployed Cloudflare build. After deployment, manually test the tongue position, all multi-fly arcs, the wall/rebound shots, and buffered-drop timing on both desktop and iPhone.
+The browser smoke uses a local in-memory API shim rather than a deployed Cloudflare Worker. After deployment, complete one manual playthrough on desktop and one on mobile to confirm touch feel, audio level, and real account/save behavior in the production environment.

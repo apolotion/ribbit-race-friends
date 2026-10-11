@@ -1,18 +1,18 @@
-# Ribbit Race Friends 1.7.7 — Scripted Tutorial Update
+# Ribbit Race Friends 1.7.8 — Tutorial Polish Update
 
 ## Build
 
-- Displayed version: `VERSION 1.7.7`
-- Server build: `2026.10.11-friends-tutorial-scripted-1`
+- Displayed version: `VERSION 1.7.8`
+- Server build: `2026.10.11-friends-tutorial-polish-2`
+- Platform: Cloudflare Worker + Durable Objects + static assets
+- Apps Script: **not used**
 
 ## Installation
 
-Use the complete repository ZIP when the GitHub repository has previously reported missing source or public files.
-
-1. Back up `apolotion/ribbit-race-friends`.
+1. Back up the current Ribbit Race Friends repository and Cloudflare deployment.
 2. Extract the complete update ZIP.
-3. Copy the extracted **contents** into the repository root, preserving every directory.
-4. Confirm the repository root directly contains:
+3. Copy the extracted **contents** into the repository root, preserving all folders.
+4. Confirm the root directly contains:
 
    ```text
    package.json
@@ -24,21 +24,32 @@ Use the complete repository ZIP when the GitHub repository has previously report
    tests/
    ```
 
-5. Commit to `main`, for example:
+5. Install dependencies when needed:
 
-   ```text
-   Ribbit Race Friends 1.7.7 scripted tutorial fixes
+   ```bash
+   npm install
    ```
 
-6. Keep Cloudflare configured as:
+6. Build and validate:
 
-   ```text
-   Build command:  npm run check && npm test
-   Deploy command: npx wrangler deploy
-   Root directory: /
+   ```bash
+   npm run check
+   npm test
    ```
 
-7. Keep the existing bindings:
+7. Deploy through the existing Cloudflare project:
+
+   ```bash
+   npm run deploy
+   ```
+
+   or:
+
+   ```bash
+   npx wrangler deploy
+   ```
+
+8. Keep the existing bindings:
 
    ```text
    HUB     → FriendsHub
@@ -46,36 +57,48 @@ Use the complete repository ZIP when the GitHub repository has previously report
    ASSETS  → public
    ```
 
-8. Do not recreate or delete either Durable Object.
-9. Wait for the build and tests to succeed.
-10. Check `/api/health` for `2026.10.11-friends-tutorial-scripted-1`.
-11. Hard-refresh desktop browsers; fully close and reopen the iPhone Home Screen app.
+9. Do not recreate or delete either Durable Object.
+10. Verify `/api/health` reports `2026.10.11-friends-tutorial-polish-2`.
+11. Hard-refresh desktop browsers; fully close and reopen an installed iPhone Home Screen app.
+
+No Apps Script or `code.gs` replacement is needed.
 
 ## Tutorial retest
 
-Append:
+To force the solo tutorial after logging in or choosing guest mode, append:
 
 ```text
 ?tutorial=solo
 ```
 
+For the hidden Park PvP tutorial test route, append:
+
+```text
+?tutorial=pvp
+```
+
 ## Verification checklist
 
-- Login/create/guest selection completes before the tutorial starts.
-- The first Ember line appears immediately.
-- Text types one sentence at a time and advances correctly.
-- Space used to close dialogue does not charge a jump.
-- The compact top panel does not cover the fly counter or Pause corner.
-- No scrollbar, lower-right arrow, or detached “Nice work” message appears.
-- Flies sparkle into existence after the final dialogue line.
-- Failed attempts clear the tongue and use two poofs with a 0.5-second gap.
-- No offscreen frog-direction arrow appears during a poof.
-- Three 90%-plus jumps are required in Scene 2.
-- Scene 3 awards three one-jump matching catches.
-- Scene 4 requires a true tongue catch and shows a brief slow-motion emphasis.
-- Scene 5 demonstrates an incorrect catch and spit-back.
-- Scene 6 checks mixed, two-match, and three-match arcs.
-- Wall Turn accepts one or two jumps; Rebound Catch remains one jump.
-- Buffer and Double Buffer recognize distinct platform transitions.
-- Current Goal fully replaces Time/Jumps/Best and fades smoothly after failure.
+- The login/create/guest screen remains visible until the player chooses an authentication path.
+- The tutorial starts only after the auth gate and input lock are released.
+- Ember changes expression between dialogue lines.
+- Dialogue is consistently sized, centered, and wraps to no more than two lines.
+- Holding Space doubles typewriter speed; a quick tap still advances normally.
+- The thin cyan border and symmetrical portrait frame have no black notch or scroll-wheel shape.
+- The larger **EMBER** name is centered in the orange plate.
+- Background scenery and authored fly movement continue while dialogue is open.
+- The dinner fly poofs in before “Looks like dinner is ready.”
+- The fly term and bottom English clue flash during their explanation lines.
+- Frog poof-out and poof-in are separated by exactly 0.5 seconds.
+- Existing flies remain in place during frog-only poofs and do not replay their spawn animation unless eaten or missing.
+- Long-jump successes sparkle on landing.
+- The range lesson begins on the lower-left platform and triggers the stock final-catch zoom.
+- Multi-fly placements are reachable in one jump.
+- Park platforms match the normal Park level exactly.
+- The frog stays frozen after scene completion until the scripted poof.
+- Current Goal text is centered over the full card.
+- Hovering Current Goal displays an objective-specific **HOW TO** panel.
+- Pause works and offers **Retry Scene** and **Skip Tutorial**.
+- The three-catch lesson retries only the missed fly.
+- No trajectory line appears during dialogue or a poof.
 - The final round uses the normal Single Player victory screen and jingle.

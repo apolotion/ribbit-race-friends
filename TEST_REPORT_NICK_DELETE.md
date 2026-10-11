@@ -1,6 +1,6 @@
 # Test report — Nick legacy-delete repair
 
-Build: `2026.10.11-friends-tutorial-spectator-polish-1`
+Build: `2026.10.11-friends-tutorial-polish-2`
 
 ## Passed
 

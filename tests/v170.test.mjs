@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import {readFileSync,existsSync} from "node:fs";
 const read=p=>readFileSync(new URL(`../${p}`,import.meta.url),"utf8");
 
-test("v1.7.7 engine tutorial project additions exist",()=>{
+test("v1.7.8 engine tutorial project additions exist",()=>{
   for(const p of [
     "client/game/99-v170-hooks.js",
     "client/game/120-engine-tutorial.js",
@@ -16,7 +16,7 @@ test("v1.7.7 engine tutorial project additions exist",()=>{
     "public/tutorial/ember-laughing.png",
     "public/tutorial/ember-thinking.png"
   ])assert.ok(existsSync(new URL(`../${p}`,import.meta.url)),p);
-  assert.equal(JSON.parse(read("package.json")).version,"1.7.7");
+  assert.equal(JSON.parse(read("package.json")).version,"1.7.8");
 });
 
 test("tutorial uses the real Park engine instead of a popup practice canvas",()=>{
@@ -67,8 +67,7 @@ test("tutorial hides legacy floating controls and preserves cloud progress",()=>
   assert.match(css,/display:\s*none\s*!important/);
 });
 
-
-test("1.7.7 tutorial uses Ember speech bubbles and authored engine checks",()=>{
+test("1.7.8 tutorial uses Ember dialogue, checked engine scenes, and a working pause menu",()=>{
   const engine=read("client/game/120-engine-tutorial.js");
   for(const word of [
     'FROG_SKINS.ember',
@@ -77,16 +76,19 @@ test("1.7.7 tutorial uses Ember speech bubbles and authored engine checks",()=>{
     'DOUBLE BUFFER DROP',
     'chooseVictoryMessage("park")',
     'tutorial-graduate',
-    'THE TUTORIAL CANNOT BE PAUSED'
+    'RETRY SCENE',
+    'SKIP TUTORIAL'
   ]) assert.match(engine,new RegExp(word.replace(/[.*+?^${}()|[\]\\]/g,"\\$&")));
-  assert.doesNotMatch(engine,/COMPLETE THE SCENARIO/);
+  assert.doesNotMatch(engine,/COMPLETE THE SCENARIO|THE TUTORIAL CANNOT BE PAUSED/);
 });
 
-test("tutorial scenarios enforce requested one-attempt and platform layouts",()=>{
+test("tutorial scenarios use Park layouts and reachable authored fly placement",()=>{
   const engine=read("client/game/120-engine-tutorial.js");
   assert.match(engine,/oneAttempt:\s*true/);
   assert.match(engine,/platforms = cloneParkPlatforms\(\)/);
-  assert.match(engine,/makeFly\(360, 75/);
+  assert.match(engine,/positionOnPlatform\(platforms\[1\], 8, 1\)/);
+  assert.match(engine,/makeFly\(300, 68, 0, 4\)/);
+  assert.match(engine,/makeParkFly\(7, 1, 1\)/);
   assert.match(engine,/bufferEventCount >= 2/);
   assert.match(engine,/catch all three matching flies before you land!/i);
   assert.match(engine,/positionSoloFrog\(350/);
@@ -99,20 +101,20 @@ test("tutorial completion achievement is registered in the shared gallery",()=>{
   assert.match(core,/"level-garden","tutorial-graduate"/);
 });
 
-
-test("Ember dialogue is right-sided, modal, and closes on Space before play resumes",()=>{
+test("Ember dialogue is right-sided, modal, centered, and uses a down triangle instead of text prompts",()=>{
   const engine=read("client/game/120-engine-tutorial.js");
   for(const word of [
     "EMBER_PORTRAIT_SOURCES",
+    "EMBER_PORTRAIT_SEQUENCE_BY_SETUP",
     "dialogueOpen",
-    "SPACE TO PLAY",
-    "TAP TO PLAY",
-    "blockJumpUntilRelease",
+    "drawDialogueContinueTriangle",
+    "dialogueSpaceHeld",
     "closeDialogue",
     'portrait: "smile"',
     "Hey there, tadpole! Welcome to Ribbit Race!"
   ]) assert.match(engine,new RegExp(word.replace(/[.*+?^${}()|[\]\\]/g,"\\$&")));
-  assert.match(engine,/const portrait = \{ x: 337/);
-  assert.match(engine,/if \(tutorial\.active && tutorial\.dialogueOpen\)/);
+  assert.match(engine,/const portrait = \{ x: 338/);
+  assert.match(engine,/if \(tutorial\.active && tutorial\.dialogueOpen && game\.state !== "paused"/);
   assert.match(engine,/armScenarioAfterDialogue\(\)/);
+  assert.doesNotMatch(engine,/SPACE TO PLAY|TAP TO PLAY|SPACE FOR NEXT|TAP FOR NEXT/);
 });
