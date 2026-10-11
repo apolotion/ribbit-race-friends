@@ -4,6 +4,9 @@ export {FriendsRoom} from './realtime.js';
 
 export default {
  async fetch(request,env,ctx){
+    const rrReplayUrl = new URL(request.url);
+    if (rrReplayUrl.pathname.startsWith("/api/replays/")) return env.HUB.getByName('friends-main-v1').fetch(request);
+
   const url=new URL(request.url),path=url.pathname;
   if(path==='/api/health')return json({ok:true,friendsVersion:1,build:BUILD,transport:'cloudflare-websocket'});
   if(path==='/ws'||path.startsWith('/api/')){

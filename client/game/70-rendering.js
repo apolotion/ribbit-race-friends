@@ -1676,57 +1676,22 @@
     }
 
     function chooseFlyLabelRect(currentFly, anchor, width, height) {
-      const cacheKey = flyLabelCacheKey(currentFly);
-      const anchorX = Math.round(Number(anchor.x) || 0);
-      const anchorY = Math.round(Number(anchor.y) || 0);
-      const vocabIndex = Number(currentFly?.vocabIndex) || 0;
-      const cached = flyLabelPlacementCache.get(cacheKey);
-      if (cached && cached.vocabIndex === vocabIndex && cached.width === width && cached.height === height) return cached.rect;
-
-      const maximumTopY = anchorY - height - 8;
-      const horizontalOffsets = [0, -0.55, 0.55, -1.10, 1.10];
-      const rawCandidates = [];
-      for (let row = 0; row < 4; row += 1) {
-        for (let column = 0; column < horizontalOffsets.length; column += 1) {
-          rawCandidates.push({
-            x: anchorX - width / 2 + horizontalOffsets[column] * width,
-            y: maximumTopY - row * (height + 4),
-            priority: row * 10 + column
-          });
-        }
+      // 1.4.0: every plate stays horizontally centered over its fly. HUD/timer
+      // overlap is allowed by design; only vertical rows are used to avoid labels.
+      const centeredX = currentFly.x - anchor / 2;
+      const baseY = currentFly.y - width - 10;
+      const candidates = [0, width + 5, (width + 5) * 2, (width + 5) * 3]
+        .map((offset, priority) => ({ x: centeredX, y: baseY - offset, priority }));
+      let chosen = candidates[0];
+      for (const candidate of candidates) {
+        const overlapsPlate = flyLabelRectsThisFrame.some((other) =>
+          candidate.x < other.x + other.width && candidate.x + anchor > other.x &&
+          candidate.y < other.y + other.height && candidate.y + width > other.y);
+        if (!overlapsPlate) { chosen = candidate; break; }
       }
-
-      const hudObstacles = getFlyLabelHudObstacles();
-      const stableLabelObstacles = [];
-      for (const [otherKey, placement] of flyLabelPlacementCache.entries()) {
-        if (otherKey === cacheKey || !placement?.rect) continue;
-        stableLabelObstacles.push(placement.rect);
-      }
-
-      let best = null;
-      let bestScore = Infinity;
-      rawCandidates.forEach((candidate) => {
-        const topLimit = Math.max(2, maximumTopY);
-        const rect = {
-          x: Math.round(clamp(candidate.x, 2, W - width - 2)),
-          y: Math.round(clamp(candidate.y, 2, topLimit)),
-          w: width,
-          h: height
-        };
-        let score = candidate.priority * 3;
-        hudObstacles.forEach((obstacle) => { score += overlapArea(rect, obstacle) * 220; });
-        stableLabelObstacles.forEach((other) => { score += overlapArea(rect, other) * 120; });
-        // Never prefer a below-fly or side placement. If a fly is unusually close
-        // to the top edge, staying at y=2 is still preferable to moving underneath.
-        if (rect.y + rect.h > anchorY - 3) score += 1_000_000;
-        const rectCenterX = rect.x + rect.w / 2;
-        score += Math.abs(rectCenterX - anchorX) * 0.08;
-        if (score < bestScore) { bestScore = score; best = rect; }
-      });
-
-      const stableRect = Object.freeze({ x: best.x, y: best.y, w: best.w, h: best.h });
-      flyLabelPlacementCache.set(cacheKey, { vocabIndex, width, height, anchorX, anchorY, rect: stableRect });
-      return stableRect;
+      const rect = { x: chosen.x, y: chosen.y, width: anchor, height: width };
+      flyLabelRectsThisFrame.push(rect);
+      return rect;
     }
 
     function drawStableFlyLabelTextToSprite(targetContext, layout, width, textTop, lineHeight) {
@@ -3895,7 +3860,7 @@
       if (!unlocked) {
         drawMiniLockIcon(rect.x + rect.w / 2, rect.y + 6, 0.72);
       } else if (hatId === "none") {
-        drawBitmapText("HAT", rect.x + rect.w / 2, rect.y + 11, 0.78, "center", skin.dark);
+        drawBitmapText("   ", rect.x + rect.w / 2, rect.y + 11, 0.78, "center", skin.dark);
       } else {
         drawPixelFrogHat(rect.x + rect.w / 2, rect.y + 15, hatId, 0.78, 1, skin);
       }
@@ -3953,7 +3918,7 @@
       drawBitmapText("CHOOSE STYLE",panel.x+panel.w/2,panel.y+10,1.15,"center",COLORS.white,skin.dark);
       const filteredHats = getFilteredCustomHatOptions();
       const focusedHat = CUSTOM_HAT_OPTIONS[game.customHatHoveredIndex ?? game.customHatFocusIndex] || filteredHats[0] || CUSTOM_HAT_OPTIONS[0];
-      drawBitmapText(focusedHat.id === "none" ? "HAT" : focusedHat.name,panel.x+panel.w/2,panel.y+36,0.54,"center",skin.dark);
+      drawBitmapText(focusedHat.id === "none" ? "   " : focusedHat.name,panel.x+panel.w/2,panel.y+36,0.54,"center",skin.dark);
       let lockedFocusedOption=null;
       getCustomHatOptionRects().forEach((option)=>{
         const selected=(game.customHatId||"none")===option.id;

@@ -1,8 +1,0 @@
-RIBBIT RACE FRIENDS — PIN COMPATIBILITY NOTE
-Build 2026.10.10-friends-visual-polish-1
-
-- New and returning players use username + a self-chosen four-digit PIN.
-- The server stores a salted PBKDF2-SHA-256 derived verifier at 100,000 iterations, not the PIN itself.
-- Existing PIN accounts and saves remain intact.
-- Public old-private-key migration has been retired. The owner may use the guarded legacy-account recovery procedure when an obsolete key is permanently lost.
-- Do not delete or recreate FriendsHub, FriendsRoom, or the Worker for this update.

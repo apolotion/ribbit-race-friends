@@ -1835,7 +1835,7 @@
       game.pvpRoundWins[index] = Math.min(roundsToWin, (game.pvpRoundWins[index] || 0) + 1);
       game.pvpMatchWinnerIndex = game.pvpRoundWins[index] >= roundsToWin ? index : null;
       awardCpuChampForCompletedMatch(true);
-      if (!game.onlineMode && game.pvpMatchWinnerIndex === 0 && (game.pvpCpuEnabled || hasRecentPlayerTwoMovement(10))) {
+      if (!game.onlineMode && game.rr14IsHumanPvpIndex(pvpMatchWinnerIndex) && (game.pvpCpuEnabled || hasRecentPlayerTwoMovement(10))) {
         statsProfile.pvpMatchWins += 1;
         saveStatsProfile();
         savePvpMatchWinsForLeaderboard();

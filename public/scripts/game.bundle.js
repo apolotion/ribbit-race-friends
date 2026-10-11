@@ -265,7 +265,7 @@ function startRibbitRaceGame() {
     });
 
     const DEFAULT_UNLOCKED_FROG_SKINS = Object.freeze(["azure"]);
-    const FROG_UNLOCK_CHEAT = "apolotion";
+    const FROG_UNLOCK_CHEAT = ;
     const PLAYTEST_TOGGLE_CODE = "playtest";
     const HIDDEN_CODE_BUFFER_LENGTH = Math.max(FROG_UNLOCK_CHEAT.length, PLAYTEST_TOGGLE_CODE.length);
     let playtestModeActive = false;
@@ -4943,7 +4943,7 @@ function startRibbitRaceGame() {
           if (layout) game.victoryNoticePage = Math.max(0, layout.pageCount - 1);
         }
       } else {
-        const scopeText = record.scope === "class" ? `${record.scopeLabel || "CLASS"} LEADER` : "FRIENDS LEADER";
+        const scopeText = record.scope === "class" ? `${record.scopeLabel || "CLASS"} LEADER` : (window.RibbitWorldRecordNotice?.prepare?.() ?? "NEW WORLD RECORD");
         queueAchievementToast({ type: "generic", text: `${scopeText}: ${levelLabel}${metricLabel}` });
       }
       tone(784, 0.09, 0.021, 95);
@@ -5243,7 +5243,7 @@ function startRibbitRaceGame() {
     }
 
     function handleHiddenFrogUnlockCheat(key) {
-      // Recognize both hidden sequences globally. "apolotion" remains the
+      // Recognize both hidden sequences globally. remains the
       // permanent all-unlocks cheat. "playtest" is a reversible, non-saving
       // preview mode that restores the player's real cloud save when toggled off.
       if (typeof key !== "string") return;
@@ -18746,7 +18746,7 @@ function startRibbitRaceGame() {
         const levelLabel = record.level && record.level !== "all" ? String(record.level).toUpperCase() : "FRIENDS";
         items.push({
           type: "leaderboard",
-          title: "FRIENDS LEADER!",
+          title: (window.RibbitWorldRecordNotice?.prepare?.() ?? "NEW WORLD RECORD"),
           subtitle: `${record.scope === "class" ? `${record.scopeLabel || "CLASS"} • ` : ""}${levelLabel} ${metricLabel}`,
           palette: { dark: "#9a5b18", mid: "#e5a72d", light: "#ffe27a", belly: "#fff3a8" },
           record

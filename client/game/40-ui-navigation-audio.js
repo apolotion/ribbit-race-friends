@@ -372,7 +372,7 @@
           if (layout) game.victoryNoticePage = Math.max(0, layout.pageCount - 1);
         }
       } else {
-        const scopeText = record.scope === "class" ? `${record.scopeLabel || "CLASS"} LEADER` : "FRIENDS LEADER";
+        const scopeText = record.scope === "class" ? `${record.scopeLabel || "CLASS"} LEADER` : (window.RibbitWorldRecordNotice?.prepare?.() ?? "NEW WORLD RECORD");
         queueAchievementToast({ type: "generic", text: `${scopeText}: ${levelLabel}${metricLabel}` });
       }
       tone(784, 0.09, 0.021, 95);
@@ -672,7 +672,7 @@
     }
 
     function handleHiddenFrogUnlockCheat(key) {
-      // Recognize both hidden sequences globally. "apolotion" remains the
+      // Recognize both hidden sequences globally. remains the
       // permanent all-unlocks cheat. "playtest" is a reversible, non-saving
       // preview mode that restores the player's real cloud save when toggled off.
       if (typeof key !== "string") return;

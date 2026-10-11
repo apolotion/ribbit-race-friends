@@ -241,7 +241,7 @@
         const levelLabel = record.level && record.level !== "all" ? String(record.level).toUpperCase() : "FRIENDS";
         items.push({
           type: "leaderboard",
-          title: "FRIENDS LEADER!",
+          title: (window.RibbitWorldRecordNotice?.prepare?.() ?? "NEW WORLD RECORD"),
           subtitle: `${record.scope === "class" ? `${record.scopeLabel || "CLASS"} • ` : ""}${levelLabel} ${metricLabel}`,
           palette: { dark: "#9a5b18", mid: "#e5a72d", light: "#ffe27a", belly: "#fff3a8" },
           record
