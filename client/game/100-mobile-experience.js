@@ -1,4 +1,4 @@
-// Ribbit Race Friends 1.5.0 — canvas-native mobile controls and menu actions.
+// Ribbit Race Friends 1.6.0 — canvas-native mobile controls and menu actions.
 // This module intentionally owns touch routing so one pointer can never release
 // another player's held jump button on a shared touchscreen.
 
@@ -155,7 +155,7 @@ drawPvpHud = function() {
       ? index === local
       : game.pvpCpuEnabled ? index === 0 : true;
     const label = OnlineVersus.isActive()
-      ? (interactive ? "HOLD TO CHARGE" : "OPPONENT")
+      ? (interactive ? "HOLD TO CHARGE" : (window.RibbitOpponentName?.() || "OPPONENT"))
       : game.pvpCpuEnabled
         ? (index === 0 ? "HOLD TO CHARGE" : `CPU LV ${game.pvpCpuDifficulty}`)
         : `P${index + 1} JUMP`;

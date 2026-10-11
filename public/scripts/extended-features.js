@@ -24,7 +24,7 @@
       const detail=this.infer();
       if((detail.metric==="pvpwins"||detail.metric==="flies")&&this.seen[detail.metric]) return "";
       if(detail.metric==="pvpwins"||detail.metric==="flies"){this.seen[detail.metric]=true;setJson("rrWorldRecordFirstPlaceSeenV1",this.seen)}
-      this.pending=detail;this.showHitbox(detail);return "NEW WORLD RECORD";
+      this.pending=detail;this.showHitbox(detail);return "WORLD RECORD";
     }
     showHitbox(detail){
       if(!this.hit){this.hit=document.createElement("div");this.hit.id="rr-world-record-hit";this.hit.innerHTML='<span></span>';document.body.append(this.hit)}

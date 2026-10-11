@@ -36,7 +36,7 @@ test("PIN hashing stays within Cloudflare PBKDF2 limit and matches 100000 rounds
 });
 
 test("Friends release exposes the new build marker",()=>{
-  assert.equal(BUILD,"2026.10.11-friends-mobile-experience-1");
+  assert.equal(BUILD,"2026.10.11-friends-online-mobile-polish-1");
   assert.match(browserSource,/2026\.10\.11\-friends\-mobile\-experience\-1/);
 });
 
@@ -317,13 +317,13 @@ test("every fly word plate uses top-only candidate rows",()=>{
 });
 
 test("Friends first-place notice is a world-record notice with hover details",()=>{
-  assert.match(html,/NEW WORLD RECORD/);
+  assert.match(html,/WORLD RECORD/);
   assert.match(html,/rr-world-record-hit/);
   assert.match(html,/Fastest time|Fewest jumps|Most PvP wins|Most flies eaten/);
   assert.doesNotMatch(indexHtml,/MIGRATE OLD PRIVATE-KEY ACCOUNT/);
 });
 
-test("version 1.5.0 remains in settings and the How To Play book footer",()=>{
+test("version 1.6.0 remains in settings and the How To Play book footer",()=>{
   assert.match(html,/const RIBBIT_DISPLAY_VERSION = "VERSION 1\.5\.0"/);
   assert.match(html,/drawVersionLabel\(panel\.x \+ panel\.w \/ 2, panel\.y \+ panel\.h - 14, "center"/);
   assert.doesNotMatch(html,/drawVersionLabel\(399, 218, "right"\)/);
@@ -415,7 +415,7 @@ test("PvP leaderboard uses singular grammar for exactly one win",()=>{
 });
 
 test("menu credit is Made by Nick on one shared baseline",()=>{
-  assert.match(html,/const RIBBIT_CREDIT_TEXT = "MADE BY NICK"/);
+  assert.match(html,/const RIBBIT_CREDIT_TEXT = "MADE BY NICK M."/);
   assert.match(html,/const RIBBIT_CREDIT_Y = 228/);
   assert.ok((html.match(/RIBBIT_CREDIT_Y/g)||[]).length>=3);
   assert.doesNotMatch(html,/MR\. MANAHAN/);

@@ -1,6 +1,6 @@
 # Test report — Nick legacy-delete repair
 
-Build: `2026.10.11-friends-mobile-experience-1`
+Build: `2026.10.11-friends-online-mobile-polish-1`
 
 ## Passed
 

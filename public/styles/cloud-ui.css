@@ -333,3 +333,21 @@
       .leaderboard-controls { grid-template-columns: 1fr 1fr; }
       .cloud-card, .leaderboard-card { padding: 14px; border-width: 5px; }
     }
+
+/* 1.6 mobile auth sizing and guest-conversion affordances */
+@media (max-width: 760px), (max-height: 560px) {
+  #cloud-gate { padding: max(4px, env(safe-area-inset-top)) max(6px, env(safe-area-inset-right)) max(4px, env(safe-area-inset-bottom)) max(6px, env(safe-area-inset-left)); align-items: start; overflow:auto; }
+  .cloud-card { width:min(96vw,680px); max-height:none; margin:4px auto 20px; padding:10px; border-width:5px; box-shadow:5px 5px 0 rgba(17,38,47,.35); }
+  .cloud-title { font-size:clamp(25px,8vw,42px); padding:8px; border-width:4px; }
+  .cloud-subtitle { margin:6px 0 8px; font-size:clamp(12px,3.7vw,18px); }
+  .cloud-field { margin:7px 0; gap:3px; font-size:13px; }
+  .cloud-field input,.cloud-field select { padding:8px 10px; font-size:17px; border-width:3px; }
+  .cloud-actions { gap:6px; margin-top:9px; }
+  .cloud-button { min-width:130px; padding:8px 10px; font-size:14px; border-width:3px; box-shadow:3px 3px 0 #aebbc0; }
+  .cloud-help { margin-top:7px; font-size:11px; }
+}
+#guest-convert-account { display:none; }
+body.rr-guest-active #guest-convert-account { display:block; }
+#world-record-replay-overlay video { background:#101315; }
+
+#rr-v160-tag-games button,#rr-v160-replay-modal button{border:3px solid #26363d;background:#f7fdff;color:#26363d;padding:9px 12px;margin:5px;font:700 13px "Courier New",monospace;cursor:pointer;box-shadow:3px 3px #aebbc0}#rr-v160-tag-games button:disabled{opacity:.35;cursor:not-allowed}.rrv-close,.rrv-tag-close{position:absolute;right:8px;top:8px}.rrv-tag-list{display:grid;gap:6px}

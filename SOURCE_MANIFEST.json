@@ -1,7 +1,7 @@
 {
   "project": "Ribbit Race Friends Edition",
-  "build": "2026.10.11-friends-mobile-experience-1",
-  "displayVersion": "1.5.0",
+  "build": "2026.10.11-friends-online-mobile-polish-1",
+  "displayVersion": "1.6.0",
   "generatedAtUtc": "2026-10-11T02:10:09.734576+00:00",
   "manifestNote": "SOURCE_MANIFEST.json is excluded from its own hash list.",
   "files": [
@@ -316,7 +316,7 @@
       "sha256": "c848a2fdf22a1dc3d7b33b2943aa2c4946d2424dcef2ad78e16767550abef172"
     },
     {
-      "path": "tests/friends-1.5.0.test.mjs",
+      "path": "tests/friends-1.6.0.test.mjs",
       "bytes": 6640,
       "sha256": "db33b88d4028655da2d0f99a14f1320f139e78104ad09daf90ab3c54222f6d27"
     },

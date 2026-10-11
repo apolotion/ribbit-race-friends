@@ -372,7 +372,7 @@
           if (layout) game.victoryNoticePage = Math.max(0, layout.pageCount - 1);
         }
       } else {
-        const scopeText = record.scope === "class" ? `${record.scopeLabel || "CLASS"} LEADER` : (window.RibbitWorldRecordNotice?.prepare?.() ?? "NEW WORLD RECORD");
+        const scopeText = record.scope === "class" ? `${record.scopeLabel || "CLASS"} LEADER` : (window.RibbitWorldRecordNotice?.prepare?.() ?? "WORLD RECORD");
         queueAchievementToast({ type: "generic", text: `${scopeText}: ${levelLabel}${metricLabel}` });
       }
       tone(784, 0.09, 0.021, 95);

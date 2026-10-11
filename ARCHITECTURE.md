@@ -1,7 +1,7 @@
 # Ribbit Race Friends Edition architecture
 
-Build: `2026.10.11-friends-mobile-experience-1`  
-Displayed game version: `VERSION 1.5.0`
+Build: `2026.10.11-friends-online-mobile-polish-1`  
+Displayed game version: `VERSION 1.6.0`
 
 ## Browser responsibilities
 

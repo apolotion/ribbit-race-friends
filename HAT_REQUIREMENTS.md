@@ -1,6 +1,6 @@
 # Friends Edition hat requirements
 
-Progress begins only after the Hats feature is unlocked in build 1.5.0. Existing totals become the baseline and do not grant hats retroactively. Typing `hatstest` exposes the Hats feature for testing but does not unlock a hat.
+Progress begins only after the Hats feature is unlocked in build 1.6.0. Existing totals become the baseline and do not grant hats retroactively. Typing `hatstest` exposes the Hats feature for testing but does not unlock a hat.
 
 No requirement below depends on an online opponent or a human opponent.
 

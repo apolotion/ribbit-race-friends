@@ -1,6 +1,6 @@
-RIBBIT RACE FRIENDS EDITION — MOBILE / IPHONE / TOUCH 1.5.0
-Build: 2026.10.11-friends-mobile-experience-1
-Displayed version: VERSION 1.5.0
+RIBBIT RACE FRIENDS EDITION — MOBILE / IPHONE / TOUCH 1.6.0
+Build: 2026.10.11-friends-online-mobile-polish-1
+Displayed version: VERSION 1.6.0
 
 THIS UPDATES THE EXISTING FRIENDS WORKER.
 Do not create another Worker, repository, FriendsHub, FriendsRoom, or database.
@@ -11,7 +11,7 @@ Do not create another Worker, repository, FriendsHub, FriendsRoom, or database.
 4. Wait for Cloudflare to run:
      npm run check && npm test
      npx wrangler deploy
-5. Confirm /api/health reports build 2026.10.11-friends-mobile-experience-1.
+5. Confirm /api/health reports build 2026.10.11-friends-online-mobile-polish-1.
 6. Hard-refresh desktop browsers.
 
 IPHONE:

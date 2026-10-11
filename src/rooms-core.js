@@ -795,7 +795,7 @@ function apiOnlineSpectate(req){
 // School Online 3: guest identities remain temporary; account identities stay private.
 const RR_SCHOOL_ONLINE = Object.freeze({VERSION:3, LIFECYCLE:3, GUEST_TTL:21600,
   GUEST_PREFIX:'RR_GUEST_V1:', PROFILE_PREFIX:'RR_ONLINE_PROFILE_V1:',
-  CONTROL_SUFFIX:':CONTROL3', BATTLE_SHEET:'Battle Tags', CPU_LEVEL:5});
+  CONTROL_SUFFIX:':CONTROL3', BATTLE_SHEET:'Frog Tags', CPU_LEVEL:5});
 function rrOnlineDisplayName_(value,fallback) {
   const name=String(value||'').normalize('NFC').replace(/[^A-Za-zÀ-ÖØ-öø-ÿ0-9 _.'’-]/g,'').replace(/\s+/g,' ').trim().slice(0,20);
   return name || String(fallback||'PLAYER').slice(0,20);
@@ -812,7 +812,7 @@ function rrOnlineBattleId_(sid){
   const props=PropertiesService.getScriptProperties();let salt=props.getProperty('RR_BATTLE_TAG_SALT_V1');
   if(!salt){
     const lock=LockService.getScriptLock(),owned=lock.hasLock();
-    if(!owned&&!lock.tryLock(1500))throw new Error('Battle Tags is busy. Try again.');
+    if(!owned&&!lock.tryLock(1500))throw new Error('Frog Tags is busy. Try again.');
     try{salt=props.getProperty('RR_BATTLE_TAG_SALT_V1');if(!salt){salt=rrOnlineToken_();props.setProperty('RR_BATTLE_TAG_SALT_V1',salt);}}
     finally{if(!owned)lock.releaseLock();}
   }
@@ -857,7 +857,7 @@ function rrOnlineCheckTakeover_(cache,room,role,mails,control,req) {
     return control;
   }finally{lock.releaseLock();}
 }
-function rrBattleSheet_(){throw new Error('Friends Edition stores Battle Tags in private SQLite, not a Sheet.');}
+function rrBattleSheet_(){throw new Error('Friends Edition stores Frog Tags in private SQLite, not a Sheet.');}
 function rrBattleRecord_(room,matchId,winnerRole){
  if(!room.quickplay||!room.host||!room.guest)return;
  for(const role of ['host','guest']){

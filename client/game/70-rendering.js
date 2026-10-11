@@ -240,6 +240,7 @@
     // become whole physical pixels (4, 3, or 2 pixels per bitmap cell), so the same
     // word cannot shimmer between fractional raster positions on later frames.
     function layoutStableFlyLabelText(text, maximumWidth = 120) {
+    if (window.RibbitV160ShouldHideFlyLabels?.()) return;
       const normalized = normalizeBitmapText(text).trim();
       const scales = [1, 0.75, 0.5];
       for (const scale of scales) {
@@ -1624,6 +1625,7 @@
     }
 
     function getFlyLabelAnchor(currentFly) {
+    if (window.RibbitV160ShouldHideFlyLabels?.()) return;
       if (currentFly.state === "spitting") {
         return { x: currentFly.returnX, y: currentFly.returnY };
       }
@@ -1638,6 +1640,7 @@
     const flyLabelSpriteCache = new Map();
 
     function flyLabelCacheKey(currentFly) {
+    if (window.RibbitV160ShouldHideFlyLabels?.()) return;
       const id = Number(currentFly?.id) || 0;
       const vocab = Number(currentFly?.vocabIndex) || 0;
       if (game.mode === "pvp") {
@@ -1649,6 +1652,7 @@
     }
 
     function pruneFlyLabelPlacementCache() {
+    if (window.RibbitV160ShouldHideFlyLabels?.()) return;
       const live = new Set(flies.map((currentFly) => flyLabelCacheKey(currentFly)));
       for (const key of flyLabelPlacementCache.keys()) {
         if (!live.has(key)) flyLabelPlacementCache.delete(key);
@@ -1665,6 +1669,7 @@
     }
 
     function getFlyLabelHudObstacles() {
+    if (window.RibbitV160ShouldHideFlyLabels?.()) return;
       const obstacles = [
         { x: 3, y: 3, w: 92, h: 29 },
         { x: W - 95, y: 3, w: 92, h: 29 }
@@ -1676,7 +1681,8 @@
     }
 
     function chooseFlyLabelRect(currentFly, anchor, width, height) {
-      // 1.5.0: the plate center remains locked directly above the fly's stable anchor.
+    if (window.RibbitV160ShouldHideFlyLabels?.()) return;
+      // 1.6.0: the plate center remains locked directly above the fly's stable anchor.
       // It never shifts sideways to avoid the score, timer, pause button, or another
       // label. When two plates would overlap, only the vertical row may change.
       const cacheKey = flyLabelCacheKey(currentFly);
@@ -1724,6 +1730,7 @@
     }
 
     function drawStableFlyLabelTextToSprite(targetContext, layout, width, textTop, lineHeight) {
+    if (window.RibbitV160ShouldHideFlyLabels?.()) return;
       const lines = Array.isArray(layout?.lines) && layout.lines.length ? layout.lines : [""];
       const logicalScale = Number(layout?.scale) || 1;
       const cell = Math.max(1, Math.round(logicalScale * RENDER_SCALE));
@@ -1760,6 +1767,7 @@
     }
 
     function getFlyLabelSprite(currentFly, term, layout, width, height) {
+    if (window.RibbitV160ShouldHideFlyLabels?.()) return;
       const cacheKey = flyLabelCacheKey(currentFly);
       const stripeColor = getSelectedSkin().mid;
       const signature = `${term}\u0000${layout.scale}\u0000${layout.lines.join("\u0001")}\u0000${width}x${height}\u0000${stripeColor}`;

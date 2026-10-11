@@ -561,7 +561,7 @@
         pendingAction:'',changingMatch:false,queued:false,background:false,peekActivity:null,suspendedActivity:null,lastLocalSkin:'',queueTimer:null};
       const QUICK_UI={quick:{x:115,y:144,w:250,h:31},
         preview:{x:151,y:104,w:178,h:77},previous:{x:159,y:124,w:22,h:27},next:{x:299,y:124,w:22,h:27},
-        enter:{x:144,y:196,w:192,h:26},cancel:{x:185,y:239,w:110,h:22},minimize:{x:115,y:201,w:250,h:34}};
+        enter:{x:144,y:196,w:192,h:26},cancel:{x:185,y:226,w:110,h:22},minimize:{x:115,y:194,w:250,h:28}};
       function isQuickplay(){return !!state.quickplay;}
       function quickRoundStage(number){return quick.roundStages[Math.max(0,Number(number)-1)]||'park';}
       function updateQuickCounts(counts){
@@ -1141,7 +1141,7 @@
         {id:'join',label:'JOIN',x:66,y:142,w:163,h:29,icon:'join',stripe:'#ef7582',tip:'Join a friend using their room ID.'},
         {id:'spectate',label:'SPECTATE',x:251,y:142,w:163,h:29,icon:'eye',stripe:'#a68be5',tip:'Watch delayed recorded frames without joining a player connection.'},
         {id:'profile',label:'CUSTOMIZER',x:66,y:184,w:163,h:29,icon:'palette',stripe:'#ef9ebc',tip:'Edit the display name opponents see. Your Friends account is unchanged.'},
-        {id:'battle',label:'BATTLE TAGS',x:251,y:184,w:163,h:29,icon:'tags',stripe:'#eac65b',tip:'View completed Quickplay encounters and your head-to-head record.'},
+        {id:'battle',label:'FROG TAGS',x:251,y:184,w:163,h:29,icon:'tags',stripe:'#eac65b',tip:'View completed Quickplay encounters and your head-to-head record.'},
         {id:'back',label:'BACK',x:184,y:231,w:112,h:23,icon:'back',stripe:'#b2c6cd',tip:'Return to Local Versus.'}
       ];
       const PROFILE_UI={name:{x:108,y:112,w:264,h:31},save:{x:127,y:193,w:104,h:29},back:{x:250,y:193,w:104,h:29}};
@@ -1190,7 +1190,7 @@
         state.screen='battleTags';state.focus='back';game.state='onlineConnect';battleView.loading=true;battleView.error='';battleView.page=0;
         battleView.entries=[];
         const gen=++battleView.generation;
-        try{const r=await RibbitCloud.battleTags();if(gen!==battleView.generation)return;if(!r?.ok)throw new Error(r?.message||'Battle Tags unavailable.');
+        try{const r=await RibbitCloud.battleTags();if(gen!==battleView.generation)return;if(!r?.ok)throw new Error(r?.message||'Frog Tags unavailable.');
           battleView.entries=r.entries||[];battleView.guest=!!r.guest;battleView.tag=r.battleTag||'';
         }catch(e){if(gen===battleView.generation)battleView.error=String(e.message||e);}
         finally{if(gen===battleView.generation)battleView.loading=false;}
@@ -1348,18 +1348,18 @@
         fitText(onlineIdentity.draft||'TYPE YOUR NAME',240,r.y+12,r.w-16,1.15,onlineIdentity.draft?'#174f65':'#85969c');
         if(state.focus==='name'&&Math.floor(game.visualTime*2)%2===0){const width=measureBitmapText(onlineIdentity.draft,Math.min(1.15,(r.w-16)/Math.max(1,measureBitmapText(onlineIdentity.draft,1))));ctx.fillStyle='#174f65';ctx.fillRect(Math.min(r.x+r.w-8,240+width/2+3),r.y+11,1,10);}
         fitText('YOUR ROSTER NAME AND PLAYER ID DO NOT CHANGE',240,158,374,.62);
-        fitText(onlineIdentity.message||(profile().guestMode?'GUEST NAMES LAST FOR THIS GUEST SESSION':'THIS NAME IS SAVED TO YOUR ONLINE PROFILE'),240,174,374,.58,onlineIdentity.error?'#96334c':'#59666b');
+        fitText(onlineIdentity.message||(profile().guestMode?"":'THIS NAME IS SAVED TO YOUR ONLINE PROFILE'),240,174,374,.58,onlineIdentity.error?'#96334c':'#59666b');
         for(const b of onlineButtons())if(b.id!=='name')drawOnlineAction(b,state.focus===b.id);
         if(onlineIdentity.tag)fitText('BATTLE TAG: '+onlineIdentity.tag,240,239,300,.63);
       }
       function drawBattleTags(){
-        drawPanel('BATTLE TAGS');fitText(battleView.loading?'LOADING MATCH RECORDS':battleView.error||'YOUR QUICKPLAY HEAD-TO-HEAD RECORDS',240,67,376,.76,battleView.error?'#96334c':'#07516a');
-        const xs=[79,286,370];drawBitmapText('OPPONENT',xs[0],88,.72,'left','#59666b');drawBitmapText('MATCHES',xs[1],88,.65,'center','#59666b');drawBitmapText('W - L',xs[2],88,.72,'center','#59666b');
+        drawPanel('FROG TAGS');fitText(battleView.loading?'LOADING MATCH RECORDS':battleView.error||'YOUR QUICKPLAY HEAD-TO-HEAD RECORDS',240,67,376,.76,battleView.error?'#96334c':'#07516a');
+        const xs=[79,286,370];drawBitmapText((window.RibbitOpponentName?.() || "OPPONENT"),xs[0],88,.72,'left','#59666b');drawBitmapText('MATCHES',xs[1],88,.65,'center','#59666b');drawBitmapText('W - L',xs[2],88,.72,'center','#59666b');
         const entries=battleView.entries.slice(battleView.page*6,battleView.page*6+6);
         entries.forEach((r,i)=>{const y=102+i*18;ctx.fillStyle=i%2?'#e6f3f3':'#f0f7f8';ctx.fillRect(68,y-3,344,17);
           fitText(r.name+(r.temporary?' *':''),80,y+1,166,.78,'#174f65','left');drawBitmapText(String(r.matches),286,y+1,.78,'center','#48555a');drawBitmapText(`${r.wins} - ${r.losses}`,370,y+1,.78,'center','#07516a');});
         if(!entries.length&&!battleView.loading&&!battleView.error)fitText('NO COMPLETED QUICKPLAY MATCHES YET',240,146,350,.78);
-        fitText(battleView.guest?'GUEST RECORDS ARE TEMPORARY':'COMPLETE HUMAN MATCHES ONLY  -  * GUEST SESSION',240,216,374,.53);
+        fitText(battleView.guest?'GUEST RECORDS ARE TEMPORARY':"",240,216,374,.53);
         for(const b of onlineButtons())drawOnlineAction(b,state.focus===b.id);
         fitText(`${battleView.page+1}/${Math.max(1,Math.ceil(battleView.entries.length/6))}`,337,240,29,.6);
       }
@@ -2140,7 +2140,7 @@
           setTimeout(() => { try { RibbitCloud.flushSave(true); } catch (_) {} }, 80);
         }
         state.resultSeenMatchId=result.matchId;
-        setStatus(result.winnerRole===state.role&&!result.winnerCpu?(result.winnerGuest?'MATCH WON - GUEST SESSION':'MATCH WIN SAVED'):'MATCH COMPLETE');
+        setStatus(result.winnerRole===state.role&&!result.winnerCpu?(result.winnerGuest?"":'MATCH WIN SAVED'):'MATCH COMPLETE');
       }
       function notifyNextRound(resetMatch){
         if(!isHostActive())return;

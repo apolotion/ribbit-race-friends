@@ -1,5 +1,5 @@
-RIBBIT RACE FRIENDS 1.5.0 — FINAL LOCAL VALIDATION
-Build: 2026.10.11-friends-mobile-experience-1
+RIBBIT RACE FRIENDS 1.6.0 — FINAL LOCAL VALIDATION
+Build: 2026.10.11-friends-online-mobile-polish-1
 
 SOURCE PROJECT
 - npm run check: PASS

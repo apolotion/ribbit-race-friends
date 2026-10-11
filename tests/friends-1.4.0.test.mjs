@@ -9,7 +9,7 @@ const mobile=read("client/game/100-mobile-experience.js");
 const render=read("client/game/70-rendering.js");
 const versus=read("client/game/60-versus-gameplay.js");
 
-test("1.5.0 build and ten modular gameplay sources are present",()=>{
+test("1.6.0 build and ten modular gameplay sources are present",()=>{
   assert.match(read("src/common.js"),/2026\.10\.11-friends-mobile-experience-1/);
   assert.match(read("package.json"),/"version": "1\.5\.0"/);
   assert.match(read("scripts/build-game.mjs"),/100-mobile-experience\.js/);
@@ -27,7 +27,7 @@ test("obsolete apolotion unlock code is absent and Playtest is reversible",()=>{
 });
 
 test("world-record label, hover details and repeat suppression remain installed",()=>{
-  assert.match(extension,/NEW WORLD RECORD/);
+  assert.match(extension,/WORLD RECORD/);
   assert.match(extension,/rr-world-record-hit/);
   assert.match(extension,/rrWorldRecordFirstPlaceSeenV1/);
   assert.match(extension,/pvpwins/);

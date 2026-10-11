@@ -1,94 +1,33 @@
-# Ribbit Race Friends 1.5.0 update
+# Ribbit Race Friends 1.6.0 — installation
 
-Build: `2026.10.11-friends-mobile-experience-1`  
-Displayed version: `VERSION 1.5.0`
+Build: `2026.10.11-friends-online-mobile-polish-1`
 
-## Install over the existing Friends Edition
+## Install
 
-This is an update to the existing `apolotion/ribbit-race-friends` GitHub repository and Cloudflare Worker. Do **not** create a second Worker, repository, `FriendsHub`, `FriendsRoom`, or database.
+1. Back up the current `apolotion/ribbit-race-friends` repository.
+2. Extract `Ribbit_Race_Friends_Online_Mobile_Polish_Update.zip`.
+3. Copy the extracted **contents** into the repository root. Do not upload the ZIP itself and do not add an extra wrapper folder.
+4. Confirm the repository root contains `package.json`, `wrangler.jsonc`, `client/`, `public/`, `scripts/`, `src/`, and `tests/`.
+5. Commit to `main`, e.g. `Ribbit Race Friends 1.6.0 online and mobile polish`.
+6. Wait for Cloudflare to run `npm run check && npm test`, then `npx wrangler deploy`.
+7. Keep the existing bindings: `HUB → FriendsHub`, `ROOMS → FriendsRoom`, `ASSETS → public`. Do not recreate or delete Durable Objects.
+8. Open `/api/health` and confirm build `2026.10.11-friends-online-mobile-polish-1`.
+9. Hard-refresh desktop browsers. On iPhone, remove and re-add the Home Screen shortcut if iOS keeps the previous icon.
 
-1. Choose a package:
-   - Use the **patch ZIP** when the repository already contains `client/`, `public/`, `scripts/`, `src/`, and `tests/`.
-   - Use the **complete repository ZIP** if any source, public asset, or build-script folder may be missing.
-2. Extract the ZIP.
-3. Copy the extracted **contents** into the root of `apolotion/ribbit-race-friends`, preserving every path. Do not upload the ZIP itself or an extra wrapper folder.
-4. Confirm GitHub shows these directly at the repository root:
+## Recommended production checks
 
-   ```text
-   package.json
-   wrangler.jsonc
-   client/
-   public/
-   scripts/
-   src/
-   tests/
-   ```
+- iPhone Home Screen icon and favicon.
+- Release-based menu taps and simultaneous Local Versus hold/release controls.
+- Countdown precharge.
+- Quickplay layout and all online menu hover targets.
+- Opponent name, remote jump audio, countdown beeps, and three-second CPU takeover interruption.
+- Frog Tags opponent rows and archived replays.
+- World Record previous-holder tooltip.
+- Solo replay from run start through finish; non-record runs should be discarded.
+- Guest → Create Account & Keep Save.
+- Pause Reset spawn position and Fullscreen option/F shortcut.
+- Buffered platform drop jump count and momentum.
 
-5. Commit directly to `main`. Suggested message:
+## Browser limitation
 
-   ```text
-   Add iPhone app mode and reliable mobile touch controls
-   ```
-
-6. Let Cloudflare run:
-
-   ```text
-   npm run check && npm test
-   npx wrangler deploy
-   ```
-
-7. Keep the current bindings:
-
-   ```text
-   HUB     → FriendsHub
-   ROOMS   → FriendsRoom
-   ASSETS  → public
-   ```
-
-8. Wait for `Success: Deploy command completed` and `Success! Build completed.`
-9. Open `/api/health` on the deployed Worker and confirm:
-
-   ```json
-   {"build":"2026.10.11-friends-mobile-experience-1"}
-   ```
-
-10. Hard-refresh desktop browsers. On an iPhone Home Screen installation, close and reopen the app; remove and re-add the Home Screen icon only if Safari keeps an older cached shell.
-
-## iPhone app-style installation
-
-The login screen now includes **PLAYING ON MOBILE?**. On iPhone:
-
-1. Open the game in Safari.
-2. Tap Share.
-3. Choose **Add to Home Screen**.
-4. Tap Add.
-5. Launch Ribbit Race from the new icon and rotate the phone sideways.
-
-The installed Home Screen version uses the included web-app manifest, Apple mobile-web-app metadata, landscape orientation, safe-area handling, and dynamic viewport sizing. A normal Safari tab cannot remove all browser chrome; the Home Screen launch is the intended app-like mode.
-
-## Mobile Mode controls
-
-- The main menu now has an account/avatar button and a phone/computer button on the lower-left side.
-- The phone/computer button asks for confirmation before changing modes.
-- Enabling Mobile Mode repeats the iPhone Home Screen instructions.
-- Single Player uses a hold-and-release jump meter.
-- Human Local Versus uses independent **P1 JUMP** and **P2 JUMP** meters. Both can be held simultaneously without releasing the other player.
-- Online Versus exposes only the local player's jump meter.
-- A touch-tested pause button appears at the upper-right during Versus.
-- Mobile instructions refer to tapping and jump meters rather than Space, WASD, or arrow keys.
-- Mobile Mode hides the old corner account/fullscreen toolbar; the main-menu avatar opens saves, records, leaderboards, and sign-out controls.
-
-## Performance changes
-
-On coarse-touch/mobile devices the game renders at `960×540` instead of `1920×1080`, disables automatic record-video capture, throttles accessory monitoring loops, and limits physics catch-up work after a slow Safari frame. Core game physics and cloud protocols remain unchanged.
-
-## Hat changes
-
-- `hatstest` exposes the Hats feature without unlocking any individual hat.
-- The no-hat choice is a dashed gray top-hat outline.
-- Hat requirements begin from a post-unlock baseline and no longer require an online or human opponent.
-- Requirements now use a broader set of default frog skins. See `HAT_REQUIREMENTS.md`.
-
-## Rollback
-
-Revert the Git commit and allow the same Cloudflare Worker to redeploy. Do not delete Durable Objects to roll back a client update.
+A web page cannot display its own custom dialog after the user has already closed the tab. Guest mode therefore uses the browser's standard leave confirmation and preserves a pending guest save snapshot. The in-game account panel provides `CREATE ACCOUNT & KEEP SAVE` while the page is open.

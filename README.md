@@ -1,11 +1,11 @@
 # Ribbit Race Friends Edition
 
-Build: `2026.10.11-friends-mobile-experience-1`  
-Displayed game version: `VERSION 1.5.0`
+Build: `2026.10.11-friends-online-mobile-polish-1`  
+Displayed game version: `VERSION 1.6.0`
 
 This is the independent public Cloudflare Friends Edition. It retains four-digit PIN accounts, cloud saves, private rooms, Quickplay, spectators, CPU takeover, leaderboard record replays, post-unlock hat progression, the current 15-word Spanish vocabulary, clean sign-out reloads, stable fly labels, and the responsibility-based browser-client organization.
 
-## Changes in 1.5.0
+## Changes in 1.6.0
 
 ### iPhone Home Screen support
 
