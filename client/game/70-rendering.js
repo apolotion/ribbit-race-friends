@@ -2446,7 +2446,7 @@
       const layout = layoutBitmapText(prompt, width - 12, { maxScale: 0.92, minScale: 0.50, maxLines: 2 });
 
       ctx.fillStyle = "rgba(25,43,52,0.35)";
-      ctx.fillRect(left + 2, top + 2, width, height);
+      ctx.fillRect(left + 2, top + 2, width - 2, height);
       ctx.fillStyle = COLORS.ink;
       ctx.fillRect(left, top, width, height);
       ctx.fillStyle = COLORS.white;

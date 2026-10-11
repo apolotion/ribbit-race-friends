@@ -64,7 +64,7 @@
     const canvas = document.getElementById("game");
     const gameFrame = document.getElementById("game-frame");
     const friendsGameInputLocked = () => window.RibbitFriendsGameInputLocked?.() === true;
-    const RIBBIT_DISPLAY_VERSION = "VERSION 1.7.8";
+    const RIBBIT_DISPLAY_VERSION = "VERSION 1.7.9";
     const RIBBIT_CREDIT_TEXT = "MADE BY NICK M.";
     const RIBBIT_CREDIT_Y = 228;
     const rgbValueEditor = document.getElementById("rgb-value-editor");
@@ -1144,26 +1144,27 @@
     }
 
 
-    // The original Park geometry is intentionally preserved verbatim.
+    // Park is a true left/right mirror. Only the two center platforms share a
+    // vertical column; every side platform has an exact opposite-side partner.
     const PARK_PLATFORMS = Object.freeze([
       { x: 0,   y: CONFIG.groundY, w: W,  h: 15, ground: true },
       { x: 36,  y: 169, w: 72, h: 12 },
       { x: 129, y: 126, w: 70, h: 12 },
-      { x: 206, y: 176, w: 72, h: 12 },
-      { x: 207, y: 70,  w: 68, h: 12 },
-      { x: 331, y: 126, w: 70, h: 12 },
+      { x: 204, y: 176, w: 72, h: 12 },
+      { x: 206, y: 70,  w: 68, h: 12 },
+      { x: 281, y: 126, w: 70, h: 12 },
       { x: 372, y: 169, w: 72, h: 12 }
     ]);
 
     const PARK_FLY_SPAWNS = Object.freeze([
       { x: 75,  y: 69 },
-      { x: 405, y: 68 },
-      { x: 241, y: 39 },
+      { x: 405, y: 69 },
+      { x: 240, y: 39 },
       { x: 165, y: 108 },
-      { x: 314, y: 108 },
+      { x: 315, y: 108 },
       { x: 90,  y: 150 },
-      { x: 391, y: 150 },
-      { x: 242, y: 157 }
+      { x: 390, y: 150 },
+      { x: 240, y: 157 }
     ]);
 
     const LEVEL_ORDER = Object.freeze([

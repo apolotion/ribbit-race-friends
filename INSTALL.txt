@@ -1,36 +1,44 @@
-RIBBIT RACE FRIENDS EDITION — TUTORIAL POLISH 1.7.8
-Build: 2026.10.11-friends-tutorial-polish-2
-Displayed version: VERSION 1.7.8
+RIBBIT RACE FRIENDS EDITION — TUTORIAL POLISH 1.7.9
+Build: 2026.10.11-friends-tutorial-polish-3
+Displayed version: VERSION 1.7.9
 
 THIS UPDATES THE EXISTING CLOUDFLARE FRIENDS WORKER.
 Do not create another Worker, repository, FriendsHub, FriendsRoom, or database.
 No Apps Script or code.gs replacement is needed.
 
-1. Back up the current project.
-2. Extract the complete repository ZIP.
-3. Copy the extracted contents into the repository root, preserving folders.
+INSTALLATION
+1. Back up the current project and Cloudflare deployment.
+2. Extract the complete 1.7.9 ZIP.
+3. Copy the extracted contents into the existing repository root, preserving folders.
 4. Run:
      npm install
      npm run check
      npm test
-5. Deploy with:
+5. Deploy with either:
      npm run deploy
    or:
      npx wrangler deploy
-6. Confirm /api/health reports build 2026.10.11-friends-tutorial-polish-2.
-7. Hard-refresh desktop browsers; fully close and reopen an installed iPhone Home Screen app.
+6. Confirm /api/health reports build 2026.10.11-friends-tutorial-polish-3.
+7. Hard-refresh desktop browsers. Fully close and reopen an installed iPhone Home Screen version.
 
-VERIFY THE TUTORIAL:
-- Login/create/guest selection appears before the tutorial.
-- Ember dialogue is thin-framed, centered, and changes portraits between lines.
-- Holding Space doubles typewriter speed.
-- Park animation continues behind dialogue while frog movement is locked.
-- The dinner fly appears before its announcement.
-- Poof-out and poof-in are separated by 0.5 seconds.
-- Long-jump successes sparkle on landing.
-- Current Goal is centered and displays HOW TO help on hover.
-- Pause includes RETRY SCENE and SKIP TUTORIAL.
-- The final round uses the normal Single Player victory flow.
+DO NOT CHANGE THESE EXISTING BINDINGS
+  HUB     → FriendsHub
+  ROOMS   → FriendsRoom
+  ASSETS  → public
 
-Existing PIN accounts, saves, vocabulary, Quickplay, hats, replays, and Custom Frogs remain available.
-See UPDATE_INSTRUCTIONS.md and TEST_REPORT.md for full details.
+QUICK TUTORIAL VERIFICATION
+- The login/create/guest gate appears before training.
+- A first-time player does not see the main menu flash before the tutorial.
+- Ember dialogue uses the larger bright textbox and equal-width portrait border.
+- The triangle animates slowly and appears only when more dialogue remains.
+- Closing the last dialogue line requires a separate second Space press to jump.
+- Resuming from Pause does not start a countdown.
+- The dinner fly completes its poof, waits 0.5 seconds, and is then announced.
+- The range lesson uses the normal final-catch slow-motion zoom.
+- Current Goal and the English clue do not overlap.
+- Park is horizontally mirrored in normal and tutorial play.
+- Drop buffers do not count as jumps and wall lessons finish only after landing.
+- The final practice round shows normal TIME/JUMPS/BEST metrics.
+- Only the RIBBIT READY tutorial-completion achievement can unlock during training.
+
+Existing accounts, PINs, cloud saves, vocabulary, Quickplay, hats, Frog Tags, and replay data remain available.

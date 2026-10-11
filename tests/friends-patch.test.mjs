@@ -36,8 +36,8 @@ test("PIN hashing stays within Cloudflare PBKDF2 limit and matches 100000 rounds
 });
 
 test("Friends release exposes the new build marker",()=>{
-  assert.equal(BUILD,"2026.10.11-friends-tutorial-polish-2");
-  assert.match(browserSource,/2026\.10\.11\-friends\-tutorial\-polish\-2/);
+  assert.equal(BUILD,"2026.10.11-friends-tutorial-polish-3");
+  assert.match(browserSource,/2026\.10\.11\-friends\-tutorial\-polish\-3/);
 });
 
 test("server vocabulary is exactly the requested 15 entries",()=>{
@@ -62,7 +62,7 @@ test("logout confirms the server session and reloads the exact initial login doc
 });
 
 test("auth boundary hides and inerts the runtime until sign-in or guest play",()=>{
-  assert.match(indexHtml,/<body class="ribbit-auth-locked">/);
+  assert.match(indexHtml,/<body class="ribbit-auth-locked rr-tutorial-pending">/);
   assert.match(indexHtml,/<main id="game-frame" inert aria-hidden="true">/);
   assert.match(styles,/body\.ribbit-auth-locked #game-frame\{visibility:hidden;\}/);
   assert.match(browserSource,/setGameInputLocked\(false\);\s*elements\["cloud-gate"\]\.hidden = true/);
@@ -71,7 +71,7 @@ test("auth boundary hides and inerts the runtime until sign-in or guest play",()
 
 test("index is presentation-only and gameplay source is separated by responsibility",()=>{
   assert.doesNotMatch(indexHtml,/<style\b/i);
-  assert.equal((indexHtml.match(/<script\b[^>]*src=/g)||[]).length,11);
+  assert.equal((indexHtml.match(/<script\b[^>]*src=/g)||[]).length,12);
   assert.match(indexHtml,/\/scripts\/friends-api-client\.js/);
   assert.match(indexHtml,/\/scripts\/auth-screen-controller\.js/);
   assert.match(indexHtml,/\/scripts\/cloud-client\.js/);
@@ -323,8 +323,8 @@ test("Friends first-place notice is a world-record notice with hover details",()
   assert.doesNotMatch(indexHtml,/MIGRATE OLD PRIVATE-KEY ACCOUNT/);
 });
 
-test("version 1.7.8 remains in settings and the How To Play book footer",()=>{
-  assert.match(html,/const RIBBIT_DISPLAY_VERSION = "VERSION 1\.7\.8"/);
+test("version 1.7.9 remains in settings and the How To Play book footer",()=>{
+  assert.match(html,/const RIBBIT_DISPLAY_VERSION = "VERSION 1\.7\.9"/);
   assert.match(html,/drawVersionLabel\(panel\.x \+ panel\.w \/ 2, panel\.y \+ panel\.h - 14, "center"/);
   assert.doesNotMatch(html,/drawVersionLabel\(399, 218, "right"\)/);
   assert.match(html,/function getPauseBookTheme/);

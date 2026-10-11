@@ -373,6 +373,17 @@
     let finished=false;
     let authReady=false;
 
+    // Hide the canvas behind the login gate before it can reveal the main menu.
+    // Once the authenticated/guest boundary opens, a first-time player sees the
+    // first tutorial frame directly rather than a one-frame menu flash.
+    try {
+      const bootEngine=window.RibbitRaceTutorialEngine;
+      const shouldQueue=Boolean(forcedKind || !bootEngine?.seen?.("solo"));
+      document.body.classList.toggle("rr-tutorial-pending",shouldQueue);
+    } catch (_) {
+      document.body.classList.add("rr-tutorial-pending");
+    }
+
     const authenticatedProfileReady=()=>{
       try {
         const cloud=typeof RibbitCloud!=="undefined"?RibbitCloud:window.RibbitCloud;
@@ -399,20 +410,25 @@
       const gameReady=Boolean(engine && canvas && Number(canvas.width) > 0 && Number(canvas.height) > 0 && portraitsReady);
       if(!authReady && authenticationBoundaryReleased()) authReady=true;
       if(!authReady || !authenticationBoundaryReleased() || !gameReady){setTimeout(check,250);return;}
-      if(!forcedKind && engine.seen("solo")){finished=true;return;}
+      if(!forcedKind && engine.seen("solo")){
+        finished=true;
+        document.body.classList.remove("rr-tutorial-pending");
+        return;
+      }
 
       starting=true;
-      requestAnimationFrame(()=>requestAnimationFrame(()=>{
-        try {
-          const started=engine.start(forcedKind||"solo");
-          finished=Boolean(started || engine.active);
-        } catch (error) {
-          console.warn("Ribbit Race tutorial auto-start retry", error);
-          finished=false;
+      try {
+        const started=engine.start(forcedKind||"solo");
+        finished=Boolean(started || engine.active);
+        if(finished && engine.active){
+          requestAnimationFrame(()=>document.body.classList.remove("rr-tutorial-pending"));
         }
-        starting=false;
-        if(!finished)setTimeout(check,250);
-      }));
+      } catch (error) {
+        console.warn("Ribbit Race tutorial auto-start retry", error);
+        finished=false;
+      }
+      starting=false;
+      if(!finished)setTimeout(check,250);
     };
 
     window.addEventListener("rr-authenticated",()=>{authReady=authenticationBoundaryReleased();setTimeout(check,60);});

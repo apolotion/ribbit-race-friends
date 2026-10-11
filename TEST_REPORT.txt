@@ -1,29 +1,53 @@
-# Ribbit Race Friends 1.7.8 — Test Report
+# Ribbit Race Friends 1.7.9 — Test Report
 
 ## Result
 
 - `npm run check`: **PASS**
-- `npm test`: **150 passed, 0 failed**
+- `npm test`: **157 passed, 0 failed**
 - Browser runtime smoke: **PASS**
-- Game bundle: **13 modules**
-- Required external public assets: **21 present**
+- Generated game bundle: **13 modules**
+- Required external public assets: **22 present**
 
 ## Browser runtime smoke
 
-A Chromium smoke harness verified that:
+A Chromium route-fulfilled smoke harness verified that:
 
-- the login gate is visible and input remains locked before authentication;
-- the tutorial becomes active only after **Play Without Saving**;
-- the polished Ember dialogue renders without page errors;
-- the intro advances into the long-jump scene;
-- the Current Goal hover explanation appears;
-- Pause opens during the tutorial;
-- selecting **Skip Tutorial** exits the tutorial cleanly.
+- the initial body is both authentication-locked and tutorial-pending;
+- the login/guest gate is visible before profile selection;
+- selecting **Play Without Saving** activates the solo tutorial without exposing an intermediate main-menu frame;
+- the larger Ember dialogue is open and the canvas is visible after tutorial activation;
+- Pause opens during the lesson;
+- Continue returns to the active tutorial with dialogue still open;
+- the run produced no console errors and no uncaught page errors.
+
+The browser harness uses a local in-memory API shim rather than a deployed Cloudflare Worker.
 
 ## Tutorial-focused automated coverage
 
-Automated checks verify the 1.7.8/build markers, auth boundary, global lexical cloud-profile lookup, five portrait assets and per-line expression sequences, fixed centered typography, 2× hold-to-type behavior, two-frame continue triangle, thin symmetrical framing, live background/fly animation, pre-line dinner-fly spawn timing, flashing term/clue references, exact 500 ms poof timing, preserved flies, exact Park geometry, normal Park start, long-jump landing sparkles, stock final-catch zoom, reachable multi-fly layouts, missed-fly-only retries, frozen success poses, centered Current Goal copy, hover help, pause retry/skip actions, trajectory suppression, reversible cloud snapshots, and the normal victory/achievement flow.
+The release tests verify:
+
+- 1.7.9/build markers and all thirteen gameplay modules;
+- synchronous first-paint tutorial gating after authentication;
+- larger centered Pokémon-style dialogue, square equal-height Ember portrait, matching two-pixel borders, larger centered name, and the slower two-frame triangle;
+- multiple Ember expressions within scenes and 2× hold-Space typing;
+- consumption of the final dialogue Space press;
+- delayed dinner-fly reveal plus the extra 500 ms announcement hold;
+- late range and mixed-scene poofs;
+- true mirrored Park platforms and Park fly anchors;
+- exact Current Goal footer footprint and non-overlapping clue shadow;
+- blank term/goal until player control returns;
+- 500 ms correct-catch landing holds;
+- missed-catch-only retry behavior;
+- stock final-catch slow-motion and zoom eligibility in the tongue lesson;
+- mirrored two-fly and diagram-aligned three-fly routes;
+- deliberate match-and-spit prompt mismatch;
+- drop-buffer jump-counter restoration;
+- deferred wall/rebound success until landing;
+- no resume countdown;
+- suppression of every training achievement except **RIBBIT READY**;
+- normal TIME/JUMPS/BEST metrics in the final round;
+- reversible cloud-save snapshot behavior and existing Friends Edition features.
 
 ## Limits
 
-The browser smoke uses a local in-memory API shim rather than a deployed Cloudflare Worker. After deployment, complete one manual playthrough on desktop and one on mobile to confirm touch feel, audio level, and real account/save behavior in the production environment.
+Static and local-browser verification cannot reproduce every production network, mobile-browser, audio-device, or account state. After deployment, complete one desktop and one mobile tutorial playthrough using the real Cloudflare account/save backend.

@@ -1,11 +1,13 @@
 {
   "ok": true,
-  "version": "1.7.8",
-  "build": "2026.10.11-friends-tutorial-polish-2",
+  "version": "1.7.9",
+  "build": "2026.10.11-friends-tutorial-polish-3",
   "modules": 13,
-  "assets": 21,
-  "tests": 150,
-  "passed": 150,
+  "assets": 22,
+  "tests": 157,
+  "passed": 157,
   "failed": 0,
-  "browserSmoke": true
+  "browserSmoke": true,
+  "browserConsoleErrors": 0,
+  "browserPageErrors": 0
 }

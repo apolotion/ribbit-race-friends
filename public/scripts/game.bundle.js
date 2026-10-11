@@ -69,7 +69,7 @@ function startRibbitRaceGame() {
     const canvas = document.getElementById("game");
     const gameFrame = document.getElementById("game-frame");
     const friendsGameInputLocked = () => window.RibbitFriendsGameInputLocked?.() === true;
-    const RIBBIT_DISPLAY_VERSION = "VERSION 1.7.8";
+    const RIBBIT_DISPLAY_VERSION = "VERSION 1.7.9";
     const RIBBIT_CREDIT_TEXT = "MADE BY NICK M.";
     const RIBBIT_CREDIT_Y = 228;
     const rgbValueEditor = document.getElementById("rgb-value-editor");
@@ -1149,26 +1149,27 @@ function startRibbitRaceGame() {
     }
 
 
-    // The original Park geometry is intentionally preserved verbatim.
+    // Park is a true left/right mirror. Only the two center platforms share a
+    // vertical column; every side platform has an exact opposite-side partner.
     const PARK_PLATFORMS = Object.freeze([
       { x: 0,   y: CONFIG.groundY, w: W,  h: 15, ground: true },
       { x: 36,  y: 169, w: 72, h: 12 },
       { x: 129, y: 126, w: 70, h: 12 },
-      { x: 206, y: 176, w: 72, h: 12 },
-      { x: 207, y: 70,  w: 68, h: 12 },
-      { x: 331, y: 126, w: 70, h: 12 },
+      { x: 204, y: 176, w: 72, h: 12 },
+      { x: 206, y: 70,  w: 68, h: 12 },
+      { x: 281, y: 126, w: 70, h: 12 },
       { x: 372, y: 169, w: 72, h: 12 }
     ]);
 
     const PARK_FLY_SPAWNS = Object.freeze([
       { x: 75,  y: 69 },
-      { x: 405, y: 68 },
-      { x: 241, y: 39 },
+      { x: 405, y: 69 },
+      { x: 240, y: 39 },
       { x: 165, y: 108 },
-      { x: 314, y: 108 },
+      { x: 315, y: 108 },
       { x: 90,  y: 150 },
-      { x: 391, y: 150 },
-      { x: 242, y: 157 }
+      { x: 390, y: 150 },
+      { x: 240, y: 157 }
     ]);
 
     const LEVEL_ORDER = Object.freeze([
@@ -15177,7 +15178,7 @@ function startRibbitRaceGame() {
       const layout = layoutBitmapText(prompt, width - 12, { maxScale: 0.92, minScale: 0.50, maxLines: 2 });
 
       ctx.fillStyle = "rgba(25,43,52,0.35)";
-      ctx.fillRect(left + 2, top + 2, width, height);
+      ctx.fillRect(left + 2, top + 2, width - 2, height);
       ctx.fillStyle = COLORS.ink;
       ctx.fillRect(left, top, width, height);
       ctx.fillStyle = COLORS.white;
@@ -20871,8 +20872,8 @@ function startRibbitRaceGame() {
 // Responsibilities: runtime bridge, deterministic PvP event telemetry, mobile
 // input support hooks, palette operations, post-hat progression, and replay state.
 
-const RIBBIT_FRIENDS_DISPLAY_VERSION = "1.7.8";
-const RIBBIT_FRIENDS_BUILD = "2026.10.11-friends-tutorial-polish-2";
+const RIBBIT_FRIENDS_DISPLAY_VERSION = "1.7.9";
+const RIBBIT_FRIENDS_BUILD = "2026.10.11-friends-tutorial-polish-3";
 
 function rr14Number(value, fallback = 0) {
   const parsed = Number(value);
@@ -21403,11 +21404,11 @@ window.RibbitRaceMobileDiagnostics = () => ({
  */
 (() => {
   "use strict";
-  const BUILD = "2026.10.11-friends-tutorial-polish-2";
+  const BUILD = "2026.10.11-friends-tutorial-polish-3";
   const RR_V160_CANDIDATES = {"catchFly":["attemptFlyCatch","attemptPvpFlyCatch","catchSandboxFly","getPvpImminentCatchFly","recordFlyEaten","scheduleFlyReplacementFromCatch"],"jumpSound":["playJumpSound"],"beep":["playCountdownGoSound","playCountdownSound"],"replayUpload":["saveRecordDate"],"restart":["resetGame","resetPvpGame","resetPvpPlayer","resetRoundLifecycle","resetRoundNetwork","restartCurrentLevel"],"drop":[],"render":["drawPvpScene","drawScene"],"worldRecord":[],"fullscreen":["getFullscreenElement","hideFullscreenFallback","showFullscreenFallback","syncFullscreenButton","toggleRibbitFullscreen"],"onlineSubmit":[],"leaderboard":["isSoloEndlessLeaderboardEligible","savePvpMatchWinsForLeaderboard"]};
   const RR_V160_VARS = {"onlineSelect":[],"achievementSelect":["activeAchievementIndex","hoveredAchievementCard"],"backRect":[]};
 
-  const VERSION = "1.7.8";
+  const VERSION = "1.7.9";
   const V = {
     menuTouch: new Map(), chargeTouch: new Map(), achievementPinned: -1,
     finalCatchStarted: 0, finalCatchLabelsGone: false,
@@ -21840,7 +21841,7 @@ window.RibbitRaceMobileDiagnostics = () => ({
 
     /* ===== client/game/99-v170-hooks.js ===== */
 
-// Ribbit Race Friends 1.7.8 — compatibility hooks, safety guards, and runtime polish.
+// Ribbit Race Friends 1.7.9 — compatibility hooks, safety guards, and runtime polish.
 // This module is bundled last so it can observe the established private game scope.
 (() => {
   "use strict";
@@ -22352,19 +22353,23 @@ window.RibbitRaceMobileDiagnostics = () => ({
 })();
 
     /* ===== client/game/120-engine-tutorial.js ===== */
-// Ribbit Race Friends 1.7.8 - polished typed Ember dialogue and scripted checked Park scenarios.
+// Ribbit Race Friends 1.7.9 - polished typed Ember dialogue and scripted checked Park scenarios.
 (() => {
   "use strict";
 
   const SOLO_SEEN_KEY = "rrFriendsEngineTutorialSoloSeenV7";
   const PVP_SEEN_KEY = "rrFriendsEngineTutorialPvpSeenV7";
-  const TUTORIAL_BUILD = "2026.10.11-friends-tutorial-polish-2";
+  const TUTORIAL_BUILD = "2026.10.11-friends-tutorial-polish-3";
   const TUTORIAL_ACHIEVEMENT_ID = "tutorial-graduate";
   const TYPEWRITER_MS_PER_CHARACTER = 28;
-  const DIALOGUE_TEXT_SCALE = 0.50;
+  const DIALOGUE_TEXT_SCALE = 0.86;
   const DIALOGUE_SPACE_HOLD_THRESHOLD_MS = 180;
   const POOF_TRANSITION_MS = 500;
   const FLY_REFERENCE_FLASH_MS = 440;
+  const DIALOGUE_TRIANGLE_FRAME_MS = 520;
+  const DIALOGUE_SCENE_SETTLE_MS = 120;
+  const CORRECT_CATCH_LANDING_HOLD_MS = 500;
+  const FLY_DIALOGUE_REVEAL_HOLD_MS = 500;
   const EMBER_SKIN = Object.freeze({ ...FROG_SKINS.ember, hat: "none" });
   const EMBER_PORTRAIT_SOURCES = Object.freeze({
     confident: "/tutorial/ember-confident.png",
@@ -22411,6 +22416,8 @@ window.RibbitRaceMobileDiagnostics = () => ({
     step: 0,
     passed: false,
     passAt: 0,
+    passPending: false,
+    passPendingAt: 0,
     enteredAt: 0,
     snapshot: null,
     runtime: null,
@@ -22458,6 +22465,8 @@ window.RibbitRaceMobileDiagnostics = () => ({
     sceneCatchCount: 0,
     sceneAttemptIndex: 0,
     sceneAttemptCaught: false,
+    sceneLandingDelayUntil: 0,
+    scenePositionedDuringDialogue: false,
     pendingStartPose: null,
     goalHovered: false,
     authStartQueued: false,
@@ -22546,7 +22555,7 @@ window.RibbitRaceMobileDiagnostics = () => ({
         "Speaking of tips... here's a good one!",
         "You don't have to land right on a fly to catch it.",
         "Get close enough, and your tongue will grab it automatically.",
-        "This fly is a little too far away for even my frog legs.",
+        "This fly is too far for even my legs.",
         "Charge a long jump and let your tongue handle the rest!"
       ],
       portrait: "cool",
@@ -23008,16 +23017,17 @@ window.RibbitRaceMobileDiagnostics = () => ({
 
   function openDialogue() {
     tutorial.dialogueOpen = true;
+    tutorial.scenePositionedDuringDialogue = false;
     beginDialogueLine(0);
     tutorial.blockJumpUntilRelease = false;
     game.state = "playing";
     game.pauseHelpOpen = false;
     clearHeldInput();
     freezeControlledEntity();
-    // New scene flies use their normal poof animation while Ember is talking.
-    // The matching lesson is the deliberate exception: its first fly is timed
-    // to finish poofing in immediately before "Looks like dinner is ready!".
-    if (tutorialStep()?.setup !== "threeCatches") armTutorialFlies();
+    // Most authored flies can animate behind Ember. Three scenes deliberately
+    // hold their flies back so the poof-in lands on the exact scripted line.
+    const setup = tutorialStep()?.setup;
+    if (!["threeCatches", "rangeCatch", "comboMixed"].includes(setup)) armTutorialFlies();
     try { drawScene(); } catch (_) {}
   }
 
@@ -23066,19 +23076,55 @@ window.RibbitRaceMobileDiagnostics = () => ({
     return spawned;
   }
 
+  function beginDialogueScenarioPlacement(nextIndex) {
+    const intendedStartPose = tutorial.pendingStartPose || captureControlledPose();
+    beginDialogueLine(nextIndex, { delayMs: POOF_TRANSITION_MS + DIALOGUE_SCENE_SETTLE_MS });
+    beginPoofTransition({
+      reason: "dialogue-scene-entry",
+      showFailure: false,
+      preserveExistingFlies: false,
+      action: () => {
+        applyControlledPose(intendedStartPose);
+        tutorial.pendingStartPose = null;
+        tutorial.scenePositionedDuringDialogue = true;
+        restoreStepSequence();
+        tutorial.enteredAt = performance.now();
+      }
+    });
+  }
+
   function prepareDialogueLine(nextIndex) {
     const setup = tutorialStep()?.setup;
-    let delayMs = 0;
-    // The first dinner fly appears, completes its poof, and only then does Ember
-    // say that dinner is ready. Ambient fly animation keeps running behind her.
+    // The dinner fly appears first, then Ember waits a clean half-second before
+    // saying that dinner is ready.
     if (setup === "threeCatches" && nextIndex === 1) {
       armTutorialFlies();
-      delayMs = POOF_TRANSITION_MS;
+      const flyRevealMs = Math.round(Math.max(CONFIG.flySpawnEffectDuration, CONFIG.flyGrowDuration) * 1000);
+      beginDialogueLine(nextIndex, { delayMs: flyRevealMs + FLY_DIALOGUE_REVEAL_HOLD_MS });
+      return;
     }
-    beginDialogueLine(nextIndex, { delayMs });
+    // Range Catch and Match + Spit move the frog and reveal the authored flies
+    // during the dialogue, exactly where the script calls for the poof.
+    if ((setup === "rangeCatch" && nextIndex === 4) ||
+        (setup === "comboMixed" && nextIndex === 2)) {
+      beginDialogueScenarioPlacement(nextIndex);
+      return;
+    }
+    beginDialogueLine(nextIndex);
   }
 
   function armScenarioAfterDialogue() {
+    if (tutorial.scenePositionedDuringDialogue) {
+      tutorial.scenePositionedDuringDialogue = false;
+      tutorial.pendingStartPose = null;
+      restoreStepSequence();
+      armTutorialFlies();
+      tutorial.enteredAt = performance.now();
+      game.state = "playing";
+      game.pauseHelpOpen = false;
+      clearHeldInput();
+      return;
+    }
     beginScenarioEntryTransition();
   }
 
@@ -23101,12 +23147,13 @@ window.RibbitRaceMobileDiagnostics = () => ({
     }
 
     const step = tutorialStep();
+    const keepJumpBlockedUntilRelease = source === "space-keydown" && tutorial.blockJumpUntilRelease;
     tutorial.dialogueOpen = false;
     tutorial.dialogueLineIndex = 0;
     tutorial.dialogueForceComplete = false;
     tutorial.dialoguePointerId = null;
     tutorial.dialoguePreLineDelayUntil = 0;
-    tutorial.blockJumpUntilRelease = false;
+    tutorial.blockJumpUntilRelease = keepJumpBlockedUntilRelease;
     resetDialogueSpaceHold();
     clearHeldInput();
     game.state = "playing";
@@ -23142,6 +23189,8 @@ window.RibbitRaceMobileDiagnostics = () => ({
   function clearScenarioState() {
     tutorial.passed = false;
     tutorial.passAt = 0;
+    tutorial.passPending = false;
+    tutorial.passPendingAt = 0;
     tutorial.enteredAt = performance.now();
     tutorial.scoreStart = Number(game.score || 0);
     tutorial.jumpStart = Number(game.jumps || 0);
@@ -23175,6 +23224,8 @@ window.RibbitRaceMobileDiagnostics = () => ({
     tutorial.sceneCatchCount = 0;
     tutorial.sceneAttemptIndex = 0;
     tutorial.sceneAttemptCaught = false;
+    tutorial.sceneLandingDelayUntil = 0;
+    tutorial.scenePositionedDuringDialogue = false;
     tutorial.goalHovered = false;
     tutorial.pvpBonks = 0;
     tutorial.pvpRebounds = 0;
@@ -23243,6 +23294,10 @@ window.RibbitRaceMobileDiagnostics = () => ({
 
   function positionOnPlatform(platform, xOffset = 12, dir = 1) {
     positionSoloFrog(platform.x + xOffset, platform.y - frog.h, dir);
+  }
+
+  function positionCenteredOnPlatform(platform, dir = 1) {
+    positionOnPlatform(platform, Math.round((platform.w - frog.w) / 2), dir);
   }
 
   function usePlatforms(authored = []) {
@@ -23328,12 +23383,12 @@ window.RibbitRaceMobileDiagnostics = () => ({
         break;
 
       case "rangeCatch": {
-        // Begin on Park's lower-left platform. The target is visibly across the
-        // stage and remains outside body-contact range, but a near-full long jump
-        // brings it inside the normal 64px tongue reach on the descent.
-        positionOnPlatform(platforms[1], 8, 1);
+        // The scripted poof places the frog in the exact middle of Park's lower-
+        // left platform. The target sits between the top and middle-high platform
+        // rows, visibly beyond a body catch but inside normal tongue reach.
+        positionCenteredOnPlatform(platforms[1], 1);
         setPrompt(0);
-        makeFly(300, 68, 0, 4);
+        makeFly(310, 98, 0, 4);
         break;
       }
 
@@ -23346,32 +23401,33 @@ window.RibbitRaceMobileDiagnostics = () => ({
       case "comboMixed":
         positionSoloFrog(42, CONFIG.groundY - frog.h, 1);
         setPrompt(0);
-        makeParkFly(3, 0, 0);
-        makeParkFly(7, 1, 1);
+        makeFly(165, 108, 0, 0);
+        makeFly(240, 108, 1, 1);
         break;
 
       case "comboTwo":
-        positionSoloFrog(42, CONFIG.groundY - frog.h, 1);
-        makeParkFly(3, 0, 0);
-        makeParkFly(7, 1, 1);
+        // Mirror the previous setup so the player approaches from the opposite
+        // side instead of repeating the same left-to-right jump pattern.
+        positionSoloFrog(W - 42 - frog.w, CONFIG.groundY - frog.h, -1);
+        makeFly(315, 108, 0, 0);
+        makeFly(240, 108, 1, 1);
         setSequence([0, 1]);
         break;
 
       case "comboThree":
-        positionSoloFrog(42, CONFIG.groundY - frog.h, 1);
-        // Three points are laid along one reachable Park arc. The final fly is
-        // still directly above the middle platform, so the lesson remains easy
-        // to read while no catch requires an impossible extra jump.
-        makeFly(145, 110, 0, 0);
-        makeFly(190, 120, 1, 1);
-        makeFly(235, 155, 2, 2);
+        // Match the authored diagram: start on the left middle platform, climb
+        // over the top-center platform, then sweep through two flies on the right.
+        positionCenteredOnPlatform(platforms[2], 1);
+        makeFly(242, 52, 0, 0);
+        makeFly(365, 52, 1, 1);
+        makeFly(430, 111, 2, 2);
         setSequence([0, 1, 2]);
         break;
 
       case "wallTurn":
         positionSoloFrog(342, CONFIG.groundY - frog.h, 1);
         setPrompt(0);
-        makeParkFly(4, 0, 0);
+        makeParkFly(7, 0, 0);
         break;
 
       case "reboundCatch": {
@@ -23652,12 +23708,27 @@ window.RibbitRaceMobileDiagnostics = () => ({
     });
   }
 
-  function passStep() {
+  function finalizePassedStep() {
     if (!tutorial.active || tutorial.passed) return;
+    tutorial.passPending = false;
+    tutorial.passPendingAt = 0;
     tutorial.passed = true;
     tutorial.passAt = performance.now();
     freezeControlledEntity();
     tone(620, .07, .018, 85);
+  }
+
+  function passStep() {
+    if (!tutorial.active || tutorial.passed || tutorial.passPending) return;
+    // Techniques such as wall rebounds can succeed in mid-air. Let the real
+    // engine finish the landing before Ember freezes the pose for dialogue.
+    if (tutorial.kind === "solo" && (!frog.grounded || tongue.active || game.soloCriticalCatchActive)) {
+      tutorial.passPending = true;
+      tutorial.passPendingAt = performance.now();
+      clearHeldInput();
+      return;
+    }
+    finalizePassedStep();
   }
 
   function unlockTutorialAchievement() {
@@ -23742,7 +23813,7 @@ window.RibbitRaceMobileDiagnostics = () => ({
     tutorial.pendingStartPose = null;
     tutorial.authStartQueued = false;
     resetDialogueSpaceHold();
-    try { document.body.classList.remove("rr-tutorial-active"); } catch (_) {}
+    try { document.body.classList.remove("rr-tutorial-active", "rr-tutorial-pending"); } catch (_) {}
     const runtime = restoreLegitimateState(true);
     restoreRuntime(runtime);
     resetGame(false);
@@ -23769,7 +23840,7 @@ window.RibbitRaceMobileDiagnostics = () => ({
     tutorial.frogHidden = false;
     tutorial.authStartQueued = false;
     resetDialogueSpaceHold();
-    try { document.body.classList.remove("rr-tutorial-active"); } catch (_) {}
+    try { document.body.classList.remove("rr-tutorial-active", "rr-tutorial-pending"); } catch (_) {}
     game.tutorialActive = false;
     game.sandboxMode = false;
     const runtime = restoreLegitimateState(false);
@@ -23823,7 +23894,10 @@ window.RibbitRaceMobileDiagnostics = () => ({
     tutorial.goalHovered = false;
     configureStep(true);
     try { drawScene(); } catch (_) {}
-    requestAnimationFrame(() => { try { drawScene(); } catch (_) {} });
+    requestAnimationFrame(() => {
+      try { drawScene(); } catch (_) {}
+      try { document.body.classList.remove("rr-tutorial-pending"); } catch (_) {}
+    });
     canvas?.focus?.();
     return true;
   }
@@ -23839,6 +23913,7 @@ window.RibbitRaceMobileDiagnostics = () => ({
   }
 
   function resetAttemptForNextJump() {
+    tutorial.sceneLandingDelayUntil = 0;
     tutorial.attemptStarted = false;
     tutorial.attemptWasAirborne = false;
     tutorial.attemptEnded = false;
@@ -23909,6 +23984,11 @@ window.RibbitRaceMobileDiagnostics = () => ({
     const attemptEnded = attemptFinishedOnLanding();
     const now = performance.now();
 
+    if (tutorial.passPending) {
+      if (frog.grounded && !tongue.active && !game.soloCriticalCatchActive) finalizePassedStep();
+      return;
+    }
+
     if (setup === "intro") return;
 
     if (setup === "longJumps") {
@@ -23927,11 +24007,18 @@ window.RibbitRaceMobileDiagnostics = () => ({
     }
 
     if (setup === "threeCatches") {
-      if (!attemptEnded) return;
-      if (tutorial.sceneAttemptCaught) {
+      if (tutorial.sceneLandingDelayUntil > 0) {
+        if (now < tutorial.sceneLandingDelayUntil) return;
+        tutorial.sceneLandingDelayUntil = 0;
         tutorial.sceneCatchCount += 1;
         if (tutorial.sceneCatchCount >= 3) passStep();
         else advanceThreeCatchAttempt();
+        return;
+      }
+      if (!attemptEnded) return;
+      if (tutorial.sceneAttemptCaught) {
+        tutorial.sceneLandingDelayUntil = now + CORRECT_CATCH_LANDING_HOLD_MS;
+        freezeControlledEntity();
       } else {
         retryThreeCatchAttempt();
       }
@@ -24035,7 +24122,8 @@ window.RibbitRaceMobileDiagnostics = () => ({
   function tutorialMovementLocked() {
     return Boolean(
       tutorial.active &&
-      (tutorial.dialogueOpen || tutorial.resetPending || tutorial.frogHidden || tutorial.passed)
+      (tutorial.dialogueOpen || tutorial.resetPending || tutorial.frogHidden || tutorial.passed ||
+        tutorial.sceneLandingDelayUntil > performance.now())
     );
   }
 
@@ -24087,7 +24175,22 @@ window.RibbitRaceMobileDiagnostics = () => ({
     // No second frog is rendered in the playable tutorial arena.
   }
 
+  function tutorialPlayerHasControl() {
+    return Boolean(
+      tutorial.active &&
+      game.state === "playing" &&
+      !tutorial.dialogueOpen &&
+      !tutorial.resetPending &&
+      !tutorial.frogHidden &&
+      !tutorial.passed &&
+      !tutorial.passPending &&
+      tutorial.sceneLandingDelayUntil <= performance.now() &&
+      !tutorial.blockJumpUntilRelease
+    );
+  }
+
   function currentGoalLines() {
+    if (!tutorialPlayerHasControl()) return [];
     const step = tutorialStep();
     if (!step) return ["TUTORIAL"];
     if (step.setup === "longJumps") return ["LONG JUMPS", `${tutorial.longJumpStreak} / 3`];
@@ -24096,10 +24199,10 @@ window.RibbitRaceMobileDiagnostics = () => ({
   }
 
   function drawDialogueContinueTriangle(x, y) {
-    const frameOffset = Math.floor(performance.now() / 260) % 2;
+    const frameOffset = Math.floor(performance.now() / DIALOGUE_TRIANGLE_FRAME_MS) % 2;
     const top = Math.round(y + frameOffset);
     const left = Math.round(x - 3);
-    ctx.fillStyle = "#bdeef5";
+    ctx.fillStyle = "#244650";
     ctx.fillRect(left, top, 7, 1);
     ctx.fillRect(left + 1, top + 1, 5, 1);
     ctx.fillRect(left + 2, top + 2, 3, 1);
@@ -24114,52 +24217,63 @@ window.RibbitRaceMobileDiagnostics = () => ({
     const visibleCount = visibleDialogueCharacterCount(fullLine);
     const lastLine = tutorial.dialogueLineIndex >= lines.length - 1;
 
-    // Keep the compact dimensions the user approved, but return to the thinner
-    // two-pixel cyan border from the earlier dialogue treatment.
-    const panel = { x: 92, y: 7, w: 300, h: 42 };
-    const portrait = { x: 338, y: 9, w: 51, h: 38 };
-    const textArea = { x: panel.x + 8, y: panel.y + 6, w: portrait.x - panel.x - 16, h: panel.h - 12 };
+    // A bright, high-contrast two-line box gives the dialogue the readable rhythm
+    // of a classic handheld RPG. Ember's sibling panel uses the same dimensions,
+    // two-pixel frame, and shadow; its inner portrait is a real square with the
+    // orange name plate overlaid at the bottom instead of shrinking the artwork.
+    const textPanel = { x: 88, y: 5, w: 248, h: 48 };
+    const portraitPanel = { x: 338, y: 5, w: 48, h: 48 };
+    const border = 2;
+    const textArea = {
+      x: textPanel.x + 9,
+      y: textPanel.y + 7,
+      w: textPanel.w - 18,
+      h: textPanel.h - 14
+    };
     const portraitImage = EMBER_PORTRAITS[currentEmberPortraitKey()] || EMBER_PORTRAITS.confident;
     const wrappedLines = wrapBitmapTextAtScale(fullLine, textArea.w, DIALOGUE_TEXT_SCALE).slice(0, 2);
-    const lineHeight = Math.max(5, Math.ceil(8 * DIALOGUE_TEXT_SCALE + 1));
-    const totalTextHeight = wrappedLines.length * lineHeight - 1;
+    const lineHeight = Math.max(8, Math.ceil(8 * DIALOGUE_TEXT_SCALE + 2));
+    const totalTextHeight = wrappedLines.length * lineHeight - 2;
     const textTop = Math.round(textArea.y + Math.max(0, (textArea.h - totalTextHeight) / 2));
 
     ctx.save();
-    ctx.globalAlpha = .99;
+    ctx.globalAlpha = .995;
 
-    ctx.fillStyle = "rgba(8,25,35,.34)";
-    ctx.fillRect(panel.x + 2, panel.y + 2, panel.w, panel.h);
-    ctx.fillStyle = "#78e8f5";
-    ctx.fillRect(panel.x, panel.y, panel.w, panel.h);
-    ctx.fillStyle = "#052f45";
-    ctx.fillRect(panel.x + 2, panel.y + 2, panel.w - 4, panel.h - 4);
-    ctx.fillStyle = "#073b55";
-    ctx.fillRect(textArea.x - 2, textArea.y - 2, textArea.w + 4, textArea.h + 4);
+    const drawDialoguePanel = (panel, fill) => {
+      ctx.fillStyle = "rgba(8,25,35,.34)";
+      ctx.fillRect(panel.x + 2, panel.y + 2, panel.w, panel.h);
+      ctx.fillStyle = "#78e8f5";
+      ctx.fillRect(panel.x, panel.y, panel.w, panel.h);
+      ctx.fillStyle = fill;
+      ctx.fillRect(
+        panel.x + border,
+        panel.y + border,
+        panel.w - border * 2,
+        panel.h - border * 2
+      );
+    };
 
-    // Ember's portrait uses the same two-pixel frame on all four sides. There is
-    // no speech-notch/scroll-wheel shape and no black edge around the artwork.
-    ctx.fillStyle = "#78e8f5";
-    ctx.fillRect(portrait.x, portrait.y, portrait.w, portrait.h);
-    ctx.fillStyle = "#2a6d8e";
-    ctx.fillRect(portrait.x + 2, portrait.y + 2, portrait.w - 4, portrait.h - 4);
+    drawDialoguePanel(textPanel, "#f7fdff");
+    drawDialoguePanel(portraitPanel, "#2a6d8e");
+
+    const imageX = portraitPanel.x + border;
+    const imageY = portraitPanel.y + border;
+    const imageSize = portraitPanel.w - border * 2;
     if (portraitImage?.complete && portraitImage.naturalWidth > 0) {
       const oldSmoothing = ctx.imageSmoothingEnabled;
       ctx.imageSmoothingEnabled = false;
-      ctx.drawImage(portraitImage, portrait.x + 2, portrait.y + 2, portrait.w - 4, portrait.h - 4);
+      ctx.drawImage(portraitImage, imageX, imageY, imageSize, imageSize);
       ctx.imageSmoothingEnabled = oldSmoothing;
     } else {
       ctx.fillStyle = EMBER_SKIN.dark;
-      ctx.fillRect(portrait.x + 8, portrait.y + 6, portrait.w - 16, portrait.h - 12);
+      ctx.fillRect(imageX + 5, imageY + 4, imageSize - 10, imageSize - 8);
     }
 
-    const nameX = portrait.x + 2;
-    const nameY = portrait.y + portrait.h - 12;
-    const nameW = portrait.w - 4;
-    const nameH = 10;
+    const nameH = 11;
+    const nameY = imageY + imageSize - nameH;
     ctx.fillStyle = "#ff9b45";
-    ctx.fillRect(nameX, nameY, nameW, nameH);
-    drawBitmapText("EMBER", nameX + nameW / 2, nameY + 3, .62, "center", "#3d2417");
+    ctx.fillRect(imageX, nameY, imageSize, nameH);
+    drawBitmapText("EMBER", imageX + imageSize / 2, nameY + 2, .78, "center", "#3d2417");
 
     let remaining = visibleCount;
     wrappedLines.forEach((wrappedLine, index) => {
@@ -24172,15 +24286,15 @@ window.RibbitRaceMobileDiagnostics = () => ({
         textTop + index * lineHeight,
         DIALOGUE_TEXT_SCALE,
         "left",
-        COLORS.white
+        "#244650"
       );
       remaining -= wrappedLine.length + 1;
     });
 
-    // A two-frame down arrow appears only when another sentence is waiting.
-    // The final instruction has no input label and no arrow.
+    // The two-frame arrow appears only when another sentence remains. Each frame
+    // holds for 520 ms, exactly half the prior animation speed.
     if (!lastLine && dialogueLineIsComplete()) {
-      drawDialogueContinueTriangle(textArea.x + textArea.w - 5, panel.y + panel.h - 9);
+      drawDialogueContinueTriangle(textArea.x + textArea.w - 4, textPanel.y + textPanel.h - 10);
     }
     ctx.restore();
   }
@@ -24281,7 +24395,9 @@ window.RibbitRaceMobileDiagnostics = () => ({
   }
 
   function getTutorialGoalRect() {
-    return { x:320, y:CONFIG.playBottom, w:W - 320, h:H - CONFIG.playBottom };
+    // The normal solo TIME / JUMPS / BEST block begins at x=326. Reusing that
+    // exact footprint keeps the English clue card from ever overlapping the goal.
+    return { x:326, y:CONFIG.playBottom, w:W - 326, h:H - CONFIG.playBottom };
   }
 
   function currentGoalHowToLines() {
@@ -24312,7 +24428,7 @@ window.RibbitRaceMobileDiagnostics = () => ({
   }
 
   function drawGoalHowToTooltip() {
-    if (!tutorial.active || !tutorial.goalHovered || tutorial.dialogueOpen || tutorial.resetPending || game.state !== "playing") return;
+    if (!tutorial.active || !tutorial.goalHovered || !tutorialPlayerHasControl() || tutorialStep()?.setup === "normalRound") return;
     const lines = currentGoalHowToLines();
     const panel = { x:304, y:183, w:172, h:40 };
     const skin = getSelectedSkin();
@@ -24373,19 +24489,21 @@ window.RibbitRaceMobileDiagnostics = () => ({
     ctx.fillRect(x + 6, y + 7, w - 12, 9);
     drawBitmapText("CURRENT GOAL", x + w / 2, y + 9, .38, "center", COLORS.white);
 
-    drawPixelTrophy(x + 16, y + 20, false, .70);
-    // Goal copy is centered on the full card, not on the leftover space beside
-    // the trophy. This keeps LONG JUMPS and every other objective truly centered.
-    const goalCenterX = x + w / 2;
-    const goalWidth = w - 18;
-    if (goal.length > 1) {
-      const scale0 = Math.min(.50, goalWidth / Math.max(1, measureBitmapText(goal[0], 1)));
-      const scale1 = Math.min(.50, goalWidth / Math.max(1, measureBitmapText(goal[1], 1)));
-      drawBitmapText(goal[0], goalCenterX, y + 19, scale0, "center", "#34484f");
-      drawBitmapText(goal[1], goalCenterX, y + 29, scale1, "center", "#34484f");
-    } else {
-      const scale = Math.min(.54, goalWidth / Math.max(1, measureBitmapText(goal[0], 1)));
-      drawBitmapText(goal[0], goalCenterX, y + 24, scale, "center", "#34484f");
+    if (goal.length > 0) {
+      drawPixelTrophy(x + 16, y + 20, false, .70);
+      // Goal copy is centered on the full card, not on the leftover space beside
+      // the trophy. This keeps LONG JUMPS and every other objective truly centered.
+      const goalCenterX = x + w / 2;
+      const goalWidth = w - 18;
+      if (goal.length > 1) {
+        const scale0 = Math.min(.50, goalWidth / Math.max(1, measureBitmapText(goal[0], 1)));
+        const scale1 = Math.min(.50, goalWidth / Math.max(1, measureBitmapText(goal[1], 1)));
+        drawBitmapText(goal[0], goalCenterX, y + 19, scale0, "center", "#34484f");
+        drawBitmapText(goal[1], goalCenterX, y + 29, scale1, "center", "#34484f");
+      } else {
+        const scale = Math.min(.54, goalWidth / Math.max(1, measureBitmapText(goal[0], 1)));
+        drawBitmapText(goal[0], goalCenterX, y + 24, scale, "center", "#34484f");
+      }
     }
 
     if (flashAlpha > 0) {
@@ -24402,11 +24520,12 @@ window.RibbitRaceMobileDiagnostics = () => ({
 
   function drawTutorialOverlay() {
     if (!tutorial.active || game.state === "paused" || game.state === "countdown") return;
-    drawCurrentGoalHud();
+    const finalPractice = tutorialStep()?.setup === "normalRound";
+    if (!finalPractice) drawCurrentGoalHud();
     drawTutorialSmoke();
     drawTutorialReferenceHighlights();
     if (!tutorial.dialogueOpen) drawTutorialProgress();
-    if (!tutorial.dialogueOpen) drawGoalHowToTooltip();
+    if (!tutorial.dialogueOpen && !finalPractice) drawGoalHowToTooltip();
     if (tutorial.dialogueOpen) drawTutorialDialogue();
   }
 
@@ -24414,6 +24533,59 @@ window.RibbitRaceMobileDiagnostics = () => ({
     // The tutorial now uses Ribbit Race's normal Single Player victory screen.
   }
 
+
+  function drawBlankTutorialVocabularyPrompt() {
+    if (!["playing", "paused", "countdown"].includes(game.state) || game.sandboxMode || game.winPending) return;
+    const left = 154;
+    const top = 234;
+    const width = 172;
+    const height = 33;
+    ctx.fillStyle = "rgba(25,43,52,0.35)";
+    ctx.fillRect(left + 2, top + 2, width - 2, height);
+    ctx.fillStyle = COLORS.ink;
+    ctx.fillRect(left, top, width, height);
+    ctx.fillStyle = COLORS.white;
+    ctx.fillRect(left + 2, top + 2, width - 4, height - 4);
+    ctx.fillStyle = getSelectedSkin().mid;
+    ctx.fillRect(left + 4, top + 4, width - 8, 8);
+    drawBitmapText(
+      "FIND THE MATCH",
+      W / 2,
+      top + 5,
+      0.96,
+      "center",
+      COLORS.white,
+      getSelectedSkin().dark
+    );
+  }
+
+  // The next vocabulary target is allowed to exist internally for authored fly
+  // logic, but it is not revealed in the footer until the frog is actually back
+  // under player control. Scene retries and poof resets therefore stay blank.
+  const originalDrawVocabularyPromptForTutorial = drawVocabularyPrompt;
+  drawVocabularyPrompt = function(...args) {
+    if (tutorial.active && !tutorialPlayerHasControl()) {
+      drawBlankTutorialVocabularyPrompt();
+      return;
+    }
+    return originalDrawVocabularyPromptForTutorial.apply(this, args);
+  };
+
+  // Training is a reversible playtest session. Suppress every ordinary solo/PvP
+  // achievement while it is active; only the dedicated completion achievement
+  // may pass through when the tutorial itself awards it.
+  const originalMarkAchievementEarnedForTutorial = markAchievementEarned;
+  markAchievementEarned = function(id, ...rest) {
+    const trainingSession = Boolean(tutorial.active || tutorial.completeScreen || game.tutorialActive);
+    if (trainingSession && id !== TUTORIAL_ACHIEVEMENT_ID) return false;
+    return originalMarkAchievementEarnedForTutorial.call(this, id, ...rest);
+  };
+
+  const originalMarkPvpAchievementEarnedForTutorial = markPvpAchievementEarned;
+  markPvpAchievementEarned = function(...args) {
+    if (tutorial.active || tutorial.completeScreen || game.tutorialActive) return false;
+    return originalMarkPvpAchievementEarnedForTutorial.apply(this, args);
+  };
 
   const originalDrawFlyNameTagForTutorial = drawFlyNameTag;
   drawFlyNameTag = function(currentFly, ...rest) {
@@ -24431,25 +24603,18 @@ window.RibbitRaceMobileDiagnostics = () => ({
     return originalGetFlySpawnScaleForTutorial.call(this, currentFly, ...rest);
   };
 
-  // Trigger the tongue lesson's cinematic at the same moment as a normal
-  // Single Player final catch: when the tongue commits to the matching fly.
-  // Temporarily presenting this as the goal catch lets the stock zoom, camera,
-  // overlay, sounds, and slow-motion timing run without any tutorial duplicate.
-  const originalBeginTongueCatchForTutorial = beginTongueCatch;
-  beginTongueCatch = function(targetFly, ...rest) {
+  // The tongue lesson opts into the exact stock final-catch cinematic. By
+  // extending the engine's own eligibility check, beginTongueCatch triggers the
+  // normal slow-motion physics, camera zoom, impact overlay, and sound timing.
+  const originalShouldStartSoloCriticalCatchForTutorial = shouldStartSoloCriticalCatch;
+  shouldStartSoloCriticalCatch = function(targetFly, ...rest) {
     const activeSetup = tutorial.active && tutorial.kind === "solo" ? tutorialStep()?.setup : "";
     const isRangeMatch = activeSetup === "rangeCatch" &&
-      targetFly && targetFly.vocabIndex === game.targetVocabIndex;
-    if (!isRangeMatch || game.soloCriticalCatchActive) {
-      return originalBeginTongueCatchForTutorial.call(this, targetFly, ...rest);
-    }
-    const previousGoal = game.soloCatchGoal;
-    try {
-      game.soloCatchGoal = Math.max(1, Number(game.score || 0) + 1);
-      return originalBeginTongueCatchForTutorial.call(this, targetFly, ...rest);
-    } finally {
-      game.soloCatchGoal = previousGoal;
-    }
+      targetFly && targetFly.vocabIndex === game.targetVocabIndex &&
+      game.mode === "solo" && game.state === "playing" &&
+      !game.sandboxMode && !game.soloCriticalCatchActive && !game.winPending;
+    if (isRangeMatch) return true;
+    return originalShouldStartSoloCriticalCatchForTutorial.call(this, targetFly, ...rest);
   };
 
   // Record how tutorial flies were caught so authored lessons can verify the intended technique.
@@ -24460,20 +24625,19 @@ window.RibbitRaceMobileDiagnostics = () => ({
     if (activeSetup === "rangeCatch" && wasCorrect && source !== "tongue") return false;
     if (activeSetup === "reboundCatch" && targetFly?.tutorialRequiresRebound && !tutorial.wallTouchedThisJump) return false;
 
-    // Use the exact normal Single Player final-catch camera, zoom, overlay and
-    // simulation slowdown instead of a separate tutorial-only slow-motion effect.
-    if (activeSetup === "rangeCatch" && wasCorrect && source === "tongue" && !game.soloCriticalCatchActive) {
-      const previousGoal = game.soloCatchGoal;
-      try {
-        game.soloCatchGoal = Math.max(1, Number(game.score || 0) + 1);
-        startSoloCriticalCatch(targetFly);
-      } finally {
-        game.soloCatchGoal = previousGoal;
-      }
-    }
-
     const result = originalAttemptFlyCatch.call(this, targetFly, source, ...rest);
     if (!result || !activeSetup) return result;
+
+    if (activeSetup === "comboMixed" && wasCorrect) {
+      const remainingFly = flies.find((currentFly) =>
+        currentFly?.tutorialAuthored && currentFly.state === "active"
+      );
+      if (remainingFly && VOCABULARY.length > 1) {
+        let wrongPromptIndex = (Number(remainingFly.vocabIndex) + 1) % VOCABULARY.length;
+        if (wrongPromptIndex === remainingFly.vocabIndex) wrongPromptIndex = (wrongPromptIndex + 1) % VOCABULARY.length;
+        setPrompt(wrongPromptIndex);
+      }
+    }
 
     if (activeSetup === "rangeCatch" && wasCorrect && source === "tongue") {
       tutorial.rangeTongueCaught = true;
@@ -24505,17 +24669,34 @@ window.RibbitRaceMobileDiagnostics = () => ({
     const power = Number(frog.charge || 0);
     const standing = active ? getStandingPlatform() : null;
     const quick = Boolean(active && standing && !standing.ground && frog.chargeHoldTime < CONFIG.platformDropHoldThreshold);
+    const jumpsBefore = Number(game.jumps || 0);
+    const totalJumpsBefore = Number(game.totalJumps || 0);
     const result = tutorial.originalLaunchJump.apply(this, args);
     if (active && !frog.grounded) {
-      tutorial.lastJumpPower = power;
+      const setup = tutorialStep()?.setup;
       tutorial.quickDrop = tutorial.quickDrop || quick;
+
+      // Platform drops are movement techniques, not jump attempts. They do not
+      // consume the two-jump wall lesson or inflate the tutorial's jump HUD.
+      if (quick) {
+        game.jumps = jumpsBefore;
+        game.totalJumps = totalJumpsBefore;
+        try { saveTotalJumpCount(game.totalJumps); } catch (_) {}
+        if (setup === "quickDrop") {
+          tutorial.attemptStarted = true;
+          tutorial.attemptWasAirborne = true;
+          tutorial.attemptEnded = false;
+        }
+        return result;
+      }
+
+      tutorial.lastJumpPower = power;
       tutorial.wallTouchedThisJump = false;
       tutorial.attemptStarted = true;
       tutorial.jumpAttempts += 1;
       tutorial.attemptWasAirborne = true;
       tutorial.attemptEnded = false;
-      const setup = tutorialStep()?.setup;
-      if (setup === "quickDrop" && !quick) {
+      if (setup === "quickDrop") {
         failAttempt("TAP QUICKLY  -  DO NOT CHARGE");
       }
     }
@@ -24562,6 +24743,20 @@ window.RibbitRaceMobileDiagnostics = () => ({
     return result;
   };
 
+  const originalResumePausedGameForTutorial = resumePausedGame;
+  resumePausedGame = function(...args) {
+    if (tutorial.active && game.state === "paused") {
+      game.state = "playing";
+      game.countdownNumber = 0;
+      game.countdownTimer = 0;
+      game.resumeChargeAfterCountdown = false;
+      game.pauseHelpOpen = false;
+      restorePauseChargeSnapshot();
+      return;
+    }
+    return originalResumePausedGameForTutorial.apply(this, args);
+  };
+
   const originalActivatePauseSelectionForTutorial = activatePauseSelection;
   activatePauseSelection = function(...args) {
     if (!tutorial.active || game.state !== "paused") {
@@ -24588,7 +24783,10 @@ window.RibbitRaceMobileDiagnostics = () => ({
   };
 
   function tutorialBlocksLiveInput() {
-    return Boolean(tutorial.active && game.state === "playing" && tutorialMovementLocked());
+    return Boolean(
+      tutorial.active && game.state === "playing" &&
+      (tutorialMovementLocked() || tutorial.passPending || tutorial.blockJumpUntilRelease)
+    );
   }
 
   const originalPressMainButtonForTutorial = pressMainButton;
@@ -24690,7 +24888,20 @@ window.RibbitRaceMobileDiagnostics = () => ({
       if (event.code === "Space") {
         event.preventDefault();
         event.stopImmediatePropagation();
-        if (!event.repeat && !tutorial.dialogueSpaceHeld) {
+        if (event.repeat) return;
+
+        // A completed final line closes on keydown and owns this entire physical
+        // key press. The matching keyup only releases the lock, so a second Space
+        // press is required to start charging the frog.
+        if (dialogueLineIsComplete()) {
+          tutorial.blockJumpUntilRelease = true;
+          tutorial.dialogueSpaceHeld = false;
+          tutorial.dialogueSpaceHeldAt = 0;
+          closeDialogue("space-keydown");
+          return;
+        }
+
+        if (!tutorial.dialogueSpaceHeld) {
           tutorial.dialogueSpaceHeld = true;
           tutorial.dialogueSpaceHeldAt = performance.now();
         }
@@ -24705,7 +24916,19 @@ window.RibbitRaceMobileDiagnostics = () => ({
   }, { capture:true, passive:false });
 
   window.addEventListener("keyup", (event) => {
-    if (event.code !== "Space" || !tutorial.active || !tutorial.dialogueOpen || !tutorial.dialogueSpaceHeld) return;
+    if (event.code !== "Space" || !tutorial.active) return;
+
+    if (tutorial.blockJumpUntilRelease) {
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      tutorial.blockJumpUntilRelease = false;
+      tutorial.dialogueSpaceHeld = false;
+      tutorial.dialogueSpaceHeldAt = 0;
+      clearHeldInput();
+      return;
+    }
+
+    if (!tutorial.dialogueOpen || !tutorial.dialogueSpaceHeld) return;
     event.preventDefault();
     event.stopImmediatePropagation();
     const now = performance.now();
@@ -24715,8 +24938,8 @@ window.RibbitRaceMobileDiagnostics = () => ({
     tutorial.dialogueSpaceHeld = false;
     tutorial.dialogueSpaceHeldAt = 0;
     clearHeldInput();
-    // A quick tap keeps the familiar advance action; a real hold is reserved
-    // for the requested 2x typewriter speed and does not skip the sentence.
+    // A quick tap completes an unfinished sentence. A sustained hold is reserved
+    // for the requested 2x typewriter speed and never skips dialogue.
     if (heldFor < DIALOGUE_SPACE_HOLD_THRESHOLD_MS) closeDialogue("space");
   }, { capture:true, passive:false });
 
@@ -24729,7 +24952,7 @@ window.RibbitRaceMobileDiagnostics = () => ({
   }, { capture:true, passive:false });
 
   canvas.addEventListener("pointermove", (event) => {
-    if (!tutorial.active || game.state !== "playing" || tutorial.dialogueOpen || tutorial.resetPending) {
+    if (!tutorialPlayerHasControl() || tutorialStep()?.setup === "normalRound") {
       tutorial.goalHovered = false;
       return;
     }

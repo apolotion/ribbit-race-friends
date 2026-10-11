@@ -5,18 +5,27 @@ import {readFileSync, existsSync} from "node:fs";
 const read = path => readFileSync(new URL(`../${path}`, import.meta.url), "utf8");
 const engine = read("client/game/120-engine-tutorial.js");
 const polish = read("public/scripts/rr-170-polish.js");
+const index = read("public/index.html");
+const css = read("public/styles/rr-170.css");
 
-test("1.7.8 tutorial-polish build is wired everywhere", () => {
-  assert.equal(JSON.parse(read("package.json")).version, "1.7.8");
-  assert.match(read("src/common.js"), /2026\.10\.11-friends-tutorial-polish-2/);
-  assert.match(read("client/game/110-online-mobile-polish.js"), /2026\.10\.11-friends-tutorial-polish-2/);
-  assert.match(read("public/scripts/cloud-client.js"), /2026\.10\.11-friends-tutorial-polish-2/);
-  const index = read("public/index.html");
-  assert.match(index, /2026\.10\.11-tutorial-polish-2/);
+function block(start, end) {
+  const from = engine.indexOf(start);
+  assert.ok(from >= 0, `Missing start marker: ${start}`);
+  const to = engine.indexOf(end, from);
+  assert.ok(to >= 0, `Missing end marker: ${end}`);
+  return engine.slice(from, to);
+}
+
+test("1.7.9 tutorial-polish build is wired everywhere", () => {
+  assert.equal(JSON.parse(read("package.json")).version, "1.7.9");
+  assert.match(read("src/common.js"), /2026\.10\.11-friends-tutorial-polish-3/);
+  assert.match(read("client/game/110-online-mobile-polish.js"), /2026\.10\.11-friends-tutorial-polish-3/);
+  assert.match(read("public/scripts/cloud-client.js"), /2026\.10\.11-friends-tutorial-polish-3/);
+  assert.match(index, /2026\.10\.11-tutorial-polish-3/);
   assert.doesNotMatch(index, /tutorial-scripted-1/);
 });
 
-test("first-boot tutorial waits for profile, gate, body, frame, and input release", () => {
+test("first-boot tutorial waits for auth and suppresses the menu before first paint", () => {
   for (const phrase of [
     "authenticatedProfileReady",
     "authenticationBoundaryReleased",
@@ -26,13 +35,25 @@ test("first-boot tutorial waits for profile, gate, body, frame, and input releas
     "__RIBBIT_FRIENDS_GAME_INPUT_LOCKED__",
     "rr-authenticated"
   ]) assert.ok(polish.includes(phrase), phrase);
+  assert.match(index, /<body class="ribbit-auth-locked rr-tutorial-pending">/);
+  assert.match(index, /tutorial-preboot\.js\?v=2026\.10\.11-tutorial-polish-3/);
+  assert.match(read("public/scripts/tutorial-preboot.js"), /rrFriendsEngineTutorialSoloSeenV7/);
+  assert.match(css, /body\.rr-tutorial-pending:not\(\.ribbit-auth-locked\) #game\s*\{[\s\S]{0,120}visibility:\s*hidden\s*!important/);
+  assert.doesNotMatch(polish, /requestAnimationFrame\(\(\) => requestAnimationFrame/);
 });
 
-test("Ember dialogue is vertically and horizontally centered with fixed typography", () => {
-  assert.match(engine, /DIALOGUE_TEXT_SCALE = 0\.50/);
-  assert.match(engine, /const textTop = Math\.round\(textArea\.y \+ Math\.max\(0, \(textArea\.h - totalTextHeight\) \/ 2\)\)/);
-  assert.match(engine, /textArea\.x \+ textArea\.w \/ 2 - fullLineWidth \/ 2/);
-  assert.match(engine, /drawBitmapText\(\s*visibleOnLine,[\s\S]{0,420}"left"/);
+test("Ember dialogue is larger, centered, bright, and uses a square equal-height portrait", () => {
+  const dialogue = block("function drawTutorialDialogue", "function drawTutorialStatus");
+  assert.match(engine, /DIALOGUE_TEXT_SCALE = 0\.86/);
+  assert.match(dialogue, /const textPanel = \{ x: 88, y: 5, w: 248, h: 48 \}/);
+  assert.match(dialogue, /const portraitPanel = \{ x: 338, y: 5, w: 48, h: 48 \}/);
+  assert.match(dialogue, /const border = 2/);
+  assert.match(dialogue, /const imageSize = portraitPanel\.w - border \* 2/);
+  assert.match(dialogue, /ctx\.drawImage\(portraitImage, imageX, imageY, imageSize, imageSize\)/);
+  assert.match(dialogue, /drawDialoguePanel\(textPanel, "#f7fdff"\)/);
+  assert.match(dialogue, /drawBitmapText\("EMBER", imageX \+ imageSize \/ 2, nameY \+ 2, \.78, "center"/);
+  assert.match(dialogue, /const textTop = Math\.round\(textArea\.y \+ Math\.max\(0, \(textArea\.h - totalTextHeight\) \/ 2\)\)/);
+  assert.match(dialogue, /textArea\.x \+ textArea\.w \/ 2 - fullLineWidth \/ 2/);
 });
 
 test("authored tutorial flies retain normal movement and normal spawn sparkles", () => {
@@ -68,9 +89,32 @@ test("scene goals cover long jumps, matching catches, tongue, combos, walls, and
 });
 
 test("normal controls resume only after dialogue and the half-second scene-entry poof", () => {
-  assert.match(engine, /function armScenarioAfterDialogue\(\) \{\s*beginScenarioEntryTransition\(\);/);
+  const arm = block("function armScenarioAfterDialogue", "function closeDialogue");
+  assert.match(arm, /tutorial\.scenePositionedDuringDialogue/);
+  assert.match(arm, /beginScenarioEntryTransition\(\)/);
   assert.match(engine, /reason: "scene-entry"/);
-  assert.match(engine, /tutorial\.resetPending/);
+  assert.match(engine, /POOF_TRANSITION_MS = 500/);
   assert.match(engine, /tutorialMovementLocked/);
   assert.match(engine, /tutorial\.frogHidden = false/);
+});
+
+test("closing the final dialogue with Space consumes that physical key press", () => {
+  assert.match(engine, /tutorial\.blockJumpUntilRelease = true/);
+  assert.match(engine, /closeDialogue\("space-keydown"\)/);
+  assert.match(engine, /if \(tutorial\.blockJumpUntilRelease\)[\s\S]{0,260}tutorial\.blockJumpUntilRelease = false/);
+  assert.match(engine, /tutorialBlocksLiveInput\(\)[\s\S]{0,180}tutorial\.blockJumpUntilRelease/);
+});
+
+test("tutorial restart keeps the term and goal blank until control returns", () => {
+  assert.match(engine, /function tutorialPlayerHasControl/);
+  assert.match(engine, /function currentGoalLines\(\) \{\s*if \(!tutorialPlayerHasControl\(\)\) return \[\]/);
+  assert.match(engine, /if \(tutorial\.active && !tutorialPlayerHasControl\(\)\) \{\s*drawBlankTutorialVocabularyPrompt\(\)/);
+  assert.match(engine, /tutorial\.resetPending/);
+});
+
+test("only the training-complete achievement can pass through during training", () => {
+  assert.match(engine, /const trainingSession = Boolean\(tutorial\.active \|\| tutorial\.completeScreen \|\| game\.tutorialActive\)/);
+  assert.match(engine, /if \(trainingSession && id !== TUTORIAL_ACHIEVEMENT_ID\) return false/);
+  assert.match(engine, /markPvpAchievementEarned = function[\s\S]{0,220}return false/);
+  assert.match(engine, /markAchievementEarned\(TUTORIAL_ACHIEVEMENT_ID, false\)/);
 });

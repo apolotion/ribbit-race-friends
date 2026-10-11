@@ -1,13 +1,25 @@
-1. Added a normal fly-catch sparkle and success sound to every correctly completed long-jump landing.
-2. Made Ember change expressions between dialogue lines, enlarged and centered her name plate, and centered all dialogue with consistent two-line typography.
-3. Restored the thinner cyan dialogue border, boxed the portrait symmetrically, removed the black notch/scroll-wheel shape, and replaced text prompts with a two-frame down triangle only when more dialogue remains.
-4. Kept Park scenery and authored flies running behind dialogue while locking only frog movement; holding Space now doubles typewriter speed.
-5. Timed the dinner fly to poof in before Ember announces it and added flashing callouts for the fly term and bottom English clue.
-6. Standardized frog poof transitions to a 0.5-second gap, kept the background running, preserved existing flies, and suppressed the trajectory preview during poofs.
-7. Preserved the frog’s completed position through the next dialogue and moved it only during the scripted poof-in transition.
-8. Restored an exact copy of Park’s platform layout and normal starting position.
-9. Rebuilt the tongue-range lesson from the lower-left platform and reused the normal Single Player final-catch slow-motion zoom.
-10. Moved the multi-fly targets into reachable one-jump positions and made the three-catch lesson retry only the missed fly.
-11. Centered Current Goal across the full card and added an objective-specific HOW TO tooltip on hover.
-12. Re-enabled Pause with Retry Scene and Skip Tutorial, and prevented the tutorial from starting before sign-in or Play Without Saving.
-Everything else remains unchanged.
+RIBBIT RACE FRIENDS — TUTORIAL POLISH 1.7.9
+Build: 2026.10.11-friends-tutorial-polish-3
+
+1. Slowed the two-frame dialogue triangle to half speed.
+2. Rebuilt Ember dialogue as a larger, brighter Pokémon-style textbox with consistent centered text and two-line wrapping.
+3. Made Ember's portrait a true square at the same height as the text panel, matched the border widths, enlarged the centered EMBER name, and removed the extra indigo rail.
+4. Resuming a paused tutorial now returns immediately with no 3-2-1 countdown.
+5. First-time players no longer see the main menu flash between authentication and the tutorial; the game canvas stays hidden until the lesson is active.
+6. The Space press that closes a scene's final line is consumed, so a second Space press is required to begin the first jump.
+7. The dinner fly now finishes poofing in, then waits another 0.5 seconds before Ember says, “Looks like dinner is ready!”
+8. Current Goal now occupies the exact normal TIME/JUMPS/BEST footer footprint, preventing the English clue outline from overlapping it.
+9. Correct catches in the three-catch lesson hold the landed frog for 0.5 seconds before the next poof transition.
+10. The tongue-range frog and fly now poof in later during dialogue. The frog is centered on the lower-left platform and the fly is lower, between the top and middle-high platform rows.
+11. Rebuilt Park as a true horizontal mirror for every Park mode. Only the two center platforms share a vertical column.
+12. Disabled all ordinary achievement earning during training. Only RIBBIT READY can be awarded for completing the tutorial.
+13. Kept the English term and Current Goal blank until the player actually regains control, including scene restarts.
+14. Delayed the mixed multi-fly setup until after “So why stop at one fly per jump?” so the frog and flies poof into place together.
+15. Raised the second match-and-spit fly and forced the second clue to mismatch the remaining fly after the correct catch, preserving the intended spit-back lesson.
+16. Mirrored the two-correct-fly lesson so the player approaches from the opposite side.
+17. Repositioned the three-fly route to follow the supplied diagram, with properly aligned tags and a left-platform starting position.
+18. Prevented quick and buffered drops from counting as jumps, moved the wall-turn fly above the middle platform, and delayed successful wall-scene completion until the frog lands so it cannot freeze in midair.
+19. Restored the normal TIME/JUMPS/BEST footer during the final practice round instead of showing a Current Goal card.
+20. Routed the tongue lesson through the exact stock Single Player final-catch slow-motion and zoom system.
+
+Everything outside these tutorial, Park-layout, and HUD refinements remains unchanged.

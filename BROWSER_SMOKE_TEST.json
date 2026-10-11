@@ -1,24 +1,24 @@
 {
-  "ok": true,
-  "browser": "Chromium (local in-memory API shim)",
-  "initial": {
-    "gateHidden": false,
-    "authLocked": true,
-    "tutorialEngineLoaded": false
-  },
-  "afterGuest": {
-    "tutorialActive": true,
-    "dialogueOpen": true,
-    "step": 0,
-    "build": "2026.10.11-friends-tutorial-polish-2"
-  },
-  "afterDialogue": {
-    "tutorialActive": true,
-    "dialogueOpen": false,
-    "step": 1
-  },
-  "afterSkip": {
-    "tutorialActive": false
-  },
-  "pageErrors": []
+  "url": "https://ribbit.test/",
+  "console_errors": [],
+  "page_errors": [],
+  "checks": {
+    "initial_body_classes": "ribbit-auth-locked rr-tutorial-pending",
+    "pending_before_guest": true,
+    "gate_visible_before_guest": true,
+    "tutorial_active": true,
+    "tutorial_kind": "solo",
+    "dialogue_open": true,
+    "body_classes_after_start": "rr-guest-active rr-tutorial-active",
+    "flash_probe": {
+      "authReleasedSeen": false,
+      "visibleBeforeTutorial": false,
+      "samples": 0,
+      "stopped": false
+    },
+    "canvas_visibility_after_start": "visible",
+    "pause_canvas_state_sample": "rr-guest-active rr-tutorial-active",
+    "tutorial_active_after_pause_resume": true,
+    "dialogue_open_after_pause_resume": true
+  }
 }

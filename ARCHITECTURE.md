@@ -1,11 +1,11 @@
 # Ribbit Race Friends Edition architecture
 
-Build: `2026.10.11-friends-tutorial-polish-2`  
-Displayed game version: `VERSION 1.7.8`
+Build: `2026.10.11-friends-tutorial-polish-3`  
+Displayed game version: `VERSION 1.7.9`
 
 ## Browser responsibilities
 
-- `public/index.html` — semantic authentication, leaderboard, account, game-shell, and mobile-install markup.
+- `public/index.html` — semantic authentication, first-paint tutorial-pending class, leaderboard, account, game-shell, and mobile-install markup.
 - `public/manifest.webmanifest` and `public/icons/` — standalone Home Screen identity, orientation, and icons.
 - `public/styles/` — page, authentication, mobile, replay, safe-area, and game-shell presentation.
 - `public/scripts/friends-api-client.js` — `FriendsApiClient`; HTTP request policy.
@@ -14,9 +14,14 @@ Displayed game version: `VERSION 1.7.8`
 - `public/scripts/mobile-experience.js` — Mobile/Computer confirmation, iPhone installation help, account-panel bridge, standalone detection, and native-gesture suppression.
 - `public/scripts/extended-features.js` — replay capture/viewing, palette tools, hat progression, and world-record notices.
 - `client/game/100-mobile-experience.js` — canvas-native avatar/device buttons, gradient jump meters, upper-right Versus pause, independent pointer ownership, and touch diagnostics.
-- `client/game/120-engine-tutorial.js` — authentication-gated real-engine Park/PvP tutorial, Ember dialogue, checked scenarios, poof lifecycle, goal help, and pause overrides.
-- `public/scripts/rr-170-polish.js` — first-boot tutorial startup and Friends Edition interface polish.
+- `client/game/120-engine-tutorial.js` — authentication-gated real-engine Park/PvP tutorial, Pokémon-style Ember dialogue, scripted fly/poof timing, checked scenarios, stock final-catch zoom bridge, HUD footprint, achievement isolation, and pause overrides.
+- `public/scripts/tutorial-preboot.js` — synchronous first-paint suppression of the menu while a first tutorial is pending.
+- `public/scripts/rr-170-polish.js` — post-auth tutorial startup and Friends Edition interface polish.
 - `public/scripts/game.bundle.js` — generated closure-preserving browser runtime.
+
+## Park layout responsibility
+
+`client/game/10-core-config.js` owns one true horizontal-mirror Park layout used by regular play, Sandbox inheritance, and tutorial scenarios. The low-left and middle-left platforms have exact right-side counterparts. Only the lower-center and top-center platforms share a vertical column. Park fly anchors are mirrored around the 240-pixel center line.
 
 ## Touch-input responsibility
 

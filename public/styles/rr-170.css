@@ -1,5 +1,5 @@
 
-/* Ribbit Race Friends 1.7.8 — account modal, mobile touch, tutorials, and UI polish. */
+/* Ribbit Race Friends 1.7.9 — account modal, mobile touch, tutorials, and UI polish. */
 html, body {
   -webkit-touch-callout: none;
   -webkit-user-select: none;
@@ -209,4 +209,13 @@ body.rr-tutorial-active #corner-controls,
 body.rr-tutorial-active #fullscreen-button,
 body.rr-tutorial-active #rr170-overlay-root {
   display: none !important;
+}
+
+/* First-boot handoff: keep the already-rendered main menu invisible behind the
+   authentication gate until the tutorial has drawn its first real Park frame. */
+body.rr-tutorial-pending:not(.ribbit-auth-locked) #game {
+  visibility: hidden !important;
+}
+body.rr-tutorial-pending #game-frame {
+  background: #052f45 !important;
 }

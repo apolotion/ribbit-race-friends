@@ -1,528 +1,775 @@
 {
-  "project": "Ribbit Race Friends",
-  "version": "1.7.8",
-  "build": "2026.10.11-friends-tutorial-polish-2",
-  "fileCount": 104,
+  "product": "Ribbit Race Friends Edition",
+  "version": "1.7.9",
+  "displayVersion": "VERSION 1.7.9",
+  "build": "2026.10.11-friends-tutorial-polish-3",
+  "generatedUtc": "2026-10-11T23:29:52Z",
+  "notes": [
+    "Hashes cover the deployable project payload and release evidence files.",
+    "SOURCE_MANIFEST.json and Ribbit_Race_Friends_1.7.9_Source_Copier.html are generated delivery indexes and are intentionally excluded from their own manifest."
+  ],
+  "summary": {
+    "files": 108,
+    "textFiles": 90,
+    "binaryFiles": 18,
+    "bytes": 3716499
+  },
   "files": [
     {
       "path": ".gitignore",
+      "kind": "text",
       "bytes": 110,
-      "sha256": "e45db8b7e2e2ef8a58e093302e63d501da9d0f79d07e2e37cba37445b8ca6895"
+      "sha256": "e45db8b7e2e2ef8a58e093302e63d501da9d0f79d07e2e37cba37445b8ca6895",
+      "mime": "text/plain"
     },
     {
       "path": "ARCHITECTURE.md",
-      "bytes": 3753,
-      "sha256": "f914666d3d78fa93ad57cb752e647d35f62755274dc27af86c4ad417ad9f49bc"
+      "kind": "text",
+      "bytes": 4383,
+      "sha256": "e624b49fa51e4db3494f19fbbecdf7e284b393c6e22a7b29b0971cdccfcc1129",
+      "mime": "text/markdown"
     },
     {
       "path": "BROWSER_SMOKE_TEST.json",
-      "bytes": 481,
-      "sha256": "f89c5014aa4f3902fb3f3fe76085cc5f0a019ded89abd1c5778b46e5cff30b34"
+      "kind": "text",
+      "bytes": 752,
+      "sha256": "e5a199ee7631459d62f7d65fa16b6025b6199d751bc3da91fa3e532b7643c261",
+      "mime": "application/json"
+    },
+    {
+      "path": "BROWSER_SMOKE_TEST_1.7.9.json",
+      "kind": "text",
+      "bytes": 751,
+      "sha256": "096c68ea66e48d79a996d54246bb459fdd12d847ca9b9c53fd98116d0a3fb74a",
+      "mime": "application/json"
     },
     {
       "path": "BUILD_REPAIR_INSTRUCTIONS.md",
+      "kind": "text",
       "bytes": 325,
-      "sha256": "9bb4355abcf050b196d1349700c33528514fa37002f94d0dcfb9e49ce2d85ca1"
+      "sha256": "9bb4355abcf050b196d1349700c33528514fa37002f94d0dcfb9e49ce2d85ca1",
+      "mime": "text/markdown"
     },
     {
       "path": "BUILD_REPAIR_TEST_REPORT.md",
+      "kind": "text",
       "bytes": 181,
-      "sha256": "9fffb711f3677b96a3caba62f558e35d5eb91b18b4459ef2aa58a4fefbd657c9"
+      "sha256": "9fffb711f3677b96a3caba62f558e35d5eb91b18b4459ef2aa58a4fefbd657c9",
+      "mime": "text/markdown"
     },
     {
       "path": "BUILD_STATUS.json",
-      "bytes": 195,
-      "sha256": "301b52bd2e51b5299158eb6199a940ef1ef006368e0fe4dc0ce79445ceafe548"
+      "kind": "text",
+      "bytes": 250,
+      "sha256": "28825db4f1a2c0e586e1d477a9f2bb365c7ad4ff27db0d0cfec183875f2ed1e4",
+      "mime": "application/json"
     },
     {
       "path": "EMBER_DIALOGUE_SCRIPT.md",
-      "bytes": 6519,
-      "sha256": "d6ac02ccf5fc98a83c19d7f43e5cbcfbf402aa6d1b7fcfdc841ed129c7193999"
+      "kind": "text",
+      "bytes": 7313,
+      "sha256": "9a40ef4db91871b24bf8cb70b4d3f51118ea3c4b149eb3517f20a28783a1b5e9",
+      "mime": "text/markdown"
     },
     {
       "path": "ENGINE_TUTORIAL.md",
-      "bytes": 3382,
-      "sha256": "ccac4172d7df4850dca8c5e81316fe8bf234886fbb80fc9b69e0c54b7d6b2295"
+      "kind": "text",
+      "bytes": 3840,
+      "sha256": "14a7ad565a77716b27aee0ecd188e8b0a023cdf94d970bb848dac9d771e5322b",
+      "mime": "text/markdown"
     },
     {
       "path": "HAT_REQUIREMENTS.md",
+      "kind": "text",
       "bytes": 1611,
-      "sha256": "76b5c663327f9ce537f73ce8f3f40085b7d1bcb9b0a5a9255210c74f8816a221"
+      "sha256": "76b5c663327f9ce537f73ce8f3f40085b7d1bcb9b0a5a9255210c74f8816a221",
+      "mime": "text/markdown"
     },
     {
       "path": "INSTALL.txt",
-      "bytes": 1522,
-      "sha256": "0547bd9c3f10fe7c3f0c656f7517d313d1f88bdeaca10f84061a8bfd966f54ee"
+      "kind": "text",
+      "bytes": 1972,
+      "sha256": "f0a109a4d91e9f656582a6008cd92efdc7e727b32ea4a15135046ed5e7448059",
+      "mime": "text/plain"
     },
     {
       "path": "NETCODE.md",
+      "kind": "text",
       "bytes": 972,
-      "sha256": "c98c85631a3017ab23d649dffdf6afe8880c779facf84f1de1f5c085d4a1adaa"
+      "sha256": "c98c85631a3017ab23d649dffdf6afe8880c779facf84f1de1f5c085d4a1adaa",
+      "mime": "text/markdown"
     },
     {
       "path": "NICK_DELETE_REPAIR.md",
+      "kind": "text",
       "bytes": 661,
-      "sha256": "e662ac76e75d688302b11ee316a892dcc794d63749a62af15307882db28be748"
+      "sha256": "e662ac76e75d688302b11ee316a892dcc794d63749a62af15307882db28be748",
+      "mime": "text/markdown"
     },
     {
       "path": "PACKAGED_TESTS_PASSED.txt",
-      "bytes": 106,
-      "sha256": "34f459a3f1d7515057e9bc48e4898ec414628166f3c4b747b52fa830e82d428f"
+      "kind": "text",
+      "bytes": 189,
+      "sha256": "c0a174af76ace6873faf7260a1d207caa915e020d6518d49470307b387ab2e8f",
+      "mime": "text/plain"
     },
     {
       "path": "PIPELINE_OUTPUT.txt",
-      "bytes": 30211,
-      "sha256": "f2d1d1ead75938ba01e5008c248b9dfc511ca3ca0741fd8f7d47fdbbefff237a"
+      "kind": "text",
+      "bytes": 31657,
+      "sha256": "8f8b1550a13e3756fea2f17d31b751a26ca0fe652a45fa9ff98606622068b8e4",
+      "mime": "text/plain"
     },
     {
       "path": "PREVIEWS/Ember_Dialogue_Welcome.png",
+      "kind": "binary",
       "bytes": 61846,
-      "sha256": "8f61d31e9100eafbb16a5c00d124b3bd1b3173ebea2bcaef42bf2a311747874e"
+      "sha256": "8f61d31e9100eafbb16a5c00d124b3bd1b3173ebea2bcaef42bf2a311747874e",
+      "mime": "image/png"
     },
     {
       "path": "PREVIEWS/Tutorial_Current_Goal_Hover.png",
+      "kind": "binary",
       "bytes": 50962,
-      "sha256": "1fd395df38ead8f32569c558c3365e2b8515f39c046f1e7fd2fa0945c94e0e70"
+      "sha256": "1fd395df38ead8f32569c558c3365e2b8515f39c046f1e7fd2fa0945c94e0e70",
+      "mime": "image/png"
     },
     {
       "path": "PREVIEWS/Tutorial_Login_Gate.png",
+      "kind": "binary",
       "bytes": 66385,
-      "sha256": "346e8411d0b582d78bffd2342f1b1881521784dbfd2553df32f77df166a21a33"
+      "sha256": "346e8411d0b582d78bffd2342f1b1881521784dbfd2553df32f77df166a21a33",
+      "mime": "image/png"
     },
     {
       "path": "PREVIEWS/Tutorial_Pause_Menu.png",
+      "kind": "binary",
       "bytes": 42313,
-      "sha256": "6a707403b23e7eb192fa458bc52387440faa9cf17056b9a8f5f8c2a49eda5f6c"
+      "sha256": "6a707403b23e7eb192fa458bc52387440faa9cf17056b9a8f5f8c2a49eda5f6c",
+      "mime": "image/png"
+    },
+    {
+      "path": "PREVIEWS/runtime-dialogue-1.7.9.png",
+      "kind": "binary",
+      "bytes": 93083,
+      "sha256": "3cbffb456001bb406e8280763da9becab18ed916b6a56d77c9910549e588f182",
+      "mime": "image/png"
+    },
+    {
+      "path": "PREVIEWS/runtime-pause-1.7.9.png",
+      "kind": "binary",
+      "bytes": 50889,
+      "sha256": "361d54ec31f8a5c44fb8670911d4e04e8bc403673cae692f781c90e7d89ce4a2",
+      "mime": "image/png"
+    },
+    {
+      "path": "PREVIEWS/runtime-resumed-1.7.9.png",
+      "kind": "binary",
+      "bytes": 92806,
+      "sha256": "859bd42a77fb7eeda67cac6b6fcaba02617ec8fcc2542cc2a35dcf437ba25b6e",
+      "mime": "image/png"
     },
     {
       "path": "README.md",
-      "bytes": 1011,
-      "sha256": "c4d197bdaade2359230ff0fcc1013121234dc0f48dbcf73b79dbeebd33bc5a51"
+      "kind": "text",
+      "bytes": 1419,
+      "sha256": "79b2d88e507b43e300f6930efc8e98252a88a0278ecf677332b29e8c3a7019a9",
+      "mime": "text/markdown"
     },
     {
       "path": "README_PIN_UPDATE.md",
+      "kind": "text",
       "bytes": 571,
-      "sha256": "756ad6bc40f55da046bfa7dd491eef90ec694c31b4f134bb753db5ec16922fc8"
+      "sha256": "756ad6bc40f55da046bfa7dd491eef90ec694c31b4f134bb753db5ec16922fc8",
+      "mime": "text/markdown"
     },
     {
       "path": "RECOVER_NICK.md",
+      "kind": "text",
       "bytes": 2134,
-      "sha256": "6d63a0e3a2d63729105f3f59f933861f9ffa1f04cd6d03fcf8f0a2bddbbcd393"
+      "sha256": "6d63a0e3a2d63729105f3f59f933861f9ffa1f04cd6d03fcf8f0a2bddbbcd393",
+      "mime": "text/markdown"
     },
     {
       "path": "REPOSITORY_REPAIR_README.md",
+      "kind": "text",
       "bytes": 589,
-      "sha256": "b783f9d35dd3b68cda5548449e894bb6ed75d3fdc298bc06577a0e8204f7ba3c"
-    },
-    {
-      "path": "Ribbit_Race_Friends_1.7.8_Source_Copier.html",
-      "bytes": 3766040,
-      "sha256": "dd04614346680368cc0852e858fa44dd13223075c48ccd2627bf3ccb74047802"
+      "sha256": "b783f9d35dd3b68cda5548449e894bb6ed75d3fdc298bc06577a0e8204f7ba3c",
+      "mime": "text/markdown"
     },
     {
       "path": "TEST_OUTPUT.txt",
-      "bytes": 29880,
-      "sha256": "ca9859b9bd6b597e8692f5effd6f34acc69f87216e5d916b4a031e7642425eb2"
+      "kind": "text",
+      "bytes": 31355,
+      "sha256": "f6388a31eff9764b1d71876f1beae13d148b4b622af096ff4b1a0baee7271d62",
+      "mime": "text/plain"
     },
     {
       "path": "TEST_REPORT.md",
-      "bytes": 1746,
-      "sha256": "425968791008650d24f6fafeb451f78a37dbcb17a678a51832116a5e80c91f2d"
+      "kind": "text",
+      "bytes": 2504,
+      "sha256": "d122f427fab538db1ab9f48be644b95d51ea634e2dc81603db5b383c25ae209a",
+      "mime": "text/markdown"
     },
     {
       "path": "TEST_REPORT.txt",
-      "bytes": 1746,
-      "sha256": "425968791008650d24f6fafeb451f78a37dbcb17a678a51832116a5e80c91f2d"
+      "kind": "text",
+      "bytes": 2504,
+      "sha256": "d122f427fab538db1ab9f48be644b95d51ea634e2dc81603db5b383c25ae209a",
+      "mime": "text/plain"
     },
     {
       "path": "TEST_REPORT_NICK_DELETE.md",
+      "kind": "text",
       "bytes": 1039,
-      "sha256": "811e074d8eaf999125a0f7180f37ea1e3298a88d2e8ab8931879bde3f56915c8"
+      "sha256": "811e074d8eaf999125a0f7180f37ea1e3298a88d2e8ab8931879bde3f56915c8",
+      "mime": "text/markdown"
     },
     {
       "path": "TEST_REPORT_V160.md",
+      "kind": "text",
       "bytes": 1064,
-      "sha256": "19b1955a8a4a93cd109ca39ca26762c184f8b2adf19b2f45d5097fc409b48204"
+      "sha256": "19b1955a8a4a93cd109ca39ca26762c184f8b2adf19b2f45d5097fc409b48204",
+      "mime": "text/markdown"
     },
     {
       "path": "TUTORIALS.md",
-      "bytes": 1848,
-      "sha256": "0ac530689cb2f881b07c806d874720f38effdc058ec28df7fc6d0205d5c62f2a"
+      "kind": "text",
+      "bytes": 2212,
+      "sha256": "1b2fa5458366a6de24bbfb933fa1b6f4812bed51c5025bdcc097678f3901c12b",
+      "mime": "text/markdown"
     },
     {
       "path": "UPDATE_INSTRUCTIONS.md",
-      "bytes": 3169,
-      "sha256": "76559754f02f511810f0ae10bb1a4c06c0eef439c01f4f53349fdb0e2480657c"
+      "kind": "text",
+      "bytes": 3570,
+      "sha256": "7af85238979bddcafca663e1a51ff9d0de2fc2381b534f16df46909f191a84c0",
+      "mime": "text/markdown"
     },
     {
       "path": "UPDATE_NOTE.txt",
-      "bytes": 1657,
-      "sha256": "2ad6d4f0bb2cde4e0aadb2d2bf9c4b6d0d1c4291840d0d918b15be16e01c92c2"
+      "kind": "text",
+      "bytes": 2785,
+      "sha256": "7a3abab4ef3773a6ffa576c3df47364ded2bcca1c7955a1766bdc29deb25a87c",
+      "mime": "text/plain"
     },
     {
       "path": "UPDATE_PIN_INSTRUCTIONS.txt",
+      "kind": "text",
       "bytes": 560,
-      "sha256": "36bb073c2cf13b4a58f1a2b2afffe15e3256041adc7e0a7058981a568e49d97b"
+      "sha256": "36bb073c2cf13b4a58f1a2b2afffe15e3256041adc7e0a7058981a568e49d97b",
+      "mime": "text/plain"
     },
     {
       "path": "V160_FEATURES.md",
+      "kind": "text",
       "bytes": 630,
-      "sha256": "5485aae0096c26e0fa6ba6b63485beeb096ed89ae6c1763263fba08071dac7f8"
+      "sha256": "5485aae0096c26e0fa6ba6b63485beeb096ed89ae6c1763263fba08071dac7f8",
+      "mime": "text/markdown"
     },
     {
       "path": "client/game/10-core-config.js",
-      "bytes": 85763,
-      "sha256": "fbf05ba30d3a8a380987ec27164c8b7b385d0e772c09e2842310e3ac05bc22a9"
+      "kind": "text",
+      "bytes": 85851,
+      "sha256": "f87274a1a133eac0122d11fcf3e6e7d389a560c03cacc6a5e13ce5c6c73d9869",
+      "mime": "text/javascript"
     },
     {
       "path": "client/game/100-mobile-experience.js",
+      "kind": "text",
       "bytes": 10681,
-      "sha256": "739184fe6d7cfa835f641a1e574aeed4d892d3c8f0c21a34029589d1ec804512"
+      "sha256": "739184fe6d7cfa835f641a1e574aeed4d892d3c8f0c21a34029589d1ec804512",
+      "mime": "text/javascript"
     },
     {
       "path": "client/game/110-online-mobile-polish.js",
+      "kind": "text",
       "bytes": 32874,
-      "sha256": "0bd0a362ad8f64870f1e6699c0f865c2242d4e5ed01c0b611c2a4666c809c4af"
+      "sha256": "163b12b5134bd8050e2282a50ab0a7ab27443a4ab2167fcb4e49f6c435d2faac",
+      "mime": "text/javascript"
     },
     {
       "path": "client/game/120-engine-tutorial.js",
-      "bytes": 92112,
-      "sha256": "828210a41a15b2df45a866b0ca89de69ee29934c842e180eae1329ce098af0fd"
+      "kind": "text",
+      "bytes": 100423,
+      "sha256": "3780a214147c1049b49e20e26a60cf28a83f4e41f2c20ca6f3f05903d47a9398",
+      "mime": "text/javascript"
     },
     {
       "path": "client/game/20-models-and-state.js",
+      "kind": "text",
       "bytes": 17149,
-      "sha256": "0d0f683706e4cf8fa3840510347db57aeb1917868e6cf6405f54e5963520b6ff"
+      "sha256": "0d0f683706e4cf8fa3840510347db57aeb1917868e6cf6405f54e5963520b6ff",
+      "mime": "text/javascript"
     },
     {
       "path": "client/game/30-online-versus.js",
+      "kind": "text",
       "bytes": 182650,
-      "sha256": "377a2200baec4873da39b05e63dcdfc5b5251164c415b737c55316262c293898"
+      "sha256": "377a2200baec4873da39b05e63dcdfc5b5251164c415b737c55316262c293898",
+      "mime": "text/javascript"
     },
     {
       "path": "client/game/40-ui-navigation-audio.js",
+      "kind": "text",
       "bytes": 115519,
-      "sha256": "3172c9fb4ab8f3a12996eb083c4846446d830cb4110eeb7a92208e72a15fbf50"
+      "sha256": "3172c9fb4ab8f3a12996eb083c4846446d830cb4110eeb7a92208e72a15fbf50",
+      "mime": "text/javascript"
     },
     {
       "path": "client/game/50-solo-gameplay.js",
+      "kind": "text",
       "bytes": 49029,
-      "sha256": "af95359eae8bac906a6b7def5b450237b2da2a6d13f8f7a2bb69bd60b9b66f8e"
+      "sha256": "af95359eae8bac906a6b7def5b450237b2da2a6d13f8f7a2bb69bd60b9b66f8e",
+      "mime": "text/javascript"
     },
     {
       "path": "client/game/60-versus-gameplay.js",
+      "kind": "text",
       "bytes": 201965,
-      "sha256": "0e068c732ffeddfefd6cbba39c8752feab6578de410b96759d9c49606f177251"
+      "sha256": "0e068c732ffeddfefd6cbba39c8752feab6578de410b96759d9c49606f177251",
+      "mime": "text/javascript"
     },
     {
       "path": "client/game/70-rendering.js",
-      "bytes": 277621,
-      "sha256": "e889b1bfe76c3b10406f67fa2d2a4f8245b675ed342b73405e4f45a385526f72"
+      "kind": "text",
+      "bytes": 277625,
+      "sha256": "e20226cae15f6d8c13b715500bb81c2b2054723034ec06d34a0f1cee145de134",
+      "mime": "text/javascript"
     },
     {
       "path": "client/game/80-input-loop-startup.js",
+      "kind": "text",
       "bytes": 97585,
-      "sha256": "9af8f2ec297aa73166421db5398dbf6b2fe640f1e7efe61795fc50af7ca4f466"
+      "sha256": "9af8f2ec297aa73166421db5398dbf6b2fe640f1e7efe61795fc50af7ca4f466",
+      "mime": "text/javascript"
     },
     {
       "path": "client/game/90-extended-features.js",
+      "kind": "text",
       "bytes": 11674,
-      "sha256": "decc5ae5b2711dd166949caa2132528c7fba9205e4f2e20fd38422cc824d4762"
+      "sha256": "e74b562c7b161f734d345ccbb059ce73bc47674f960f2a85ecc083240d39e09b",
+      "mime": "text/javascript"
     },
     {
       "path": "client/game/99-v170-hooks.js",
+      "kind": "text",
       "bytes": 19888,
-      "sha256": "3e988959c961f91ce7f1c8d70a99563eb79281acddd01574642c13bb11362c14"
+      "sha256": "b42fbb70c6b82c2842294745def4aef48f91263e08b6382620571138fa3a6809",
+      "mime": "text/javascript"
     },
     {
       "path": "client/game/README.md",
-      "bytes": 1195,
-      "sha256": "35896397af0dd0fcb2b26892fd869f9ced7e8ce3e4d0ed860e1503570dedea3d"
+      "kind": "text",
+      "bytes": 1734,
+      "sha256": "69a21405550cd41bcd143858968daaa95dc911775b45fdb0dabff1f1edbd1142",
+      "mime": "text/markdown"
     },
     {
       "path": "package.json",
+      "kind": "text",
       "bytes": 456,
-      "sha256": "885c315e55a2b3697b5a7bf80a36b2407e52c534367cfb21a915870204e8824f"
+      "sha256": "05afd968e559004f023beea8c1477c955e146773d6d257eff205fd9109a9af41",
+      "mime": "application/json"
     },
     {
       "path": "public/_headers",
+      "kind": "text",
       "bytes": 567,
-      "sha256": "331df5ad56df2420013efc01db9f36aae14baf5e02bc0304c58d57d7f626bfe8"
+      "sha256": "331df5ad56df2420013efc01db9f36aae14baf5e02bc0304c58d57d7f626bfe8",
+      "mime": "text/plain"
     },
     {
       "path": "public/account.html",
+      "kind": "text",
       "bytes": 1774,
-      "sha256": "aad4f7f220725b20f2c2d98fe6990140027568e170311b728dab8ab613d2c439"
+      "sha256": "aad4f7f220725b20f2c2d98fe6990140027568e170311b728dab8ab613d2c439",
+      "mime": "text/html"
     },
     {
       "path": "public/account.js",
+      "kind": "text",
       "bytes": 2466,
-      "sha256": "2958c1077b17b0718f10d39efaa899c9717e7f0f5cb12457085165bf7a1d29cb"
+      "sha256": "2958c1077b17b0718f10d39efaa899c9717e7f0f5cb12457085165bf7a1d29cb",
+      "mime": "text/javascript"
     },
     {
       "path": "public/favicon.png",
+      "kind": "binary",
       "bytes": 1604,
-      "sha256": "fdb9fb3c16be65ad53bf0a13bbccd50d45459e69e2781cc624bc04ba665026ed"
+      "sha256": "fdb9fb3c16be65ad53bf0a13bbccd50d45459e69e2781cc624bc04ba665026ed",
+      "mime": "image/png"
     },
     {
       "path": "public/friends-ui.css",
+      "kind": "text",
       "bytes": 1602,
-      "sha256": "baddb1423c739a6d5f054b4bff54faa2cbaebe8e84b46bdd046ec10a29a06af6"
+      "sha256": "baddb1423c739a6d5f054b4bff54faa2cbaebe8e84b46bdd046ec10a29a06af6",
+      "mime": "text/css"
     },
     {
       "path": "public/help.html",
+      "kind": "text",
       "bytes": 4670,
-      "sha256": "f859dabd07d166ef08814a3d937f9324f03e0cb3c889e392b487b6a1c905922e"
+      "sha256": "f859dabd07d166ef08814a3d937f9324f03e0cb3c889e392b487b6a1c905922e",
+      "mime": "text/html"
     },
     {
       "path": "public/icons/favicon-32.png",
+      "kind": "binary",
       "bytes": 1604,
-      "sha256": "fdb9fb3c16be65ad53bf0a13bbccd50d45459e69e2781cc624bc04ba665026ed"
+      "sha256": "fdb9fb3c16be65ad53bf0a13bbccd50d45459e69e2781cc624bc04ba665026ed",
+      "mime": "image/png"
     },
     {
       "path": "public/icons/favicon-64.png",
+      "kind": "binary",
       "bytes": 3070,
-      "sha256": "638e53f2d30ffeba8c2e790569925e126005692b368a37f6d61f4f0cb402370e"
+      "sha256": "638e53f2d30ffeba8c2e790569925e126005692b368a37f6d61f4f0cb402370e",
+      "mime": "image/png"
     },
     {
       "path": "public/icons/ribbit-race-180.png",
+      "kind": "binary",
       "bytes": 10098,
-      "sha256": "898138d420249bf4a91418404d8275026646144fea56724dca63630a8be0605c"
+      "sha256": "898138d420249bf4a91418404d8275026646144fea56724dca63630a8be0605c",
+      "mime": "image/png"
     },
     {
       "path": "public/icons/ribbit-race-192.png",
+      "kind": "binary",
       "bytes": 10579,
-      "sha256": "7af1221f7fc985e6d950d49978311b5d83dae3d2327772696e40e91d01f48329"
+      "sha256": "7af1221f7fc985e6d950d49978311b5d83dae3d2327772696e40e91d01f48329",
+      "mime": "image/png"
     },
     {
       "path": "public/icons/ribbit-race-512.png",
+      "kind": "binary",
       "bytes": 25861,
-      "sha256": "02a382485431e0c57a85dcc2561b1211d3b4605bb07b0bf5e1cbf85161334d3a"
+      "sha256": "02a382485431e0c57a85dcc2561b1211d3b4605bb07b0bf5e1cbf85161334d3a",
+      "mime": "image/png"
     },
     {
       "path": "public/index.html",
-      "bytes": 11719,
-      "sha256": "8346dc18ef08042f73686153e63891f0dc35b837ba185e56ef6558feb0560ae0"
+      "kind": "text",
+      "bytes": 11825,
+      "sha256": "7601e942f717f9e963d97680b68298609316f1d6192038d80cde29b2c1199c19",
+      "mime": "text/html"
     },
     {
       "path": "public/manifest.webmanifest",
+      "kind": "text",
       "bytes": 729,
-      "sha256": "b20471a2bdd5cdfc67c841e8e48f374f427b431e8f7c8aa1565343866246b99d"
+      "sha256": "b20471a2bdd5cdfc67c841e8e48f374f427b431e8f7c8aa1565343866246b99d",
+      "mime": "application/manifest+json"
     },
     {
       "path": "public/scripts/auth-screen-controller.js",
+      "kind": "text",
       "bytes": 1684,
-      "sha256": "672c2392e219834a8d9d8b3bdc87ac539c28da1686b4ca3a388e080ea7ce5e3f"
+      "sha256": "672c2392e219834a8d9d8b3bdc87ac539c28da1686b4ca3a388e080ea7ce5e3f",
+      "mime": "text/javascript"
     },
     {
       "path": "public/scripts/bootstrap.js",
+      "kind": "text",
       "bytes": 109,
-      "sha256": "525b6503b2af66dd9a93a90f55f02d1328a04df0bdcfbed226d769438d375ee6"
+      "sha256": "525b6503b2af66dd9a93a90f55f02d1328a04df0bdcfbed226d769438d375ee6",
+      "mime": "text/javascript"
     },
     {
       "path": "public/scripts/cloud-client.js",
+      "kind": "text",
       "bytes": 58464,
-      "sha256": "6752e5b3e84165fd95b9a686546718d0d548b7a0000ef0559cf0f6aed6969804"
+      "sha256": "e2960125923a39f9e210e66c2b5a062ac60e9425db4033674798ac343b217c7a",
+      "mime": "text/javascript"
     },
     {
       "path": "public/scripts/extended-features.js",
+      "kind": "text",
       "bytes": 19399,
-      "sha256": "11ce6735ab1af9f8a60f7388f923d7470543a71836bd5c0851c82410e33566a0"
+      "sha256": "11ce6735ab1af9f8a60f7388f923d7470543a71836bd5c0851c82410e33566a0",
+      "mime": "text/javascript"
     },
     {
       "path": "public/scripts/friends-api-client.js",
+      "kind": "text",
       "bytes": 1497,
-      "sha256": "12089fa6706d8fbc41071615bd6199f2b4c95029c94586b5e2d3f7f02b81b2b2"
+      "sha256": "12089fa6706d8fbc41071615bd6199f2b4c95029c94586b5e2d3f7f02b81b2b2",
+      "mime": "text/javascript"
     },
     {
       "path": "public/scripts/game.bundle.js",
-      "bytes": 1195386,
-      "sha256": "31a8a377fb8a4458c426c1b572942b5419e912e132cfde73c4e886a3f8bb0f5b"
+      "kind": "text",
+      "bytes": 1203789,
+      "sha256": "6bea9e4c4560fa9719d0136f7c32cdd1be14f00e9466e8e001dca2ba16f726ef",
+      "mime": "text/javascript"
     },
     {
       "path": "public/scripts/mobile-experience.js",
+      "kind": "text",
       "bytes": 5471,
-      "sha256": "aae9310789fef0c44f489748cb1838135373c0e75ddf833b4b5ee5ae820f62d8"
+      "sha256": "aae9310789fef0c44f489748cb1838135373c0e75ddf833b4b5ee5ae820f62d8",
+      "mime": "text/javascript"
     },
     {
       "path": "public/scripts/playtest-guard.js",
+      "kind": "text",
       "bytes": 2213,
-      "sha256": "b98d140c5db050e73571ab4da78a4483fed03a4c35a4f3eabbc48d382eb600c6"
+      "sha256": "b98d140c5db050e73571ab4da78a4483fed03a4c35a4f3eabbc48d382eb600c6",
+      "mime": "text/javascript"
     },
     {
       "path": "public/scripts/rr-170-online.js",
+      "kind": "text",
       "bytes": 11827,
-      "sha256": "407a477ac15198466664e0b12ce0f745591550ee772633befe89927e65201e14"
+      "sha256": "407a477ac15198466664e0b12ce0f745591550ee772633befe89927e65201e14",
+      "mime": "text/javascript"
     },
     {
       "path": "public/scripts/rr-170-polish.js",
-      "bytes": 17455,
-      "sha256": "b37e068d32e5fabb1f250ae8422dfe6f46a1026922fe97cddfae8443ef04ce97"
+      "kind": "text",
+      "bytes": 18128,
+      "sha256": "9b7227726633ada15801da536dc13c1ad3f2f491325fae1e1468cd2269e0d201",
+      "mime": "text/javascript"
+    },
+    {
+      "path": "public/scripts/tutorial-preboot.js",
+      "kind": "text",
+      "bytes": 457,
+      "sha256": "37e1fc4de709f8f9ccb12f0e64e4d19ce5340c1db231c04c569c9a8400c2eaf3",
+      "mime": "text/javascript"
     },
     {
       "path": "public/scripts/v160-page-polish.js",
+      "kind": "text",
       "bytes": 1970,
-      "sha256": "2a936dd6fe653e8b536f4acb6fc691bdd4a670a77ffcc2bfc5ab64322da3fa3d"
+      "sha256": "2a936dd6fe653e8b536f4acb6fc691bdd4a670a77ffcc2bfc5ab64322da3fa3d",
+      "mime": "text/javascript"
     },
     {
       "path": "public/styles/base.css",
+      "kind": "text",
       "bytes": 2060,
-      "sha256": "e9abfb0abc71e4cc95d21c7dbb82cc4b563706eeb2da8d9558b8102f5ccc9a89"
+      "sha256": "e9abfb0abc71e4cc95d21c7dbb82cc4b563706eeb2da8d9558b8102f5ccc9a89",
+      "mime": "text/css"
     },
     {
       "path": "public/styles/cloud-ui.css",
+      "kind": "text",
       "bytes": 11441,
-      "sha256": "33775db4dbac5d3c754793686852bf8188b03ad9fb2f1328dbdbd19c4a28b181"
+      "sha256": "33775db4dbac5d3c754793686852bf8188b03ad9fb2f1328dbdbd19c4a28b181",
+      "mime": "text/css"
     },
     {
       "path": "public/styles/extended-features.css",
+      "kind": "text",
       "bytes": 5688,
-      "sha256": "f09e46956c7f3e1102d725cf010989da0b3ab95f385875ccf60d0a031a20317b"
+      "sha256": "f09e46956c7f3e1102d725cf010989da0b3ab95f385875ccf60d0a031a20317b",
+      "mime": "text/css"
     },
     {
       "path": "public/styles/game-shell.css",
+      "kind": "text",
       "bytes": 5390,
-      "sha256": "1dd43a741de5330705c5db729033eca4b8183fec0a464b8337522a85ad9e72aa"
+      "sha256": "1dd43a741de5330705c5db729033eca4b8183fec0a464b8337522a85ad9e72aa",
+      "mime": "text/css"
     },
     {
       "path": "public/styles/rr-170.css",
-      "bytes": 5578,
-      "sha256": "00bc53c2b4013fc62cc3d21c2b2d1f631a7cb0b0830a97f2168db79681256c06"
+      "kind": "text",
+      "bytes": 5909,
+      "sha256": "8ac9504cd334dcc0ce12ba12714ae7ff115caabe9c614253191e522450438ed5",
+      "mime": "text/css"
     },
     {
       "path": "public/tutorial/ember-confident.png",
+      "kind": "binary",
       "bytes": 57408,
-      "sha256": "32f1d76c267c9f8e4c68070d1a632d721cc6484701ba91df62482d0e5b92819f"
+      "sha256": "32f1d76c267c9f8e4c68070d1a632d721cc6484701ba91df62482d0e5b92819f",
+      "mime": "image/png"
     },
     {
       "path": "public/tutorial/ember-cool.png",
+      "kind": "binary",
       "bytes": 61488,
-      "sha256": "2552bf4aeca5239a2dff8e642de65e61842975b9cafea5b59bbe2df450fba75d"
+      "sha256": "2552bf4aeca5239a2dff8e642de65e61842975b9cafea5b59bbe2df450fba75d",
+      "mime": "image/png"
     },
     {
       "path": "public/tutorial/ember-laughing.png",
+      "kind": "binary",
       "bytes": 61087,
-      "sha256": "63098020e2fcb7708334e1014b3b9498daaae4a1e7cc1e662364ad4fda51d111"
+      "sha256": "63098020e2fcb7708334e1014b3b9498daaae4a1e7cc1e662364ad4fda51d111",
+      "mime": "image/png"
     },
     {
       "path": "public/tutorial/ember-smile.png",
+      "kind": "binary",
       "bytes": 62925,
-      "sha256": "6a3557f09012f76d60f3c6170c5ba0a98e4ca26698f907c757763623db18f80d"
+      "sha256": "6a3557f09012f76d60f3c6170c5ba0a98e4ca26698f907c757763623db18f80d",
+      "mime": "image/png"
     },
     {
       "path": "public/tutorial/ember-thinking.png",
+      "kind": "binary",
       "bytes": 60807,
-      "sha256": "46950535d92d5aaf7d628725d5cc719a780855aad787e2b0b9b951ce0e77e1a9"
+      "sha256": "46950535d92d5aaf7d628725d5cc719a780855aad787e2b0b9b951ce0e77e1a9",
+      "mime": "image/png"
     },
     {
       "path": "scripts/build-game.mjs",
+      "kind": "text",
       "bytes": 1929,
-      "sha256": "9086922e2774cf261f749972134fa54e36c083313d28349e76c10efd34236697"
+      "sha256": "9086922e2774cf261f749972134fa54e36c083313d28349e76c10efd34236697",
+      "mime": "text/javascript"
     },
     {
       "path": "scripts/check.mjs",
+      "kind": "text",
       "bytes": 3235,
-      "sha256": "459c64511ec8c4ae51085ece28dd90cedde973a479bcff31e8f208d46c259bab"
+      "sha256": "459c64511ec8c4ae51085ece28dd90cedde973a479bcff31e8f208d46c259bab",
+      "mime": "text/javascript"
     },
     {
       "path": "scripts/smoke.mjs",
+      "kind": "text",
       "bytes": 3218,
-      "sha256": "8cea6f0f2baccdcf84348bc56f9377fb0bb2d9389717d8802023fbc0bca63e1c"
+      "sha256": "8cea6f0f2baccdcf84348bc56f9377fb0bb2d9389717d8802023fbc0bca63e1c",
+      "mime": "text/javascript"
     },
     {
       "path": "src/common.js",
+      "kind": "text",
       "bytes": 2266,
-      "sha256": "eb305121d540f48dd842c39aec12301a26f4efb0788d7c0bea5bccd88f6121fb"
+      "sha256": "01e3b4fc0121098a0ecc65822dcacebf1e59dee54bdf84eedc00fb9c483e178f",
+      "mime": "text/javascript"
     },
     {
       "path": "src/hub.js",
+      "kind": "text",
       "bytes": 26729,
-      "sha256": "01d6ab285e0c255bfbda4a0036b9c4398cacea33832e506bfff03bfb9c4ada52"
+      "sha256": "01d6ab285e0c255bfbda4a0036b9c4398cacea33832e506bfff03bfb9c4ada52",
+      "mime": "text/javascript"
     },
     {
       "path": "src/index.js",
+      "kind": "text",
       "bytes": 2581,
-      "sha256": "a5128139f471e437690f6aa5378f0ef2b6f0a2e8eb8168dd79592620c7636f07"
+      "sha256": "a5128139f471e437690f6aa5378f0ef2b6f0a2e8eb8168dd79592620c7636f07",
+      "mime": "text/javascript"
     },
     {
       "path": "src/realtime.js",
+      "kind": "text",
       "bytes": 7878,
-      "sha256": "7103a0ae72e9f4a426e0bca5ad566ae3a60cb070e983f7dca2fc7f70310f9c8d"
+      "sha256": "7103a0ae72e9f4a426e0bca5ad566ae3a60cb070e983f7dca2fc7f70310f9c8d",
+      "mime": "text/javascript"
     },
     {
       "path": "src/rooms-core.js",
+      "kind": "text",
       "bytes": 72677,
-      "sha256": "b1eac194d2617316d0b72a0261f439de05da5d176367d96fcd6863536e45e1ce"
+      "sha256": "b1eac194d2617316d0b72a0261f439de05da5d176367d96fcd6863536e45e1ce",
+      "mime": "text/javascript"
     },
     {
       "path": "src/save-data.js",
+      "kind": "text",
       "bytes": 8421,
-      "sha256": "976fba4ee45829eb77eaba68c35cb928a21e9a587cb4ebd3c43f0072aefb6651"
+      "sha256": "976fba4ee45829eb77eaba68c35cb928a21e9a587cb4ebd3c43f0072aefb6651",
+      "mime": "text/javascript"
     },
     {
       "path": "src/vocabulary.json",
+      "kind": "text",
       "bytes": 870,
-      "sha256": "95a2ac207defcfbf7680d89e75bc77fdafa29ab7a3c884cda084f54cd9d29a0d"
+      "sha256": "95a2ac207defcfbf7680d89e75bc77fdafa29ab7a3c884cda084f54cd9d29a0d",
+      "mime": "application/json"
     },
     {
       "path": "tests/core.test.mjs",
+      "kind": "text",
       "bytes": 10880,
-      "sha256": "b5ef86610b6005859faf0738c1bb058262a754b9489f97aca75e3f1ef7dcc55e"
+      "sha256": "b5ef86610b6005859faf0738c1bb058262a754b9489f97aca75e3f1ef7dcc55e",
+      "mime": "text/javascript"
     },
     {
       "path": "tests/friends-1.4.0.test.mjs",
+      "kind": "text",
       "bytes": 5294,
-      "sha256": "df8b1d8e99c4b779f5a2fadd5673e0936f64c7042c6181eba3292239ee6b7981"
+      "sha256": "87045b16f10030ab8f06c0231c23d5d88773d000339a8bfde215d7dd4255936e",
+      "mime": "text/javascript"
     },
     {
       "path": "tests/friends-1.4.1.test.mjs",
+      "kind": "text",
       "bytes": 2768,
-      "sha256": "ae60f6dfb8e63a16de119ba8dc51655c8c2394ff3a97b65a3553aaf7731038e7"
+      "sha256": "acdd06ac2daa4f315fc57dd3e0d67509fa5a5225fa936d1f2f6e079e229a7b63",
+      "mime": "text/javascript"
     },
     {
       "path": "tests/friends-1.5.0.test.mjs",
+      "kind": "text",
       "bytes": 6694,
-      "sha256": "d78824715e317c0e29efb11fcc32b19f53e1d682573335d2998e77d9dd4d3dce"
+      "sha256": "d78824715e317c0e29efb11fcc32b19f53e1d682573335d2998e77d9dd4d3dce",
+      "mime": "text/javascript"
     },
     {
       "path": "tests/friends-patch.test.mjs",
-      "bytes": 24940,
-      "sha256": "c16158abe36a91743a8ffc5ca4a9527e9607e02a2546b3670e04e6ecbfcc45d1"
+      "kind": "text",
+      "bytes": 24960,
+      "sha256": "ac1824e18358a1e78d6a6dfb20618c9438ded40714ce41987640c7a194d54267",
+      "mime": "text/javascript"
     },
     {
       "path": "tests/tutorial-cinematic-1.7.6.test.mjs",
-      "bytes": 9933,
-      "sha256": "d35b1b71c0228e9068d7e6d00630fc82c5a9b4487e8c0050ae410b5fa303977b"
+      "kind": "text",
+      "bytes": 12509,
+      "sha256": "448e3e7579d9c6cf9a7760bec0bd8d099c907e1b03e1db076e20cb324baa470b",
+      "mime": "text/javascript"
     },
     {
       "path": "tests/tutorial-refinement.test.mjs",
-      "bytes": 3585,
-      "sha256": "283b00ab56d08cb5d064c3268e0419173a4e97bbc93ff41ffa38789fe364eb9e"
+      "kind": "text",
+      "bytes": 6423,
+      "sha256": "d3c9efe14ecbedfcaa11ab190526050ae2cf0800adadade281c4497ecd7497df",
+      "mime": "text/javascript"
     },
     {
       "path": "tests/v160-deep-integration.test.mjs",
+      "kind": "text",
       "bytes": 1169,
-      "sha256": "aa15ac05477c605bbbcc3d7fa83129d586f8a0cc9f77f420ecc774f82ace4181"
+      "sha256": "aa15ac05477c605bbbcc3d7fa83129d586f8a0cc9f77f420ecc774f82ace4181",
+      "mime": "text/javascript"
     },
     {
       "path": "tests/v160-polish.test.mjs",
+      "kind": "text",
       "bytes": 2397,
-      "sha256": "7c733b6e9f6d6744ea218b12f500134a30f2497feabfab2f2b3f9c8f17a97efc"
+      "sha256": "76e6276a5d1d25a5962a20aeeb5bed3e53903e57cee60650de9fbb4d3ae38212",
+      "mime": "text/javascript"
     },
     {
       "path": "tests/v160-replay-tags-records.test.mjs",
+      "kind": "text",
       "bytes": 917,
-      "sha256": "83ab2518998605b26562f9aa89c020fd5a76108e741e93344e12390a93026067"
+      "sha256": "83ab2518998605b26562f9aa89c020fd5a76108e741e93344e12390a93026067",
+      "mime": "text/javascript"
     },
     {
       "path": "tests/v170.test.mjs",
-      "bytes": 5048,
-      "sha256": "b1091649c2a5203fba5b7da0716a67dd8edb4581c87ff1dcf143d3bc2a03b318"
+      "kind": "text",
+      "bytes": 5061,
+      "sha256": "2816b9e0d748fee0536c8fb025578bd438c522bc7c30e34daae3e57e8c7d6638",
+      "mime": "text/javascript"
     },
     {
       "path": "wrangler.jsonc",
+      "kind": "text",
       "bytes": 673,
-      "sha256": "72c04131d6c51c32eb0a3655ca5d94190a5ae2adc2a117d3e08a2e8cdf137378"
+      "sha256": "72c04131d6c51c32eb0a3655ca5d94190a5ae2adc2a117d3e08a2e8cdf137378",
+      "mime": "text/plain"
     }
   ]
 }
