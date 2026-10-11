@@ -12077,8 +12077,9 @@ function startRibbitRaceGame() {
 
     function drawPvpVsHoverTooltip() {
       if (OnlineVersus.isRoomMenu() || game.pvpSetupHoveredKey !== "vs") return;
+      const message = game.pvpHuman2 ? "LOCAL PVP ENABLED" : "CLICK TO ENABLE LOCAL PVP";
       const r = { x: 130, y: 208, w: 160, h: 17 };
-      window.RibbitTooltipBox?.(ctx, "CLICK TO ENABLE LOCAL PVP", 240, 211, { size: 7 });
+      window.RibbitTooltipBox?.(ctx, message, 240, 211, { size: 7 });
       ctx.save();
       ctx.fillStyle = "rgba(25,43,52,0.30)";
       ctx.fillRect(r.x + 2, r.y + 2, r.w, r.h);
@@ -12969,7 +12970,7 @@ function startRibbitRaceGame() {
     // become whole physical pixels (4, 3, or 2 pixels per bitmap cell), so the same
     // word cannot shimmer between fractional raster positions on later frames.
     function layoutStableFlyLabelText(text, maximumWidth = 120) {
-    if (window.RibbitV160ShouldHideFlyLabels?.()) return;
+    if (typeof window !== "undefined" && window.RibbitV160ShouldHideFlyLabels?.()) return;
       const normalized = normalizeBitmapText(text).trim();
       const scales = [1, 0.75, 0.5];
       for (const scale of scales) {
@@ -14354,7 +14355,7 @@ function startRibbitRaceGame() {
     }
 
     function getFlyLabelAnchor(currentFly) {
-    if (window.RibbitV160ShouldHideFlyLabels?.()) return;
+    if (typeof window !== "undefined" && window.RibbitV160ShouldHideFlyLabels?.()) return;
       if (currentFly.state === "spitting") {
         return { x: currentFly.returnX, y: currentFly.returnY };
       }
@@ -14369,7 +14370,7 @@ function startRibbitRaceGame() {
     const flyLabelSpriteCache = new Map();
 
     function flyLabelCacheKey(currentFly) {
-    if (window.RibbitV160ShouldHideFlyLabels?.()) return;
+    if (typeof window !== "undefined" && window.RibbitV160ShouldHideFlyLabels?.()) return;
       const id = Number(currentFly?.id) || 0;
       const vocab = Number(currentFly?.vocabIndex) || 0;
       if (game.mode === "pvp") {
@@ -14381,7 +14382,7 @@ function startRibbitRaceGame() {
     }
 
     function pruneFlyLabelPlacementCache() {
-    if (window.RibbitV160ShouldHideFlyLabels?.()) return;
+    if (typeof window !== "undefined" && window.RibbitV160ShouldHideFlyLabels?.()) return;
       const live = new Set(flies.map((currentFly) => flyLabelCacheKey(currentFly)));
       for (const key of flyLabelPlacementCache.keys()) {
         if (!live.has(key)) flyLabelPlacementCache.delete(key);
@@ -14398,7 +14399,7 @@ function startRibbitRaceGame() {
     }
 
     function getFlyLabelHudObstacles() {
-    if (window.RibbitV160ShouldHideFlyLabels?.()) return;
+    if (typeof window !== "undefined" && window.RibbitV160ShouldHideFlyLabels?.()) return;
       const obstacles = [
         { x: 3, y: 3, w: 92, h: 29 },
         { x: W - 95, y: 3, w: 92, h: 29 }
@@ -14410,7 +14411,7 @@ function startRibbitRaceGame() {
     }
 
     function chooseFlyLabelRect(currentFly, anchor, width, height) {
-    if (window.RibbitV160ShouldHideFlyLabels?.()) return;
+    if (typeof window !== "undefined" && window.RibbitV160ShouldHideFlyLabels?.()) return;
       // 1.6.0: the plate center remains locked directly above the fly's stable anchor.
       // It never shifts sideways to avoid the score, timer, pause button, or another
       // label. When two plates would overlap, only the vertical row may change.
@@ -14459,7 +14460,7 @@ function startRibbitRaceGame() {
     }
 
     function drawStableFlyLabelTextToSprite(targetContext, layout, width, textTop, lineHeight) {
-    if (window.RibbitV160ShouldHideFlyLabels?.()) return;
+    if (typeof window !== "undefined" && window.RibbitV160ShouldHideFlyLabels?.()) return;
       const lines = Array.isArray(layout?.lines) && layout.lines.length ? layout.lines : [""];
       const logicalScale = Number(layout?.scale) || 1;
       const cell = Math.max(1, Math.round(logicalScale * RENDER_SCALE));
@@ -14496,7 +14497,7 @@ function startRibbitRaceGame() {
     }
 
     function getFlyLabelSprite(currentFly, term, layout, width, height) {
-    if (window.RibbitV160ShouldHideFlyLabels?.()) return;
+    if (typeof window !== "undefined" && window.RibbitV160ShouldHideFlyLabels?.()) return;
       const cacheKey = flyLabelCacheKey(currentFly);
       const stripeColor = getSelectedSkin().mid;
       const signature = `${term}\u0000${layout.scale}\u0000${layout.lines.join("\u0001")}\u0000${width}x${height}\u0000${stripeColor}`;
@@ -20870,7 +20871,7 @@ function startRibbitRaceGame() {
 // input support hooks, palette operations, post-hat progression, and replay state.
 
 const RIBBIT_FRIENDS_DISPLAY_VERSION = "1.7.0";
-const RIBBIT_FRIENDS_BUILD = "2026.10.11-friends-tutorial-spectator-polish-1";
+const RIBBIT_FRIENDS_BUILD = "2026.10.11-friends-tutorial-spectator-polish-1a";
 
 function rr14Number(value, fallback = 0) {
   const parsed = Number(value);
@@ -21401,7 +21402,7 @@ window.RibbitRaceMobileDiagnostics = () => ({
  */
 (() => {
   "use strict";
-  const BUILD = "2026.10.11-friends-tutorial-spectator-polish-1";
+  const BUILD = "2026.10.11-friends-tutorial-spectator-polish-1a";
   const RR_V160_CANDIDATES = {"catchFly":["attemptFlyCatch","attemptPvpFlyCatch","catchSandboxFly","getPvpImminentCatchFly","recordFlyEaten","scheduleFlyReplacementFromCatch"],"jumpSound":["playJumpSound"],"beep":["playCountdownGoSound","playCountdownSound"],"replayUpload":["saveRecordDate"],"restart":["resetGame","resetPvpGame","resetPvpPlayer","resetRoundLifecycle","resetRoundNetwork","restartCurrentLevel"],"drop":[],"render":["drawPvpScene","drawScene"],"worldRecord":[],"fullscreen":["getFullscreenElement","hideFullscreenFallback","showFullscreenFallback","syncFullscreenButton","toggleRibbitFullscreen"],"onlineSubmit":[],"leaderboard":["isSoloEndlessLeaderboardEligible","savePvpMatchWinsForLeaderboard"]};
   const RR_V160_VARS = {"onlineSelect":[],"achievementSelect":["activeAchievementIndex","hoveredAchievementCard"],"backRect":[]};
 

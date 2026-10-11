@@ -6,6 +6,7 @@ const read=(path)=>readFileSync(path,"utf8");
 const html=read("public/index.html");
 const mobileClient=read("public/scripts/mobile-experience.js");
 const mobileGame=read("client/game/100-mobile-experience.js");
+const polish170=read("public/scripts/rr-170-polish.js");
 const core=read("client/game/10-core-config.js");
 const render=read("client/game/70-rendering.js");
 const versus=read("client/game/60-versus-gameplay.js");
@@ -38,9 +39,9 @@ test("main menu has canvas-native account and phone-computer controls",()=>{
   assert.match(mobileGame,/RR_MOBILE_MENU_UI/);
   assert.match(mobileGame,/rrDrawAvatarIcon/);
   assert.match(mobileGame,/rrDrawDeviceIcon/);
-  assert.match(mobileGame,/ACCOUNT • SAVES • RECORDS/);
-  assert.match(mobileGame,/SWITCH TO MOBILE MODE/);
-  assert.match(mobileGame,/SWITCH TO COMPUTER MODE/);
+  assert.match(polish170,/ACCOUNT • SAVES • RECORDS/);
+  assert.match(polish170,/SWITCH TO MOBILE MODE/);
+  assert.match(polish170,/SWITCH TO COMPUTER MODE/);
   assert.match(mobileGame,/RibbitMobileExperience\?\.openAccount/);
 });
 

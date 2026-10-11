@@ -3372,8 +3372,9 @@
 
     function drawPvpVsHoverTooltip() {
       if (OnlineVersus.isRoomMenu() || game.pvpSetupHoveredKey !== "vs") return;
+      const message = game.pvpHuman2 ? "LOCAL PVP ENABLED" : "CLICK TO ENABLE LOCAL PVP";
       const r = { x: 130, y: 208, w: 160, h: 17 };
-      window.RibbitTooltipBox?.(ctx, "CLICK TO ENABLE LOCAL PVP", 240, 211, { size: 7 });
+      window.RibbitTooltipBox?.(ctx, message, 240, 211, { size: 7 });
       ctx.save();
       ctx.fillStyle = "rgba(25,43,52,0.30)";
       ctx.fillRect(r.x + 2, r.y + 2, r.w, r.h);

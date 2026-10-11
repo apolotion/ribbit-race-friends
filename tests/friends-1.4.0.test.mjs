@@ -10,8 +10,8 @@ const render=read("client/game/70-rendering.js");
 const versus=read("client/game/60-versus-gameplay.js");
 
 test("1.7.0 build and ten modular gameplay sources are present",()=>{
-  assert.match(read("src/common.js"),/2026\.10\.11-friends-mobile-experience-1/);
-  assert.match(read("package.json"),/"version": "1\.5\.0"/);
+  assert.match(read("src/common.js"),/2026\.10\.11-friends-tutorial-spectator-polish-1a/);
+  assert.match(read("package.json"),/"version": "1\.7\.0"/);
   assert.match(read("scripts/build-game.mjs"),/100-mobile-experience\.js/);
   assert.match(read("public/index.html"),/mobile-experience\.js/);
 });

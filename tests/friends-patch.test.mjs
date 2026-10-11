@@ -36,8 +36,8 @@ test("PIN hashing stays within Cloudflare PBKDF2 limit and matches 100000 rounds
 });
 
 test("Friends release exposes the new build marker",()=>{
-  assert.equal(BUILD,"2026.10.11-friends-tutorial-spectator-polish-1");
-  assert.match(browserSource,/2026\.10\.11\-friends\-mobile\-experience\-1/);
+  assert.equal(BUILD,"2026.10.11-friends-tutorial-spectator-polish-1a");
+  assert.match(browserSource,/2026\.10\.11\-friends\-tutorial\-spectator\-polish\-1/);
 });
 
 test("server vocabulary is exactly the requested 15 entries",()=>{
@@ -71,13 +71,13 @@ test("auth boundary hides and inerts the runtime until sign-in or guest play",()
 
 test("index is presentation-only and gameplay source is separated by responsibility",()=>{
   assert.doesNotMatch(indexHtml,/<style\b/i);
-  assert.equal((indexHtml.match(/<script\b[^>]*src=/g)||[]).length,8);
+  assert.equal((indexHtml.match(/<script\b[^>]*src=/g)||[]).length,11);
   assert.match(indexHtml,/\/scripts\/friends-api-client\.js/);
   assert.match(indexHtml,/\/scripts\/auth-screen-controller\.js/);
   assert.match(indexHtml,/\/scripts\/cloud-client\.js/);
   assert.match(indexHtml,/\/scripts\/game\.bundle\.js/);
   const modules=fs.readdirSync(new URL("../client/game/",import.meta.url)).filter(name=>/^\d+-.+\.js$/.test(name));
-  assert.equal(modules.length,11);
+  assert.equal(modules.length,12);
   assert.match(fs.readFileSync(new URL("../scripts/build-game.mjs",import.meta.url),"utf8"),/class GameBundleBuilder/);
 });
 
@@ -134,8 +134,8 @@ test("Quickplay partner connection check is capped at 30 seconds",()=>{
 });
 
 test("queued device-check status is centered inside Play While Waiting",()=>{
-  assert.match(html,/minimize:\{x:115,y:201,w:250,h:34\}/);
-  assert.match(html,/cancel:\{x:185,y:239,w:110,h:22\}/);
+  assert.match(html,/minimize:\{x:115,y:194,w:250,h:28\}/);
+  assert.match(html,/cancel:\{x:185,y:226,w:110,h:22\}/);
   assert.match(html,/DEVICE CHECK PASSED - PARTNER LINK NOT YET TESTED/);
   assert.match(html,/const groupTop=y\+\(h-\(mainHeight\+gap\+subHeight\)\)\/2;/);
   assert.match(html,/drawBitmapText\(spec\.subLabel,\(left\+right\)\/2,groupTop\+mainHeight\+gap,subScale/);
@@ -324,7 +324,7 @@ test("Friends first-place notice is a world-record notice with hover details",()
 });
 
 test("version 1.7.0 remains in settings and the How To Play book footer",()=>{
-  assert.match(html,/const RIBBIT_DISPLAY_VERSION = "VERSION 1\.5\.0"/);
+  assert.match(html,/const RIBBIT_DISPLAY_VERSION = "VERSION 1\.7\.0"/);
   assert.match(html,/drawVersionLabel\(panel\.x \+ panel\.w \/ 2, panel\.y \+ panel\.h - 14, "center"/);
   assert.doesNotMatch(html,/drawVersionLabel\(399, 218, "right"\)/);
   assert.match(html,/function getPauseBookTheme/);
