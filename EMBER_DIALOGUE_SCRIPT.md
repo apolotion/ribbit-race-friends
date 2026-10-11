@@ -1,117 +1,93 @@
-# Ember Tutorial Dialogue Script
+# Ember Tutorial Dialogue — Version 1.7.6
 
-Build: `2026.10.11-friends-tutorial-refinement-1`  
-Displayed version: `VERSION 1.7.5`
+Each entry appears one line at a time. Space/Enter—or tap-release on mobile—advances to the next line. Closing the final line starts the playable exercise.
 
-## Dialogue behavior
+## 1. Welcome to Ribbit Race
 
-Every checked scenario loads its authored Park setup first. Ember’s compact dialogue then appears at the top of the screen, with Ember’s mirrored close-up portrait on the right. Pressing Space or Enter—or tapping and releasing on mobile—closes the dialogue and unlocks normal gameplay. The closing Space press is consumed until the player releases it.
+1. `HEY THERE! I'M EMBER. WELCOME TO RIBBIT RACE!`
+2. `I'LL TEACH YOU TO HOP, CATCH, AND COMPETE.`
+3. `CLOSE THIS BOX, THEN MAKE ONE JUMP.`
 
-Failed one-attempt exercises reset immediately with a ninja-style smoke poof. The dialogue is not repeated after every failure.
+Goal: Make one jump.
 
-## 1. Welcome to Ribbit Race — Smile
+## 2. Match the Term
 
-> Hey there! I’m Ember. Welcome to Ribbit Race!  
-> I’ll show you the ropes so you can hop, catch,  
-> and compete like a pro.
+1. `THE ENGLISH TERM APPEARS AT THE BOTTOM.`
+2. `CATCH THE FLY WITH THE MATCHING SPANISH WORD.`
 
-**Goal:** Make one jump.
+Goal: Catch the matching fly.
 
-## 2. Match the Term — Confident
+## 3. Charge a Full Jump
 
-> Your goal is simple: catch flies and be the best!  
-> I’ll give you an English term. Catch the fly  
-> with the matching Spanish word.
+1. `HOLD JUMP UNTIL THE METER IS COMPLETELY FULL.`
+2. `RELEASE AND CATCH THE FLY IN THAT ONE JUMP.`
 
-**Goal:** Catch the fly matching the term at the bottom.
+Goal: Max charge plus catch. A weak jump is allowed to finish before the smoke reset.
 
-## 3. Charge a Full Jump — Cool
+## 4. Automatic Catch Range
 
-> Hold to charge your jump, then release to leap!  
-> The longer you hold, the farther you go.  
-> Catch this fly with one fully charged jump.
+1. `YOUR FROG CATCHES FLIES AUTOMATICALLY IN RANGE.`
+2. `THIS FLY IS JUST BEYOND BODY-CATCH RANGE.`
+3. `GET CLOSE ENOUGH AND YOUR TONGUE WILL GRAB IT.`
 
-**Goal:** Max-charge and catch the fly in one attempt. Releasing too early resets immediately.
+Goal: Complete a real tongue catch.
 
-## 4. Automatic Catch Range — Confident
+## 5. Wrong Flies Are Safe
 
-> Flies are caught automatically when you’re close.  
-> This one is just beyond your normal jump.  
-> Get close enough and your tongue will reach it.
+1. `WRONG FLY? NO PROBLEM—YOU'LL SPIT IT BACK OUT.`
+2. `CATCH THE WRONG FLY, THEN THE RIGHT FLY.`
+3. `DO BOTH IN THE SAME JUMP.`
 
-**Goal:** Catch the fly specifically with the frog’s tongue.
+Goal: Wrong fly first, correct fly second, before landing.
 
-## 5. Wrong Flies Are Safe — Laughing
+## 6. Turn Around with a Wall
 
-> Grab the wrong fly? No worries!  
-> You’ll spit it back out. Catch the wrong fly,  
-> then the right fly in the same jump.
+1. `YOU CAN'T TURN AROUND IN MID-AIR.`
+2. `HIT THE RIGHT WALL, THEN COME BACK FOR THE FLY.`
+3. `ONE OR TWO JUMPS WILL WORK.`
 
-**Goal:** Catch the aligned wrong fly first, then the correct fly before landing.
+Goal: Wall turn and catch within two jumps. A successful one-jump catch also passes.
 
-## 6. Turn Around with a Wall — Thinking
+## 7. Rebound Catch
 
-> One catch: you can’t turn around in mid-air.  
-> Use your first jump to hit the wall, then use  
-> your second jump to come back for the fly.
+1. `NOW DO THE WALL TURN IN ONE JUMP.`
+2. `HIT THE WALL, REBOUND, AND CATCH THE FLY.`
 
-**Goal:** Turn at the wall and catch the fly within two jumps.
+Goal: One-jump rebound catch.
 
-## 7. Rebound Catch — Cool
+## 8. Quick Platform Drop
 
-> Now let’s make that wall turn look smooth.  
-> You get one jump: hit the wall, rebound,  
-> and catch the fly on the way back.
+1. `TAP JUMP QUICKLY WHILE STANDING ON A PLATFORM.`
+2. `DROP THROUGH AND CATCH THE FLY BELOW.`
 
-**Goal:** Complete the rebound catch in one jump.
+Goal: Quick drop plus catch in one attempt.
 
-## 8. Quick Platform Drop — Confident
+## 9. Buffer a Platform Drop
 
-> On a platform, tap jump quickly to drop through.  
-> The fly is just ahead and below.  
-> One attempt—drop and catch it.
+1. `CHARGE FROM THE LOW PLATFORM TO THE TOP.`
+2. `TAP JUST BEFORE LANDING TO BUFFER THROUGH IT.`
+3. `CATCH THE FLY NEAR THE MIDDLE PLATFORM.`
 
-**Goal:** Quick-drop and catch the fly in one attempt. Charging instead resets immediately.
+Goal: Buffered drop through the top Park platform.
 
-## 9. Buffer a Platform Drop — Thinking
+## 10. Double Buffer Drop
 
-> You can buffer a drop before you land.  
-> Charge to the top platform, tap just before  
-> touchdown, and fall through to the fly.
+1. `BUFFER THROUGH THE TOP, THEN THE MIDDLE.`
+2. `CATCH ALL THREE FLIES ON THE WAY DOWN.`
 
-**Goal:** Buffer through the top platform and catch the fly below.
+Goal: Two buffered drops and three catches.
 
-## 10. Double Buffer Drop — Cool
+## 11. Two Flies in One Arc
 
-> Ready for the fancy version?  
-> Buffer through the top, then the middle,  
-> and catch all three flies on the way down.
+1. `LINE UP TWO FLIES ALONG ONE JUMP ARC.`
+2. `CATCH BOTH BEFORE YOU LAND.`
 
-**Goal:** Complete two buffered drops and catch three sequential flies.
+Goal: Two flies in one jump.
 
-## 11. Two Flies in One Arc — Smile
+## 12. Final Practice Round
 
-> Line up multiple flies in one jump arc.  
-> It’s a great way to go faster!  
-> Catch both before you land.
+1. `THAT'S THE BASICS—NOW PUT IT ALL TOGETHER.`
+2. `CATCH FIVE FLIES IN A NORMAL PARK ROUND.`
+3. `I'LL BE CHEERING FOR YOU!`
 
-**Goal:** Catch two prompted flies during one jump.
-
-## 12. Final Practice Round — Smile
-
-> That’s the basics! Now put it all together.  
-> Catch five flies in a normal Park round.  
-> I’ll be cheering from the sidelines!
-
-**Goal:** Complete a normal five-fly Park round.
-
-## Completion
-
-The final round opens the tutorial congratulations screen and awards:
-
-```text
-RIBBIT READY
-Complete the Park Tutorial
-```
-
-The legitimate pre-tutorial save is restored before the permanent achievement is written.
+Goal: Complete a normal five-fly Park round. The standard Single Player victory screen and jingle are used.

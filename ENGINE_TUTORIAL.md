@@ -1,14 +1,34 @@
-# Ribbit Race Friends 1.7.5 — Refined Park Tutorial
+# Engine Tutorial Notes — 1.7.6
 
-The tutorial runs inside the real Park engine. It now starts automatically on first entry, displays a compact top dialogue from mirrored Ember portraits on the right, animates normal flies, and immediately resets failed scenarios with a pixel smoke poof.
+The tutorial runs inside the real Park engine. It does not use a separate practice canvas.
 
-## Scenario changes
+## Dialogue
 
-- Tongue range: authored fly is beyond normal body-contact range and requires a tongue catch.
-- Wrong fly: wrong and correct flies are aligned for one jump; both must be caught in order.
-- Wall turn: two jumps are allowed.
-- Rebound catch: one jump only.
-- Quick drop: one attempt, with immediate reset for a charged jump.
-- All authored flies use the regular hover/bob animation and their cards remain centered over them.
+- Approved Ember close-up portraits are preloaded before first boot.
+- Portraits use the black-and-cream frog, orange markings, orange patterned shirt, sunglasses, gold chain, and right-side placement.
+- The small gameplay frog is never used as a portrait fallback.
+- One dialogue line is displayed at a time and dynamically scaled to the available panel width.
+- The final close input is consumed before gameplay resumes.
 
-The tutorial continues to use reversible Playtest snapshots, so temporary tutorial progress does not replace legitimate cloud records or unlocks.
+## Scenario spawning
+
+- Authored flies remain hidden during dialogue.
+- Closing the final dialogue line arms the flies at `spawnAge = 0` and plays the normal fly-spawn sound.
+- Flies retain normal bobbing and horizontal hover movement after spawning.
+
+## Failure reset
+
+- Failure is detected immediately when the prerequisite is known to be missed.
+- For the max-charge exercise, failure waits for landing so the jump can finish naturally.
+- The frog poofs out and is hidden.
+- The authored scenario resets 500 milliseconds later.
+- A second smoke cloud and sound accompany the reappearance.
+- The Current Goal panel flashes red instead of creating a separate failure banner.
+
+## Park geometry
+
+Quick Drop, Buffer Drop, and Double Buffer all use the original `PARK_PLATFORMS` geometry. Their flies use normal `PARK_FLY_SPAWNS` coordinates.
+
+## Completion
+
+The final lesson completes through Ribbit Race's ordinary Single Player win state. The normal victory message, dance, rounded pixel panel, buttons, and victory melody are shown. The reversible tutorial snapshot remains active until the player leaves the victory screen, then the legitimate save is restored and `RIBBIT READY` is awarded.

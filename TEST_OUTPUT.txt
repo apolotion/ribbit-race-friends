@@ -1,18 +1,18 @@
-RIBBIT RACE FRIENDS 1.7.5
-Build: 2026.10.11-friends-tutorial-refinement-1
+RIBBIT RACE FRIENDS 1.7.6
+Build: 2026.10.11-friends-tutorial-cinematic-1
 
 
-> ribbit-race-friends@1.7.5 check
+> ribbit-race-friends@1.7.6 check
 > npm run build && node scripts/check.mjs
 
 
-> ribbit-race-friends@1.7.5 build
+> ribbit-race-friends@1.7.6 build
 > node scripts/build-game.mjs
 
 Built game bundle from 13 modules (1151689 bytes).
 Server and browser modules parse; 21 external assets are present; no Google or WebRTC runtime dependency.
 
-> ribbit-race-friends@1.7.5 test
+> ribbit-race-friends@1.7.6 test
 > node --test tests/*.test.mjs
 
 TAP version 13
@@ -142,8 +142,8 @@ ok 21 - Quickplay player replaced by CPU can immediately enter a new queue
   duration_ms: 4.625589
   type: 'test'
   ...
-# Subtest: 1.7.5 build and thirteen modular gameplay sources are present
-ok 22 - 1.7.5 build and thirteen modular gameplay sources are present
+# Subtest: 1.7.6 build and thirteen modular gameplay sources are present
+ok 22 - 1.7.6 build and thirteen modular gameplay sources are present
   ---
   duration_ms: 1.635295
   type: 'test'
@@ -220,8 +220,8 @@ ok 34 - replay routes are forwarded through the Worker
   duration_ms: 0.161402
   type: 'test'
   ...
-# Subtest: 1.7.5 keeps a right-edge Lake word plate exactly centered over its fly
-ok 35 - 1.7.5 keeps a right-edge Lake word plate exactly centered over its fly
+# Subtest: 1.7.6 keeps a right-edge Lake word plate exactly centered over its fly
+ok 35 - 1.7.6 keeps a right-edge Lake word plate exactly centered over its fly
   ---
   duration_ms: 2.075832
   type: 'test'
@@ -478,8 +478,8 @@ ok 77 - Friends first-place notice is a world-record notice with hover details
   duration_ms: 1.38034
   type: 'test'
   ...
-# Subtest: version 1.7.5 remains in settings and the How To Play book footer
-ok 78 - version 1.7.5 remains in settings and the How To Play book footer
+# Subtest: version 1.7.6 remains in settings and the How To Play book footer
+ok 78 - version 1.7.6 remains in settings and the How To Play book footer
   ---
   duration_ms: 2.121721
   type: 'test'
@@ -562,8 +562,8 @@ ok 91 - public legacy-key migration controls are retired
   duration_ms: 2.074777
   type: 'test'
   ...
-# Subtest: 1.7.5 tutorial refinement build is wired
-ok 92 - 1.7.5 tutorial refinement build is wired
+# Subtest: 1.7.6 tutorial refinement build is wired
+ok 92 - 1.7.6 tutorial refinement build is wired
   ---
   duration_ms: 1.511461
   type: 'test'
@@ -664,8 +664,8 @@ ok 108 - CPU takeover counts down without reset
   duration_ms: 0.090302
   type: 'test'
   ...
-# Subtest: version and build are 1.7.5
-ok 109 - version and build are 1.7.5
+# Subtest: version and build are 1.7.6
+ok 109 - version and build are 1.7.6
   ---
   duration_ms: 1.066529
   type: 'test'
@@ -766,8 +766,8 @@ ok 125 - Frog Tags uses frog appearance and disabled arrows
   duration_ms: 0.45999
   type: 'test'
   ...
-# Subtest: v1.7.5 engine tutorial project additions exist
-ok 126 - v1.7.5 engine tutorial project additions exist
+# Subtest: v1.7.6 engine tutorial project additions exist
+ok 126 - v1.7.6 engine tutorial project additions exist
   ---
   duration_ms: 2.796461
   type: 'test'
@@ -802,8 +802,8 @@ ok 131 - tutorial hides legacy floating controls and preserves cloud progress
   duration_ms: 0.398285
   type: 'test'
   ...
-# Subtest: 1.7.5 tutorial uses Ember speech bubbles and authored engine checks
-ok 132 - 1.7.5 tutorial uses Ember speech bubbles and authored engine checks
+# Subtest: 1.7.6 tutorial uses Ember speech bubbles and authored engine checks
+ok 132 - 1.7.6 tutorial uses Ember speech bubbles and authored engine checks
   ---
   duration_ms: 1.236788
   type: 'test'

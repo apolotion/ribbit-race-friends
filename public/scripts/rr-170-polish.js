@@ -376,7 +376,8 @@
       const engine=window.RibbitRaceTutorialEngine;
       const canvas=qs("#game");
       const gateOpen=gate && gate.hidden !== true;
-      const gameReady=Boolean(engine && canvas && Number(canvas.width) > 0 && Number(canvas.height) > 0);
+      const portraitsReady=engine?.portraitsReady !== false;
+      const gameReady=Boolean(engine && canvas && Number(canvas.width) > 0 && Number(canvas.height) > 0 && portraitsReady);
       if(gateOpen || !gameReady){setTimeout(check,250);return;}
       if(!forcedKind && engine.seen("solo")){finished=true;return;}
 

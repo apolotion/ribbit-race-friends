@@ -1,35 +1,40 @@
-# Ribbit Race Friends 1.7.5 — Tutorial Refinement Test Report
+# Ribbit Race Friends 1.7.6 — Test Report
 
-Build: `2026.10.11-friends-tutorial-refinement-1`
-
-## Automated pipeline
+## Commands run
 
 ```text
 npm run check
-Built game bundle from 13 modules.
-Server and browser modules parse; 21 external assets are present.
-
 npm test
-135 tests
-135 passed
+```
+
+## Final result
+
+```text
+Built game bundle from 13 modules
+Server and browser modules parse; 21 external assets are present
+
+146 tests
+146 passed
 0 failed
 ```
 
-## Targeted tutorial checks
+## Tutorial-specific coverage
 
-- New V5 first-boot marker and automatic post-authentication start retry.
-- Compact top dialogue panel and right-side portraits.
-- Five mirrored Ember portrait assets are packaged.
-- No on-map Ember mentor frog is drawn during the Solo tutorial.
-- Authored flies are no longer frozen to their base coordinates.
-- Failed attempts call the scenario reset synchronously and render smoke at departure and arrival.
-- The tongue lesson requires a catch whose source is `tongue`.
-- The wrong-fly lesson checks wrong-then-right before landing.
-- The wall-turn lesson allows two jumps while rebound remains one attempt.
-- Existing PIN accounts, saves, Quickplay, online play, Mobile Mode, hats, replays, and previous regression checks remain green.
+The automated checks verify:
 
-## Browser limitation
+- 1.7.6 build and V6 first-boot marker;
+- portrait preloading and no gameplay-frog portrait fallback;
+- one-line dialogue progression and dynamic text scaling;
+- hidden authored flies during dialogue;
+- normal sparkle/grow spawning after dialogue;
+- 500 ms two-stage smoke reset and both poof sounds;
+- max-charge failure only after landing;
+- tongue-only completion on a normal Park spawn;
+- wrong-then-right order enforcement;
+- unchanged Park platform geometry for drop lessons;
+- trophy Current Goal panel and red failure flash;
+- normal Single Player victory screen and melody reuse.
 
-A local Chromium navigation test was attempted, but the managed environment blocked local HTTP access with `ERR_BLOCKED_BY_ADMINISTRATOR`. The production deployment still needs a manual playthrough of all tutorial scenarios.
+## Limits
 
-Nothing was deployed to the live Cloudflare Worker from this environment.
+No files were deployed to the user's Cloudflare account. Exact feel on a physical iPhone, Promethean board, and the full twelve-step production tutorial still requires a manual post-deployment playthrough.

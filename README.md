@@ -1,12 +1,12 @@
 # Ribbit Race Friends Edition
 
-Build: `2026.10.11-friends-tutorial-refinement-1`  
-Displayed game version: `VERSION 1.7.5`
+Build: `2026.10.11-friends-tutorial-cinematic-1`  
+Displayed game version: `VERSION 1.7.6`
 
 This is the independent public Cloudflare Friends Edition. It retains four-digit PIN accounts, cloud saves, private rooms, Quickplay, spectators, CPU takeover, leaderboard record replays, post-unlock hat progression, the current 15-word Spanish vocabulary, clean sign-out reloads, stable fly labels, and the responsibility-based browser-client organization.
 
 
-## Changes in 1.7.5
+## Changes in 1.7.6
 
 - The corrected Park tutorial auto-starts the first time a player enters the game on that browser/profile.
 - Ember’s five approved black-and-orange portraits are mirrored and remain on the right side of the dialogue.

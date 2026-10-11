@@ -1,6 +1,6 @@
-# Ribbit Race Friends 1.7.5 — Ember Dialogue Tutorial
+# Ribbit Race Friends 1.7.6 — Ember Dialogue Tutorial
 
-Build: `2026.10.11-friends-tutorial-refinement-1`
+Build: `2026.10.11-friends-tutorial-cinematic-1`
 
 The tutorial runs inside the normal Park engine. It does not use a separate popup minigame.
 
