@@ -1,19 +1,22 @@
 {
-  "verified": false,
-  "syntax_failures": {},
-  "build": 0,
-  "check_script": 0,
-  "individual_tests": {
-    "core.test.mjs": 0,
-    "friends-1.4.0.test.mjs": 1,
-    "friends-1.4.1.test.mjs": 1,
-    "friends-1.5.0.test.mjs": 1,
-    "friends-patch.test.mjs": 1,
-    "v160-deep-integration.test.mjs": 0,
-    "v160-polish.test.mjs": 1,
-    "v160-replay-tags-records.test.mjs": 0,
-    "v170.test.mjs": 0
-  },
-  "final_check": 0,
-  "final_test": 1
+  "verified": true,
+  "version": "1.7.2",
+  "build": "2026.10.11-friends-engine-tutorial-2",
+  "bundleModules": 13,
+  "requiredPublicAssets": 21,
+  "npmCheck": 0,
+  "npmTest": 0,
+  "tests": 121,
+  "passed": 121,
+  "failed": 0,
+  "browserRuntime": {
+    "tutorialActive": true,
+    "mode": "solo",
+    "level": "park",
+    "oldPopupPresent": false,
+    "floatingTutorialButtonsPresent": false,
+    "floatingLiveMatchesButtonPresent": false,
+    "legacyLeftControlsVisible": false,
+    "pageErrors": 0
+  }
 }

@@ -1,9 +1,19 @@
 # Ribbit Race Friends Edition
 
-Build: `2026.10.11-friends-tutorial-spectator-polish-1`  
-Displayed game version: `VERSION 1.7.0`
+Build: `2026.10.11-friends-engine-tutorial-2`  
+Displayed game version: `VERSION 1.7.2`
 
 This is the independent public Cloudflare Friends Edition. It retains four-digit PIN accounts, cloud saves, private rooms, Quickplay, spectators, CPU takeover, leaderboard record replays, post-unlock hat progression, the current 15-word Spanish vocabulary, clean sign-out reloads, stable fly labels, and the responsibility-based browser-client organization.
+
+
+## Changes in 1.7.2
+
+- Replaced the separate tutorial popup/practice canvas with scenario checks inside the real Park game engine.
+- First boot now opens the actual Park level and uses the normal frog, flies, tongue, walls, platforms, drops, HUD, pause control, and five-fly round lifecycle.
+- Failed tutorial requirements reset their authored Park scenario.
+- Tutorial activity is isolated through the reversible playtest snapshot system so legitimate cloud progress and records are restored afterward.
+- Removed the legacy floating tutorial controls and floating Live Matches button. Spectating remains inside the normal Online → Spectate flow.
+- Added URL-only tutorial retesting with `?tutorial=solo` or `?tutorial=pvp`, avoiding additional menu clutter.
 
 ## Changes in 1.6.0
 
@@ -69,6 +79,8 @@ This is the independent public Cloudflare Friends Edition. It retains four-digit
 | `client/game/80-input-loop-startup.js` | Scene composition, input, fixed-step loop, and startup |
 | `client/game/90-extended-features.js` | Runtime bridge, record hooks, palette hooks, and telemetry |
 | `client/game/100-mobile-experience.js` | Canvas-native account/device icons, mobile meters, pause touch, and pointer ownership |
+| `client/game/110-online-mobile-polish.js` | Online/mobile replay, Frog Tags, records, audio, and performance polish |
+| `client/game/120-engine-tutorial.js` | Real Park-engine Single Player and PvP tutorial scenario controller |
 | `scripts/build-game.mjs` | Validates and assembles the closure-preserving game bundle |
 | `public/scripts/game.bundle.js` | Generated runtime; do not edit directly |
 | `src/` | Cloudflare Worker, Durable Objects, saves, rooms, replay storage, and vocabulary |

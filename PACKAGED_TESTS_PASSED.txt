@@ -1,24 +1,26 @@
-RIBBIT RACE FRIENDS 1.6.0 — FINAL LOCAL VALIDATION
-Build: 2026.10.11-friends-tutorial-spectator-polish-1
+RIBBIT RACE FRIENDS 1.7.2 — ENGINE TUTORIAL VALIDATION
+Build: 2026.10.11-friends-engine-tutorial-2
 
 SOURCE PROJECT
 - npm run check: PASS
-- npm test: 91 passed, 0 failed
-- Full test suite repeated 3 additional times: 91/91 each run
+- Game bundle: 13 modules
+- Required public assets: 21
+- npm test: 121 passed, 0 failed
 
-TRUSTED MOBILE BROWSER TEST
-- Login iPhone instructions opened: PASS
-- Mobile render scale selected 960x540: PASS
-- Trusted touch entered two-human Local Versus: PASS
-- P1 and P2 held simultaneously: PASS
-- Independent release preserved the other player's hold: PASS
-- Upper-right Versus pause touch entered paused state: PASS
+BROWSER RUNTIME
+- First boot entered the real Park level: PASS
+- Tutorial active inside normal Solo gameplay: PASS
+- Separate popup/tutorial canvas absent: PASS
+- Floating tutorial buttons absent: PASS
+- Floating Live Matches button absent: PASS
+- Legacy left account/device/medal overlays hidden: PASS
 - JavaScript page errors: 0
 
-FINAL EXTRACTED COMPLETE ZIP TEST
-- npm run check: PASS
-- npm test: 91 passed, 0 failed
+FINAL PACKAGED ZIP
+- Complete ZIP extracted into a fresh directory: PASS
+- npm run check from extracted ZIP: PASS
+- npm test from extracted ZIP: 121 passed, 0 failed
 
 LIMITS
 - No live Cloudflare deployment was performed.
-- Physical iPhone Safari, Home Screen installation, Promethean hardware, and production WebSocket play remain to be tested by the installation owner.
+- Physical iPhone, Promethean hardware, and full manual tutorial completion remain production checks.

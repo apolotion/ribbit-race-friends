@@ -1,108 +1,740 @@
-## check attempt 1 (exit 1)
 
-> ribbit-race-friends@1.7.0 check
-> npm run build && node scripts/check.mjs
+> ribbit-race-friends@1.7.2 test
+> node --test tests/*.test.mjs
 
-
-> ribbit-race-friends@1.7.0 build
-> node scripts/build-game.mjs
-
-Built game bundle from 12 modules (1102717 bytes).
-
-/mnt/data/Ribbit_Race_Friends_Tutorial_Spectator_Update/src/rooms-core.js:125
-     this is a reserved matchmaking room.');
-          ^^
-
-SyntaxError: Unexpected identifier 'is'
-[90m    at checkSyntax (node:internal/main/check_syntax:74:5)[39m
-
-Node.js v22.16.0
-
-
-
-## check attempt 2 (exit 1)
-
-> ribbit-race-friends@1.7.0 check
-> npm run build && node scripts/check.mjs
-
-
-> ribbit-race-friends@1.7.0 build
-> node scripts/build-game.mjs
-
-Built game bundle from 12 modules (1102717 bytes).
-
-/mnt/data/Ribbit_Race_Friends_Tutorial_Spectator_Update/src/rooms-core.js:125
-     this is a reserved matchmaking room.');
-          ^^
-
-SyntaxError: Unexpected identifier 'is'
-[90m    at checkSyntax (node:internal/main/check_syntax:74:5)[39m
-
-Node.js v22.16.0
-
-
-
-## check attempt 3 (exit 1)
-
-> ribbit-race-friends@1.7.0 check
-> npm run build && node scripts/check.mjs
-
-
-> ribbit-race-friends@1.7.0 build
-> node scripts/build-game.mjs
-
-Built game bundle from 12 modules (1102717 bytes).
-
-/mnt/data/Ribbit_Race_Friends_Tutorial_Spectator_Update/src/rooms-core.js:125
-     this is a reserved matchmaking room.');
-          ^^
-
-SyntaxError: Unexpected identifier 'is'
-[90m    at checkSyntax (node:internal/main/check_syntax:74:5)[39m
-
-Node.js v22.16.0
-
-
-
-## check attempt 4 (exit 1)
-
-> ribbit-race-friends@1.7.0 check
-> npm run build && node scripts/check.mjs
-
-
-> ribbit-race-friends@1.7.0 build
-> node scripts/build-game.mjs
-
-Built game bundle from 12 modules (1102717 bytes).
-
-/mnt/data/Ribbit_Race_Friends_Tutorial_Spectator_Update/src/rooms-core.js:125
-     this is a reserved matchmaking room.');
-          ^^
-
-SyntaxError: Unexpected identifier 'is'
-[90m    at checkSyntax (node:internal/main/check_syntax:74:5)[39m
-
-Node.js v22.16.0
-
-
-
-## FINAL CHECK (exit 1)
-
-> ribbit-race-friends@1.7.0 check
-> npm run build && node scripts/check.mjs
-
-
-> ribbit-race-friends@1.7.0 build
-> node scripts/build-game.mjs
-
-Built game bundle from 12 modules (1102717 bytes).
-
-/mnt/data/Ribbit_Race_Friends_Tutorial_Spectator_Update/src/rooms-core.js:125
-     this is a reserved matchmaking room.');
-          ^^
-
-SyntaxError: Unexpected identifier 'is'
-[90m    at checkSyntax (node:internal/main/check_syntax:74:5)[39m
-
-Node.js v22.16.0
-
+TAP version 13
+# Subtest: PIN derivation is salted and cookie is Secure/HttpOnly
+ok 1 - PIN derivation is salted and cookie is Secure/HttpOnly
+  ---
+  duration_ms: 95.559909
+  type: 'test'
+  ...
+# Subtest: JSON request size limit rejects oversized streamed input
+ok 2 - JSON request size limit rejects oversized streamed input
+  ---
+  duration_ms: 19.486152
+  type: 'test'
+  ...
+# Subtest: save keeps Endless maxima, time minima, PvP maxima and result journal
+ok 3 - save keeps Endless maxima, time minima, PvP maxima and result journal
+  ---
+  duration_ms: 1.186683
+  type: 'test'
+  ...
+# Subtest: save ignores unrelated keys and bounds payloads
+ok 4 - save ignores unrelated keys and bounds payloads
+  ---
+  duration_ms: 0.210356
+  type: 'test'
+  ...
+# Subtest: achievements merge without deleting prior unlocks
+ok 5 - achievements merge without deleting prior unlocks
+  ---
+  duration_ms: 1.065861
+  type: 'test'
+  ...
+# Subtest: old clients and untested preflight rejected
+ok 6 - old clients and untested preflight rejected
+  ---
+  duration_ms: 0.929497
+  type: 'test'
+  ...
+# Subtest: private room rejects same account and wrong account token
+ok 7 - private room rejects same account and wrong account token
+  ---
+  duration_ms: 4.164596
+  type: 'test'
+  ...
+# Subtest: Ready and a fabricated flag cannot start without authenticated sockets
+ok 8 - Ready and a fabricated flag cannot start without authenticated sockets
+  ---
+  duration_ms: 2.470351
+  type: 'test'
+  ...
+# Subtest: two fresh socket confirmations admit a private match
+ok 9 - two fresh socket confirmations admit a private match
+  ---
+  duration_ms: 2.10325
+  type: 'test'
+  ...
+# Subtest: wrong partner challenge does not admit
+ok 10 - wrong partner challenge does not admit
+  ---
+  duration_ms: 2.526986
+  type: 'test'
+  ...
+# Subtest: Google-style audit snapshots and inputs never returned for live human playback
+ok 11 - Google-style audit snapshots and inputs never returned for live human playback
+  ---
+  duration_ms: 1.399532
+  type: 'test'
+  ...
+# Subtest: private lobby leave invalidates old room capability
+ok 12 - private lobby leave invalidates old room capability
+  ---
+  duration_ms: 1.036056
+  type: 'test'
+  ...
+# Subtest: in-progress opponent departure produces one server-authorized CPU slot
+ok 13 - in-progress opponent departure produces one server-authorized CPU slot
+  ---
+  duration_ms: 2.012493
+  type: 'test'
+  ...
+# Subtest: host departure transfers simulation authority to surviving guest
+ok 14 - host departure transfers simulation authority to surviving guest
+  ---
+  duration_ms: 2.033404
+  type: 'test'
+  ...
+# Subtest: unstarted failed pairing is closed without awarding any result
+ok 15 - unstarted failed pairing is closed without awarding any result
+  ---
+  duration_ms: 1.47827
+  type: 'test'
+  ...
+# Subtest: Quickplay pairs with fixed best-of-three Endless rules
+ok 16 - Quickplay pairs with fixed best-of-three Endless rules
+  ---
+  duration_ms: 2.801709
+  type: 'test'
+  ...
+# Subtest: guest spectator capability survives subsequent polls
+ok 17 - guest spectator capability survives subsequent polls
+  ---
+  duration_ms: 0.954634
+  type: 'test'
+  ...
+# Subtest: spectator capability cannot be reused by a different account
+ok 18 - spectator capability cannot be reused by a different account
+  ---
+  duration_ms: 0.747382
+  type: 'test'
+  ...
+# Subtest: private ratings are absent from public profile
+ok 19 - private ratings are absent from public profile
+  ---
+  duration_ms: 0.265468
+  type: 'test'
+  ...
+# Subtest: guest display names stay in expiring storage
+ok 20 - guest display names stay in expiring storage
+  ---
+  duration_ms: 0.201482
+  type: 'test'
+  ...
+# Subtest: Quickplay player replaced by CPU can immediately enter a new queue
+ok 21 - Quickplay player replaced by CPU can immediately enter a new queue
+  ---
+  duration_ms: 3.457093
+  type: 'test'
+  ...
+# Subtest: 1.7.2 build and thirteen modular gameplay sources are present
+ok 22 - 1.7.2 build and thirteen modular gameplay sources are present
+  ---
+  duration_ms: 1.348726
+  type: 'test'
+  ...
+# Subtest: obsolete apolotion unlock code is absent and Playtest is reversible
+ok 23 - obsolete apolotion unlock code is absent and Playtest is reversible
+  ---
+  duration_ms: 1.887566
+  type: 'test'
+  ...
+# Subtest: world-record label, hover details and repeat suppression remain installed
+ok 24 - world-record label, hover details and repeat suppression remain installed
+  ---
+  duration_ms: 0.171548
+  type: 'test'
+  ...
+# Subtest: fastest-time and fewest-jumps replay paths remain available
+ok 25 - fastest-time and fewest-jumps replay paths remain available
+  ---
+  duration_ms: 0.254943
+  type: 'test'
+  ...
+# Subtest: hat progression uses a post-unlock baseline and no online/human-only requirements
+ok 26 - hat progression uses a post-unlock baseline and no online/human-only requirements
+  ---
+  duration_ms: 0.474163
+  type: 'test'
+  ...
+# Subtest: hatstest exposes Hats without directly unlocking individual hats
+ok 27 - hatstest exposes Hats without directly unlocking individual hats
+  ---
+  duration_ms: 0.584668
+  type: 'test'
+  ...
+# Subtest: custom palette tools and revised Custom Frog 3 requirements remain installed
+ok 28 - custom palette tools and revised Custom Frog 3 requirements remain installed
+  ---
+  duration_ms: 0.164487
+  type: 'test'
+  ...
+# Subtest: Mobile Mode owns independent simultaneous P1 and P2 pointer slots
+ok 29 - Mobile Mode owns independent simultaneous P1 and P2 pointer slots
+  ---
+  duration_ms: 0.158578
+  type: 'test'
+  ...
+# Subtest: word plates stay horizontally centered above flies
+ok 30 - word plates stay horizontally centered above flies
+  ---
+  duration_ms: 0.451618
+  type: 'test'
+  ...
+# Subtest: bonks require a falling upper frog or a rising lower frog
+ok 31 - bonks require a falling upper frog or a rising lower frog
+  ---
+  duration_ms: 0.457117
+  type: 'test'
+  ...
+# Subtest: PvP achievements and bounce stats accept the eligible active human on either side
+ok 32 - PvP achievements and bounce stats accept the eligible active human on either side
+  ---
+  duration_ms: 0.530787
+  type: 'test'
+  ...
+# Subtest: Versus entry persists the preferred selected frog skin
+ok 33 - Versus entry persists the preferred selected frog skin
+  ---
+  duration_ms: 0.15933
+  type: 'test'
+  ...
+# Subtest: replay routes are forwarded through the Worker
+ok 34 - replay routes are forwarded through the Worker
+  ---
+  duration_ms: 0.094461
+  type: 'test'
+  ...
+# Subtest: 1.7.2 keeps a right-edge Lake word plate exactly centered over its fly
+ok 35 - 1.7.2 keeps a right-edge Lake word plate exactly centered over its fly
+  ---
+  duration_ms: 1.259612
+  type: 'test'
+  ...
+# Subtest: running pause button is deliberately translucent
+ok 36 - running pause button is deliberately translucent
+  ---
+  duration_ms: 0.285519
+  type: 'test'
+  ...
+# Subtest: pause book and How To Play pages inherit the selected frog palette
+ok 37 - pause book and How To Play pages inherit the selected frog palette
+  ---
+  duration_ms: 1.418961
+  type: 'test'
+  ...
+# Subtest: record replay API is backed by SQLite and same-origin Worker forwarding
+ok 38 - record replay API is backed by SQLite and same-origin Worker forwarding
+  ---
+  duration_ms: 0.230076
+  type: 'test'
+  ...
+# Subtest: iPhone Home Screen metadata, manifest and installation help ship together
+ok 39 - iPhone Home Screen metadata, manifest and installation help ship together
+  ---
+  duration_ms: 1.159351
+  type: 'test'
+  ...
+# Subtest: Mobile Mode confirmation and repeat iPhone instructions are explicit
+ok 40 - Mobile Mode confirmation and repeat iPhone instructions are explicit
+  ---
+  duration_ms: 0.189355
+  type: 'test'
+  ...
+# Subtest: main menu has canvas-native account and phone-computer controls
+ok 41 - main menu has canvas-native account and phone-computer controls
+  ---
+  duration_ms: 0.107532
+  type: 'test'
+  ...
+# Subtest: Mobile Mode hides the legacy guest/fullscreen DOM toolbar
+ok 42 - Mobile Mode hides the legacy guest/fullscreen DOM toolbar
+  ---
+  duration_ms: 0.222575
+  type: 'test'
+  ...
+# Subtest: iOS long-press magnifier and native selection are suppressed on the game canvas
+ok 43 - iOS long-press magnifier and native selection are suppressed on the game canvas
+  ---
+  duration_ms: 0.195513
+  type: 'test'
+  ...
+# Subtest: Mobile meters retain gradient charge and independent pointer ownership
+ok 44 - Mobile meters retain gradient charge and independent pointer ownership
+  ---
+  duration_ms: 0.247011
+  type: 'test'
+  ...
+# Subtest: mobile pause is drawn in Versus and routes through pauseGame
+ok 45 - mobile pause is drawn in Versus and routes through pauseGame
+  ---
+  duration_ms: 0.148753
+  type: 'test'
+  ...
+# Subtest: letterboxed touchscreen coordinates are mapped into the 480 by 270 game area
+ok 46 - letterboxed touchscreen coordinates are mapped into the 480 by 270 game area
+  ---
+  duration_ms: 0.102243
+  type: 'test'
+  ...
+# Subtest: mobile instructions do not tell players to use keyboard controls
+ok 47 - mobile instructions do not tell players to use keyboard controls
+  ---
+  duration_ms: 1.163348
+  type: 'test'
+  ...
+# Subtest: opponent frogs and flies lower the first-jump instruction bubble opacity
+ok 48 - opponent frogs and flies lower the first-jump instruction bubble opacity
+  ---
+  duration_ms: 0.4596
+  type: 'test'
+  ...
+# Subtest: Versus round results are awarded once and transition through a real result state
+ok 49 - Versus round results are awarded once and transition through a real result state
+  ---
+  duration_ms: 0.2258
+  type: 'test'
+  ...
+# Subtest: Mobile performance mode reduces render pixels, video recording and catch-up work
+ok 50 - Mobile performance mode reduces render pixels, video recording and catch-up work
+  ---
+  duration_ms: 0.10668
+  type: 'test'
+  ...
+# Subtest: hatstest unlocks only the Hats feature and no requirement needs online/human opponents
+ok 51 - hatstest unlocks only the Hats feature and no requirement needs online/human opponents
+  ---
+  duration_ms: 0.175734
+  type: 'test'
+  ...
+# Subtest: no-hat selection uses a dashed empty top-hat outline
+ok 52 - no-hat selection uses a dashed empty top-hat outline
+  ---
+  duration_ms: 0.127261
+  type: 'test'
+  ...
+# Subtest: runtime loops are throttled and replay recording is disabled on mobile
+ok 53 - runtime loops are throttled and replay recording is disabled on mobile
+  ---
+  duration_ms: 0.09954
+  type: 'test'
+  ...
+# Subtest: PIN hashing stays within Cloudflare PBKDF2 limit and matches 100000 rounds
+ok 54 - PIN hashing stays within Cloudflare PBKDF2 limit and matches 100000 rounds
+  ---
+  duration_ms: 64.142373
+  type: 'test'
+  ...
+# Subtest: Friends release exposes the new build marker
+ok 55 - Friends release exposes the new build marker
+  ---
+  duration_ms: 0.220301
+  type: 'test'
+  ...
+# Subtest: server vocabulary is exactly the requested 15 entries
+ok 56 - server vocabulary is exactly the requested 15 entries
+  ---
+  duration_ms: 1.008996
+  type: 'test'
+  ...
+# Subtest: offline fallback vocabulary matches the server vocabulary
+ok 57 - offline fallback vocabulary matches the server vocabulary
+  ---
+  duration_ms: 2.341858
+  type: 'test'
+  ...
+# Subtest: logout confirms the server session and reloads the exact initial login document
+ok 58 - logout confirms the server session and reloads the exact initial login document
+  ---
+  duration_ms: 0.769877
+  type: 'test'
+  ...
+# Subtest: auth boundary hides and inerts the runtime until sign-in or guest play
+ok 59 - auth boundary hides and inerts the runtime until sign-in or guest play
+  ---
+  duration_ms: 0.288554
+  type: 'test'
+  ...
+# Subtest: index is presentation-only and gameplay source is separated by responsibility
+ok 60 - index is presentation-only and gameplay source is separated by responsibility
+  ---
+  duration_ms: 0.557007
+  type: 'test'
+  ...
+# Subtest: AuthScreenController owns runtime locking and clean-login navigation
+ok 61 - AuthScreenController owns runtime locking and clean-login navigation
+  ---
+  duration_ms: 1.616157
+  type: 'test'
+  ...
+# Subtest: global gameplay hotkeys are gated while the login screen owns focus
+ok 62 - global gameplay hotkeys are gated while the login screen owns focus
+  ---
+  duration_ms: 1.878962
+  type: 'test'
+  ...
+# Subtest: Quickplay partner connection check is capped at 30 seconds
+ok 63 - Quickplay partner connection check is capped at 30 seconds
+  ---
+  duration_ms: 1.023357
+  type: 'test'
+  ...
+# Subtest: queued device-check status is centered inside Play While Waiting
+ok 64 - queued device-check status is centered inside Play While Waiting
+  ---
+  duration_ms: 0.831379
+  type: 'test'
+  ...
+# Subtest: single-player fly labels keep persistent placements instead of re-solving every frame
+ok 65 - single-player fly labels keep persistent placements instead of re-solving every frame
+  ---
+  duration_ms: 2.739405
+  type: 'test'
+  ...
+# Subtest: fly vocabulary text is rasterized once on quarter-step pixel scales
+ok 66 - fly vocabulary text is rasterized once on quarter-step pixel scales
+  ---
+  duration_ms: 0.913913
+  type: 'test'
+  ...
+# Subtest: actual label-placement function keeps existing fly rectangles stable as flies spawn and leave
+ok 67 - actual label-placement function keeps existing fly rectangles stable as flies spawn and leave
+  ---
+  duration_ms: 2.560837
+  type: 'test'
+  ...
+# Subtest: online PvP label rectangles survive rebuilt snapshot flies and tiny anchor drift
+ok 68 - online PvP label rectangles survive rebuilt snapshot flies and tiny anchor drift
+  ---
+  duration_ms: 2.262598
+  type: 'test'
+  ...
+# Subtest: failed connection Local Play opens the single-player level menu without auto-starting
+ok 69 - failed connection Local Play opens the single-player level menu without auto-starting
+  ---
+  duration_ms: 0.444728
+  type: 'test'
+  ...
+# Subtest: local Versus VS hover explains how to enable local PvP
+ok 70 - local Versus VS hover explains how to enable local PvP
+  ---
+  duration_ms: 0.977148
+  type: 'test'
+  ...
+# Subtest: owner legacy recovery is request-triggered, one-shot and refuses PIN accounts
+ok 71 - owner legacy recovery is request-triggered, one-shot and refuses PIN accounts
+  ---
+  duration_ms: 0.36625
+  type: 'test'
+  ...
+# Subtest: untimed Single Player top-center fly keeps its word plate above the fly
+ok 72 - untimed Single Player top-center fly keeps its word plate above the fly
+  ---
+  duration_ms: 1.980756
+  type: 'test'
+  ...
+# Subtest: Single Player pause and resume countdown reuse one frozen world bitmap
+ok 73 - Single Player pause and resume countdown reuse one frozen world bitmap
+  ---
+  duration_ms: 2.382509
+  type: 'test'
+  ...
+# Subtest: CPU takeover leaves an explicit disconnected-player notice
+ok 74 - CPU takeover leaves an explicit disconnected-player notice
+  ---
+  duration_ms: 0.421483
+  type: 'test'
+  ...
+# Subtest: replaced Quickplay participant is released and routed back to requeue
+ok 75 - replaced Quickplay participant is released and routed back to requeue
+  ---
+  duration_ms: 1.387785
+  type: 'test'
+  ...
+# Subtest: every fly word plate uses top-only candidate rows
+ok 76 - every fly word plate uses top-only candidate rows
+  ---
+  duration_ms: 1.841145
+  type: 'test'
+  ...
+# Subtest: Friends first-place notice is a world-record notice with hover details
+ok 77 - Friends first-place notice is a world-record notice with hover details
+  ---
+  duration_ms: 1.796298
+  type: 'test'
+  ...
+# Subtest: version 1.7.2 remains in settings and the How To Play book footer
+ok 78 - version 1.7.2 remains in settings and the How To Play book footer
+  ---
+  duration_ms: 1.474284
+  type: 'test'
+  ...
+# Subtest: frog overlap axis is deterministic and cooldown separation removes intersections
+ok 79 - frog overlap axis is deterministic and cooldown separation removes intersections
+  ---
+  duration_ms: 0.871759
+  type: 'test'
+  ...
+# Subtest: overlap resolution rebounds horizontally and bonks vertically only with valid motion
+ok 80 - overlap resolution rebounds horizontally and bonks vertically only with valid motion
+  ---
+  duration_ms: 0.684899
+  type: 'test'
+  ...
+# Subtest: fast-moving frogs use swept collision detection instead of tunneling through
+ok 81 - fast-moving frogs use swept collision detection instead of tunneling through
+  ---
+  duration_ms: 0.780031
+  type: 'test'
+  ...
+# Subtest: Versus collision code cannot silently ignore overlapping frogs
+ok 82 - Versus collision code cannot silently ignore overlapping frogs
+  ---
+  duration_ms: 1.003587
+  type: 'test'
+  ...
+# Subtest: achievement toast becomes translucent when a fly or word plate is behind it
+ok 83 - achievement toast becomes translucent when a fly or word plate is behind it
+  ---
+  duration_ms: 0.652891
+  type: 'test'
+  ...
+# Subtest: jungle center trunk no longer draws the decorative snake
+ok 84 - jungle center trunk no longer draws the decorative snake
+  ---
+  duration_ms: 1.503759
+  type: 'test'
+  ...
+# Subtest: final-catch word plates stay in camera space and fade with their flies
+ok 85 - final-catch word plates stay in camera space and fade with their flies
+  ---
+  duration_ms: 0.568895
+  type: 'test'
+  ...
+# Subtest: PvP leaderboard uses singular grammar for exactly one win
+ok 86 - PvP leaderboard uses singular grammar for exactly one win
+  ---
+  duration_ms: 0.107141
+  type: 'test'
+  ...
+# Subtest: menu credit is Made by Nick M. on one shared baseline
+ok 87 - menu credit is Made by Nick M. on one shared baseline
+  ---
+  duration_ms: 1.377168
+  type: 'test'
+  ...
+# Subtest: fly-label sprite text is centered in physical pixels
+ok 88 - fly-label sprite text is centered in physical pixels
+  ---
+  duration_ms: 0.520612
+  type: 'test'
+  ...
+# Subtest: custom frog editor includes a large live preview and relocated controls
+ok 89 - custom frog editor includes a large live preview and relocated controls
+  ---
+  duration_ms: 1.286753
+  type: 'test'
+  ...
+# Subtest: sandbox flies begin with the normal Single Player spawn animation
+ok 90 - sandbox flies begin with the normal Single Player spawn animation
+  ---
+  duration_ms: 1.180844
+  type: 'test'
+  ...
+# Subtest: public legacy-key migration controls are retired
+ok 91 - public legacy-key migration controls are retired
+  ---
+  duration_ms: 1.88347
+  type: 'test'
+  ...
+# Subtest: release touch updates online hover index
+ok 92 - release touch updates online hover index
+  ---
+  duration_ms: 2.153936
+  type: 'test'
+  ...
+# Subtest: final catch tongue assist calls normal catch candidates
+ok 93 - final catch tongue assist calls normal catch candidates
+  ---
+  duration_ms: 0.111287
+  type: 'test'
+  ...
+# Subtest: replay begins on active run and only uploads records
+ok 94 - replay begins on active run and only uploads records
+  ---
+  duration_ms: 0.095694
+  type: 'test'
+  ...
+# Subtest: pause fullscreen DOM option exists
+ok 95 - pause fullscreen DOM option exists
+  ---
+  duration_ms: 0.101292
+  type: 'test'
+  ...
+# Subtest: reset and platform drop functions are wrapped
+ok 96 - reset and platform drop functions are wrapped
+  ---
+  duration_ms: 0.194512
+  type: 'test'
+  ...
+# Subtest: online appearance and Frog Tags are separated
+ok 97 - online appearance and Frog Tags are separated
+  ---
+  duration_ms: 0.0929
+  type: 'test'
+  ...
+# Subtest: CPU takeover counts down without reset
+ok 98 - CPU takeover counts down without reset
+  ---
+  duration_ms: 0.079119
+  type: 'test'
+  ...
+# Subtest: version and build are 1.7.2
+ok 99 - version and build are 1.7.2
+  ---
+  duration_ms: 0.939531
+  type: 'test'
+  ...
+# Subtest: touch menus activate on release
+ok 100 - touch menus activate on release
+  ---
+  duration_ms: 0.157106
+  type: 'test'
+  ...
+# Subtest: countdown touch precharge has separate pointers
+ok 101 - countdown touch precharge has separate pointers
+  ---
+  duration_ms: 0.091017
+  type: 'test'
+  ...
+# Subtest: final catch labels cannot reappear
+ok 102 - final catch labels cannot reappear
+  ---
+  duration_ms: 0.081503
+  type: 'test'
+  ...
+# Subtest: remote audio and countdown beeps are monitored
+ok 103 - remote audio and countdown beeps are monitored
+  ---
+  duration_ms: 0.250957
+  type: 'test'
+  ...
+# Subtest: CPU takeover is a three second frozen interruption
+ok 104 - CPU takeover is a three second frozen interruption
+  ---
+  duration_ms: 0.107531
+  type: 'test'
+  ...
+# Subtest: Frog Tags and history exist
+ok 105 - Frog Tags and history exist
+  ---
+  duration_ms: 0.133671
+  type: 'test'
+  ...
+# Subtest: guest save conversion and close warning exist
+ok 106 - guest save conversion and close warning exist
+  ---
+  duration_ms: 0.216035
+  type: 'test'
+  ...
+# Subtest: record replay starts timesliced and discards non-records
+ok 107 - record replay starts timesliced and discards non-records
+  ---
+  duration_ms: 0.257837
+  type: 'test'
+  ...
+# Subtest: platform buffer preserves momentum without extra jump
+ok 108 - platform buffer preserves momentum without extra jump
+  ---
+  duration_ms: 0.311318
+  type: 'test'
+  ...
+# Subtest: app manifest and icons exist
+ok 109 - app manifest and icons exist
+  ---
+  duration_ms: 0.14599
+  type: 'test'
+  ...
+# Subtest: credit says Nick M.
+ok 110 - credit says Nick M.
+  ---
+  duration_ms: 2.60259
+  type: 'test'
+  ...
+# Subtest: IndexedDB replay archive exists
+ok 111 - IndexedDB replay archive exists
+  ---
+  duration_ms: 1.526933
+  type: 'test'
+  ...
+# Subtest: Frog Tags supports selecting opponent and all games
+ok 112 - Frog Tags supports selecting opponent and all games
+  ---
+  duration_ms: 0.222064
+  type: 'test'
+  ...
+# Subtest: online matches record full replay from match start
+ok 113 - online matches record full replay from match start
+  ---
+  duration_ms: 0.165088
+  type: 'test'
+  ...
+# Subtest: record notice remembers prior holder and suppresses repeated aggregate leaders
+ok 114 - record notice remembers prior holder and suppresses repeated aggregate leaders
+  ---
+  duration_ms: 0.164327
+  type: 'test'
+  ...
+# Subtest: Frog Tags uses frog appearance and disabled arrows
+ok 115 - Frog Tags uses frog appearance and disabled arrows
+  ---
+  duration_ms: 0.268403
+  type: 'test'
+  ...
+# Subtest: v1.7.2 engine tutorial project additions exist
+ok 116 - v1.7.2 engine tutorial project additions exist
+  ---
+  duration_ms: 1.062396
+  type: 'test'
+  ...
+# Subtest: tutorial uses the real Park engine instead of a popup practice canvas
+ok 117 - tutorial uses the real Park engine instead of a popup practice canvas
+  ---
+  duration_ms: 1.384389
+  type: 'test'
+  ...
+# Subtest: mobile touch support remains present
+ok 118 - mobile touch support remains present
+  ---
+  duration_ms: 0.224377
+  type: 'test'
+  ...
+# Subtest: spectator picker remains available without a floating live-matches button
+ok 119 - spectator picker remains available without a floating live-matches button
+  ---
+  duration_ms: 0.327362
+  type: 'test'
+  ...
+# Subtest: safety guards are present
+ok 120 - safety guards are present
+  ---
+  duration_ms: 0.185198
+  type: 'test'
+  ...
+# Subtest: tutorial hides legacy floating controls and preserves cloud progress
+ok 121 - tutorial hides legacy floating controls and preserves cloud progress
+  ---
+  duration_ms: 0.411989
+  type: 'test'
+  ...
+1..121
+# tests 121
+# suites 0
+# pass 121
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 297.218305

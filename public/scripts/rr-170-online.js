@@ -9,7 +9,7 @@
     return h?.game?.online || window.RibbitRaceOnlineSession || null;
   };
   const safe = (v,n=40)=>String(v??"").replace(/[<>\x00-\x1f]/g,"").trim().slice(0,n);
-  let lastHeartbeat=0, lastRoom="", picker, spectatorButton, overlayCanvas, octx;
+  let lastHeartbeat=0, lastRoom="", picker, overlayCanvas, octx;
   let currentMatchAppearance=null;
   let audioContext=null, audioUnlocked=false, lastCountdown=null, previousGrounded=[true,true];
   function unlockAudio(){
@@ -156,18 +156,6 @@
     canvas.addEventListener("pointercancel",event=>pending.delete(event.pointerId),true);
   }
 
-  function installSpectateButton(){
-    spectatorButton=document.createElement("button");
-    spectatorButton.className="rr170-button";
-    spectatorButton.type="button";
-    spectatorButton.textContent="◉";
-    spectatorButton.title="CHOOSE A LIVE MATCH TO SPECTATE";
-    spectatorButton.style.cssText+=";right:10.6%;top:43%;width:5.8%;aspect-ratio:1";
-    spectatorButton.hidden=true;
-    spectatorButton.onclick=refreshPicker;
-    root()?.appendChild(spectatorButton);
-  }
-
   function installOverlayCanvas(){
     const frame=document.querySelector("#game-frame"),canvas=document.querySelector("#game");
     if(!frame||!canvas)return;
@@ -239,8 +227,6 @@
   }
 
   function loop(){
-    if(!spectatorButton)installSpectateButton();
-    spectatorButton.hidden=!onlineMenuActive();
     drawSpectatorOverlay();
     applySpectatorAppearance();
     requestAnimationFrame(loop);
