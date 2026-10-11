@@ -1,6 +1,6 @@
 # Friends PIN-account compatibility
 
-Current build: `2026.10.10-friends-visual-polish-1`
+Current build: `2026.10.10-friends-centered-labels-themed-book-1`
 
 The Friends Edition uses a username plus a user-chosen four-digit PIN. PBKDF2-SHA-256 uses 100,000 iterations, within Cloudflare Workers' supported limit. Existing PIN accounts and saves remain compatible with this release.
 

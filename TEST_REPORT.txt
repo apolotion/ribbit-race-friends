@@ -1,60 +1,87 @@
-# Test report — Ribbit Race Friends 1.3.0
+# Ribbit Race Friends 1.4.1 — test report
 
-Build: `2026.10.10-friends-visual-polish-1`
-Displayed game version: `VERSION 1.3.0`
+Build: `2026.10.10-friends-centered-labels-themed-book-1`  
+Displayed version: `VERSION 1.4.1`
 
-## Automated project checks
+Overall: **PASS**
 
-The exact production commands completed successfully:
+## Build and source validation
+
+The exact project source completed:
+
+```text
+npm run check
+```
+
+Result:
+
+```text
+Built game bundle from 9 modules (1029324 bytes).
+Server and browser modules parse; 11 external assets are present; no Google or WebRTC runtime dependency.
+```
+
+This validates the responsibility-based game modules, generated browser bundle, Worker source, public assets, and script/style references.
+
+## Automated tests
+
+The exact project source completed:
+
+```text
+npm test
+```
+
+Result:
+
+```text
+82 tests
+82 passed
+0 failed
+```
+
+The complete test suite was then repeated three additional times. Every repeated run again passed **82/82**.
+
+The suite includes targeted checks for:
+
+- exact fly-label centering at the upper-right edge of Lake;
+- deliberate overlap with the pause-button region rather than horizontal label displacement;
+- translucent running-state pause rendering;
+- frog-palette-derived compact book and open How To Play panel;
+- persistent Single Player and online label placements;
+- pause-frame stability;
+- PIN authentication and save compatibility;
+- Quickplay, disconnect CPU takeover, and immediate requeue;
+- Fastest Time/Fewest Jumps replay storage and Worker forwarding;
+- Mobile Mode and independent two-player touch pointers;
+- thematic hat progression and reversible Playtest state;
+- collision, bonk, rebound, and anti-tunneling behavior.
+
+## Browser visual smoke test
+
+The production HTML, CSS, and generated scripts were executed in Chromium with test-only in-memory storage and mocked same-origin API responses. No JavaScript errors occurred.
+
+Verified visually:
+
+- Lake fly plates remain centered directly over the flies, including a wide upper-right plate near the pause control;
+- the running pause button is visibly translucent;
+- Pause uses a book icon derived from the active Azure frog palette;
+- the open How To Play book uses the same frog palette for its header, page, divider, and version footer;
+- `VERSION 1.4.1` appears inside the book footer.
+
+Preview files:
+
+- `Ribbit_Race_1.4.1_Lake_Centered_Labels.png`
+- `Ribbit_Race_1.4.1_Pause_Themed_Book_Button.png`
+- `Ribbit_Race_1.4.1_Themed_How_To_Play.png`
+
+The managed Chromium environment blocks ordinary localhost and `file:` navigation, so the visual run used an inline test document assembled from the exact production assets. Cloudflare deployment, real account storage, production replay upload, and physical multitouch hardware were not exercised here.
+
+## Packaging verification
+
+The final complete repository ZIP was extracted to a fresh directory and the exact commands below were rerun successfully:
 
 ```text
 npm run check
 npm test
 ```
 
-Results:
-
-```text
-59 tests
-59 passed
-0 failed
-```
-
-The complete 59-test suite was then run three additional times. Every repeated run again passed 59/59.
-
-## Coverage added for this release
-
-- Achievement toast opacity is capped when its rectangle covers a fly body or cached vocabulary plate.
-- The Jungle center-trunk snake drawing code is absent.
-- Final Catch labels use camera-space fly offsets and a timed fade.
-- Friends first-place messaging says `FRIENDS LEADER!` and documents its leaderboard meaning.
-- PvP leaderboard grammar uses `1 WIN` and plural `WINS` otherwise.
-- Main and Single Player menus use one `MADE BY NICK` credit constant and baseline.
-- Fly-label text is centered in physical pixels.
-- Version `1.3.0` remains in settings and appears in the How To Play book footer.
-- The Custom Frog editor includes a large live preview and relocated controls.
-- Sandbox flies begin with `spawnAge: 0` and pass through the same grow/spark rendering functions as normal flies.
-- Public private-key migration controls and handlers are absent.
-
-## Existing regression coverage retained
-
-The suite also covers PIN derivation, save merging, achievements, private rooms, direct admission, Quickplay, spectators, CPU takeover, immediate disconnect requeue, label persistence, pause-frame stability, Local Play routing, Versus tooltip behavior, collision separation, swept collision detection, vocabulary parity, clean sign-out, modular bundle construction, and guarded legacy-owner recovery.
-
-## Browser rendering smoke test
-
-The built production assets were assembled in their normal load order and executed in headless Chromium at 1280×720 with test-only API and storage adapters. The following screens rendered without JavaScript errors:
-
-- Friends login
-- main menu
-- Frog Color
-- redesigned Custom Frog editor
-- Lake Single Player with live vocabulary plates
-- Pause menu
-- How To Play book with `VERSION 1.3.0` footer
-- Sandbox immediately after fly spawn and after the spawn effect completed
-
-The early Sandbox frame visibly showed the normal sparkle/grow effect; the later frame showed the same flies at full size.
-
-## Limits
-
-Nothing was deployed to the user's Cloudflare account. The browser environment blocks real network navigation, so the rendering smoke test used local test-only API/storage adapters and did not verify production cookies, live Durable Objects, real two-device WebSockets, or production latency. Final Catch, achievement overlap, and online behavior are covered by source/function tests but still require a live post-deployment play check.
+No live Cloudflare Worker or Durable Object was modified by these tests.

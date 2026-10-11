@@ -1,0 +1,25 @@
+RIBBIT RACE FRIENDS 1.4.1 — FINAL LOCAL VALIDATION
+Build: 2026.10.10-friends-centered-labels-themed-book-1
+
+npm run check
+PASS — Built game bundle from 9 modules (1029324 bytes).
+PASS — Server and browser modules parse; 11 external assets are present.
+
+npm test
+PASS — 82 tests
+PASS — 82 passed
+PASS — 0 failed
+
+Repeated npm test runs
+PASS — run 1: 82/82
+PASS — run 2: 82/82
+PASS — run 3: 82/82
+
+Browser visual smoke test
+PASS — production HTML/CSS/scripts executed with test-only API/storage adapters
+PASS — no JavaScript errors
+PASS — upper-right Lake label remained centered over its fly
+PASS — running pause control was translucent
+PASS — compact book and open How To Play panel inherited the selected frog palette
+
+No live Cloudflare deployment was performed by this validation.

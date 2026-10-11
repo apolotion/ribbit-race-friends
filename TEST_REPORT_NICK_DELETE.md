@@ -1,6 +1,6 @@
 # Test report — Nick legacy-delete repair
 
-Build: `2026.10.10-friends-visual-polish-1`
+Build: `2026.10.10-friends-centered-labels-themed-book-1`
 
 ## Passed
 

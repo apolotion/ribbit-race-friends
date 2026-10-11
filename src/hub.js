@@ -19,6 +19,8 @@ export class FriendsHub extends DurableObject {
   this.sql.exec('CREATE INDEX IF NOT EXISTS temporary_exp ON temporary(expires)');
   this.sql.exec('CREATE TABLE IF NOT EXISTS persistent (key TEXT PRIMARY KEY, value TEXT NOT NULL)');
   this.sql.exec('CREATE TABLE IF NOT EXISTS awards (matchid TEXT PRIMARY KEY, uid TEXT NOT NULL, created INTEGER NOT NULL)');
+  this.sql.exec('CREATE TABLE IF NOT EXISTS record_replays (uid TEXT NOT NULL, username TEXT NOT NULL, level TEXT NOT NULL, metric TEXT NOT NULL, value REAL NOT NULL, mime TEXT NOT NULL, data TEXT NOT NULL, updated INTEGER NOT NULL, PRIMARY KEY(uid,level,metric))');
+  this.sql.exec('CREATE INDEX IF NOT EXISTS record_replays_lookup ON record_replays(username,level,metric)');
   const get=(key)=>{const r=this.one('SELECT value,expires FROM temporary WHERE key=?',key);return r&&r.expires>Date.now()?r.value:null;};
   const put=(key,value,seconds)=>{this.sql.exec('INSERT INTO temporary(key,value,expires) VALUES(?,?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value,expires=excluded.expires',String(key),String(value),Date.now()+Math.max(1,Math.min(21600,seconds||600))*1000);};
   this.cache={get,put,getAll:keys=>Object.fromEntries(keys.map(k=>[k,get(k)]).filter(([,v])=>v!==null)),putAll:(o,s)=>{for(const[k,v]of Object.entries(o))put(k,v,s);},remove:k=>this.sql.exec('DELETE FROM temporary WHERE key=?',k),removeAll:ks=>{for(const k of ks)this.sql.exec('DELETE FROM temporary WHERE key=?',k);}};
@@ -49,6 +51,7 @@ export class FriendsHub extends DurableObject {
    this.runtime({uid:old.id,marker:'',guest:false,expires:0}).deletePrivate(old.id);
    this.sql.exec('DELETE FROM sessions WHERE uid=?',old.id);
    this.sql.exec('DELETE FROM awards WHERE uid=?',old.id);
+   this.sql.exec('DELETE FROM record_replays WHERE uid=?',old.id);
    this.sql.exec('DELETE FROM users WHERE id=?',old.id);
    result={status:'deleted-legacy',username:old.username,at:Date.now()};
   }
@@ -76,9 +79,48 @@ export class FriendsHub extends DurableObject {
   this.sql.exec('INSERT INTO awards(matchid,uid,created) VALUES(?,?,?)',matchid,uid,Date.now());this.writeSave(u,s);return {ok:true,pvpMatchWins:n};
  }
  writeSave(u,s){const clean=sanitizeSaveData_(s),rev=u.revision+1;this.sql.exec('UPDATE users SET savedata=?,revision=?,updated=?,summary=? WHERE id=?',JSON.stringify(clean),rev,Date.now(),JSON.stringify(summarizeSave_(clean)),u.id);return {ok:true,revision:rev,saveSchemaVersion:2};}
+ replayLevel(value){const level=String(value||'').toLowerCase();return ['park','swamp','jungle','pond','lake','garden'].includes(level)?level:'';}
+ replayMetric(value){const metric=String(value||'').toLowerCase();return ['time','jumps'].includes(metric)?metric:'';}
+ async replayGet(request,url){
+  const auth=this.readAuth(request);if(!auth)return json(error('SESSION_EXPIRED','Sign in or use guest play to view replays.'),401);
+  const username=String(url.searchParams.get('username')||'').normalize('NFKC').trim().toLowerCase();
+  const level=this.replayLevel(url.searchParams.get('level')),metric=this.replayMetric(url.searchParams.get('metric'));
+  if(!username||!level||!metric)return json(error('INVALID_REPLAY','Choose a player, level and record category.'),400);
+  const row=this.one('SELECT mime,data,value,updated FROM record_replays WHERE username=? AND level=? AND metric=?',username,level,metric);
+  if(!row)return json(error('REPLAY_NOT_FOUND','This record was made before replay capture was enabled.'),404);
+  return json({ok:true,username,level,metric,value:Number(row.value),mime:row.mime,data:row.data,updated:Number(row.updated)});
+ }
+ async replaySubmit(request){
+  const auth=this.readAuth(request);if(!auth||auth.guest)return json(error('SESSION_EXPIRED','Sign in to save a record replay.'),401);
+  if(request.method!=='POST')return json(error('METHOD_NOT_ALLOWED','Replay submission requires POST.'),405);
+  let payload;try{payload=await limitedJson(request,4_500_000);}catch(e){return json(error('INVALID_REQUEST',e.message),400);}
+  const user=this.one('SELECT id,username,name FROM users WHERE id=?',auth.uid);
+  if(!user)return json(error('ACCOUNT_NOT_FOUND','The account no longer exists.'),404);
+  const requested=String(payload.username||'').normalize('NFKC').trim().toLowerCase();
+  if(requested&&requested!==user.username)return json(error('REPLAY_ACCOUNT_MISMATCH','A replay can only be saved to the signed-in account.'),403);
+  const level=this.replayLevel(payload.level);
+  const time=Number(payload.time),jumps=Math.floor(Number(payload.jumps));
+  const mime=String(payload.mime||'video/webm').toLowerCase();
+  const data=String(payload.data||'').trim();
+  if(!level||!Number.isFinite(time)||time<=0||time>3600||!Number.isFinite(jumps)||jumps<0||jumps>100000)return json(error('INVALID_REPLAY','Replay timing or level data is invalid.'),400);
+  if(!/^video\/webm(?:;|$)/.test(mime)||data.length<32||data.length>3_900_000||!/^[A-Za-z0-9+/=]+$/.test(data))return json(error('INVALID_REPLAY','Replay video data is invalid or too large.'),400);
+  const now=Date.now(),stored=[];
+  const saveMetric=(metric,value)=>{
+   const previous=this.one('SELECT value FROM record_replays WHERE uid=? AND level=? AND metric=?',user.id,level,metric);
+   const better=!previous||(metric==='time'?value<Number(previous.value):value<Number(previous.value));
+   if(!better)return;
+   this.sql.exec('INSERT INTO record_replays(uid,username,level,metric,value,mime,data,updated) VALUES(?,?,?,?,?,?,?,?) ON CONFLICT(uid,level,metric) DO UPDATE SET username=excluded.username,value=excluded.value,mime=excluded.mime,data=excluded.data,updated=excluded.updated',user.id,user.username,level,metric,value,mime,data,now);
+   stored.push(metric);
+  };
+  saveMetric('time',time);saveMetric('jumps',jumps);
+  return json({ok:true,stored,level,time,jumps});
+ }
  async fetch(request){
   this.runOwnerLegacyCleanup();
-  const method=new URL(request.url).pathname.split('/').pop();let payload;
+  const requestUrl=new URL(request.url);
+  if(requestUrl.pathname==='/api/replays/get')return this.replayGet(request,requestUrl);
+  if(requestUrl.pathname==='/api/replays/submit')return this.replaySubmit(request);
+  const method=requestUrl.pathname.split('/').pop();let payload;
   try{payload=await limitedJson(request);}catch(e){return json(error('INVALID_REQUEST',e.message),400);}
   const ip=digest(request.headers.get('X-Friends-IP')||'unknown');
   let auth=this.readAuth(request),presence={};
@@ -159,7 +201,7 @@ export class FriendsHub extends DurableObject {
      if(method==='apiDeleteAccount'){
       if(payload.confirm!==u.name)return error('CONFIRM','Type your exact username to confirm deletion.');
       this.runtime(auth).deletePrivate(u.id);this.sql.exec('DELETE FROM sessions WHERE uid=?',u.id);this.sql.exec('DELETE FROM users WHERE id=?',u.id);
-      this.sql.exec('DELETE FROM awards WHERE uid=?',u.id);setCookie=sessionCookie(request.url,'',0);
+      this.sql.exec('DELETE FROM awards WHERE uid=?',u.id);this.sql.exec('DELETE FROM record_replays WHERE uid=?',u.id);setCookie=sessionCookie(request.url,'',0);
       return {ok:true,deleted:true,message:'Account and cloud save deleted. Historical opponents may retain past matchup records.'};
      }
      const nextPin=String(payload.newPin||'').trim();if(!/^\d{4}$/.test(nextPin))return error('INVALID_PIN','Choose exactly four numbers for the new PIN.');

@@ -1,46 +1,44 @@
 # Ribbit Race Friends Edition architecture
 
-Build: `2026.10.10-friends-visual-polish-1`
-Displayed game version: `VERSION 1.3.0`
+Build: `2026.10.10-friends-centered-labels-themed-book-1`  
+Displayed game version: `VERSION 1.4.1`
 
 ## Browser responsibilities
 
-- `public/index.html` — semantic document structure only; no public legacy-key migration form.
-- `public/styles/base.css` — page, canvas, and accessibility foundations.
-- `public/styles/cloud-ui.css` — authentication, account, and leaderboard presentation.
-- `public/styles/game-shell.css` — fullscreen shell, queue rail, responsive rules, and auth lock.
+- `public/index.html` — semantic document structure only.
+- `public/styles/` — page, authentication, mobile, replay, and game-shell presentation.
 - `public/scripts/friends-api-client.js` — `FriendsApiClient`; HTTP request policy.
-- `public/scripts/auth-screen-controller.js` — `AuthScreenController`; login/game visibility, input boundary, and clean sign-out navigation.
+- `public/scripts/auth-screen-controller.js` — login/game visibility, input boundary, and clean sign-out navigation.
 - `public/scripts/cloud-client.js` — PIN accounts, save hydration, vocabulary, leaderboard formatting, and cloud lifecycle.
-- `client/game/20-models-and-state.js` — sandbox fly creation and shared runtime state.
-- `client/game/40-ui-navigation-audio.js` — menu navigation and Custom Frog editor geometry.
-- `client/game/50-solo-gameplay.js` — shared normal/sandbox fly animation updates.
-- `client/game/60-versus-gameplay.js` — deterministic contact, physical separation, rebound/bonk effects, and swept high-speed collision detection.
-- `client/game/70-rendering.js` — persistent labels, physical-pixel text centering, final-catch attachment/fade, achievement visibility, custom preview, Pause book, and environment art.
-- `client/game/80-input-loop-startup.js` — frame composition, frozen-world pause rendering, input, and startup.
+- `public/scripts/extended-features.js` — Mobile Mode, replay capture/viewing, palette tools, hat progression, and world-record notices.
+- `client/game/70-rendering.js` — persistent fly plates, exact horizontal centering, pause-control opacity, themed How To Play book, cinematics, achievements, menus, and HUD.
 - `public/scripts/game.bundle.js` — generated closure-preserving browser runtime.
 
 ## Label-placement responsibility
 
-`70-rendering.js` owns two caches:
+`70-rendering.js` owns a placement cache and a prerendered sprite cache keyed by mode/round/fly/vocabulary identity. A label keeps one stable rectangle for its fly's lifetime.
 
-- a placement cache keyed by mode/round/fly/vocabulary identity;
-- a prerendered sprite cache keyed by the same identity and label signature.
+The horizontal coordinate is always:
 
-Existing labels never reflow when another fly appears. Candidate rows are above the fly only. Text is centered in physical pixels. During Final Catch, cached plates temporarily re-enter camera space, follow their flies, and fade with the cinematic.
+```text
+stable fly anchor X - plate width / 2
+```
 
-## Achievement visibility responsibility
+No HUD obstacle, screen-edge clamp, timer, or pause button may shift it sideways. Only the vertical row may change to avoid an older label.
 
-`70-rendering.js` checks the toast rectangle against fly bodies and cached vocabulary plates. If content would be obscured, the toast alpha is capped by `achievementToastObstructedOpacity`; the achievement remains visible without hiding the answer choices.
+## Pause-book theming responsibility
+
+`getPauseBookTheme()` maps the selected frog's palette to the book frame, cover, page, page lines, spine, bookmark, open-book header, divider, and version footer. This keeps the help control consistent with default and custom frogs.
 
 ## Server responsibilities
 
-- `src/rooms-core.js` owns matchmaking, room lifecycle, admission, CPU takeover, and per-participant Quickplay reservations.
-- `src/hub.js` owns PIN accounts, saves, sessions, and guarded owner recovery. Public private-key migration is retired.
+- `src/rooms-core.js` owns matchmaking, room lifecycle, admission, CPU takeover, and Quickplay reservations.
+- `src/hub.js` owns PIN accounts, saves, sessions, guarded owner recovery, and record-replay SQLite storage.
+- `src/index.js` owns same-origin Worker routing, including replay requests.
 - `src/common.js` owns shared build/version constants and response helpers.
 
 ## Why the game bundle is generated
 
-The historical game uses one large private lexical scope. Splitting declarations into independent runtime scripts would expose globals or require a risky simulation rewrite. Responsibility-focused source modules are assembled during the existing Cloudflare build, preserving scope and execution order while remaining human-readable.
+The historical game uses one large private lexical scope. Responsibility-focused source modules are assembled during the Cloudflare build, preserving scope and execution order without exposing internal state globally.
 
 Run `npm run build` after editing a game module. `npm run check` does this automatically.

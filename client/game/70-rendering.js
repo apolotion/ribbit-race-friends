@@ -1676,22 +1676,51 @@
     }
 
     function chooseFlyLabelRect(currentFly, anchor, width, height) {
-      // 1.4.0: every plate stays horizontally centered over its fly. HUD/timer
-      // overlap is allowed by design; only vertical rows are used to avoid labels.
-      const centeredX = currentFly.x - anchor / 2;
-      const baseY = currentFly.y - width - 10;
-      const candidates = [0, width + 5, (width + 5) * 2, (width + 5) * 3]
-        .map((offset, priority) => ({ x: centeredX, y: baseY - offset, priority }));
-      let chosen = candidates[0];
-      for (const candidate of candidates) {
-        const overlapsPlate = flyLabelRectsThisFrame.some((other) =>
-          candidate.x < other.x + other.width && candidate.x + anchor > other.x &&
-          candidate.y < other.y + other.height && candidate.y + width > other.y);
-        if (!overlapsPlate) { chosen = candidate; break; }
+      // 1.4.1: the plate center is locked directly above the fly's stable anchor.
+      // It never shifts sideways to avoid the score, timer, pause button, or another
+      // label. When two plates would overlap, only the vertical row may change.
+      const cacheKey = flyLabelCacheKey(currentFly);
+      const anchorX = Math.round(Number(anchor?.x ?? currentFly?.baseX ?? currentFly?.x) || 0);
+      const anchorY = Math.round(Number(anchor?.y ?? currentFly?.baseY ?? currentFly?.y) || 0);
+      const vocabIndex = Number(currentFly?.vocabIndex) || 0;
+      const cached = flyLabelPlacementCache.get(cacheKey);
+      if (cached && cached.vocabIndex === vocabIndex && cached.width === width && cached.height === height) {
+        return cached.rect;
       }
-      const rect = { x: chosen.x, y: chosen.y, width: anchor, height: width };
-      flyLabelRectsThisFrame.push(rect);
-      return rect;
+
+      const centeredX = Math.round(anchorX - width / 2);
+      const firstTop = Math.round(anchorY - height - 8);
+      const stableLabelObstacles = [];
+      for (const [otherKey, placement] of flyLabelPlacementCache.entries()) {
+        if (otherKey === cacheKey || !placement?.rect) continue;
+        stableLabelObstacles.push(placement.rect);
+      }
+
+      let chosen = null;
+      for (let row = 0; row < 6; row += 1) {
+        const candidate = {
+          x: centeredX,
+          y: Math.max(2, firstTop - row * (height + 4)),
+          w: width,
+          h: height
+        };
+        if (!stableLabelObstacles.some((other) => overlapArea(candidate, other) > 0)) {
+          chosen = candidate;
+          break;
+        }
+      }
+      if (!chosen) chosen = { x: centeredX, y: Math.max(2, firstTop), w: width, h: height };
+
+      const stableRect = Object.freeze(chosen);
+      flyLabelPlacementCache.set(cacheKey, {
+        vocabIndex,
+        width,
+        height,
+        anchorX,
+        anchorY,
+        rect: stableRect
+      });
+      return stableRect;
     }
 
     function drawStableFlyLabelTextToSprite(targetContext, layout, width, textTop, lineHeight) {
@@ -2484,6 +2513,11 @@
       }
 
       const pause = HUD_UI.pauseButton;
+      // Keep the control usable without hiding a centered fly label underneath it.
+      // The paused state is slightly stronger because the world is already frozen.
+      const pauseOpacity = game.state === "paused" ? 0.84 : game.sandboxMode ? 0.66 : 0.56;
+      ctx.save();
+      ctx.globalAlpha *= pauseOpacity;
       ctx.fillStyle = "rgba(38,54,61,0.45)";
       ctx.fillRect(pause.x + 2, pause.y + 2, pause.w, pause.h);
       ctx.fillStyle = COLORS.ink;
@@ -2507,6 +2541,7 @@
         ctx.fillRect(pause.x + 7, pause.y + 5, 4, 9);
         ctx.fillRect(pause.x + 15, pause.y + 5, 4, 9);
       }
+      ctx.restore();
     }
 
     function drawOverlayPanel(title, lines, footer, useCrispText = false, layout = {}) {
@@ -5528,32 +5563,53 @@
 
       const help = PAUSE_UI.helpButton;
       const helpActive = game.pauseHoveredSelection === "help" || game.pausePressedSelection === "help" || game.pauseHelpOpen;
+      const bookTheme = getPauseBookTheme(helpActive);
       ctx.fillStyle = "rgba(25,43,52,0.28)"; ctx.fillRect(help.x + 2, help.y + 2, help.w, help.h);
-      ctx.fillStyle = helpActive ? COLORS.ink : "#4b565b"; ctx.fillRect(help.x, help.y, help.w, help.h);
-      ctx.fillStyle = helpActive ? "#f7f1c9" : "#f7fdff"; ctx.fillRect(help.x + 2, help.y + 2, help.w - 4, help.h - 4);
-      drawMiniBookIcon(help.x + help.w / 2, help.y + help.h / 2, helpActive ? "#9f7d2c" : "#7a5a2a");
+      ctx.fillStyle = bookTheme.frame; ctx.fillRect(help.x, help.y, help.w, help.h);
+      ctx.fillStyle = bookTheme.buttonFill; ctx.fillRect(help.x + 2, help.y + 2, help.w - 4, help.h - 4);
+      drawMiniBookIcon(help.x + help.w / 2, help.y + help.h / 2, bookTheme);
       if (game.pauseHelpOpen) drawPauseHowToOverlay();
     }
 
-    function drawMiniBookIcon(cx, cy, color = "#7a5a2a") {
-      // A compact open instruction book with visible covers, pages, spine,
-      // page lines and a small bookmark. It reads clearly at the 20×20 size.
+    function getPauseBookTheme(active = false) {
+      const skin = getSelectedSkin();
+      return {
+        frame: active ? skin.dark : mixHexColors(skin.dark, COLORS.ink, 0.30),
+        buttonFill: active
+          ? mixHexColors(skin.belly, "#ffffff", 0.08)
+          : mixHexColors(skin.belly, "#ffffff", 0.38),
+        cover: skin.dark,
+        coverHighlight: skin.mid,
+        page: mixHexColors(skin.belly, "#ffffff", active ? 0.30 : 0.54),
+        pageLine: mixHexColors(skin.dark, skin.mid, 0.54),
+        spine: skin.mid,
+        bookmark: skin.light
+      };
+    }
+
+    function drawMiniBookIcon(cx, cy, theme = getPauseBookTheme(false)) {
+      // The instruction book now inherits the currently selected frog palette.
+      // Covers, pages, spine, page lines and bookmark all remain readable across
+      // the default and custom color themes.
       ctx.fillStyle = COLORS.ink;
       ctx.fillRect(cx - 8, cy - 7, 16, 14);
-      ctx.fillStyle = color;
+      ctx.fillStyle = theme.cover;
       ctx.fillRect(cx - 7, cy - 6, 7, 12);
       ctx.fillRect(cx + 1, cy - 6, 7, 12);
-      ctx.fillStyle = "#fff7d6";
-      ctx.fillRect(cx - 6, cy - 5, 5, 10);
-      ctx.fillRect(cx + 2, cy - 5, 5, 10);
-      ctx.fillStyle = "#d8c58a";
+      ctx.fillStyle = theme.coverHighlight;
+      ctx.fillRect(cx - 6, cy - 5, 1, 10);
+      ctx.fillRect(cx + 6, cy - 5, 1, 10);
+      ctx.fillStyle = theme.page;
+      ctx.fillRect(cx - 5, cy - 5, 4, 10);
+      ctx.fillRect(cx + 2, cy - 5, 4, 10);
+      ctx.fillStyle = theme.pageLine;
       ctx.fillRect(cx - 5, cy - 2, 3, 1);
       ctx.fillRect(cx - 5, cy + 1, 3, 1);
       ctx.fillRect(cx + 3, cy - 2, 3, 1);
       ctx.fillRect(cx + 3, cy + 1, 3, 1);
-      ctx.fillStyle = color;
+      ctx.fillStyle = theme.spine;
       ctx.fillRect(cx - 1, cy - 6, 2, 12);
-      ctx.fillStyle = getSelectedSkin().mid;
+      ctx.fillStyle = theme.bookmark;
       ctx.fillRect(cx + 4, cy - 6, 2, 5);
       ctx.fillRect(cx + 5, cy - 1, 1, 2);
     }
@@ -5581,16 +5637,20 @@
             "WRONG FLIES GET SPAT BACK OUT",
             "TAP JUST BEFORE LANDING TO DROP THROUGH"
           ];
+      const bookTheme = getPauseBookTheme(true);
+      const bookSkin = getSelectedSkin();
       ctx.fillStyle = "rgba(18,33,41,0.62)"; ctx.fillRect(0,0,W,H);
       ctx.fillStyle = "rgba(25,43,52,0.30)"; ctx.fillRect(panel.x + 3, panel.y + 3, panel.w, panel.h);
-      ctx.fillStyle = COLORS.ink; ctx.fillRect(panel.x, panel.y, panel.w, panel.h);
-      ctx.fillStyle = "#f7fdff"; ctx.fillRect(panel.x + 2, panel.y + 2, panel.w - 4, panel.h - 4);
-      ctx.fillStyle = "#b8dfe8"; ctx.fillRect(panel.x + 4, panel.y + 4, panel.w - 8, 22);
-      drawBitmapText("HOW TO PLAY", panel.x + panel.w / 2, panel.y + 9, 1, "center", "#34484f");
-      lines.forEach((line, index) => drawBitmapText(line, panel.x + panel.w / 2, panel.y + 38 + index * 16, 0.68, "center", "#48555a"));
-      ctx.fillStyle = "#d6e0e3";
+      ctx.fillStyle = bookTheme.frame; ctx.fillRect(panel.x, panel.y, panel.w, panel.h);
+      ctx.fillStyle = mixHexColors(bookSkin.belly, "#ffffff", 0.62);
+      ctx.fillRect(panel.x + 2, panel.y + 2, panel.w - 4, panel.h - 4);
+      ctx.fillStyle = bookSkin.mid; ctx.fillRect(panel.x + 4, panel.y + 4, panel.w - 8, 22);
+      ctx.fillStyle = bookSkin.light; ctx.fillRect(panel.x + 6, panel.y + 6, panel.w - 12, 2);
+      drawBitmapText("HOW TO PLAY", panel.x + panel.w / 2, panel.y + 9, 1, "center", COLORS.white, bookSkin.dark);
+      lines.forEach((line, index) => drawBitmapText(line, panel.x + panel.w / 2, panel.y + 38 + index * 16, 0.68, "center", bookSkin.dark));
+      ctx.fillStyle = mixHexColors(bookSkin.dark, bookSkin.mid, 0.56);
       ctx.fillRect(panel.x + 18, panel.y + panel.h - 21, panel.w - 36, 1);
-      drawVersionLabel(panel.x + panel.w / 2, panel.y + panel.h - 14, "center", "#68787e");
+      drawVersionLabel(panel.x + panel.w / 2, panel.y + panel.h - 14, "center", bookSkin.dark);
       const close = PAUSE_UI.helpCloseButton;
       const closeActive = game.pauseHoveredSelection === "help-close" || game.pausePressedSelection === "help-close";
       ctx.fillStyle = "rgba(25,43,52,0.28)";

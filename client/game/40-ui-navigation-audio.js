@@ -672,9 +672,9 @@
     }
 
     function handleHiddenFrogUnlockCheat(key) {
-      // Recognize both hidden sequences globally. remains the
-      // permanent all-unlocks cheat. "playtest" is a reversible, non-saving
-      // preview mode that restores the player's real cloud save when toggled off.
+      // The only hidden sequence is "playtest". It is a reversible,
+      // non-saving preview mode that restores the player's real cloud save when
+      // toggled off or when the page is closed.
       if (typeof key !== "string") return;
       const character = key.toLowerCase();
       if (!/^[a-z]$/.test(character)) return;
@@ -683,7 +683,7 @@
         togglePlaytestMode();
         return;
       }
-      if (game.cheatBuffer.endsWith(FROG_UNLOCK_CHEAT)) unlockAllFrogSkinsByCheat();
+      if (FROG_UNLOCK_CHEAT && game.cheatBuffer.endsWith(FROG_UNLOCK_CHEAT)) unlockAllFrogSkinsByCheat();
     }
 
     function openSetupMenu(playFeedback = true) {

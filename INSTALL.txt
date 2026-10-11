@@ -1,6 +1,6 @@
-RIBBIT RACE FRIENDS EDITION — VISUAL POLISH 1.3.0
-Build: 2026.10.10-friends-visual-polish-1
-Displayed version: VERSION 1.3.0
+RIBBIT RACE FRIENDS EDITION — CENTERED LABELS / THEMED BOOK 1.4.1
+Build: 2026.10.10-friends-centered-labels-themed-book-1
+Displayed version: VERSION 1.4.1
 
 THIS UPDATES THE EXISTING FRIENDS WORKER.
 Do not create another Worker, repository, FriendsHub, FriendsRoom, or database.
@@ -11,20 +11,14 @@ Do not create another Worker, repository, FriendsHub, FriendsRoom, or database.
 4. Wait for Cloudflare to run:
      npm run check && npm test
      npx wrangler deploy
-5. Confirm /api/health reports build 2026.10.10-friends-visual-polish-1.
+5. Confirm /api/health reports build 2026.10.10-friends-centered-labels-themed-book-1.
 6. Hard-refresh all test devices.
 
 VERIFY:
-- Achievement toasts become translucent when covering a fly or vocabulary plate.
-- Jungle has no decorative snake around the center tree.
-- Final Catch vocabulary plates follow flies and fade out.
-- Friends leaderboard first-place notices say FRIENDS LEADER.
-- PvP leaderboard displays 1 WIN, not 1 WINS.
-- Main and Single Player menus show MADE BY NICK at the same baseline.
-- Lake labels are visibly centered.
-- Pause > How To Play displays VERSION 1.3.0 in the book footer.
-- Custom Frog shows a large live preview.
-- Sandbox flies use the normal grow-and-spark spawn animation.
-- The public login screen has no old-private-key migration button.
+- A wide Lake label at the upper-right remains centered over its fly even when it overlaps the pause-button area.
+- The running pause button is translucent enough to read a label underneath it.
+- Pause > How To Play uses the selected frog's palette for the book button and open-book panel.
+- VERSION 1.4.1 appears in the existing version locations.
+- Existing PIN accounts, saves, vocabulary, Quickplay, Mobile Mode, hats, replays, and Custom Frogs remain available.
 
 See UPDATE_INSTRUCTIONS.md and TEST_REPORT.md for details.

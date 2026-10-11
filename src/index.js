@@ -4,10 +4,16 @@ export {FriendsRoom} from './realtime.js';
 
 export default {
  async fetch(request,env,ctx){
-    const rrReplayUrl = new URL(request.url);
-    if (rrReplayUrl.pathname.startsWith("/api/replays/")) return env.HUB.getByName('friends-main-v1').fetch(request);
-
   const url=new URL(request.url),path=url.pathname;
+  if(path.startsWith('/api/replays/')){
+   const origin=request.headers.get('Origin');
+   if(origin&&origin!==url.origin)return json(error('ORIGIN_DENIED','Open the game from its own public link.'),403);
+   const headers=new Headers(request.headers);
+   headers.set('X-Friends-IP',request.headers.get('CF-Connecting-IP')||'local');
+   headers.delete('X-Friends-Member');
+   return env.HUB.getByName('friends-main-v1').fetch(new Request(request,{headers}));
+  }
+
   if(path==='/api/health')return json({ok:true,friendsVersion:1,build:BUILD,transport:'cloudflare-websocket'});
   if(path==='/ws'||path.startsWith('/api/')){
    // Same-origin only: no CORS wildcard and no third-party embedding of authenticated APIs.

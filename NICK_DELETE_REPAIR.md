@@ -1,6 +1,6 @@
 # Guarded legacy-account cleanup
 
-Current compatible build: `2026.10.10-friends-visual-polish-1`
+Current compatible build: `2026.10.10-friends-centered-labels-themed-book-1`
 
 The FriendsHub owner-recovery hook remains available for deleting a specifically named, pre-PIN legacy account whose private key is permanently lost. It refuses to delete a modern PIN account.
 

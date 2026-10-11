@@ -1,8 +1,9 @@
 {
   "project": "Ribbit Race Friends Edition",
-  "build": "2026.10.10-friends-visual-polish-1",
-  "displayVersion": "1.3.0",
-  "generatedAtUtc": "2026-10-10T21:36:19.041382+00:00",
+  "build": "2026.10.10-friends-centered-labels-themed-book-1",
+  "displayVersion": "1.4.1",
+  "generatedAtUtc": "2026-10-11T00:47:26.575128+00:00",
+  "manifestNote": "SOURCE_MANIFEST.json is excluded from its own hash list.",
   "files": [
     {
       "path": ".gitignore",
@@ -11,28 +12,38 @@
     },
     {
       "path": "ARCHITECTURE.md",
-      "bytes": 3258,
-      "sha256": "f3dcfaa5af2e933d888caf8061147b6e8ca2b02557eb13237c95ca1c77cd83d5"
+      "bytes": 2516,
+      "sha256": "aa3cfa2bf43c1d0e47afe2761548aea0341aa62f936dc8a28b3e0386460ae6b1"
+    },
+    {
+      "path": "HAT_REQUIREMENTS.md",
+      "bytes": 1245,
+      "sha256": "041b3507e4a93f802747efd7afd7330dca7e6df02a39410b3f998d28d45680af"
     },
     {
       "path": "INSTALL.txt",
-      "bytes": 1297,
-      "sha256": "727ae8a7ad8315998bc6eca04370c2f4343873d45ba7dedd56206eefb6deb220"
+      "bytes": 1159,
+      "sha256": "9308c456f3440a5df423aa0793fae93f3577958c76dfaba8c88fb15751f42816"
     },
     {
       "path": "NICK_DELETE_REPAIR.md",
-      "bytes": 659,
-      "sha256": "085d03bba656608f58b57205d97d77fc2278b508799caf0c90af0d909df3aadd"
+      "bytes": 673,
+      "sha256": "a126020bfec157711c33e26426fce734a39bb99fe052ee2ffd769a8636e97751"
+    },
+    {
+      "path": "PACKAGED_TESTS_PASSED.txt",
+      "bytes": 812,
+      "sha256": "e73e2afae3e8fe4200e38339271cc24edeeaf97d498d93eb1bbcedc5483228bd"
     },
     {
       "path": "README.md",
-      "bytes": 3735,
-      "sha256": "3bd6c30583fd2451326f6fd79324b2424a55cced80d81e5dcfbd72311f119233"
+      "bytes": 3828,
+      "sha256": "8b59f09532b1d13e1d052ec77776602dbf6836f538782b358872c78c608e0362"
     },
     {
       "path": "README_PIN_UPDATE.md",
-      "bytes": 559,
-      "sha256": "9d45c57aad88e5f28aad40f92241edc5b7f4e53ee9ba5ebb123090747024f1ea"
+      "bytes": 573,
+      "sha256": "9e894f46a0b44e2a74fd96559eefdf412ef2fdeca906569ce4bf4b3ec612e441"
     },
     {
       "path": "RECOVER_NICK.md",
@@ -46,38 +57,38 @@
     },
     {
       "path": "TEST_REPORT.md",
-      "bytes": 2829,
-      "sha256": "7c81757538c26b91822c79729031745b092f65bd8b8fe3e7b19f912badb55efd"
+      "bytes": 2889,
+      "sha256": "2fd09ce0b7c7ec60e25c635d5889c3d9abef0a41a37c991da4aa5b9e07c2d443"
     },
     {
       "path": "TEST_REPORT.txt",
-      "bytes": 2829,
-      "sha256": "7c81757538c26b91822c79729031745b092f65bd8b8fe3e7b19f912badb55efd"
+      "bytes": 2889,
+      "sha256": "2fd09ce0b7c7ec60e25c635d5889c3d9abef0a41a37c991da4aa5b9e07c2d443"
     },
     {
       "path": "TEST_REPORT_NICK_DELETE.md",
-      "bytes": 1039,
-      "sha256": "3cedfbd614da09cfe0ea4f01ee6edbc81d6fdbb7e5487d9c4916e18549ad3298"
+      "bytes": 1053,
+      "sha256": "675a799de88a03c9f2ec1f7bba650e2ea085925286071ed4229ba4bb0e576307"
     },
     {
       "path": "UPDATE_INSTRUCTIONS.md",
-      "bytes": 2871,
-      "sha256": "e6838482bfd4ae4f878c04e544ccd85efc9f53caffea083d4875b7d5aead0a53"
+      "bytes": 1966,
+      "sha256": "0141fa7e9749dd059ad2c160428abbe57064d43fc4953570382e15809a040e55"
     },
     {
       "path": "UPDATE_NOTE.txt",
-      "bytes": 462,
-      "sha256": "208c762750df7b120a15c1d6695db54c5acea62975538b932fbd4a6622a755ce"
+      "bytes": 527,
+      "sha256": "5dfcf9add815c163a534b76dc2668f2c963fa899a64576339cc52a878a774ef3"
     },
     {
       "path": "UPDATE_PIN_INSTRUCTIONS.txt",
-      "bytes": 558,
-      "sha256": "dc6b58152448695c66294919fd8ee9e589aefec88b4dd4389838c00388b1074b"
+      "bytes": 572,
+      "sha256": "d802cfe17fbdc6a4702cf37cc83a1d7eea566a26cd417b59e892a8afbef36db2"
     },
     {
       "path": "client/game/10-core-config.js",
-      "bytes": 83679,
-      "sha256": "c8fb8af5783cd649ef1516f86c33d3ac73382a3ae4ec4d462018da8650aa6fb2"
+      "bytes": 83634,
+      "sha256": "2ddfb0a16eac83443d110cb45d47233bc1d3555b00d84dc2e4c8ef41146dcd7d"
     },
     {
       "path": "client/game/20-models-and-state.js",
@@ -91,8 +102,8 @@
     },
     {
       "path": "client/game/40-ui-navigation-audio.js",
-      "bytes": 114812,
-      "sha256": "dc10121f2ce02a1e83b8ed8c27d48dacd7a6d5a51c691e93865fff058f74bae8"
+      "bytes": 114848,
+      "sha256": "073c69ffa76030ce5087009a50cc2e83ce72fce80cac73d4343cfe1e0e4ad597"
     },
     {
       "path": "client/game/50-solo-gameplay.js",
@@ -101,18 +112,23 @@
     },
     {
       "path": "client/game/60-versus-gameplay.js",
-      "bytes": 199106,
-      "sha256": "33424c06e189c6784b48dd955c1cc873a51d1c924e742b33729e7f980365d85a"
+      "bytes": 199121,
+      "sha256": "6a1c24584aed2a69cea3f0a3ea04045698123a2dc87f73f081f4095a7b1f68b9"
     },
     {
       "path": "client/game/70-rendering.js",
-      "bytes": 273560,
-      "sha256": "0691192782bdc9dc51d458c27e542f8f9ae4ab5d3b93763955c8b557792dfdb8"
+      "bytes": 274394,
+      "sha256": "92c0caf256d8d2b1a83beebea1d999ec2a5da4c941abf7452ba544b410ade7ab"
     },
     {
       "path": "client/game/80-input-loop-startup.js",
-      "bytes": 96275,
-      "sha256": "9377ef878cffc48b1aed7fd038d8779dbbc3911634b5232f0a97370c4e686024"
+      "bytes": 96325,
+      "sha256": "398c947307e95800b37335991805cdf0a7264d6b4e94c43e699d6ee58455d588"
+    },
+    {
+      "path": "client/game/90-extended-features.js",
+      "bytes": 11531,
+      "sha256": "a5ecfab4e5b95359f9dfc5fc9ef2c247b5273717f4737f53dc458437d5693a8a"
     },
     {
       "path": "client/game/README.md",
@@ -122,7 +138,7 @@
     {
       "path": "package.json",
       "bytes": 456,
-      "sha256": "882a33b36d9ab3713e130a40dfcc30ec85a5e63335ad0395f86edf39dd1e832d"
+      "sha256": "c1f5e2765384e6901d9435612dbd3515b0c01a47f4cc6576b0412a53ff10512c"
     },
     {
       "path": "public/_headers",
@@ -151,8 +167,8 @@
     },
     {
       "path": "public/index.html",
-      "bytes": 9437,
-      "sha256": "ad18107caec12870ae4b92cbb0e895e8c802257c3b78445fe16a645dbccb6756"
+      "bytes": 9839,
+      "sha256": "14165bd444ca9c2c9d8c0ee55ac91b5414bd227cfb10cda95b065f76ef998489"
     },
     {
       "path": "public/scripts/auth-screen-controller.js",
@@ -166,8 +182,13 @@
     },
     {
       "path": "public/scripts/cloud-client.js",
-      "bytes": 58041,
-      "sha256": "8dd42d7a23cf81caef87f72e8887c58aa3b9717fb675842aa5c43f64ba8b2b71"
+      "bytes": 58206,
+      "sha256": "9fe88d2ede5de83161afd1bc63dca48555c62ebf8695c9291bd44e4a432b9da9"
+    },
+    {
+      "path": "public/scripts/extended-features.js",
+      "bytes": 19608,
+      "sha256": "42e56cd1e51705b2b3c81b7f94e764b2ceac37775737204a96573a46981564bf"
     },
     {
       "path": "public/scripts/friends-api-client.js",
@@ -176,8 +197,13 @@
     },
     {
       "path": "public/scripts/game.bundle.js",
-      "bytes": 1016844,
-      "sha256": "7ec41cc3c8a8926a7f5b41e284d1e542a9de55dc512aa772bc6a99d4c216030a"
+      "bytes": 1029324,
+      "sha256": "00b190da6ec76cfed3b5d482a4bf02d33e485a87b7ddb7edb91d03c01dce95a8"
+    },
+    {
+      "path": "public/scripts/playtest-guard.js",
+      "bytes": 2213,
+      "sha256": "b98d140c5db050e73571ab4da78a4483fed03a4c35a4f3eabbc48d382eb600c6"
     },
     {
       "path": "public/styles/base.css",
@@ -190,14 +216,19 @@
       "sha256": "986991bf7247e8f5d5713af0f39a45bd771ab5798fe8cfa8411061631eaafcf1"
     },
     {
+      "path": "public/styles/extended-features.css",
+      "bytes": 3561,
+      "sha256": "44bd938850fcbcfc2417cb78a92dbaf4b3da02140c555cf4a54f752a33e3adc2"
+    },
+    {
       "path": "public/styles/game-shell.css",
       "bytes": 5388,
       "sha256": "4992475fd35a03d9f856115d6eca6f8f3bf505f91e9236727b13869280781c8f"
     },
     {
       "path": "scripts/build-game.mjs",
-      "bytes": 1728,
-      "sha256": "0ff2250a7221e9b571ebfeb01c1afc5f232ed0f3c9f898af1c50c9272daa31ce"
+      "bytes": 1769,
+      "sha256": "1ccad57de477a39f8a7d03b3076c4311c2ad16802d4819b119e74883be7156dd"
     },
     {
       "path": "scripts/check.mjs",
@@ -211,18 +242,18 @@
     },
     {
       "path": "src/common.js",
-      "bytes": 2264,
-      "sha256": "13f4755d8035b2c84baeee5dbb687fb522f1ce01334dc74aff7e28f934c0a9fa"
+      "bytes": 2278,
+      "sha256": "2851a83e5ab47b612a5df9613ca8e0cee7adace5c35f3920029dfe16bce5154a"
     },
     {
       "path": "src/hub.js",
-      "bytes": 19461,
-      "sha256": "5c1ea1c8117f5173ff5492496d8d66e13e8995d96b59f70fd2c9d8241916acde"
+      "bytes": 23535,
+      "sha256": "ed3621baed661c253cf98e0b7bb14e4cc613769c1721cb363b209ded707909ac"
     },
     {
       "path": "src/index.js",
-      "bytes": 2119,
-      "sha256": "c0875d67fdc3bd3ed92c3eded4986a23665c0b105e5ff514f10c325ed7f0d006"
+      "bytes": 2581,
+      "sha256": "a5128139f471e437690f6aa5378f0ef2b6f0a2e8eb8168dd79592620c7636f07"
     },
     {
       "path": "src/realtime.js",
@@ -250,9 +281,19 @@
       "sha256": "b5ef86610b6005859faf0738c1bb058262a754b9489f97aca75e3f1ef7dcc55e"
     },
     {
+      "path": "tests/friends-1.4.0.test.mjs",
+      "bytes": 4913,
+      "sha256": "f770f6b792b28696b4d0e11f70f8effcf0d326d01f95d3630efb28a69cda9015"
+    },
+    {
+      "path": "tests/friends-1.4.1.test.mjs",
+      "bytes": 2768,
+      "sha256": "a021cc21fa4c66ab5667ac70e53c17e5431cf05f008d038e39cf4f91d073c7b5"
+    },
+    {
       "path": "tests/friends-patch.test.mjs",
-      "bytes": 24220,
-      "sha256": "1b7bccd0e1f32e5dbe7837c5e42e8700bdd4ab88a41d1224a57b381d0b374a8e"
+      "bytes": 24525,
+      "sha256": "ae85fd0f1f460f7545c676b3b633a71f7ee4125293d203b1718bcaf4bfa76f13"
     },
     {
       "path": "wrangler.jsonc",

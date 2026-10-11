@@ -1,6 +1,6 @@
 # Friends Edition hat requirements
 
-Progress begins only after the Hats feature is unlocked in build 1.4.0. Existing totals become the baseline and do not grant hats retroactively.
+Progress begins only after the Hats feature is unlocked in build 1.4.1. Existing totals become the baseline and do not grant hats retroactively.
 
 | Hat theme | Requirement after Hats unlock |
 |---|---|

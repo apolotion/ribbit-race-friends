@@ -1,31 +1,54 @@
-# Ribbit Race Friends 1.4.0 update
+# Ribbit Race Friends 1.4.1 update
 
-Build: `2026.10.10-friends-mobile-replay-hats-1`  
-Displayed version: `VERSION 1.4.0`
+Build: `2026.10.10-friends-centered-labels-themed-book-1`  
+Displayed version: `VERSION 1.4.1`
 
 ## Install
+
 1. Extract the patch ZIP into the root of the existing `apolotion/ribbit-race-friends` repository.
 2. Preserve `client/`, `public/`, `scripts/`, `src/`, and `tests/` exactly; do not upload an extra wrapper folder.
-3. Commit to `main` and let Cloudflare run `npm run check && npm test`, then `npx wrangler deploy`.
-4. Keep the existing HUB, ROOMS, and ASSETS bindings. Do not recreate Durable Objects.
-5. Confirm `/api/health` reports `2026.10.10-friends-mobile-replay-hats-1` and hard-refresh every device.
+3. Commit directly to `main`. Suggested message:
 
-## New systems
-- **New World Record** notification with hover details and repeat suppression for an account already first in Most PvP Wins or Most Flies Eaten.
-- Canvas-recorded replay storage for Fastest Time and Fewest Jumps. Click a corresponding leaderboard row to watch its available replay.
-- Post-Hats baseline progression, thematic requirements, and `HATS UNLOCKED` / `HAT UNLOCKED` notifications.
-- `apolotion` removed; `playtest` is the only unlock-all code. A persistent pre-playtest snapshot rolls back on normal exit, reload, tab close, or browser close.
-- Default/custom palette copying, right-click and Cmd/Ctrl+C/V shortcuts, and commit-on-slot-switch behavior.
-- Revised Custom Frog 3 target: 100 flies, 3 Versus wins, and wins on 3 different levels after the new progression baseline.
-- Mobile Mode toggle and simultaneous independent local-PvP jump pads.
-- Current selected skin preferred on Versus entry.
-- Exact top-centered fly plates, including behind HUD/timer areas.
-- Bonk validation requiring a falling upper frog or a rising lower opponent.
+   ```text
+   Center Lake labels and theme the pause book
+   ```
 
-## Replay note
-Record replay capture uses the browser MediaRecorder API. Older leaderboard records and browsers without canvas capture will show “Replay not available.” Replays are casual visual records, not tamper-proof verification.
+4. Let Cloudflare run:
 
-- Fastest Time/Fewest Jumps leaderboard names receive a frog button; click it to request the stored run.
-- Existing PvP achievement gates now accept either active human player index.
+   ```text
+   npm run check && npm test
+   npx wrangler deploy
+   ```
 
-See `HAT_REQUIREMENTS.md` for the complete thematic progression table.
+5. Keep the existing `HUB`, `ROOMS`, and `ASSETS` bindings. Do not recreate Durable Objects.
+6. Confirm `/api/health` reports:
+
+   ```json
+   {"build":"2026.10.10-friends-centered-labels-themed-book-1"}
+   ```
+
+7. Hard-refresh every test device.
+
+## What changed
+
+### Fly plates
+
+The plate's horizontal center is now always the fly's stable anchor. The placement system does not consult HUD obstacles or clamp the plate sideways. When multiple plates compete for space, the system can move a newer plate upward only.
+
+This intentionally permits a wide upper-right plate to overlap the pause-button area rather than appearing left of its fly.
+
+### Pause button
+
+The button's clickable rectangle is unchanged. Its running-state rendering is now 56% opaque; Sandbox uses 66%, and the already-paused state uses 84%.
+
+### Themed How To Play book
+
+The compact book icon and the open How To Play panel use the active frog's `dark`, `mid`, `light`, and `belly` colors. Custom Frog palettes are supported through the same selected-skin function.
+
+### Replay storage repair
+
+The previously added Fastest Time/Fewest Jumps replay UI now has matching SQLite storage and same-origin Worker routes. The table is created automatically inside the existing FriendsHub Durable Object.
+
+## Rollback
+
+Revert the Git commit and allow Cloudflare to redeploy. Do not delete Durable Objects to roll back a visual update.

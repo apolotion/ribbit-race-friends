@@ -1,5 +1,5 @@
 RIBBIT RACE FRIENDS — PIN COMPATIBILITY NOTE
-Build 2026.10.10-friends-visual-polish-1
+Build 2026.10.10-friends-centered-labels-themed-book-1
 
 - New and returning players use username + a self-chosen four-digit PIN.
 - The server stores a salted PBKDF2-SHA-256 derived verifier at 100,000 iterations, not the PIN itself.

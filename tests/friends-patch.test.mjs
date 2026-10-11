@@ -13,12 +13,15 @@ const browserFiles = [
   "../public/scripts/auth-screen-controller.js",
   "../public/scripts/cloud-client.js",
   "../public/scripts/game.bundle.js",
-  "../public/scripts/bootstrap.js"
+  "../public/scripts/bootstrap.js",
+  "../public/scripts/playtest-guard.js",
+  "../public/scripts/extended-features.js"
 ];
 const styleFiles = [
   "../public/styles/base.css",
   "../public/styles/cloud-ui.css",
-  "../public/styles/game-shell.css"
+  "../public/styles/game-shell.css",
+  "../public/styles/extended-features.css"
 ];
 const browserSource = browserFiles.map(file=>fs.readFileSync(new URL(file,import.meta.url),"utf8")).join("\n");
 const styles = styleFiles.map(file=>fs.readFileSync(new URL(file,import.meta.url),"utf8")).join("\n");
@@ -32,8 +35,8 @@ test("PIN hashing stays within Cloudflare PBKDF2 limit and matches 100000 rounds
 });
 
 test("Friends release exposes the new build marker",()=>{
-  assert.equal(BUILD,"2026.10.10-friends-visual-polish-1");
-  assert.match(browserSource,/2026\.10\.10\-friends\-visual\-polish\-1/);
+  assert.equal(BUILD,"2026.10.10-friends-centered-labels-themed-book-1");
+  assert.match(browserSource,/2026\.10\.10\-friends\-centered\-labels\-themed\-book\-1/);
 });
 
 test("server vocabulary is exactly the requested 15 entries",()=>{
@@ -67,13 +70,13 @@ test("auth boundary hides and inerts the runtime until sign-in or guest play",()
 
 test("index is presentation-only and gameplay source is separated by responsibility",()=>{
   assert.doesNotMatch(indexHtml,/<style\b/i);
-  assert.equal((indexHtml.match(/<script\b[^>]*src=/g)||[]).length,5);
+  assert.equal((indexHtml.match(/<script\b[^>]*src=/g)||[]).length,7);
   assert.match(indexHtml,/\/scripts\/friends-api-client\.js/);
   assert.match(indexHtml,/\/scripts\/auth-screen-controller\.js/);
   assert.match(indexHtml,/\/scripts\/cloud-client\.js/);
   assert.match(indexHtml,/\/scripts\/game\.bundle\.js/);
   const modules=fs.readdirSync(new URL("../client/game/",import.meta.url)).filter(name=>/^\d+-.+\.js$/.test(name));
-  assert.equal(modules.length,8);
+  assert.equal(modules.length,9);
   assert.match(fs.readFileSync(new URL("../scripts/build-game.mjs",import.meta.url),"utf8"),/class GameBundleBuilder/);
 });
 
@@ -142,7 +145,7 @@ test("queued device-check status is centered inside Play While Waiting",()=>{
 test("single-player fly labels keep persistent placements instead of re-solving every frame",()=>{
   assert.match(html,/const flyLabelPlacementCache = new Map\(\);/);
   assert.match(html,/function chooseFlyLabelRect\(currentFly, anchor, width, height\)/);
-  assert.match(html,/if \(cached && cached\.vocabIndex === vocabIndex && cached\.width === width && cached\.height === height\) return cached\.rect;/);
+  assert.match(html,/if \(cached && cached\.vocabIndex === vocabIndex && cached\.width === width && cached\.height === height\) \{[\s\S]{0,80}return cached\.rect;/);
   assert.match(html,/flyLabelPlacementCache\.set\(cacheKey, \{/);
   assert.match(html,/function drawScene\(\) \{\s*\/\/ Prune labels only when a fly actually leaves[\s\S]{0,220}pruneFlyLabelPlacementCache\(\);/);
   assert.doesNotMatch(html,/flyLabelLayoutStamp = game\.visualTime/);
@@ -312,17 +315,19 @@ test("every fly word plate uses top-only candidate rows",()=>{
   assert.doesNotMatch(source,/anchorX \+ 11/);
 });
 
-test("Friends first-place notice clearly identifies a leaderboard lead",()=>{
-  assert.match(html,/title: "FRIENDS LEADER!"/);
-  assert.match(html,/FRIENDS LEADER/);
+test("Friends first-place notice is a world-record notice with hover details",()=>{
+  assert.match(html,/NEW WORLD RECORD/);
+  assert.match(html,/rr-world-record-hit/);
+  assert.match(html,/Fastest time|Fewest jumps|Most PvP wins|Most flies eaten/);
   assert.doesNotMatch(indexHtml,/MIGRATE OLD PRIVATE-KEY ACCOUNT/);
 });
 
-test("version 1.3.0 remains in settings and moves into the How To Play book footer",()=>{
-  assert.match(html,/const RIBBIT_DISPLAY_VERSION = "VERSION 1\.3\.0"/);
+test("version 1.4.1 remains in settings and the How To Play book footer",()=>{
+  assert.match(html,/const RIBBIT_DISPLAY_VERSION = "VERSION 1\.4\.1"/);
   assert.match(html,/drawVersionLabel\(panel\.x \+ panel\.w \/ 2, panel\.y \+ panel\.h - 14, "center"/);
   assert.doesNotMatch(html,/drawVersionLabel\(399, 218, "right"\)/);
-  assert.match(html,/function drawMiniBookIcon[\s\S]{0,900}bookmark/);
+  assert.match(html,/function getPauseBookTheme/);
+  assert.match(html,/function drawMiniBookIcon[\s\S]{0,1500}theme\.bookmark/);
 });
 
 test("frog overlap axis is deterministic and cooldown separation removes intersections",()=>{

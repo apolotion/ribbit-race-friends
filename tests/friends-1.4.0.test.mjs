@@ -3,8 +3,8 @@ import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
 const read=(p)=>readFileSync(p,"utf8");
 
-test("1.4.0 build and modular extension are present",()=>{
-  assert.match(read("src/common.js"),/friends-mobile-replay-hats-1/);
+test("1.4.1 build and modular extension are present",()=>{
+  assert.match(read("src/common.js"),/friends-centered-labels-themed-book-1/);
   assert.match(read("scripts/build-game.mjs"),/90-extended-features\.js/);
   assert.match(read("public/index.html"),/extended-features\.js/);
 });
@@ -36,8 +36,13 @@ test("custom frog three uses revised achievable parameters",()=>{
 test("mobile mode has independent simultaneous P1 and P2 pointers",()=>{
   const s=read("public/scripts/extended-features.js");assert.match(s,/rrFriendsMobileModeV1/);assert.match(s,/ShiftLeft/);assert.match(s,/ShiftRight/);assert.match(s,/this\.pointers=new Map/);
 });
-test("word plates remain exactly centered above flies",()=>{
-  const s=read("client/game/70-rendering.js");assert.match(s,/centeredX = .*\.x - .* \/ 2/);assert.match(s,/HUD\/timer/);
+test("word plates remain exactly centered above flies and ignore HUD obstacles",()=>{
+  const s=read("client/game/70-rendering.js");
+  assert.match(s,/const centeredX = Math\.round\(anchorX - width \/ 2\)/);
+  assert.match(s,/never shifts sideways to avoid the score, timer, pause button/);
+  const block=s.slice(s.indexOf("function chooseFlyLabelRect"),s.indexOf("function drawStableFlyLabelTextToSprite"));
+  assert.doesNotMatch(block,/getFlyLabelHudObstacles\(/);
+  assert.doesNotMatch(block,/clamp\(candidate\.x/);
 });
 test("bonks require falling or an opponent rising",()=>{
   const s=read("client/game/90-extended-features.js");assert.match(s,/top\.vy > 0\.08 \|\| bottom\.vy < -0\.08/);

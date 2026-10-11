@@ -64,7 +64,7 @@
     const canvas = document.getElementById("game");
     const gameFrame = document.getElementById("game-frame");
     const friendsGameInputLocked = () => window.RibbitFriendsGameInputLocked?.() === true;
-    const RIBBIT_DISPLAY_VERSION = "VERSION 1.4.0";
+    const RIBBIT_DISPLAY_VERSION = "VERSION 1.4.1";
     const RIBBIT_CREDIT_TEXT = "MADE BY NICK";
     const RIBBIT_CREDIT_Y = 228;
     const rgbValueEditor = document.getElementById("rgb-value-editor");
@@ -260,9 +260,9 @@
     });
 
     const DEFAULT_UNLOCKED_FROG_SKINS = Object.freeze(["azure"]);
-    const FROG_UNLOCK_CHEAT = ;
+    const FROG_UNLOCK_CHEAT = "";
     const PLAYTEST_TOGGLE_CODE = "playtest";
-    const HIDDEN_CODE_BUFFER_LENGTH = Math.max(FROG_UNLOCK_CHEAT.length, PLAYTEST_TOGGLE_CODE.length);
+    const HIDDEN_CODE_BUFFER_LENGTH = PLAYTEST_TOGGLE_CODE.length;
     let playtestModeActive = false;
     let playtestSnapshot = null;
 

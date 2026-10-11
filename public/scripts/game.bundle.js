@@ -69,7 +69,7 @@ function startRibbitRaceGame() {
     const canvas = document.getElementById("game");
     const gameFrame = document.getElementById("game-frame");
     const friendsGameInputLocked = () => window.RibbitFriendsGameInputLocked?.() === true;
-    const RIBBIT_DISPLAY_VERSION = "VERSION 1.3.0";
+    const RIBBIT_DISPLAY_VERSION = "VERSION 1.4.1";
     const RIBBIT_CREDIT_TEXT = "MADE BY NICK";
     const RIBBIT_CREDIT_Y = 228;
     const rgbValueEditor = document.getElementById("rgb-value-editor");
@@ -265,9 +265,9 @@ function startRibbitRaceGame() {
     });
 
     const DEFAULT_UNLOCKED_FROG_SKINS = Object.freeze(["azure"]);
-    const FROG_UNLOCK_CHEAT = ;
+    const FROG_UNLOCK_CHEAT = "";
     const PLAYTEST_TOGGLE_CODE = "playtest";
-    const HIDDEN_CODE_BUFFER_LENGTH = Math.max(FROG_UNLOCK_CHEAT.length, PLAYTEST_TOGGLE_CODE.length);
+    const HIDDEN_CODE_BUFFER_LENGTH = PLAYTEST_TOGGLE_CODE.length;
     let playtestModeActive = false;
     let playtestSnapshot = null;
 
@@ -5243,9 +5243,9 @@ function startRibbitRaceGame() {
     }
 
     function handleHiddenFrogUnlockCheat(key) {
-      // Recognize both hidden sequences globally. remains the
-      // permanent all-unlocks cheat. "playtest" is a reversible, non-saving
-      // preview mode that restores the player's real cloud save when toggled off.
+      // The only hidden sequence is "playtest". It is a reversible,
+      // non-saving preview mode that restores the player's real cloud save when
+      // toggled off or when the page is closed.
       if (typeof key !== "string") return;
       const character = key.toLowerCase();
       if (!/^[a-z]$/.test(character)) return;
@@ -5254,7 +5254,7 @@ function startRibbitRaceGame() {
         togglePlaytestMode();
         return;
       }
-      if (game.cheatBuffer.endsWith(FROG_UNLOCK_CHEAT)) unlockAllFrogSkinsByCheat();
+      if (FROG_UNLOCK_CHEAT && game.cheatBuffer.endsWith(FROG_UNLOCK_CHEAT)) unlockAllFrogSkinsByCheat();
     }
 
     function openSetupMenu(playFeedback = true) {
@@ -10480,7 +10480,7 @@ function startRibbitRaceGame() {
       game.pvpRoundWins[index] = Math.min(roundsToWin, (game.pvpRoundWins[index] || 0) + 1);
       game.pvpMatchWinnerIndex = game.pvpRoundWins[index] >= roundsToWin ? index : null;
       awardCpuChampForCompletedMatch(true);
-      if (!game.onlineMode && game.pvpMatchWinnerIndex === 0 && (game.pvpCpuEnabled || hasRecentPlayerTwoMovement(10))) {
+      if (!game.onlineMode && game.rr14IsHumanPvpIndex(pvpMatchWinnerIndex) && (game.pvpCpuEnabled || hasRecentPlayerTwoMovement(10))) {
         statsProfile.pvpMatchWins += 1;
         saveStatsProfile();
         savePvpMatchWinsForLeaderboard();
@@ -14304,56 +14304,50 @@ function startRibbitRaceGame() {
     }
 
     function chooseFlyLabelRect(currentFly, anchor, width, height) {
+      // 1.4.1: the plate center is locked directly above the fly's stable anchor.
+      // It never shifts sideways to avoid the score, timer, pause button, or another
+      // label. When two plates would overlap, only the vertical row may change.
       const cacheKey = flyLabelCacheKey(currentFly);
-      const anchorX = Math.round(Number(anchor.x) || 0);
-      const anchorY = Math.round(Number(anchor.y) || 0);
+      const anchorX = Math.round(Number(anchor?.x ?? currentFly?.baseX ?? currentFly?.x) || 0);
+      const anchorY = Math.round(Number(anchor?.y ?? currentFly?.baseY ?? currentFly?.y) || 0);
       const vocabIndex = Number(currentFly?.vocabIndex) || 0;
       const cached = flyLabelPlacementCache.get(cacheKey);
-      if (cached && cached.vocabIndex === vocabIndex && cached.width === width && cached.height === height) return cached.rect;
-
-      const maximumTopY = anchorY - height - 8;
-      const horizontalOffsets = [0, -0.55, 0.55, -1.10, 1.10];
-      const rawCandidates = [];
-      for (let row = 0; row < 4; row += 1) {
-        for (let column = 0; column < horizontalOffsets.length; column += 1) {
-          rawCandidates.push({
-            x: anchorX - width / 2 + horizontalOffsets[column] * width,
-            y: maximumTopY - row * (height + 4),
-            priority: row * 10 + column
-          });
-        }
+      if (cached && cached.vocabIndex === vocabIndex && cached.width === width && cached.height === height) {
+        return cached.rect;
       }
 
-      const hudObstacles = getFlyLabelHudObstacles();
+      const centeredX = Math.round(anchorX - width / 2);
+      const firstTop = Math.round(anchorY - height - 8);
       const stableLabelObstacles = [];
       for (const [otherKey, placement] of flyLabelPlacementCache.entries()) {
         if (otherKey === cacheKey || !placement?.rect) continue;
         stableLabelObstacles.push(placement.rect);
       }
 
-      let best = null;
-      let bestScore = Infinity;
-      rawCandidates.forEach((candidate) => {
-        const topLimit = Math.max(2, maximumTopY);
-        const rect = {
-          x: Math.round(clamp(candidate.x, 2, W - width - 2)),
-          y: Math.round(clamp(candidate.y, 2, topLimit)),
+      let chosen = null;
+      for (let row = 0; row < 6; row += 1) {
+        const candidate = {
+          x: centeredX,
+          y: Math.max(2, firstTop - row * (height + 4)),
           w: width,
           h: height
         };
-        let score = candidate.priority * 3;
-        hudObstacles.forEach((obstacle) => { score += overlapArea(rect, obstacle) * 220; });
-        stableLabelObstacles.forEach((other) => { score += overlapArea(rect, other) * 120; });
-        // Never prefer a below-fly or side placement. If a fly is unusually close
-        // to the top edge, staying at y=2 is still preferable to moving underneath.
-        if (rect.y + rect.h > anchorY - 3) score += 1_000_000;
-        const rectCenterX = rect.x + rect.w / 2;
-        score += Math.abs(rectCenterX - anchorX) * 0.08;
-        if (score < bestScore) { bestScore = score; best = rect; }
-      });
+        if (!stableLabelObstacles.some((other) => overlapArea(candidate, other) > 0)) {
+          chosen = candidate;
+          break;
+        }
+      }
+      if (!chosen) chosen = { x: centeredX, y: Math.max(2, firstTop), w: width, h: height };
 
-      const stableRect = Object.freeze({ x: best.x, y: best.y, w: best.w, h: best.h });
-      flyLabelPlacementCache.set(cacheKey, { vocabIndex, width, height, anchorX, anchorY, rect: stableRect });
+      const stableRect = Object.freeze(chosen);
+      flyLabelPlacementCache.set(cacheKey, {
+        vocabIndex,
+        width,
+        height,
+        anchorX,
+        anchorY,
+        rect: stableRect
+      });
       return stableRect;
     }
 
@@ -15147,6 +15141,11 @@ function startRibbitRaceGame() {
       }
 
       const pause = HUD_UI.pauseButton;
+      // Keep the control usable without hiding a centered fly label underneath it.
+      // The paused state is slightly stronger because the world is already frozen.
+      const pauseOpacity = game.state === "paused" ? 0.84 : game.sandboxMode ? 0.66 : 0.56;
+      ctx.save();
+      ctx.globalAlpha *= pauseOpacity;
       ctx.fillStyle = "rgba(38,54,61,0.45)";
       ctx.fillRect(pause.x + 2, pause.y + 2, pause.w, pause.h);
       ctx.fillStyle = COLORS.ink;
@@ -15170,6 +15169,7 @@ function startRibbitRaceGame() {
         ctx.fillRect(pause.x + 7, pause.y + 5, 4, 9);
         ctx.fillRect(pause.x + 15, pause.y + 5, 4, 9);
       }
+      ctx.restore();
     }
 
     function drawOverlayPanel(title, lines, footer, useCrispText = false, layout = {}) {
@@ -16523,7 +16523,7 @@ function startRibbitRaceGame() {
       if (!unlocked) {
         drawMiniLockIcon(rect.x + rect.w / 2, rect.y + 6, 0.72);
       } else if (hatId === "none") {
-        drawBitmapText("HAT", rect.x + rect.w / 2, rect.y + 11, 0.78, "center", skin.dark);
+        drawBitmapText("   ", rect.x + rect.w / 2, rect.y + 11, 0.78, "center", skin.dark);
       } else {
         drawPixelFrogHat(rect.x + rect.w / 2, rect.y + 15, hatId, 0.78, 1, skin);
       }
@@ -16581,7 +16581,7 @@ function startRibbitRaceGame() {
       drawBitmapText("CHOOSE STYLE",panel.x+panel.w/2,panel.y+10,1.15,"center",COLORS.white,skin.dark);
       const filteredHats = getFilteredCustomHatOptions();
       const focusedHat = CUSTOM_HAT_OPTIONS[game.customHatHoveredIndex ?? game.customHatFocusIndex] || filteredHats[0] || CUSTOM_HAT_OPTIONS[0];
-      drawBitmapText(focusedHat.id === "none" ? "HAT" : focusedHat.name,panel.x+panel.w/2,panel.y+36,0.54,"center",skin.dark);
+      drawBitmapText(focusedHat.id === "none" ? "   " : focusedHat.name,panel.x+panel.w/2,panel.y+36,0.54,"center",skin.dark);
       let lockedFocusedOption=null;
       getCustomHatOptionRects().forEach((option)=>{
         const selected=(game.customHatId||"none")===option.id;
@@ -18191,32 +18191,53 @@ function startRibbitRaceGame() {
 
       const help = PAUSE_UI.helpButton;
       const helpActive = game.pauseHoveredSelection === "help" || game.pausePressedSelection === "help" || game.pauseHelpOpen;
+      const bookTheme = getPauseBookTheme(helpActive);
       ctx.fillStyle = "rgba(25,43,52,0.28)"; ctx.fillRect(help.x + 2, help.y + 2, help.w, help.h);
-      ctx.fillStyle = helpActive ? COLORS.ink : "#4b565b"; ctx.fillRect(help.x, help.y, help.w, help.h);
-      ctx.fillStyle = helpActive ? "#f7f1c9" : "#f7fdff"; ctx.fillRect(help.x + 2, help.y + 2, help.w - 4, help.h - 4);
-      drawMiniBookIcon(help.x + help.w / 2, help.y + help.h / 2, helpActive ? "#9f7d2c" : "#7a5a2a");
+      ctx.fillStyle = bookTheme.frame; ctx.fillRect(help.x, help.y, help.w, help.h);
+      ctx.fillStyle = bookTheme.buttonFill; ctx.fillRect(help.x + 2, help.y + 2, help.w - 4, help.h - 4);
+      drawMiniBookIcon(help.x + help.w / 2, help.y + help.h / 2, bookTheme);
       if (game.pauseHelpOpen) drawPauseHowToOverlay();
     }
 
-    function drawMiniBookIcon(cx, cy, color = "#7a5a2a") {
-      // A compact open instruction book with visible covers, pages, spine,
-      // page lines and a small bookmark. It reads clearly at the 20×20 size.
+    function getPauseBookTheme(active = false) {
+      const skin = getSelectedSkin();
+      return {
+        frame: active ? skin.dark : mixHexColors(skin.dark, COLORS.ink, 0.30),
+        buttonFill: active
+          ? mixHexColors(skin.belly, "#ffffff", 0.08)
+          : mixHexColors(skin.belly, "#ffffff", 0.38),
+        cover: skin.dark,
+        coverHighlight: skin.mid,
+        page: mixHexColors(skin.belly, "#ffffff", active ? 0.30 : 0.54),
+        pageLine: mixHexColors(skin.dark, skin.mid, 0.54),
+        spine: skin.mid,
+        bookmark: skin.light
+      };
+    }
+
+    function drawMiniBookIcon(cx, cy, theme = getPauseBookTheme(false)) {
+      // The instruction book now inherits the currently selected frog palette.
+      // Covers, pages, spine, page lines and bookmark all remain readable across
+      // the default and custom color themes.
       ctx.fillStyle = COLORS.ink;
       ctx.fillRect(cx - 8, cy - 7, 16, 14);
-      ctx.fillStyle = color;
+      ctx.fillStyle = theme.cover;
       ctx.fillRect(cx - 7, cy - 6, 7, 12);
       ctx.fillRect(cx + 1, cy - 6, 7, 12);
-      ctx.fillStyle = "#fff7d6";
-      ctx.fillRect(cx - 6, cy - 5, 5, 10);
-      ctx.fillRect(cx + 2, cy - 5, 5, 10);
-      ctx.fillStyle = "#d8c58a";
+      ctx.fillStyle = theme.coverHighlight;
+      ctx.fillRect(cx - 6, cy - 5, 1, 10);
+      ctx.fillRect(cx + 6, cy - 5, 1, 10);
+      ctx.fillStyle = theme.page;
+      ctx.fillRect(cx - 5, cy - 5, 4, 10);
+      ctx.fillRect(cx + 2, cy - 5, 4, 10);
+      ctx.fillStyle = theme.pageLine;
       ctx.fillRect(cx - 5, cy - 2, 3, 1);
       ctx.fillRect(cx - 5, cy + 1, 3, 1);
       ctx.fillRect(cx + 3, cy - 2, 3, 1);
       ctx.fillRect(cx + 3, cy + 1, 3, 1);
-      ctx.fillStyle = color;
+      ctx.fillStyle = theme.spine;
       ctx.fillRect(cx - 1, cy - 6, 2, 12);
-      ctx.fillStyle = getSelectedSkin().mid;
+      ctx.fillStyle = theme.bookmark;
       ctx.fillRect(cx + 4, cy - 6, 2, 5);
       ctx.fillRect(cx + 5, cy - 1, 1, 2);
     }
@@ -18244,16 +18265,20 @@ function startRibbitRaceGame() {
             "WRONG FLIES GET SPAT BACK OUT",
             "TAP JUST BEFORE LANDING TO DROP THROUGH"
           ];
+      const bookTheme = getPauseBookTheme(true);
+      const bookSkin = getSelectedSkin();
       ctx.fillStyle = "rgba(18,33,41,0.62)"; ctx.fillRect(0,0,W,H);
       ctx.fillStyle = "rgba(25,43,52,0.30)"; ctx.fillRect(panel.x + 3, panel.y + 3, panel.w, panel.h);
-      ctx.fillStyle = COLORS.ink; ctx.fillRect(panel.x, panel.y, panel.w, panel.h);
-      ctx.fillStyle = "#f7fdff"; ctx.fillRect(panel.x + 2, panel.y + 2, panel.w - 4, panel.h - 4);
-      ctx.fillStyle = "#b8dfe8"; ctx.fillRect(panel.x + 4, panel.y + 4, panel.w - 8, 22);
-      drawBitmapText("HOW TO PLAY", panel.x + panel.w / 2, panel.y + 9, 1, "center", "#34484f");
-      lines.forEach((line, index) => drawBitmapText(line, panel.x + panel.w / 2, panel.y + 38 + index * 16, 0.68, "center", "#48555a"));
-      ctx.fillStyle = "#d6e0e3";
+      ctx.fillStyle = bookTheme.frame; ctx.fillRect(panel.x, panel.y, panel.w, panel.h);
+      ctx.fillStyle = mixHexColors(bookSkin.belly, "#ffffff", 0.62);
+      ctx.fillRect(panel.x + 2, panel.y + 2, panel.w - 4, panel.h - 4);
+      ctx.fillStyle = bookSkin.mid; ctx.fillRect(panel.x + 4, panel.y + 4, panel.w - 8, 22);
+      ctx.fillStyle = bookSkin.light; ctx.fillRect(panel.x + 6, panel.y + 6, panel.w - 12, 2);
+      drawBitmapText("HOW TO PLAY", panel.x + panel.w / 2, panel.y + 9, 1, "center", COLORS.white, bookSkin.dark);
+      lines.forEach((line, index) => drawBitmapText(line, panel.x + panel.w / 2, panel.y + 38 + index * 16, 0.68, "center", bookSkin.dark));
+      ctx.fillStyle = mixHexColors(bookSkin.dark, bookSkin.mid, 0.56);
       ctx.fillRect(panel.x + 18, panel.y + panel.h - 21, panel.w - 36, 1);
-      drawVersionLabel(panel.x + panel.w / 2, panel.y + panel.h - 14, "center", "#68787e");
+      drawVersionLabel(panel.x + panel.w / 2, panel.y + panel.h - 14, "center", bookSkin.dark);
       const close = PAUSE_UI.helpCloseButton;
       const closeActive = game.pauseHoveredSelection === "help-close" || game.pausePressedSelection === "help-close";
       ctx.fillStyle = "rgba(25,43,52,0.28)";
@@ -20678,5 +20703,253 @@ function startRibbitRaceGame() {
     window.__RIBBIT_GAME_READY__ = true;
     window.dispatchEvent(new CustomEvent("ribbit-race-ready"));
     requestAnimationFrame(frame);
+
+    /* ===== client/game/90-extended-features.js ===== */
+// Ribbit Race Friends 1.4.1 — integrated extension layer
+// Responsibilities: runtime bridge, deterministic PvP event telemetry, mobile
+// input support hooks, palette operations, post-hat progression, and replay state.
+
+const RIBBIT_FRIENDS_DISPLAY_VERSION = "1.4.1";
+const RIBBIT_FRIENDS_BUILD = "2026.10.10-friends-centered-labels-themed-book-1";
+
+function rr14Number(value, fallback = 0) {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : fallback;
+}
+function rr14RectFromActor(actor) {
+  if (!actor || typeof actor !== "object") return null;
+  const x = rr14Number(actor.x, NaN), y = rr14Number(actor.y, NaN);
+  if (!Number.isFinite(x) || !Number.isFinite(y)) return null;
+  const width = Math.max(8, rr14Number(actor.width ?? actor.w ?? actor.hitW, 26));
+  const height = Math.max(8, rr14Number(actor.height ?? actor.h ?? actor.hitH, 22));
+  return { actor, x, y, width, height, cx: x + width / 2, cy: y + height / 2,
+    vx: rr14Number(actor.vx), vy: rr14Number(actor.vy) };
+}
+function rr14FindFrogPair(args) {
+  const direct = Array.from(args || []).map(rr14RectFromActor).filter(Boolean);
+  if (direct.length >= 2) return direct.slice(0, 2);
+  const candidates = [];
+  const inspect = (value) => {
+    if (!value || typeof value !== "object") return;
+    if (Array.isArray(value)) value.forEach(inspect);
+    else { const rect = rr14RectFromActor(value); if (rect) candidates.push(rect); }
+  };
+  Array.from(args || []).forEach(inspect);
+  return candidates.slice(0, 2);
+}
+function rr14Overlap(a, b) {
+  if (!a || !b) return null;
+  const x = Math.min(a.x + a.width, b.x + b.width) - Math.max(a.x, b.x);
+  const y = Math.min(a.y + a.height, b.y + b.height) - Math.max(a.y, b.y);
+  return x > 0 && y > 0 ? { x, y } : null;
+}
+function rr14ManualRebound(a, b, overlap) {
+  const left = a.cx <= b.cx ? a : b, right = left === a ? b : a;
+  const push = Math.max(0.5, overlap.x / 2 + 0.5);
+  left.actor.x -= push; right.actor.x += push;
+  const speed = Math.max(2.2, Math.abs(a.vx), Math.abs(b.vx), 2.8);
+  left.actor.vx = -speed; right.actor.vx = speed;
+  window.dispatchEvent(new CustomEvent("ribbit-pvp-event", {detail:{type:"rebound",human:true}}));
+  return true;
+}
+function rr14ValidVerticalBonk(a, b) {
+  const top = a.cy <= b.cy ? a : b, bottom = top === a ? b : a;
+  // A bonk is valid only when the upper frog is falling, or the lower frog is
+  // actively rising into it. Merely pressing jump while already overlapping
+  // can no longer manufacture an instant bonk.
+  return top.vy > 0.08 || bottom.vy < -0.08;
+}
+
+if (typeof resolvePvpCollision === "function") {
+  const rr14OriginalCollision = resolvePvpCollision;
+  resolvePvpCollision = function(...args) {
+    const pair = rr14FindFrogPair(args);
+    const overlap = pair.length === 2 ? rr14Overlap(pair[0], pair[1]) : null;
+    if (overlap && overlap.y <= overlap.x && !rr14ValidVerticalBonk(pair[0], pair[1])) {
+      return rr14ManualRebound(pair[0], pair[1], overlap);
+    }
+    const result = rr14OriginalCollision.apply(this, args);
+    if (overlap) {
+      const type = overlap.y <= overlap.x ? "bonk" : "rebound";
+      window.dispatchEvent(new CustomEvent("ribbit-pvp-event", {detail:{type,human:true}}));
+    }
+    return result;
+  };
+}
+
+function rr14StorageJson(key, fallback) {
+  try { const parsed = JSON.parse(localStorage.getItem(key) || "null"); return parsed ?? fallback; } catch (_) { return fallback; }
+}
+function rr14SetStorageJson(key, value) { localStorage.setItem(key, JSON.stringify(value)); }
+function rr14GameState() {
+  try { return String(game?.state || ""); } catch (_) { return ""; }
+}
+function rr14CurrentLevel() {
+  try {
+    const allowed = new Set(["park","swamp","jungle","pond","lake","garden"]);
+    for (const [key,value] of Object.entries(game || {})) {
+      if (typeof value === "string" && allowed.has(value.toLowerCase()) && /level|stage|selected/i.test(key)) return value.toLowerCase();
+    }
+    return allowed.has(String(game?.levelId || "").toLowerCase()) ? String(game.levelId).toLowerCase() : "";
+  } catch (_) { return ""; }
+}
+function rr14CurrentSkin() {
+  try { return String(game?.skinId || game?.selectedSkinId || game?.setupSkinFocusId || "azure"); } catch (_) { return "azure"; }
+}
+function rr14FindNumeric(regex, fallback = 0) {
+  try {
+    for (const [key,value] of Object.entries(game || {})) if (regex.test(key) && Number.isFinite(Number(value))) return Number(value);
+  } catch (_) {}
+  return fallback;
+}
+function rr14Snapshot() {
+  const state = rr14GameState();
+  return {
+    state,
+    level: rr14CurrentLevel(),
+    skin: rr14CurrentSkin(),
+    time: rr14FindNumeric(/elapsed|playTime|levelTime|runTime/i, 0),
+    jumps: Math.max(0, Math.floor(rr14FindNumeric(/^jumps$|jumpCount|levelJumps/i, 0))),
+    score: rr14FindNumeric(/^score$|fliesCaught|correctFlies/i, 0),
+    matchWinnerIndex: Math.floor(rr14FindNumeric(/pvpMatchWinner|matchWinnerIndex/i, -1)),
+    ownPlayerIndex: Math.floor(rr14FindNumeric(/onlinePlayerIndex|localPlayerIndex|pvpLocalIndex/i, 0)),
+    randomSelected: (() => { try { return /random/i.test(String(game?.requestedStage || game?.selectedLevel || game?.levelSelection || "")); } catch (_) { return false; } })(),
+    mobile: localStorage.getItem("rrFriendsMobileModeV1") === "1",
+    localVersus: (/pvp|versus/i.test(state) || Boolean(game?.pvpActive)) && !rr14OnlineActive(),
+    onlineVersus: rr14OnlineActive() || /online|quick/i.test(state),
+    twoHuman: (() => { try { return !(game?.pvpCpuEnabled ?? game?.pvpCpu ?? true); } catch (_) { return false; } })()
+  };
+}
+function rr14SkinPalette(id) {
+  try {
+    const skin = FROG_SKINS?.[id];
+    if (!skin) return null;
+    const out = {};
+    ["dark","mid","light","belly","accents","bump","crest","arms","feet","tongue","tongueDark"].forEach((k) => { if (typeof skin[k] === "string") out[k] = skin[k]; });
+    return Object.keys(out).length ? out : null;
+  } catch (_) { return null; }
+}
+function rr14ActiveCustomId() {
+  const id = rr14CurrentSkin();
+  return /^custom[1-3]$/.test(id) ? id : "custom1";
+}
+function rr14CommitRgbEditor() {
+  const editor = document.getElementById("rgb-value-editor");
+  if (editor && document.activeElement === editor) { editor.dispatchEvent(new Event("change",{bubbles:true})); editor.blur(); }
+}
+function rr14ApplyPalette(customId, palette) {
+  if (!/^custom[1-3]$/.test(customId) || !palette) return false;
+  rr14CommitRgbEditor();
+  try {
+    const skin = FROG_SKINS?.[customId];
+    if (skin) Object.assign(skin, palette);
+  } catch (_) {}
+  // Update any recognized custom-color storage object/array without assuming a
+  // single historical schema.
+  for (let i=0;i<localStorage.length;i++) {
+    const key=localStorage.key(i); if (!/custom.*frog.*(color|skin)|frog.*custom.*(color|skin)/i.test(key||"")) continue;
+    let data; try { data=JSON.parse(localStorage.getItem(key)); } catch (_) { continue; }
+    const slot=Number(customId.slice(-1))-1;
+    if (Array.isArray(data)) { data[slot]={...(data[slot]||{}),...palette}; rr14SetStorageJson(key,data); }
+    else if (data && typeof data === "object") { data[customId]={...(data[customId]||{}),...palette}; rr14SetStorageJson(key,data); }
+  }
+  try { selectFrogSkin(customId, false); } catch (_) {}
+  try { window.RibbitRaceRefreshRuntimeFromStorage?.(); } catch (_) {}
+  return true;
+}
+
+function rr14IsHumanPvpIndex(index) {
+  const i = Number(index);
+  try {
+    const snap = rr14Snapshot();
+    if (snap.onlineVersus) {
+      const own = Number(game?.onlinePlayerIndex ?? game?.localPlayerIndex ?? game?.pvpLocalIndex);
+      return Number.isFinite(own) ? i === own : true;
+    }
+    const cpu = Boolean(game?.pvpCpuEnabled ?? game?.pvpCpu ?? false);
+    return cpu ? i === 0 : (i === 0 || i === 1);
+  } catch (_) { return i === 0 || i === 1; }
+}
+function rr14PersistPreferredSkin(id) {
+  if (!id || !/^(?:azure|crimson|plum|forest|violet|silver|blossom|ember|custom[1-3])$/.test(id)) return;
+  localStorage.setItem("ribbitRaceSelectedSkinV1", id);
+  for (let i=0;i<localStorage.length;i++) {
+    const key=localStorage.key(i); if (/selected.*skin|equipped.*frog|frog.*selected/i.test(key||"")) {
+      const old=localStorage.getItem(key); if (old && old.trim().startsWith("{")) continue; localStorage.setItem(key,id);
+    }
+  }
+}
+function rr14PreferSelectedSkin() {
+  const preferred = localStorage.getItem("ribbitRaceSelectedSkinV1") || rr14CurrentSkin();
+  rr14PersistPreferredSkin(preferred);
+  try {
+    if (Array.isArray(game?.pvpSkinIds)) game.pvpSkinIds[0] = preferred;
+    if (Array.isArray(game?.versusSkinIds)) game.versusSkinIds[0] = preferred;
+    if ("onlineSkinId" in (game||{})) game.onlineSkinId = preferred;
+    if ("setupSkinFocusId" in (game||{})) game.setupSkinFocusId = preferred;
+  } catch (_) {}
+}
+
+function rr14HatIds() {
+  try {
+    const catalog = (typeof HAT_CATALOG !== "undefined" && HAT_CATALOG) ||
+      (typeof HATS !== "undefined" && HATS) ||
+      (typeof HAT_DEFS !== "undefined" && HAT_DEFS) ||
+      (typeof FROG_HATS !== "undefined" && FROG_HATS) || null;
+    if (Array.isArray(catalog)) return catalog.map(x => typeof x === "string" ? x : (x?.id || x?.key)).filter(Boolean);
+    if (catalog && typeof catalog === "object") return Object.keys(catalog);
+  } catch (_) {}
+  return [];
+}
+function rr14OnlineActive() {
+  try { return Boolean((typeof OnlineVersus !== "undefined") && (OnlineVersus.isActive?.() || OnlineVersus.isPlaying?.() || OnlineVersus.isSpectating?.())); } catch (_) { return false; }
+}
+window.RibbitRaceRuntimeBridge = Object.freeze({
+  version: RIBBIT_FRIENDS_DISPLAY_VERSION,
+  build: RIBBIT_FRIENDS_BUILD,
+  snapshot: rr14Snapshot,
+  state: rr14GameState,
+  canvas: () => canvas,
+  currentSkin: rr14CurrentSkin,
+  currentLevel: rr14CurrentLevel,
+  skinIds: () => { try { return Object.keys(FROG_SKINS || {}); } catch (_) { return []; } },
+  hatIds: rr14HatIds,
+  palette: rr14SkinPalette,
+  activeCustomId: rr14ActiveCustomId,
+  applyPalette: rr14ApplyPalette,
+  commitRgbEditor: rr14CommitRgbEditor,
+  preferSelectedSkin: rr14PreferSelectedSkin,
+  isHumanPvpIndex: rr14IsHumanPvpIndex,
+  persistPreferredSkin: rr14PersistPreferredSkin,
+  dispatchKey(code, down) {
+    window.dispatchEvent(new KeyboardEvent(down ? "keydown" : "keyup", {code,key:code,bubbles:true,cancelable:true}));
+  }
+});
+
+let rr14PreviousState = rr14GameState();
+let rr14PreviousSnapshot = rr14Snapshot();
+function rr14RuntimeMonitor() {
+  const snap=rr14Snapshot();
+  if (snap.state !== rr14PreviousState) {
+    if (/versus|pvp|online|quick/i.test(snap.state)) rr14PreferSelectedSkin();
+    if (/versus|pvp|online|quick/i.test(snap.state)) {
+      try {
+        const own = Array.isArray(game?.pvpSkinIds) ? game.pvpSkinIds[0] : (game?.onlineSkinId || rr14CurrentSkin());
+        rr14PersistPreferredSkin(String(own || rr14CurrentSkin()));
+      } catch (_) {}
+    }
+    if (/won|victory|complete/i.test(snap.state) && !/won|victory|complete/i.test(rr14PreviousState)) {
+      if ((snap.localVersus || snap.onlineVersus) && (snap.matchWinnerIndex === 0 || snap.matchWinnerIndex === 1)) {
+        window.dispatchEvent(new CustomEvent("ribbit-pvp-match-finished",{detail:{...snap,human:rr14IsHumanPvpIndex(snap.matchWinnerIndex),ownWon:snap.matchWinnerIndex===snap.ownPlayerIndex}}));
+      } else {
+        window.dispatchEvent(new CustomEvent("ribbit-solo-finished",{detail:snap}));
+      }
+    }
+    rr14PreviousState=snap.state;
+  }
+  rr14PreviousSnapshot=snap;
+  requestAnimationFrame(rr14RuntimeMonitor);
+}
+requestAnimationFrame(rr14RuntimeMonitor);
 
 }
