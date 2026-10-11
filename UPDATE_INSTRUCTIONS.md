@@ -1,54 +1,94 @@
-# Ribbit Race Friends 1.4.1 update
+# Ribbit Race Friends 1.5.0 update
 
-Build: `2026.10.10-friends-centered-labels-themed-book-1`  
-Displayed version: `VERSION 1.4.1`
+Build: `2026.10.11-friends-mobile-experience-1`  
+Displayed version: `VERSION 1.5.0`
 
-## Install
+## Install over the existing Friends Edition
 
-1. Extract the patch ZIP into the root of the existing `apolotion/ribbit-race-friends` repository.
-2. Preserve `client/`, `public/`, `scripts/`, `src/`, and `tests/` exactly; do not upload an extra wrapper folder.
-3. Commit directly to `main`. Suggested message:
+This is an update to the existing `apolotion/ribbit-race-friends` GitHub repository and Cloudflare Worker. Do **not** create a second Worker, repository, `FriendsHub`, `FriendsRoom`, or database.
+
+1. Choose a package:
+   - Use the **patch ZIP** when the repository already contains `client/`, `public/`, `scripts/`, `src/`, and `tests/`.
+   - Use the **complete repository ZIP** if any source, public asset, or build-script folder may be missing.
+2. Extract the ZIP.
+3. Copy the extracted **contents** into the root of `apolotion/ribbit-race-friends`, preserving every path. Do not upload the ZIP itself or an extra wrapper folder.
+4. Confirm GitHub shows these directly at the repository root:
 
    ```text
-   Center Lake labels and theme the pause book
+   package.json
+   wrangler.jsonc
+   client/
+   public/
+   scripts/
+   src/
+   tests/
    ```
 
-4. Let Cloudflare run:
+5. Commit directly to `main`. Suggested message:
+
+   ```text
+   Add iPhone app mode and reliable mobile touch controls
+   ```
+
+6. Let Cloudflare run:
 
    ```text
    npm run check && npm test
    npx wrangler deploy
    ```
 
-5. Keep the existing `HUB`, `ROOMS`, and `ASSETS` bindings. Do not recreate Durable Objects.
-6. Confirm `/api/health` reports:
+7. Keep the current bindings:
 
-   ```json
-   {"build":"2026.10.10-friends-centered-labels-themed-book-1"}
+   ```text
+   HUB     → FriendsHub
+   ROOMS   → FriendsRoom
+   ASSETS  → public
    ```
 
-7. Hard-refresh every test device.
+8. Wait for `Success: Deploy command completed` and `Success! Build completed.`
+9. Open `/api/health` on the deployed Worker and confirm:
 
-## What changed
+   ```json
+   {"build":"2026.10.11-friends-mobile-experience-1"}
+   ```
 
-### Fly plates
+10. Hard-refresh desktop browsers. On an iPhone Home Screen installation, close and reopen the app; remove and re-add the Home Screen icon only if Safari keeps an older cached shell.
 
-The plate's horizontal center is now always the fly's stable anchor. The placement system does not consult HUD obstacles or clamp the plate sideways. When multiple plates compete for space, the system can move a newer plate upward only.
+## iPhone app-style installation
 
-This intentionally permits a wide upper-right plate to overlap the pause-button area rather than appearing left of its fly.
+The login screen now includes **PLAYING ON MOBILE?**. On iPhone:
 
-### Pause button
+1. Open the game in Safari.
+2. Tap Share.
+3. Choose **Add to Home Screen**.
+4. Tap Add.
+5. Launch Ribbit Race from the new icon and rotate the phone sideways.
 
-The button's clickable rectangle is unchanged. Its running-state rendering is now 56% opaque; Sandbox uses 66%, and the already-paused state uses 84%.
+The installed Home Screen version uses the included web-app manifest, Apple mobile-web-app metadata, landscape orientation, safe-area handling, and dynamic viewport sizing. A normal Safari tab cannot remove all browser chrome; the Home Screen launch is the intended app-like mode.
 
-### Themed How To Play book
+## Mobile Mode controls
 
-The compact book icon and the open How To Play panel use the active frog's `dark`, `mid`, `light`, and `belly` colors. Custom Frog palettes are supported through the same selected-skin function.
+- The main menu now has an account/avatar button and a phone/computer button on the lower-left side.
+- The phone/computer button asks for confirmation before changing modes.
+- Enabling Mobile Mode repeats the iPhone Home Screen instructions.
+- Single Player uses a hold-and-release jump meter.
+- Human Local Versus uses independent **P1 JUMP** and **P2 JUMP** meters. Both can be held simultaneously without releasing the other player.
+- Online Versus exposes only the local player's jump meter.
+- A touch-tested pause button appears at the upper-right during Versus.
+- Mobile instructions refer to tapping and jump meters rather than Space, WASD, or arrow keys.
+- Mobile Mode hides the old corner account/fullscreen toolbar; the main-menu avatar opens saves, records, leaderboards, and sign-out controls.
 
-### Replay storage repair
+## Performance changes
 
-The previously added Fastest Time/Fewest Jumps replay UI now has matching SQLite storage and same-origin Worker routes. The table is created automatically inside the existing FriendsHub Durable Object.
+On coarse-touch/mobile devices the game renders at `960×540` instead of `1920×1080`, disables automatic record-video capture, throttles accessory monitoring loops, and limits physics catch-up work after a slow Safari frame. Core game physics and cloud protocols remain unchanged.
+
+## Hat changes
+
+- `hatstest` exposes the Hats feature without unlocking any individual hat.
+- The no-hat choice is a dashed gray top-hat outline.
+- Hat requirements begin from a post-unlock baseline and no longer require an online or human opponent.
+- Requirements now use a broader set of default frog skins. See `HAT_REQUIREMENTS.md`.
 
 ## Rollback
 
-Revert the Git commit and allow Cloudflare to redeploy. Do not delete Durable Objects to roll back a visual update.
+Revert the Git commit and allow the same Cloudflare Worker to redeploy. Do not delete Durable Objects to roll back a client update.

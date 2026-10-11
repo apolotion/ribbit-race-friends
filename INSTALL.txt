@@ -1,24 +1,34 @@
-RIBBIT RACE FRIENDS EDITION — CENTERED LABELS / THEMED BOOK 1.4.1
-Build: 2026.10.10-friends-centered-labels-themed-book-1
-Displayed version: VERSION 1.4.1
+RIBBIT RACE FRIENDS EDITION — MOBILE / IPHONE / TOUCH 1.5.0
+Build: 2026.10.11-friends-mobile-experience-1
+Displayed version: VERSION 1.5.0
 
 THIS UPDATES THE EXISTING FRIENDS WORKER.
 Do not create another Worker, repository, FriendsHub, FriendsRoom, or database.
 
-1. Extract the patch ZIP.
-2. Copy its contents into the root of apolotion/ribbit-race-friends, preserving folders.
+1. Extract the patch ZIP, or use the complete repository ZIP if the GitHub project is missing files.
+2. Copy the extracted contents into the root of apolotion/ribbit-race-friends, preserving folders.
 3. Commit to main.
 4. Wait for Cloudflare to run:
      npm run check && npm test
      npx wrangler deploy
-5. Confirm /api/health reports build 2026.10.10-friends-centered-labels-themed-book-1.
-6. Hard-refresh all test devices.
+5. Confirm /api/health reports build 2026.10.11-friends-mobile-experience-1.
+6. Hard-refresh desktop browsers.
+
+IPHONE:
+- Open the deployed game in Safari.
+- Tap PLAYING ON MOBILE? for the in-game instructions.
+- Share > Add to Home Screen > Add.
+- Launch from the new icon and rotate sideways.
+- Use the phone/computer icon on the main menu to enable Mobile Mode.
 
 VERIFY:
-- A wide Lake label at the upper-right remains centered over its fly even when it overlaps the pause-button area.
-- The running pause button is translucent enough to read a label underneath it.
-- Pause > How To Play uses the selected frog's palette for the book button and open-book panel.
-- VERSION 1.4.1 appears in the existing version locations.
-- Existing PIN accounts, saves, vocabulary, Quickplay, Mobile Mode, hats, replays, and Custom Frogs remain available.
+- Mobile Mode asks for confirmation and repeats the iPhone instructions.
+- The main-menu avatar opens account/save/leaderboard controls.
+- Single Player and Versus use the gradient touch meters.
+- Two Local Versus players can hold P1 and P2 simultaneously.
+- The upper-right Versus pause button responds to touch.
+- Long-pressing the game does not open the iOS magnifier/callout.
+- Mobile instructions do not mention Space, WASD, or arrow keys.
+- Existing PIN accounts, saves, vocabulary, Quickplay, hats, replays, and Custom Frogs remain available.
 
-See UPDATE_INSTRUCTIONS.md and TEST_REPORT.md for details.
+See UPDATE_INSTRUCTIONS.md, HAT_REQUIREMENTS.md, and TEST_REPORT.md for details.

@@ -1,34 +1,38 @@
 # Ribbit Race Friends Edition architecture
 
-Build: `2026.10.10-friends-centered-labels-themed-book-1`  
-Displayed game version: `VERSION 1.4.1`
+Build: `2026.10.11-friends-mobile-experience-1`  
+Displayed game version: `VERSION 1.5.0`
 
 ## Browser responsibilities
 
-- `public/index.html` — semantic document structure only.
-- `public/styles/` — page, authentication, mobile, replay, and game-shell presentation.
+- `public/index.html` — semantic authentication, leaderboard, account, game-shell, and mobile-install markup.
+- `public/manifest.webmanifest` and `public/icons/` — standalone Home Screen identity, orientation, and icons.
+- `public/styles/` — page, authentication, mobile, replay, safe-area, and game-shell presentation.
 - `public/scripts/friends-api-client.js` — `FriendsApiClient`; HTTP request policy.
 - `public/scripts/auth-screen-controller.js` — login/game visibility, input boundary, and clean sign-out navigation.
 - `public/scripts/cloud-client.js` — PIN accounts, save hydration, vocabulary, leaderboard formatting, and cloud lifecycle.
-- `public/scripts/extended-features.js` — Mobile Mode, replay capture/viewing, palette tools, hat progression, and world-record notices.
-- `client/game/70-rendering.js` — persistent fly plates, exact horizontal centering, pause-control opacity, themed How To Play book, cinematics, achievements, menus, and HUD.
+- `public/scripts/mobile-experience.js` — Mobile/Computer confirmation, iPhone installation help, account-panel bridge, standalone detection, and native-gesture suppression.
+- `public/scripts/extended-features.js` — replay capture/viewing, palette tools, hat progression, and world-record notices.
+- `client/game/100-mobile-experience.js` — canvas-native avatar/device buttons, gradient jump meters, upper-right Versus pause, independent pointer ownership, and touch diagnostics.
 - `public/scripts/game.bundle.js` — generated closure-preserving browser runtime.
 
-## Label-placement responsibility
+## Touch-input responsibility
 
-`70-rendering.js` owns a placement cache and a prerendered sprite cache keyed by mode/round/fly/vocabulary identity. A label keeps one stable rectangle for its fly's lifetime.
+The mobile gameplay module receives pointer events in capture phase, maps them through the canvas's actual letterboxed drawing rectangle, and assigns each pointer ID to exactly one control. P1 and P2 can therefore hold separate Local Versus meters at the same time. Releasing or cancelling one contact cannot release the other contact.
 
-The horizontal coordinate is always:
+The account/device controls are rendered inside the game canvas on the main menu. The old DOM corner toolbar is hidden while Mobile Mode is active, but its account panel remains accessible through the canvas avatar.
 
-```text
-stable fly anchor X - plate width / 2
-```
+## Mobile performance responsibility
 
-No HUD obstacle, screen-edge clamp, timer, or pause button may shift it sideways. Only the vertical row may change to avoid an older label.
+- `RENDER_SCALE` is 2 on coarse-touch devices and 4 on desktop.
+- The fixed-step simulation remains compatible with the existing physics but caps catch-up work on slow mobile frames.
+- Replay video capture is skipped on mobile/coarse-pointer devices.
+- Accessory monitors use throttled timers rather than independent full-rate animation loops.
+- Standalone mode uses dynamic viewport units and safe-area insets.
 
-## Pause-book theming responsibility
+## Hat responsibility
 
-`getPauseBookTheme()` maps the selected frog's palette to the book frame, cover, page, page lines, spine, bookmark, open-book header, divider, and version footer. This keeps the help control consistent with default and custom frogs.
+`HatProgressController` records a post-feature baseline. It consumes Solo completion, general Versus wins, total flies, and total jumps without requiring an online or human opponent. `hatstest` creates only the feature baseline and dispatches the Hats-open event.
 
 ## Server responsibilities
 
@@ -39,6 +43,6 @@ No HUD obstacle, screen-edge clamp, timer, or pause button may shift it sideways
 
 ## Why the game bundle is generated
 
-The historical game uses one large private lexical scope. Responsibility-focused source modules are assembled during the Cloudflare build, preserving scope and execution order without exposing internal state globally.
+The historical game uses one large private lexical scope. Ten responsibility-focused source modules are assembled during the Cloudflare build, preserving scope and execution order without exposing internal state globally.
 
 Run `npm run build` after editing a game module. `npm run check` does this automatically.

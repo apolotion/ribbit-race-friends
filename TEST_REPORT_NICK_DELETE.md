@@ -1,13 +1,13 @@
 # Test report — Nick legacy-delete repair
 
-Build: `2026.10.10-friends-centered-labels-themed-book-1`
+Build: `2026.10.11-friends-mobile-experience-1`
 
 ## Passed
 
-- Complete browser bundle rebuilt from the eight modular game source files.
+- Complete browser bundle rebuilt from the ten modular game source files.
 - Server and browser modules parse.
 - All required external assets are present.
-- 59/59 automated tests passed in the current complete project.
+- 91/91 automated tests passed in the current complete project.
 - Recovery variable is read from `OWNER_DELETE_LEGACY_USERNAME`.
 - Recovery runs during Durable Object construction and at the start of every Hub request.
 - V2 one-shot marker prevents a later replacement PIN account from being deleted.

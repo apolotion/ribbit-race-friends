@@ -27,8 +27,12 @@ if(/<style\b/i.test(html))throw new Error('index.html must not contain inline CS
 for(const m of html.matchAll(/<script\b([^>]*)>([\s\S]*?)<\/script>/gi)){
   if(!/\bsrc\s*=/.test(m[1])&&m[2].trim())throw new Error('index.html must not contain inline JavaScript.');
 }
-const assets=[...html.matchAll(/(?:src|href)="(\/(?:scripts|styles)\/[^"?]+)(?:\?[^"#]*)?"/g)].map(m=>m[1].slice(1));
+const assets=[...html.matchAll(/(?:src|href)="(\/(?:scripts|styles|icons)\/[^"?]+|\/manifest\.webmanifest)(?:\?[^"#]*)?"/g)].map(m=>m[1].slice(1));
 for(const asset of assets)if(!existsSync(join(root,'public',asset)))throw new Error('Missing referenced browser asset: '+asset);
+const requiredMobileAssets=['manifest.webmanifest','icons/ribbit-race-180.png','icons/ribbit-race-512.png','scripts/mobile-experience.js'];
+for(const asset of requiredMobileAssets)if(!existsSync(join(root,'public',asset)))throw new Error('Missing Mobile/PWA asset: '+asset);
+const manifest=JSON.parse(readFileSync('public/manifest.webmanifest','utf8'));
+if(manifest.display!=='standalone'||manifest.orientation!=='landscape')throw new Error('Mobile manifest must launch standalone in landscape.');
 
 const browserSource=walk(join(root,'public/scripts')).filter(v=>v.endsWith('.js')).map(v=>readFileSync(v,'utf8')).join('\n');
 new vm.Script(browserSource,{filename:'friends-browser-sources.js'});

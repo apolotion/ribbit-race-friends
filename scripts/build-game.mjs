@@ -13,7 +13,8 @@ class GameBundleBuilder {
   "client/game/60-versus-gameplay.js",
   "client/game/70-rendering.js",
   "client/game/80-input-loop-startup.js",
-  "client/game/90-extended-features.js",];
+  "client/game/90-extended-features.js",
+  "client/game/100-mobile-experience.js",];
 
   constructor(projectRoot = process.cwd()) {
     this.projectRoot = projectRoot;

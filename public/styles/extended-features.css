@@ -3,3 +3,19 @@
 #rr-custom-top-hat{position:fixed;z-index:1501;right:9vw;bottom:5vh;width:42px;height:18px;background:#26363d;border:3px solid #f7fdff;box-shadow:0 -20px 0 -7px #26363d,0 -22px 0 -4px #26363d;pointer-events:none}#rr-custom-top-hat[hidden]{display:none}
 
 .rr-replay-frog{border:0;background:transparent;font-size:22px;cursor:pointer;margin-right:8px;vertical-align:middle;filter:drop-shadow(2px 2px 0 #aebbc0)}.rr-replay-frog:hover{transform:scale(1.18)}
+
+/* Friends 1.5 mobile experience */
+#rr-mobile-dialog{position:fixed;inset:0;z-index:2900;display:grid;place-items:center;padding:max(16px,env(safe-area-inset-top)) max(16px,env(safe-area-inset-right)) max(16px,env(safe-area-inset-bottom)) max(16px,env(safe-area-inset-left));background:rgba(8,30,42,.88);color:#26363d;-webkit-user-select:text;user-select:text}
+#rr-mobile-dialog[hidden]{display:none}
+#rr-mobile-dialog .rr-mobile-dialog-card{width:min(620px,96vw);max-height:min(88dvh,720px);overflow:auto;border:7px solid #26363d;background:#f7fdff;box-shadow:10px 10px 0 rgba(0,0,0,.32);padding:20px;text-align:center}
+#rr-mobile-dialog h2{margin:0 0 12px;padding:12px;border:5px solid #07516a;background:#0f9fbb;color:#fff;font:700 clamp(24px,6vw,40px)/1 "Courier New",monospace;text-shadow:3px 3px 0 #07516a}
+#rr-mobile-dialog p,#rr-mobile-dialog li{font:700 16px/1.45 "Courier New",monospace;color:#48555a}
+#rr-mobile-dialog ol{margin:14px auto;text-align:left;max-width:490px;padding-left:28px}
+#rr-mobile-dialog .cloud-actions{margin-top:16px}
+#cloud-mobile-help{background:#dff8ff}
+body.rr-mobile-enabled #corner-controls{display:none!important}
+body.rr-mobile-enabled{-webkit-touch-callout:none;-webkit-user-select:none;user-select:none;touch-action:none}
+body.rr-mobile-enabled canvas,body.rr-mobile-enabled #game-frame{-webkit-touch-callout:none;-webkit-user-select:none;user-select:none;touch-action:none;-webkit-tap-highlight-color:transparent}
+@media(display-mode:standalone){html,body{width:100%;height:100dvh;min-height:100dvh}#game-frame{position:fixed;inset:0;width:100vw;height:100dvh;max-width:none;aspect-ratio:auto;border:0;box-shadow:none;padding:max(0px,env(safe-area-inset-top)) max(0px,env(safe-area-inset-right)) max(0px,env(safe-area-inset-bottom)) max(0px,env(safe-area-inset-left));background:#111a2b}#game-frame canvas{width:100%;height:100%;object-fit:contain}}
+body.rr-mobile-enabled #rr-mobile-toggle,body.rr-mobile-enabled .rr-mobile-pad{display:none!important}
+body.rr-mobile-enabled #game{ -webkit-user-drag:none; -webkit-touch-callout:none; user-select:none; -webkit-user-select:none; }

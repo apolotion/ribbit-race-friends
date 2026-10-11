@@ -4,12 +4,17 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="theme-color" content="#5a95b8" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-title" content="Ribbit Race" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <link rel="manifest" href="/manifest.webmanifest" />
+  <link rel="apple-touch-icon" href="/icons/ribbit-race-180.png" />
   <title>Ribbit Race — Friends Edition</title>
   <!-- Ribbit Race Friends Edition. Separate Cloudflare deployment; no school data or Google services. -->
-  <link rel="stylesheet" href="/styles/base.css?v=2026.10.10-centered-labels-book-theme-1" />
-  <link rel="stylesheet" href="/styles/cloud-ui.css?v=2026.10.10-centered-labels-book-theme-1" />
-  <link rel="stylesheet" href="/styles/game-shell.css?v=2026.10.10-centered-labels-book-theme-1" />
-  <link rel="stylesheet" href="/styles/extended-features.css?v=2026.10.10-centered-labels-book-theme-1">
+  <link rel="stylesheet" href="/styles/base.css?v=2026.10.11-mobile-experience-1" />
+  <link rel="stylesheet" href="/styles/cloud-ui.css?v=2026.10.11-mobile-experience-1" />
+  <link rel="stylesheet" href="/styles/game-shell.css?v=2026.10.11-mobile-experience-1" />
+  <link rel="stylesheet" href="/styles/extended-features.css?v=2026.10.11-mobile-experience-1">
 </head>
 <body class="ribbit-auth-locked">
 
@@ -20,7 +25,7 @@
     <div id="cloud-login-view" class="cloud-view">
      <label class="cloud-field">USERNAME<input id="cloud-login-id" maxlength="20" autocomplete="username" placeholder="Your username" /></label>
      <label class="cloud-field">4-DIGIT PIN<input id="cloud-login-pin" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="4" autocomplete="current-password" placeholder="4 numbers" /></label>
-     <div class="cloud-actions"><button id="cloud-login-button" class="cloud-button primary">SIGN IN</button><button id="cloud-show-create" class="cloud-button">CREATE ACCOUNT</button><button id="cloud-play-guest" class="cloud-button">PLAY WITHOUT SAVING</button></div>
+     <div class="cloud-actions"><button id="cloud-login-button" class="cloud-button primary">SIGN IN</button><button id="cloud-show-create" class="cloud-button">CREATE ACCOUNT</button><button id="cloud-play-guest" class="cloud-button">PLAY WITHOUT SAVING</button><button id="cloud-mobile-help" class="cloud-button" type="button">PLAYING ON MOBILE?</button></div>
      <p class="cloud-help">No school email or Google account needed. Sign in with your username and 4-digit PIN. <a href="/help.html" target="_blank" rel="noopener">Help &amp; privacy</a></p>
     </div>
     <div id="cloud-create-view" class="cloud-view" hidden>
@@ -39,6 +44,25 @@
      <div class="cloud-actions"><button id="cloud-created-continue" class="cloud-button primary">PLAY RIBBIT RACE</button></div>
     </div>
    </div>
+  </section>
+
+
+  <section id="rr-mobile-dialog" aria-modal="true" role="dialog" aria-labelledby="rr-mobile-dialog-title" hidden>
+    <div class="rr-mobile-dialog-card">
+      <h2 id="rr-mobile-dialog-title">PLAYING ON IPHONE?</h2>
+      <p id="rr-mobile-dialog-message">Add Ribbit Race to your Home Screen for a larger, app-like play area.</p>
+      <ol id="rr-mobile-dialog-steps">
+        <li>Open this game in Safari.</li>
+        <li>Tap the Share button (the square with an upward arrow).</li>
+        <li>Scroll and choose <strong>Add to Home Screen</strong>.</li>
+        <li>Tap <strong>Add</strong>, then launch Ribbit Race from the new icon.</li>
+        <li>Rotate the iPhone sideways before starting a match.</li>
+      </ol>
+      <div class="cloud-actions">
+        <button id="rr-mobile-dialog-confirm" class="cloud-button primary" type="button">GOT IT</button>
+        <button id="rr-mobile-dialog-cancel" class="cloud-button" type="button">CLOSE</button>
+      </div>
+    </div>
   </section>
 
   <section id="leaderboard-overlay" aria-label="Ribbit Race leaderboard" hidden>
@@ -137,7 +161,7 @@
       width="1920"
       height="1080"
       tabindex="0"
-      aria-label="Ribbit Race language-learning frog game. Hold Space or either Shift key to charge a solo jump, then release to jump. Catch the fly carrying the Spanish translation of the English prompt. Collect five correct flies to win."
+      aria-label="Ribbit Race language-learning frog game. Use keyboard controls in Computer Mode or hold the onscreen jump meter in Mobile Mode. Catch the fly carrying the translation of the prompt."
     ></canvas>
     <input
       id="rgb-value-editor"
@@ -149,14 +173,15 @@
       autocomplete="off"
       aria-label="RGB channel value"
     />
-    <p class="sr-only">In solo play, hold Space, W, Up, or either Shift key and release to leap. In versus play, Player 1 uses Left Shift and Player 2 uses Right Shift. Catch the fly carrying the Spanish translation of the English prompt. Five correct answers win. R restarts, Escape or the on-screen pause button pauses, and M mutes.</p>
+    <p class="sr-only">Computer Mode uses keyboard controls. Mobile Mode uses the onscreen jump meter and pause button. Catch the fly carrying the translation of the prompt.</p>
   </main>
-  <script src="/scripts/friends-api-client.js?v=2026.10.10-centered-labels-book-theme-1"></script>
-  <script src="/scripts/auth-screen-controller.js?v=2026.10.10-centered-labels-book-theme-1"></script>
-  <script src="/scripts/cloud-client.js?v=2026.10.10-centered-labels-book-theme-1"></script>
-  <script src="/scripts/game.bundle.js?v=2026.10.10-centered-labels-book-theme-1"></script>
-  <script src="/scripts/bootstrap.js?v=2026.10.10-centered-labels-book-theme-1"></script>
-  <script src="/scripts/playtest-guard.js?v=2026.10.10-centered-labels-book-theme-1"></script>
-  <script src="/scripts/extended-features.js?v=2026.10.10-centered-labels-book-theme-1"></script>
+  <script src="/scripts/friends-api-client.js?v=2026.10.11-mobile-experience-1"></script>
+  <script src="/scripts/auth-screen-controller.js?v=2026.10.11-mobile-experience-1"></script>
+  <script src="/scripts/cloud-client.js?v=2026.10.11-mobile-experience-1"></script>
+  <script src="/scripts/mobile-experience.js?v=2026.10.11-mobile-experience-1"></script>
+  <script src="/scripts/game.bundle.js?v=2026.10.11-mobile-experience-1"></script>
+  <script src="/scripts/bootstrap.js?v=2026.10.11-mobile-experience-1"></script>
+  <script src="/scripts/playtest-guard.js?v=2026.10.11-mobile-experience-1"></script>
+  <script src="/scripts/extended-features.js?v=2026.10.11-mobile-experience-1"></script>
 </body>
 </html>

@@ -3,65 +3,114 @@ import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
 const read=(p)=>readFileSync(p,"utf8");
 
-test("1.4.1 build and modular extension are present",()=>{
-  assert.match(read("src/common.js"),/friends-centered-labels-themed-book-1/);
-  assert.match(read("scripts/build-game.mjs"),/90-extended-features\.js/);
-  assert.match(read("public/index.html"),/extended-features\.js/);
+const extension=read("public/scripts/extended-features.js");
+const core=read("client/game/10-core-config.js");
+const mobile=read("client/game/100-mobile-experience.js");
+const render=read("client/game/70-rendering.js");
+const versus=read("client/game/60-versus-gameplay.js");
+
+test("1.5.0 build and ten modular gameplay sources are present",()=>{
+  assert.match(read("src/common.js"),/2026\.10\.11-friends-mobile-experience-1/);
+  assert.match(read("package.json"),/"version": "1\.5\.0"/);
+  assert.match(read("scripts/build-game.mjs"),/100-mobile-experience\.js/);
+  assert.match(read("public/index.html"),/mobile-experience\.js/);
 });
-test("obsolete apolotion unlock code is absent",()=>{
-  const all=["client/game/40-ui-navigation-audio.js","client/game/80-input-loop-startup.js","public/scripts/cloud-client.js"].map(read).join("\n");
+
+test("obsolete apolotion unlock code is absent and Playtest is reversible",()=>{
+  const all=[core,read("client/game/40-ui-navigation-audio.js"),read("public/scripts/cloud-client.js")].join("\n");
   assert.doesNotMatch(all,/apolotion/i);
-  assert.match(all,/playtest/i);
+  assert.match(all,/PLAYTEST_TOGGLE_CODE = "playtest"/);
+  const guard=read("public/scripts/playtest-guard.js");
+  assert.match(guard,/rrFriendsPlaytestRecoveryV3/);
+  assert.match(guard,/beforeunload/);
+  assert.match(guard,/pagehide/);
 });
-test("playtest has persistent pre-session rollback",()=>{
-  const s=read("public/scripts/playtest-guard.js");assert.match(s,/rrFriendsPlaytestRecoveryV3/);assert.match(s,/beforeunload/);assert.match(s,/pagehide/);
+
+test("world-record label, hover details and repeat suppression remain installed",()=>{
+  assert.match(extension,/NEW WORLD RECORD/);
+  assert.match(extension,/rr-world-record-hit/);
+  assert.match(extension,/rrWorldRecordFirstPlaceSeenV1/);
+  assert.match(extension,/pvpwins/);
+  assert.match(extension,/flies/);
 });
-test("world-record label and repeat suppression are installed",()=>{
-  const s=read("public/scripts/extended-features.js");assert.match(s,/NEW WORLD RECORD/);assert.match(s,/pvpwins/);assert.match(s,/rrWorldRecordFirstPlaceSeenV1/);
+
+test("fastest-time and fewest-jumps replay paths remain available",()=>{
+  const hub=read("src/hub.js");
+  assert.match(hub,/record_replays/);
+  assert.match(hub,/api\/replays\/submit/);
+  assert.match(hub,/api\/replays\/get/);
+  assert.match(extension,/WORLD RECORD REPLAY/);
+  assert.match(extension,/rr-replay-frog/);
 });
-test("fastest-time and fewest-jumps replay paths exist",()=>{
-  const s=read("src/hub.js");assert.match(s,/record_replays/);assert.match(s,/api\/replays\/submit/);assert.match(s,/api\/replays\/get/);
-  assert.match(read("public/scripts/extended-features.js"),/WORLD RECORD REPLAY/);
+
+test("hat progression uses a post-unlock baseline and no online/human-only requirements",()=>{
+  assert.match(extension,/fliesBase/);
+  assert.match(extension,/jumpsBase/);
+  assert.match(extension,/HATS UNLOCKED/);
+  assert.match(extension,/HAT UNLOCKED/);
+  assert.match(extension,/Finish Garden under 30 seconds as Blossom/);
+  assert.match(extension,/Win 10 Versus matches/);
+  const requirements=extension.slice(extension.indexOf("requirements(id"),extension.indexOf("requirementLines(id"));
+  assert.doesNotMatch(requirements,/online/i);
+  assert.doesNotMatch(requirements,/human opponent|human frog/i);
+  for(const skin of ["Azure","Crimson","Forest","Violet","Silver","Blossom","Ember"]){
+    assert.match(requirements,new RegExp(skin,"i"));
+  }
 });
-test("hat progression starts from a post-unlock baseline",()=>{
-  const s=read("public/scripts/extended-features.js");assert.match(s,/fliesBase/);assert.match(s,/winsBase/);assert.match(s,/HATS UNLOCKED/);assert.match(s,/HAT UNLOCKED/);
-  assert.match(s,/Garden under 30 seconds as Bloom/);assert.match(s,/Rebound from a human frog 10 times/);assert.match(s,/Win 10 individual Versus games/);
+
+test("hatstest exposes Hats without directly unlocking individual hats",()=>{
+  const nav=read("client/game/40-ui-navigation-audio.js");
+  assert.match(core,/HATS_TEST_TOGGLE_CODE = "hatstest"/);
+  assert.match(nav,/ribbitRaceHatsTestUnlockedV1/);
+  assert.match(nav,/ribbit-hats-test-enabled/);
+  const block=nav.slice(nav.indexOf("endsWith(HATS_TEST_TOGGLE_CODE)"),nav.indexOf("return true",nav.indexOf("endsWith(HATS_TEST_TOGGLE_CODE)"))+20);
+  assert.doesNotMatch(block,/unlock\(/i);
+  assert.doesNotMatch(block,/ribbitRaceUnlockedHatsV2/);
 });
-test("custom palette copy paste and base selection are installed",()=>{
-  const s=read("public/scripts/extended-features.js");assert.match(s,/BASE PALETTE/);assert.match(s,/contextmenu/);assert.match(s,/metaKey\|\|e\.ctrlKey/);assert.match(s,/commitRgbEditor/);
+
+test("custom palette tools and revised Custom Frog 3 requirements remain installed",()=>{
+  assert.match(extension,/BASE PALETTE/);
+  assert.match(extension,/contextmenu/);
+  assert.match(extension,/metaKey\|\|e\.ctrlKey/);
+  assert.match(extension,/commitRgbEditor/);
+  assert.match(extension,/flies>=100&&wins>=3&&levels>=3/);
 });
-test("custom frog three uses revised achievable parameters",()=>{
-  const s=read("public/scripts/extended-features.js");assert.match(s,/flies>=100&&wins>=3&&levels>=3/);
+
+test("Mobile Mode owns independent simultaneous P1 and P2 pointer slots",()=>{
+  assert.match(core,/rrFriendsMobileModeV1/);
+  assert.match(mobile,/const rrMobileHeldPointers = new Map\(\)/);
+  assert.match(mobile,/RR_MOBILE_PVP_METERS/);
+  assert.match(mobile,/pointerId/);
+  assert.match(mobile,/pressPvpButton\(index, "human"\)/);
+  assert.match(mobile,/releasePvpButton\(held\.index, "human"\)/);
 });
-test("mobile mode has independent simultaneous P1 and P2 pointers",()=>{
-  const s=read("public/scripts/extended-features.js");assert.match(s,/rrFriendsMobileModeV1/);assert.match(s,/ShiftLeft/);assert.match(s,/ShiftRight/);assert.match(s,/this\.pointers=new Map/);
-});
-test("word plates remain exactly centered above flies and ignore HUD obstacles",()=>{
-  const s=read("client/game/70-rendering.js");
-  assert.match(s,/const centeredX = Math\.round\(anchorX - width \/ 2\)/);
-  assert.match(s,/never shifts sideways to avoid the score, timer, pause button/);
-  const block=s.slice(s.indexOf("function chooseFlyLabelRect"),s.indexOf("function drawStableFlyLabelTextToSprite"));
+
+test("word plates stay horizontally centered above flies",()=>{
+  assert.match(render,/const centeredX = Math\.round\(anchorX - width \/ 2\)/);
+  const block=render.slice(render.indexOf("function chooseFlyLabelRect"),render.indexOf("function drawStableFlyLabelTextToSprite"));
   assert.doesNotMatch(block,/getFlyLabelHudObstacles\(/);
   assert.doesNotMatch(block,/clamp\(candidate\.x/);
 });
-test("bonks require falling or an opponent rising",()=>{
-  const s=read("client/game/90-extended-features.js");assert.match(s,/top\.vy > 0\.08 \|\| bottom\.vy < -0\.08/);
+
+test("bonks require a falling upper frog or a rising lower frog",()=>{
+  assert.match(versus,/function canPvpVerticalContactBonk/);
+  assert.match(versus,/Number\(top\.vy \|\| 0\) > 12/);
+  assert.match(versus,/Number\(bottom\.vy \|\| 0\) < -24/);
 });
 
-test("PvP achievements accept either active human index",()=>{
- const s=read("client/game/90-extended-features.js");assert.match(s,/rr14IsHumanPvpIndex/);
-});
-test("Versus entry persists the preferred selected skin",()=>{
- const s=read("client/game/90-extended-features.js");assert.match(s,/rr14PersistPreferredSkin/);assert.match(s,/ribbitRaceSelectedSkinV1/);
-});
-test("leaderboard record rows receive a replay frog control",()=>{
- const s=read("public/scripts/extended-features.js");assert.match(s,/rr-replay-frog/);assert.match(s,/Watch this record run/);
+test("PvP achievements and bounce stats accept the eligible active human on either side",()=>{
+  assert.match(core,/isAchievementEligibleHumanPvpIndex/);
+  const nav=read("client/game/40-ui-navigation-audio.js");
+  assert.match(nav,/function recordPvpBounceStat/);
+  assert.match(nav,/isAchievementEligibleHumanPvpIndex\(playerIndex\)/);
 });
 
-test("replay routes are forwarded through the Worker",()=>{assert.match(read("src/index.js"),/api\/replays\//);});
-test("hat requirements enumerate the real hat catalog",()=>{assert.match(read("client/game/90-extended-features.js"),/rr14HatIds/);assert.match(read("public/scripts/extended-features.js"),/hatIds/);});
-test("repeat world-record notices can return an empty suppressed label",()=>{const all=[read("client/game/70-rendering.js"),read("public/scripts/cloud-client.js")].join("\n");assert.doesNotMatch(all,/prepare\?\.\(\) \|\| ["']NEW WORLD RECORD/);});
+test("Versus entry persists the preferred selected frog skin",()=>{
+  const ext=read("client/game/90-extended-features.js");
+  assert.match(ext,/rr14PersistPreferredSkin/);
+  assert.match(ext,/ribbitRaceSelectedSkinV1/);
+});
 
-test("hat counters include online wins and post-unlock jumps",()=>{const s=read("public/scripts/extended-features.js");assert.match(s,/ribbit-pvp-match-finished/);assert.match(s,/jumpsBase/);assert.match(s,/onlineWins/);});
-
-test("every live hat has a thematic or fallback requirement",()=>{const s=read("public/scripts/extended-features.js");for(const word of ["horn","chef","halo","baseball","sombrero","santa","bow","propeller"])assert.match(s,new RegExp(word));assert.match(s,/Catch 40 flies after Hats unlock/);});
+test("replay routes are forwarded through the Worker",()=>{
+  assert.match(read("src/index.js"),/api\/replays\//);
+});

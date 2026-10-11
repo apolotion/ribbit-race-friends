@@ -172,6 +172,7 @@
       }
       syncTimeOfDayChrome();
       resetPvpGame();
+      game.pvpRoundAwardedToken = null;
       startResumeCountdown();
       return true;
     }
@@ -848,7 +849,7 @@
     }
 
     function awardMaximumBonkAchievement(attackerIndex, duration, notify = true) {
-      if (!Number.isInteger(attackerIndex) || attackerIndex !== 0 || !isMaximumPvpBonkDuration(duration)) return false;
+      if (!Number.isInteger(attackerIndex) || !isMaximumPvpBonkDuration(duration)) return false;
       return markPvpAchievementEarned("pvp-max-bonk", attackerIndex, notify, { verifiedInteraction: true });
     }
 
@@ -975,6 +976,13 @@
       };
     }
 
+    function canPvpVerticalContactBonk(top, bottom) {
+      if (!top || !bottom) return false;
+      const topFalling = Number(top.vy || 0) > 12;
+      const bottomJumpingIntoTop = Number(bottom.vy || 0) < -24;
+      return topFalling || bottomJumpingIntoTop;
+    }
+
     function resolvePvpOverlapByAxis(a, b, metrics = getPvpOverlapMetrics(a, b)) {
       if (!metrics) return false;
       if (metrics.axis === "horizontal") {
@@ -985,6 +993,10 @@
       const bCenterY = b.y + b.h / 2;
       const top = aCenterY <= bCenterY ? a : b;
       const bottom = top === a ? b : a;
+      if (!canPvpVerticalContactBonk(top, bottom)) {
+        bouncePvpPlayersSideways(a, b, metrics);
+        return "rebound";
+      }
       bonkPvpPlayer(bottom, top);
       return "bonk";
     }
@@ -1185,7 +1197,7 @@
         const sideContact = overlapWidth <= Math.max(4, airborne.w * 0.45);
         const similarHeightSideHit = (verticalGap <= 9.5 || topAligned) && sideContact;
         const horizontalFootOverlap = airborne.x + airborne.w * 0.78 > grounded.x && airborne.x + airborne.w * 0.22 < grounded.x + grounded.w;
-        const descendingOrSettling = airborne.vy >= -35 || currentBottom >= previousBottom;
+        const descendingOrSettling = airborne.vy > 12 && currentBottom >= previousBottom;
         const feetCrossedHead = previousBottom <= grounded.y + grounded.h * 0.45 + 5 && currentBottom >= grounded.y - 5;
         const clearlyAbove = airborne.y + airborne.h * 0.72 <= grounded.y + grounded.h * 0.66;
         const airborneAbove = airborneCenterY < groundedCenterY - 1;
@@ -1235,18 +1247,17 @@
           bouncePvpPlayersSideways(a, b);
           return;
         }
-        const closingFromAbove = top.vy >= bottom.vy - 12;
         const topFeetNearHead = top.y + top.h >= bottom.y - 4;
-        if (closingFromAbove && topFeetNearHead) {
+        if (topFeetNearHead && canPvpVerticalContactBonk(top, bottom)) {
           bonkPvpPlayer(bottom, top);
           return;
         }
-        resolvePvpOverlapByAxis(a, b, overlapMetrics);
+        bouncePvpPlayersSideways(a, b, overlapMetrics);
         return;
       }
 
       if (a.grounded && b.grounded) {
-        resolvePvpOverlapByAxis(a, b, overlapMetrics);
+        bouncePvpPlayersSideways(a, b, overlapMetrics);
         return;
       }
 
@@ -1313,10 +1324,12 @@
       }
     }
 
-    function playerOneWonNoseAheadContest(targetFly) {
+    function playerWonNoseAheadContest(playerIndex, targetFly) {
+      const winner = pvpPlayers[playerIndex];
+      const opponent = pvpPlayers[playerIndex === 0 ? 1 : 0];
       const p1 = pvpPlayers[0];
       const p2 = pvpPlayers[1];
-      if (!p1 || !p2 || p1.grounded || p2.grounded) return false;
+      if (!winner || !opponent || !p1 || !p2 || winner.grounded || opponent.grounded) return false;
       const centerTowardFly = (player) => {
         const dx = targetFly.baseX - (player.x + player.w / 2);
         const tongueCommitted = player.tongue?.active && player.tongue.targetFlyId === targetFly.id;
@@ -1586,11 +1599,11 @@
       ) {
         registerPvpFlyPursuit(otherPlayer, targetFly);
       }
-      const noseAheadQualified = player.index === 0 && playerOneWonNoseAheadContest(targetFly);
+      const noseAheadQualified = playerWonNoseAheadContest(player.index, targetFly);
       const playerScoreBefore = Number(player.score || 0);
       const otherScoreBefore = Number(otherPlayer?.score || 0);
       flies.splice(index, 1);
-      if (noseAheadQualified) markPvpAchievementEarned("pvp-contested-fly", 0, true);
+      if (noseAheadQualified) markPvpAchievementEarned("pvp-contested-fly", player.index, true, { verifiedInteraction: true });
       if (player.tongue.targetFlyId === targetFly.id) player.tongue.captured = true;
       game.completedVocabIndices.add(targetFly.vocabIndex);
       player.score += 1;
@@ -1806,6 +1819,9 @@
 
     function completePvpWin(index) {
       if (game.mode !== "pvp" || game.state === "won" || game.state === "pvpCelebration") return;
+      const roundAwardToken = `${game.pvpRoundNumber}:${game.pvpSuddenDeath ? "sudden" : "normal"}`;
+      if (game.pvpRoundAwardedToken === roundAwardToken) return;
+      game.pvpRoundAwardedToken = roundAwardToken;
       game.pvpWinnerIndex = index;
       game.pvpWinPendingIndex = null;
       game.pvpTimedOutcomePending = false;
@@ -1835,7 +1851,7 @@
       game.pvpRoundWins[index] = Math.min(roundsToWin, (game.pvpRoundWins[index] || 0) + 1);
       game.pvpMatchWinnerIndex = game.pvpRoundWins[index] >= roundsToWin ? index : null;
       awardCpuChampForCompletedMatch(true);
-      if (!game.onlineMode && game.rr14IsHumanPvpIndex(pvpMatchWinnerIndex) && (game.pvpCpuEnabled || hasRecentPlayerTwoMovement(10))) {
+      if (!game.onlineMode && game.pvpMatchWinnerIndex !== null && rr14IsHumanPvpIndex(game.pvpMatchWinnerIndex) && (game.pvpCpuEnabled || hasRecentPlayerTwoMovement(10))) {
         statsProfile.pvpMatchWins += 1;
         saveStatsProfile();
         savePvpMatchWinsForLeaderboard();
@@ -1857,7 +1873,19 @@
       game.pvpCelebrationWinnerIndex = index;
       pvpPlayers.forEach(clearFrogAfterimages);
       game.pvpCelebrationTimer = CONFIG.pvpCelebrationSeconds;
+      // A round result is its own state. Clear every pause pointer/selection so
+      // a touch released on the same frame cannot replace the result with the
+      // pause overlay or award the round a second time.
+      game.pauseHelpOpen = false;
+      game.pauseHoveredSelection = null;
+      game.pausePressedSelection = null;
+      game.pausePointerId = null;
+      game.volumeDragging = false;
+      game.volumePointerId = null;
       game.state = "pvpCelebration";
+      window.dispatchEvent(new CustomEvent("ribbit-pvp-round-ended", {
+        detail: { winnerIndex: index, matchWinnerIndex: game.pvpMatchWinnerIndex, roundNumber: game.pvpRoundNumber }
+      }));
       game.victorySelection = "replay";
       game.pvpVictoryMouseMode = false;
       game.pvpVictoryHoveredSelection = null;
@@ -3076,9 +3104,13 @@
         currentFly.baseY >= y - 8 && currentFly.baseY <= y + h + 14
       );
       const jumpPreviewBehind = player.charging && previewPathOverlapsRect(getPvpPreviewPoints(player), bubbleRect, 5);
+      const opponent = pvpPlayers[player.index === 0 ? 1 : 0];
+      const opponentBehind = Boolean(opponent &&
+        opponent.x + opponent.w >= bubbleRect.x && opponent.x <= bubbleRect.x + bubbleRect.w &&
+        opponent.y + opponent.h >= bubbleRect.y && opponent.y <= bubbleRect.y + bubbleRect.h);
 
       ctx.save();
-      ctx.globalAlpha = flyBehind || jumpPreviewBehind ? 0.25 : 1;
+      ctx.globalAlpha = flyBehind || jumpPreviewBehind || opponentBehind ? 0.25 : 1;
       ctx.fillStyle = "rgba(38,54,61,0.42)";
       ctx.fillRect(x + 4, y + 4, w, h);
       const pointerX = player.index === 0 ? x + 56 : x + w - 68;
@@ -3096,10 +3128,14 @@
       ctx.fillRect(pointerX + 2, y + h - 1, 8, 7);
       ctx.fillRect(pointerX + 4, y + h + 6, 4, 3);
 
+      const mobileInstructions = isRibbitMobileMode();
       const keyLabel = game.onlineMode || game.pvpCpuEnabled
         ? "SPACE"
         : (player.index === 0 ? "LEFT SHIFT" : "RIGHT SHIFT");
-      drawBitmapText(`HOLD ${keyLabel} TO CHARGE`, x + w / 2, y + 10, 0.78, "center", "#4c555a");
+      const mobileLabel = game.onlineMode || game.pvpCpuEnabled
+        ? "HOLD JUMP METER"
+        : `HOLD P${player.index + 1} JUMP BUTTON`;
+      drawBitmapText(mobileInstructions ? mobileLabel : `HOLD ${keyLabel} TO CHARGE`, x + w / 2, y + 10, mobileInstructions ? 0.72 : 0.78, "center", "#4c555a");
       drawBitmapText("RELEASE TO JUMP", x + w / 2, y + 27, 0.92, "center", "#4c555a");
       ctx.restore();
     }
@@ -3159,9 +3195,14 @@
       const meterY = 247;
       const meterW = 112;
       const meterH = 12;
+      const mobileHud = isRibbitMobileMode();
       [
-        { player: pvpPlayers[0], x: 12, label: game.onlineMode ? (OnlineVersus.localIndex() === 0 ? "YOU - SPACE" : "OPPONENT") : game.pvpCpuEnabled ? "SPACE" : "LEFT SHIFT", palette: p1Palette },
-        { player: pvpPlayers[1], x: W - 124, label: game.onlineMode ? (OnlineVersus.localIndex() === 1 ? "YOU - SPACE" : "OPPONENT") : game.pvpCpuEnabled ? `CPU LV ${game.pvpCpuDifficulty}` : "RIGHT SHIFT", palette: p2Palette }
+        { player: pvpPlayers[0], x: 12, label: mobileHud
+          ? (game.onlineMode ? (OnlineVersus.localIndex() === 0 ? "YOU - TAP METER" : "OPPONENT") : game.pvpCpuEnabled ? "TAP METER" : "P1 JUMP")
+          : (game.onlineMode ? (OnlineVersus.localIndex() === 0 ? "YOU - SPACE" : "OPPONENT") : game.pvpCpuEnabled ? "SPACE" : "LEFT SHIFT"), palette: p1Palette },
+        { player: pvpPlayers[1], x: W - 124, label: mobileHud
+          ? (game.onlineMode ? (OnlineVersus.localIndex() === 1 ? "YOU - TAP METER" : "OPPONENT") : game.pvpCpuEnabled ? `CPU LV ${game.pvpCpuDifficulty}` : "P2 JUMP")
+          : (game.onlineMode ? (OnlineVersus.localIndex() === 1 ? "YOU - SPACE" : "OPPONENT") : game.pvpCpuEnabled ? `CPU LV ${game.pvpCpuDifficulty}` : "RIGHT SHIFT"), palette: p2Palette }
       ].forEach(({ player, x, label, palette }) => {
         ctx.fillStyle = COLORS.ink;
         ctx.fillRect(x - 2, meterY - 2, meterW + 4, meterH + 4);

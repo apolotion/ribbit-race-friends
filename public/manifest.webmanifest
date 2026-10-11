@@ -1,0 +1,15 @@
+{
+  "name": "Ribbit Race — Friends Edition",
+  "short_name": "Ribbit Race",
+  "description": "A one-button language-learning frog game.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "landscape",
+  "background_color": "#111a2b",
+  "theme_color": "#5a95b8",
+  "icons": [
+    {"src":"/icons/ribbit-race-180.png","sizes":"180x180","type":"image/png"},
+    {"src":"/icons/ribbit-race-512.png","sizes":"512x512","type":"image/png"}
+  ]
+}

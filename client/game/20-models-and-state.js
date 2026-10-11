@@ -284,6 +284,7 @@
       pvpSetupConflictOwnerIndex: 1,
       pvpRoundWins: [0, 0],
       pvpRoundNumber: 1,
+      pvpRoundAwardedToken: null,
       pvpMatchWinnerIndex: null,
       pvpMatchAchievementContext: null,
       pvpBonusEligible: false,

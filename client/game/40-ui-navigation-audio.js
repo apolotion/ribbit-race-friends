@@ -672,15 +672,24 @@
     }
 
     function handleHiddenFrogUnlockCheat(key) {
-      // The only hidden sequence is "playtest". It is a reversible,
-      // non-saving preview mode that restores the player's real cloud save when
-      // toggled off or when the page is closed.
+      // "playtest" is a reversible non-saving preview. "hatstest" exposes
+      // only the Hats option so its achievement requirements can be tested.
       if (typeof key !== "string") return;
       const character = key.toLowerCase();
       if (!/^[a-z]$/.test(character)) return;
       game.cheatBuffer = (game.cheatBuffer + character).slice(-HIDDEN_CODE_BUFFER_LENGTH);
       if (game.cheatBuffer.endsWith(PLAYTEST_TOGGLE_CODE)) {
         togglePlaytestMode();
+        return;
+      }
+      if (game.cheatBuffer.endsWith(HATS_TEST_TOGGLE_CODE)) {
+        try { localStorage.setItem("ribbitRaceHatsTestUnlockedV1", "1"); } catch (_) {}
+        window.dispatchEvent(new CustomEvent("ribbit-hats-test-enabled"));
+        game.cheatBuffer = "";
+        game.cheatToastText = "HATS TEST MODE • OPTION UNLOCKED";
+        game.cheatToastTimer = CONFIG.achievementToastDuration;
+        tone(520, 0.07, 0.018, 70);
+        tone(760, 0.10, 0.014, 90, 0.06);
         return;
       }
       if (FROG_UNLOCK_CHEAT && game.cheatBuffer.endsWith(FROG_UNLOCK_CHEAT)) unlockAllFrogSkinsByCheat();
@@ -2051,7 +2060,10 @@
 
     function recordPvpBounceStat(playerIndex, amount = 1) {
       if (game.onlinePredicting) return;
-      if (playerIndex === 0 || !game.pvpCpuEnabled) {
+      // The Friends account owns the active human frog, which may be Player 1
+      // or Player 2 in Local/Online Versus. CPU and remote frogs never advance
+      // the account's bounce statistics or achievement progress.
+      if (isAchievementEligibleHumanPvpIndex(playerIndex)) {
         statsProfile.pvpBounces += Math.max(0, Math.floor(amount));
         saveStatsProfile();
       }

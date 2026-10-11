@@ -69,7 +69,7 @@ function startRibbitRaceGame() {
     const canvas = document.getElementById("game");
     const gameFrame = document.getElementById("game-frame");
     const friendsGameInputLocked = () => window.RibbitFriendsGameInputLocked?.() === true;
-    const RIBBIT_DISPLAY_VERSION = "VERSION 1.4.1";
+    const RIBBIT_DISPLAY_VERSION = "VERSION 1.5.0";
     const RIBBIT_CREDIT_TEXT = "MADE BY NICK";
     const RIBBIT_CREDIT_Y = 228;
     const rgbValueEditor = document.getElementById("rgb-value-editor");
@@ -156,12 +156,26 @@ function startRibbitRaceGame() {
     document.addEventListener("fullscreenchange", () => { syncFullscreenButton(); canvas.focus({ preventScroll: true }); });
     document.addEventListener("webkitfullscreenchange", () => { syncFullscreenButton(); canvas.focus({ preventScroll: true }); });
 
-    // Render the original 480×270 game grid at a true 1920×1080 backing
-    // resolution. Game physics and layout remain unchanged, while text and
-    // pixel-art edges are rasterized with four times the detail.
+    // Preserve the original 480×270 logical grid. Coarse-touch devices render
+    // at 960×540 to reduce Safari's per-frame pixel workload; desktop remains
+    // at the original 1920×1080 backing resolution.
     const W = 480;
     const H = 270;
-    const RENDER_SCALE = 4;
+    const RIBBIT_COARSE_TOUCH_DEVICE = Boolean(
+      navigator.maxTouchPoints > 0 && window.matchMedia?.("(pointer: coarse)")?.matches
+    );
+    const RIBBIT_MOBILE_MODE_STORAGE_KEY = "rrFriendsMobileModeV1";
+    function isRibbitMobileMode() {
+      try { return localStorage.getItem(RIBBIT_MOBILE_MODE_STORAGE_KEY) === "1"; }
+      catch (_) { return false; }
+    }
+    function setRibbitMobileMode(enabled) {
+      try { localStorage.setItem(RIBBIT_MOBILE_MODE_STORAGE_KEY, enabled ? "1" : "0"); }
+      catch (_) {}
+      document.body.classList.toggle("rr-mobile-enabled", Boolean(enabled));
+      window.dispatchEvent(new CustomEvent("ribbit-mobile-mode-changed", { detail: { enabled: Boolean(enabled) } }));
+    }
+    const RENDER_SCALE = RIBBIT_COARSE_TOUCH_DEVICE ? 2 : 4;
     canvas.width = W * RENDER_SCALE;
     canvas.height = H * RENDER_SCALE;
 
@@ -267,7 +281,8 @@ function startRibbitRaceGame() {
     const DEFAULT_UNLOCKED_FROG_SKINS = Object.freeze(["azure"]);
     const FROG_UNLOCK_CHEAT = "";
     const PLAYTEST_TOGGLE_CODE = "playtest";
-    const HIDDEN_CODE_BUFFER_LENGTH = PLAYTEST_TOGGLE_CODE.length;
+    const HATS_TEST_TOGGLE_CODE = "hatstest";
+    const HIDDEN_CODE_BUFFER_LENGTH = Math.max(PLAYTEST_TOGGLE_CODE.length, HATS_TEST_TOGGLE_CODE.length);
     let playtestModeActive = false;
     let playtestSnapshot = null;
 
@@ -618,7 +633,7 @@ function startRibbitRaceGame() {
     let customFrogColors = { ...customFrogSlots[activeCustomFrogSlotIndex] };
 
     const CUSTOM_HAT_OPTIONS = Object.freeze([
-      Object.freeze({ id: "none", name: "NONE" }),
+      Object.freeze({ id: "none", name: "NO HAT" }),
       Object.freeze({ id: "top-hat", name: "TOP" }),
       Object.freeze({ id: "crown", name: "CROWN" }),
       Object.freeze({ id: "party-hat", name: "PARTY" }),
@@ -706,23 +721,32 @@ function startRibbitRaceGame() {
 
     const HAT_UNLOCK_REQUIREMENTS = Object.freeze({
       "none": { unlocked: () => true, lines: ["ALWAYS AVAILABLE", "NO REQUIREMENT"] },
-      "party-hat": { unlocked: () => isCustomHatSelectorUnlocked(), lines: ["FIRST HAT", "UNLOCK HATS"] },
-      "top-hat": { unlocked: () => statsProfile.totalWins >= 3, lines: ["WIN 3 SOLO LEVELS", `${Math.min(statsProfile.totalWins, 3)} / 3 WINS`] },
-      "crown": { unlocked: () => getFastestCompletionTime() !== null && getFastestCompletionTime() <= 25, lines: ["BEAT ANY LEVEL", "IN 25 SECONDS OR LESS"] },
-      "hard-hat": { unlocked: () => statsProfile.wallBounces >= 10, lines: ["WALL BOUNCE 10 TIMES", `${Math.min(statsProfile.wallBounces, 10)} / 10 BOUNCES`] },
-      "viking": { unlocked: () => statsProfile.pvpBonksDealt >= 10, lines: ["BONK 10 FROGS", `${Math.min(statsProfile.pvpBonksDealt, 10)} / 10 BONKS`] },
-      "straw-hat": { unlocked: () => statsProfile.maxFliesOneJump >= 3, lines: ["CATCH 3 FLIES", "IN ONE JUMP"] }
+      "party-hat": { lines: ["CATCH 50 FLIES", "AS PLUM"] },
+      "top-hat": { lines: ["CATCH 75 FLIES", "AS AZURE"] },
+      "crown": { lines: ["WIN 10 VERSUS MATCHES", "AFTER HATS UNLOCK"] },
+      "hard-hat": { lines: ["WIN JUNGLE 3 TIMES", "AS FOREST"] },
+      "viking": { lines: ["WIN 5 VERSUS MATCHES", "AS EMBER"] },
+      "straw-hat": { lines: ["FINISH PARK UNDER 25 SEC", "AS FOREST"] }
     });
 
+    function readProgressionUnlockedHatIds() {
+      try {
+        const parsed = JSON.parse(localStorage.getItem("ribbitRaceUnlockedHatsV2") || "[]");
+        return new Set(Array.isArray(parsed) ? parsed.map(String) : []);
+      } catch (_) { return new Set(); }
+    }
+
     function isHatUnlocked(hatId) {
+      if (hatId === "none") return true;
       if (isPlaytestModeActive() || isCheatUnlockAllActive()) return true;
-      const requirement = HAT_UNLOCK_REQUIREMENTS[hatId];
-      return requirement ? !!requirement.unlocked() : isCustomHatSelectorUnlocked();
+      return readProgressionUnlockedHatIds().has(String(hatId));
     }
 
     function getHatRequirementLines(hatId) {
+      const external = window.RibbitHatProgress?.requirementLines?.(hatId);
+      if (Array.isArray(external) && external.length) return external.slice(0, 2);
       const requirement = HAT_UNLOCK_REQUIREMENTS[hatId];
-      return requirement ? requirement.lines.slice(0, 2) : ["UNLOCK THE STYLE SELECTOR", "TO USE THIS STYLE"];
+      return requirement ? requirement.lines.slice(0, 2) : ["COMPLETE ITS HAT CHALLENGE", "AFTER HATS UNLOCK"];
     }
 
     function ensureValidEquippedHat() {
@@ -850,7 +874,11 @@ function startRibbitRaceGame() {
       return getHatForFrogSkinId(target);
     }
 
-    function isCustomHatSelectorUnlocked() { return isPlaytestModeActive() || isCheatUnlockAllActive() || isCustomFrogSlotUnlocked(1); }
+    function isCustomHatSelectorUnlocked() {
+      let hatsTest = false;
+      try { hatsTest = localStorage.getItem("ribbitRaceHatsTestUnlockedV1") === "1"; } catch (_) {}
+      return isPlaytestModeActive() || isCheatUnlockAllActive() || hatsTest || isCustomFrogSlotUnlocked(1);
+    }
     function getCustomHatIdForSlot(index = activeCustomFrogSlotIndex) {
       const slotIndex = clamp(Math.round(Number(index)||0),0,CUSTOM_FROG_SLOT_COUNT-1);
       return getHatForFrogSkinId(`custom${slotIndex + 1}`);
@@ -1716,32 +1744,51 @@ function startRibbitRaceGame() {
       return true;
     }
 
-    function hasRecentPlayerTwoMovement(windowSeconds = 10) {
-      if (game.mode !== "pvp" || game.pvpCpuEnabled) return false;
-      const playerTwo = pvpPlayers[1];
+    function hasRecentHumanPlayerMovement(playerIndex, windowSeconds = 10) {
+      if (game.mode !== "pvp" || !Number.isInteger(playerIndex)) return false;
+      const player = pvpPlayers[playerIndex];
       return Boolean(
-        playerTwo &&
-        playerTwo.humanInputCount > 0 &&
-        Number.isFinite(playerTwo.lastHumanInputAt) &&
-        game.pvpElapsed - playerTwo.lastHumanInputAt <= windowSeconds
+        player &&
+        player.humanInputCount > 0 &&
+        Number.isFinite(player.lastHumanInputAt) &&
+        game.pvpElapsed - player.lastHumanInputAt <= windowSeconds
       );
     }
 
+    function hasRecentPlayerTwoMovement(windowSeconds = 10) {
+      if (game.mode !== "pvp" || game.pvpCpuEnabled) return false;
+      return hasRecentHumanPlayerMovement(1, windowSeconds);
+    }
+
+    function isAchievementEligibleHumanPvpIndex(playerIndex, verifiedInteraction = false) {
+      if (!Number.isInteger(playerIndex) || playerIndex < 0 || playerIndex > 1) return false;
+      if (game.pvpCpuEnabled) return playerIndex === 0;
+      if (game.onlineMode || OnlineVersus.isActive()) {
+        const localIndex = Number(OnlineVersus.localIndex());
+        if (playerIndex !== localIndex) return false;
+        // Network prediction alone cannot unlock a collision achievement. The
+        // host-verified interaction path may bypass only the recency check.
+        if (game.onlinePredicting && !verifiedInteraction) return false;
+        return verifiedInteraction || hasRecentHumanPlayerMovement(playerIndex, 10);
+      }
+      // In local two-human Versus either side can earn the account achievement,
+      // but the side must have actually participated recently.
+      return verifiedInteraction || hasRecentHumanPlayerMovement(playerIndex, 10);
+    }
+
     function markPvpAchievementEarned(id, playerIndex = null, notify = true, options = null) {
-      if (game.onlinePredicting || (game.onlineMode && game.onlineRole === "guest")) return false;
       if (typeof playerIndex === "boolean") {
         notify = playerIndex;
         playerIndex = null;
       }
       const verifiedInteraction = Boolean(options && options.verifiedInteraction);
       if (game.mode !== "pvp" || !PVP_ACHIEVEMENT_ID_SET.has(id) || earnedPvpAchievementIds.has(id)) return false;
-      if (Number.isInteger(playerIndex) && playerIndex !== 0) return false;
-      if (game.pvpCpuEnabled && playerIndex === 1) return false;
-      // Most human PvP achievements still require recent Player 2 movement to
-      // prevent farming an idle second controller. A collision or completed CPU
-      // match that the game engine itself verifies may explicitly bypass only
-      // this activity-window check.
-      if (!game.pvpCpuEnabled && !verifiedInteraction && !hasRecentPlayerTwoMovement(10)) return false;
+      if (Number.isInteger(playerIndex) && !isAchievementEligibleHumanPvpIndex(playerIndex, verifiedInteraction)) return false;
+      if (!Number.isInteger(playerIndex)) {
+        const fallbackIndex = game.onlineMode || OnlineVersus.isActive() ? Number(OnlineVersus.localIndex()) : 0;
+        if (!isAchievementEligibleHumanPvpIndex(fallbackIndex, verifiedInteraction)) return false;
+        playerIndex = fallbackIndex;
+      }
       earnedPvpAchievementIds.add(id);
       saveEarnedPvpAchievementIds();
       if (!Array.isArray(game.roundUnlockedPvpAchievementIds)) game.roundUnlockedPvpAchievementIds = [];
@@ -2106,6 +2153,7 @@ function startRibbitRaceGame() {
       pvpSetupConflictOwnerIndex: 1,
       pvpRoundWins: [0, 0],
       pvpRoundNumber: 1,
+      pvpRoundAwardedToken: null,
       pvpMatchWinnerIndex: null,
       pvpMatchAchievementContext: null,
       pvpBonusEligible: false,
@@ -5243,15 +5291,24 @@ function startRibbitRaceGame() {
     }
 
     function handleHiddenFrogUnlockCheat(key) {
-      // The only hidden sequence is "playtest". It is a reversible,
-      // non-saving preview mode that restores the player's real cloud save when
-      // toggled off or when the page is closed.
+      // "playtest" is a reversible non-saving preview. "hatstest" exposes
+      // only the Hats option so its achievement requirements can be tested.
       if (typeof key !== "string") return;
       const character = key.toLowerCase();
       if (!/^[a-z]$/.test(character)) return;
       game.cheatBuffer = (game.cheatBuffer + character).slice(-HIDDEN_CODE_BUFFER_LENGTH);
       if (game.cheatBuffer.endsWith(PLAYTEST_TOGGLE_CODE)) {
         togglePlaytestMode();
+        return;
+      }
+      if (game.cheatBuffer.endsWith(HATS_TEST_TOGGLE_CODE)) {
+        try { localStorage.setItem("ribbitRaceHatsTestUnlockedV1", "1"); } catch (_) {}
+        window.dispatchEvent(new CustomEvent("ribbit-hats-test-enabled"));
+        game.cheatBuffer = "";
+        game.cheatToastText = "HATS TEST MODE • OPTION UNLOCKED";
+        game.cheatToastTimer = CONFIG.achievementToastDuration;
+        tone(520, 0.07, 0.018, 70);
+        tone(760, 0.10, 0.014, 90, 0.06);
         return;
       }
       if (FROG_UNLOCK_CHEAT && game.cheatBuffer.endsWith(FROG_UNLOCK_CHEAT)) unlockAllFrogSkinsByCheat();
@@ -6622,7 +6679,10 @@ function startRibbitRaceGame() {
 
     function recordPvpBounceStat(playerIndex, amount = 1) {
       if (game.onlinePredicting) return;
-      if (playerIndex === 0 || !game.pvpCpuEnabled) {
+      // The Friends account owns the active human frog, which may be Player 1
+      // or Player 2 in Local/Online Versus. CPU and remote frogs never advance
+      // the account's bounce statistics or achievement progress.
+      if (isAchievementEligibleHumanPvpIndex(playerIndex)) {
         statsProfile.pvpBounces += Math.max(0, Math.floor(amount));
         saveStatsProfile();
       }
@@ -8817,6 +8877,7 @@ function startRibbitRaceGame() {
       }
       syncTimeOfDayChrome();
       resetPvpGame();
+      game.pvpRoundAwardedToken = null;
       startResumeCountdown();
       return true;
     }
@@ -9493,7 +9554,7 @@ function startRibbitRaceGame() {
     }
 
     function awardMaximumBonkAchievement(attackerIndex, duration, notify = true) {
-      if (!Number.isInteger(attackerIndex) || attackerIndex !== 0 || !isMaximumPvpBonkDuration(duration)) return false;
+      if (!Number.isInteger(attackerIndex) || !isMaximumPvpBonkDuration(duration)) return false;
       return markPvpAchievementEarned("pvp-max-bonk", attackerIndex, notify, { verifiedInteraction: true });
     }
 
@@ -9620,6 +9681,13 @@ function startRibbitRaceGame() {
       };
     }
 
+    function canPvpVerticalContactBonk(top, bottom) {
+      if (!top || !bottom) return false;
+      const topFalling = Number(top.vy || 0) > 12;
+      const bottomJumpingIntoTop = Number(bottom.vy || 0) < -24;
+      return topFalling || bottomJumpingIntoTop;
+    }
+
     function resolvePvpOverlapByAxis(a, b, metrics = getPvpOverlapMetrics(a, b)) {
       if (!metrics) return false;
       if (metrics.axis === "horizontal") {
@@ -9630,6 +9698,10 @@ function startRibbitRaceGame() {
       const bCenterY = b.y + b.h / 2;
       const top = aCenterY <= bCenterY ? a : b;
       const bottom = top === a ? b : a;
+      if (!canPvpVerticalContactBonk(top, bottom)) {
+        bouncePvpPlayersSideways(a, b, metrics);
+        return "rebound";
+      }
       bonkPvpPlayer(bottom, top);
       return "bonk";
     }
@@ -9830,7 +9902,7 @@ function startRibbitRaceGame() {
         const sideContact = overlapWidth <= Math.max(4, airborne.w * 0.45);
         const similarHeightSideHit = (verticalGap <= 9.5 || topAligned) && sideContact;
         const horizontalFootOverlap = airborne.x + airborne.w * 0.78 > grounded.x && airborne.x + airborne.w * 0.22 < grounded.x + grounded.w;
-        const descendingOrSettling = airborne.vy >= -35 || currentBottom >= previousBottom;
+        const descendingOrSettling = airborne.vy > 12 && currentBottom >= previousBottom;
         const feetCrossedHead = previousBottom <= grounded.y + grounded.h * 0.45 + 5 && currentBottom >= grounded.y - 5;
         const clearlyAbove = airborne.y + airborne.h * 0.72 <= grounded.y + grounded.h * 0.66;
         const airborneAbove = airborneCenterY < groundedCenterY - 1;
@@ -9880,18 +9952,17 @@ function startRibbitRaceGame() {
           bouncePvpPlayersSideways(a, b);
           return;
         }
-        const closingFromAbove = top.vy >= bottom.vy - 12;
         const topFeetNearHead = top.y + top.h >= bottom.y - 4;
-        if (closingFromAbove && topFeetNearHead) {
+        if (topFeetNearHead && canPvpVerticalContactBonk(top, bottom)) {
           bonkPvpPlayer(bottom, top);
           return;
         }
-        resolvePvpOverlapByAxis(a, b, overlapMetrics);
+        bouncePvpPlayersSideways(a, b, overlapMetrics);
         return;
       }
 
       if (a.grounded && b.grounded) {
-        resolvePvpOverlapByAxis(a, b, overlapMetrics);
+        bouncePvpPlayersSideways(a, b, overlapMetrics);
         return;
       }
 
@@ -9958,10 +10029,12 @@ function startRibbitRaceGame() {
       }
     }
 
-    function playerOneWonNoseAheadContest(targetFly) {
+    function playerWonNoseAheadContest(playerIndex, targetFly) {
+      const winner = pvpPlayers[playerIndex];
+      const opponent = pvpPlayers[playerIndex === 0 ? 1 : 0];
       const p1 = pvpPlayers[0];
       const p2 = pvpPlayers[1];
-      if (!p1 || !p2 || p1.grounded || p2.grounded) return false;
+      if (!winner || !opponent || !p1 || !p2 || winner.grounded || opponent.grounded) return false;
       const centerTowardFly = (player) => {
         const dx = targetFly.baseX - (player.x + player.w / 2);
         const tongueCommitted = player.tongue?.active && player.tongue.targetFlyId === targetFly.id;
@@ -10231,11 +10304,11 @@ function startRibbitRaceGame() {
       ) {
         registerPvpFlyPursuit(otherPlayer, targetFly);
       }
-      const noseAheadQualified = player.index === 0 && playerOneWonNoseAheadContest(targetFly);
+      const noseAheadQualified = playerWonNoseAheadContest(player.index, targetFly);
       const playerScoreBefore = Number(player.score || 0);
       const otherScoreBefore = Number(otherPlayer?.score || 0);
       flies.splice(index, 1);
-      if (noseAheadQualified) markPvpAchievementEarned("pvp-contested-fly", 0, true);
+      if (noseAheadQualified) markPvpAchievementEarned("pvp-contested-fly", player.index, true, { verifiedInteraction: true });
       if (player.tongue.targetFlyId === targetFly.id) player.tongue.captured = true;
       game.completedVocabIndices.add(targetFly.vocabIndex);
       player.score += 1;
@@ -10451,6 +10524,9 @@ function startRibbitRaceGame() {
 
     function completePvpWin(index) {
       if (game.mode !== "pvp" || game.state === "won" || game.state === "pvpCelebration") return;
+      const roundAwardToken = `${game.pvpRoundNumber}:${game.pvpSuddenDeath ? "sudden" : "normal"}`;
+      if (game.pvpRoundAwardedToken === roundAwardToken) return;
+      game.pvpRoundAwardedToken = roundAwardToken;
       game.pvpWinnerIndex = index;
       game.pvpWinPendingIndex = null;
       game.pvpTimedOutcomePending = false;
@@ -10480,7 +10556,7 @@ function startRibbitRaceGame() {
       game.pvpRoundWins[index] = Math.min(roundsToWin, (game.pvpRoundWins[index] || 0) + 1);
       game.pvpMatchWinnerIndex = game.pvpRoundWins[index] >= roundsToWin ? index : null;
       awardCpuChampForCompletedMatch(true);
-      if (!game.onlineMode && game.rr14IsHumanPvpIndex(pvpMatchWinnerIndex) && (game.pvpCpuEnabled || hasRecentPlayerTwoMovement(10))) {
+      if (!game.onlineMode && game.pvpMatchWinnerIndex !== null && rr14IsHumanPvpIndex(game.pvpMatchWinnerIndex) && (game.pvpCpuEnabled || hasRecentPlayerTwoMovement(10))) {
         statsProfile.pvpMatchWins += 1;
         saveStatsProfile();
         savePvpMatchWinsForLeaderboard();
@@ -10502,7 +10578,19 @@ function startRibbitRaceGame() {
       game.pvpCelebrationWinnerIndex = index;
       pvpPlayers.forEach(clearFrogAfterimages);
       game.pvpCelebrationTimer = CONFIG.pvpCelebrationSeconds;
+      // A round result is its own state. Clear every pause pointer/selection so
+      // a touch released on the same frame cannot replace the result with the
+      // pause overlay or award the round a second time.
+      game.pauseHelpOpen = false;
+      game.pauseHoveredSelection = null;
+      game.pausePressedSelection = null;
+      game.pausePointerId = null;
+      game.volumeDragging = false;
+      game.volumePointerId = null;
       game.state = "pvpCelebration";
+      window.dispatchEvent(new CustomEvent("ribbit-pvp-round-ended", {
+        detail: { winnerIndex: index, matchWinnerIndex: game.pvpMatchWinnerIndex, roundNumber: game.pvpRoundNumber }
+      }));
       game.victorySelection = "replay";
       game.pvpVictoryMouseMode = false;
       game.pvpVictoryHoveredSelection = null;
@@ -11721,9 +11809,13 @@ function startRibbitRaceGame() {
         currentFly.baseY >= y - 8 && currentFly.baseY <= y + h + 14
       );
       const jumpPreviewBehind = player.charging && previewPathOverlapsRect(getPvpPreviewPoints(player), bubbleRect, 5);
+      const opponent = pvpPlayers[player.index === 0 ? 1 : 0];
+      const opponentBehind = Boolean(opponent &&
+        opponent.x + opponent.w >= bubbleRect.x && opponent.x <= bubbleRect.x + bubbleRect.w &&
+        opponent.y + opponent.h >= bubbleRect.y && opponent.y <= bubbleRect.y + bubbleRect.h);
 
       ctx.save();
-      ctx.globalAlpha = flyBehind || jumpPreviewBehind ? 0.25 : 1;
+      ctx.globalAlpha = flyBehind || jumpPreviewBehind || opponentBehind ? 0.25 : 1;
       ctx.fillStyle = "rgba(38,54,61,0.42)";
       ctx.fillRect(x + 4, y + 4, w, h);
       const pointerX = player.index === 0 ? x + 56 : x + w - 68;
@@ -11741,10 +11833,14 @@ function startRibbitRaceGame() {
       ctx.fillRect(pointerX + 2, y + h - 1, 8, 7);
       ctx.fillRect(pointerX + 4, y + h + 6, 4, 3);
 
+      const mobileInstructions = isRibbitMobileMode();
       const keyLabel = game.onlineMode || game.pvpCpuEnabled
         ? "SPACE"
         : (player.index === 0 ? "LEFT SHIFT" : "RIGHT SHIFT");
-      drawBitmapText(`HOLD ${keyLabel} TO CHARGE`, x + w / 2, y + 10, 0.78, "center", "#4c555a");
+      const mobileLabel = game.onlineMode || game.pvpCpuEnabled
+        ? "HOLD JUMP METER"
+        : `HOLD P${player.index + 1} JUMP BUTTON`;
+      drawBitmapText(mobileInstructions ? mobileLabel : `HOLD ${keyLabel} TO CHARGE`, x + w / 2, y + 10, mobileInstructions ? 0.72 : 0.78, "center", "#4c555a");
       drawBitmapText("RELEASE TO JUMP", x + w / 2, y + 27, 0.92, "center", "#4c555a");
       ctx.restore();
     }
@@ -11804,9 +11900,14 @@ function startRibbitRaceGame() {
       const meterY = 247;
       const meterW = 112;
       const meterH = 12;
+      const mobileHud = isRibbitMobileMode();
       [
-        { player: pvpPlayers[0], x: 12, label: game.onlineMode ? (OnlineVersus.localIndex() === 0 ? "YOU - SPACE" : "OPPONENT") : game.pvpCpuEnabled ? "SPACE" : "LEFT SHIFT", palette: p1Palette },
-        { player: pvpPlayers[1], x: W - 124, label: game.onlineMode ? (OnlineVersus.localIndex() === 1 ? "YOU - SPACE" : "OPPONENT") : game.pvpCpuEnabled ? `CPU LV ${game.pvpCpuDifficulty}` : "RIGHT SHIFT", palette: p2Palette }
+        { player: pvpPlayers[0], x: 12, label: mobileHud
+          ? (game.onlineMode ? (OnlineVersus.localIndex() === 0 ? "YOU - TAP METER" : "OPPONENT") : game.pvpCpuEnabled ? "TAP METER" : "P1 JUMP")
+          : (game.onlineMode ? (OnlineVersus.localIndex() === 0 ? "YOU - SPACE" : "OPPONENT") : game.pvpCpuEnabled ? "SPACE" : "LEFT SHIFT"), palette: p1Palette },
+        { player: pvpPlayers[1], x: W - 124, label: mobileHud
+          ? (game.onlineMode ? (OnlineVersus.localIndex() === 1 ? "YOU - TAP METER" : "OPPONENT") : game.pvpCpuEnabled ? `CPU LV ${game.pvpCpuDifficulty}` : "P2 JUMP")
+          : (game.onlineMode ? (OnlineVersus.localIndex() === 1 ? "YOU - SPACE" : "OPPONENT") : game.pvpCpuEnabled ? `CPU LV ${game.pvpCpuDifficulty}` : "RIGHT SHIFT"), palette: p2Palette }
       ].forEach(({ player, x, label, palette }) => {
         ctx.fillStyle = COLORS.ink;
         ctx.fillRect(x - 2, meterY - 2, meterW + 4, meterH + 4);
@@ -14304,7 +14405,7 @@ function startRibbitRaceGame() {
     }
 
     function chooseFlyLabelRect(currentFly, anchor, width, height) {
-      // 1.4.1: the plate center is locked directly above the fly's stable anchor.
+      // 1.5.0: the plate center remains locked directly above the fly's stable anchor.
       // It never shifts sideways to avoid the score, timer, pause button, or another
       // label. When two plates would overlap, only the vertical row may change.
       const cacheKey = flyLabelCacheKey(currentFly);
@@ -14984,8 +15085,9 @@ function startRibbitRaceGame() {
       ctx.fillRect(x + 58, y + h - 1, 8, 7);
       ctx.fillRect(x + 60, y + h + 6, 4, 3);
 
-      drawBitmapText("HOLD SPACE TO CHARGE", x + w / 2, y + 10, 0.78, "center", "#4c555a");
-      drawBitmapText("RELEASE TO JUMP", x + w / 2, y + 27, 0.92, "center", "#4c555a");
+      const mobileInstructions = isRibbitMobileMode();
+      drawBitmapText(mobileInstructions ? "HOLD METER TO CHARGE" : "HOLD SPACE TO CHARGE", x + w / 2, y + 10, mobileInstructions ? 0.68 : 0.78, "center", "#4c555a");
+      drawBitmapText(mobileInstructions ? "RELEASE TO JUMP" : "RELEASE TO JUMP", x + w / 2, y + 27, 0.92, "center", "#4c555a");
       ctx.restore();
     }
 
@@ -15030,7 +15132,7 @@ function startRibbitRaceGame() {
       // The language target now occupies the center of the gray footer.
       drawVocabularyPrompt();
       if (game.sandboxMode) {
-        drawBitmapText("SHIFT: WIN / LOSE / PLAY", 306, 240, 0.72, "center", "#d9edf2");
+        drawBitmapText(isRibbitMobileMode() ? "TAP PREVIEW TO CHANGE" : "SHIFT: WIN / LOSE / PLAY", 306, 240, 0.72, "center", "#d9edf2");
         drawBitmapText(sandboxPreview.mode === "play" ? "TEST YOUR TONGUE COLOR" : sandboxPreview.mode === "win" ? "VICTORY PREVIEW" : "LOSING PREVIEW", 306, 252, 0.65, "center", getSelectedSkin().light);
       }
 
@@ -15235,6 +15337,33 @@ function startRibbitRaceGame() {
         }
         ctx.restore();
       }
+    }
+
+    function drawEmptyTopHatOutline(centerX, frogTopY, scale = 1, color = "#8b989d") {
+      const s = Math.max(0.7, Number(scale) || 1);
+      const px = Math.max(1, Math.round(s));
+      const left = Math.round(centerX - 8 * s);
+      const top = Math.round(frogTopY - 12 * s);
+      const dot = (x, y, w = 1, h = 1) => {
+        ctx.fillRect(
+          Math.round(left + x * s),
+          Math.round(top + y * s),
+          Math.max(px, Math.round(w * s)),
+          Math.max(px, Math.round(h * s))
+        );
+      };
+      ctx.save();
+      ctx.globalAlpha *= 0.72;
+      ctx.fillStyle = color;
+      // Dashed crown outline.
+      [0, 3, 6, 9].forEach((x) => dot(4 + x, 1, 2, 1));
+      [0, 3, 6].forEach((y) => { dot(3, 2 + y, 1, 2); dot(15, 2 + y, 1, 2); });
+      [0, 3, 6, 9].forEach((x) => dot(4 + x, 10, 2, 1));
+      // Dashed brim outline.
+      [0, 3, 6, 9, 12, 15].forEach((x) => dot(0 + x, 12, 2, 1));
+      dot(0, 13, 1, 2); dot(17, 13, 1, 2);
+      [0, 3, 6, 9, 12, 15].forEach((x) => dot(0 + x, 15, 2, 1));
+      ctx.restore();
     }
 
     function drawPixelFrogHat(centerX, frogTopY, hatId = "none", scale = 1, direction = 1, paletteTheme = null) {
@@ -16124,7 +16253,7 @@ function startRibbitRaceGame() {
         drawBitmapText(game.cheatToastText || "EVERYTHING UNLOCKED!", W / 2, 244, 0.82, "center", getSelectedSkin().dark);
         ctx.restore();
       } else {
-        drawBitmapText("CLICK OR ARROWS • ENTER TO SELECT", W / 2, 244, 1, "center", "#617177");
+        drawBitmapText(isRibbitMobileMode() ? "TAP A BUTTON TO SELECT" : "CLICK OR ARROWS • ENTER TO SELECT", W / 2, 244, 1, "center", "#617177");
       }
 
       // The modal is deliberately last so the footer and any unlock text cannot
@@ -16523,7 +16652,7 @@ function startRibbitRaceGame() {
       if (!unlocked) {
         drawMiniLockIcon(rect.x + rect.w / 2, rect.y + 6, 0.72);
       } else if (hatId === "none") {
-        drawBitmapText("   ", rect.x + rect.w / 2, rect.y + 11, 0.78, "center", skin.dark);
+        drawEmptyTopHatOutline(rect.x + rect.w / 2, rect.y + 17, 0.62, "#8b989d");
       } else {
         drawPixelFrogHat(rect.x + rect.w / 2, rect.y + 15, hatId, 0.78, 1, skin);
       }
@@ -16581,7 +16710,7 @@ function startRibbitRaceGame() {
       drawBitmapText("CHOOSE STYLE",panel.x+panel.w/2,panel.y+10,1.15,"center",COLORS.white,skin.dark);
       const filteredHats = getFilteredCustomHatOptions();
       const focusedHat = CUSTOM_HAT_OPTIONS[game.customHatHoveredIndex ?? game.customHatFocusIndex] || filteredHats[0] || CUSTOM_HAT_OPTIONS[0];
-      drawBitmapText(focusedHat.id === "none" ? "   " : focusedHat.name,panel.x+panel.w/2,panel.y+36,0.54,"center",skin.dark);
+      drawBitmapText(focusedHat.name,panel.x+panel.w/2,panel.y+36,0.54,"center",skin.dark);
       let lockedFocusedOption=null;
       getCustomHatOptionRects().forEach((option)=>{
         const selected=(game.customHatId||"none")===option.id;
@@ -16593,7 +16722,11 @@ function startRibbitRaceGame() {
         ctx.fillStyle=!unlocked?"#eef3f5":selected?skin.light:"#ffffff";ctx.fillRect(option.x+5,option.y+4,option.w-10,3);
         ctx.save(); if(!unlocked) ctx.globalAlpha=0.33;
         const selectorLift = ({ "headband":2, "flower":1, "washington-wig":2, "pink-bow":0, "party-hat":1, "mohawk":1, "baseball-cap":1 }[option.id] || 0);
-        drawPixelFrogHat(option.x+option.w/2,option.y+25-selectorLift,option.id,1.05,1,{...skin,previewCenterHat:true});
+        if (option.id === "none") {
+          drawEmptyTopHatOutline(option.x + option.w / 2, option.y + 29, 0.68, "#8b989d");
+        } else {
+          drawPixelFrogHat(option.x+option.w/2,option.y+25-selectorLift,option.id,1.05,1,{...skin,previewCenterHat:true});
+        }
         ctx.restore();
         const shortLabel=option.name.length>13?option.name.split(" ")[0]:option.name;
         drawBitmapText(shortLabel,option.x+option.w/2,option.y+35,0.43,"center",!unlocked?"#6d7a80":skin.dark);
@@ -17862,7 +17995,7 @@ function startRibbitRaceGame() {
         ctx.fillRect(baseX + 12, baseY - 13, 1, 12);
       });
 
-      drawBitmapText("CLICK OR ARROWS • ENTER TO SELECT", W / 2, 202, 0.78, "center", "#48555a");
+      drawBitmapText(isRibbitMobileMode() ? "TAP A BUTTON TO SELECT" : "CLICK OR ARROWS • ENTER TO SELECT", W / 2, 202, 0.78, "center", "#48555a");
       drawBitmapText(RIBBIT_CREDIT_TEXT, W / 2, RIBBIT_CREDIT_Y, 1, "center", "#617177");
     }
 
@@ -17959,7 +18092,7 @@ function startRibbitRaceGame() {
       drawHomeSettingsButton();
       drawHomeTimeControls();
 
-      drawBitmapText("CLICK OR ARROWS • ENTER TO PLAY", W / 2, 210, 0.75, "center", "#48555a");
+      drawBitmapText(isRibbitMobileMode() ? "TAP A LEVEL TO PLAY" : "CLICK OR ARROWS • ENTER TO PLAY", W / 2, 210, 0.75, "center", "#48555a");
       drawBitmapText(RIBBIT_CREDIT_TEXT, W / 2, RIBBIT_CREDIT_Y, 1, "center", "#617177");
 
       const recordLevelId = game.hoveredLevelId || (game.homeFocusVisible && LEVELS[game.homeSelection] ? game.homeSelection : null);
@@ -18244,26 +18377,27 @@ function startRibbitRaceGame() {
 
     function drawPauseHowToOverlay() {
       const panel = { x: 76, y: 70, w: 312, h: 138 };
+      const mobileHelp = isRibbitMobileMode();
       const lines = game.mode === "pvp"
         ? (game.pvpCpuEnabled ? [
-            "HOLD SPACE TO JUMP",
+            mobileHelp ? "HOLD THE JUMP METER, THEN RELEASE" : "HOLD SPACE TO JUMP",
             "THE CPU CONTROLS PLAYER 2",
             "CATCH THE FLY THAT MATCHES THE PROMPT",
             game.pvpRoundGoalMode === "endless" ? "ENDLESS: MOST FLIES BEFORE TIME ENDS" : "FIRST TO THE GOAL WINS THE ROUND",
             "BONK OR BOUNCE OFF THE OTHER FROG TO STUN THEM"
           ] : [
-            "P1: HOLD LEFT SHIFT TO JUMP",
-            "P2: HOLD RIGHT SHIFT TO JUMP",
+            mobileHelp ? "P1: HOLD THE LEFT JUMP METER" : "P1: HOLD LEFT SHIFT TO JUMP",
+            mobileHelp ? "P2: HOLD THE RIGHT JUMP METER" : "P2: HOLD RIGHT SHIFT TO JUMP",
             "CATCH THE FLY THAT MATCHES THE PROMPT",
             game.pvpRoundGoalMode === "endless" ? "ENDLESS: MOST FLIES BEFORE TIME ENDS" : "FIRST TO THE GOAL WINS THE ROUND",
             "BONK OR BOUNCE OFF THE OTHER FROG TO STUN THEM"
           ])
         : [
-            "HOLD SPACE, RELEASE TO JUMP",
+            mobileHelp ? "HOLD THE JUMP METER, THEN RELEASE" : "HOLD SPACE, RELEASE TO JUMP",
             "CATCH THE FLY THAT MATCHES THE PROMPT",
             "GET 5 CORRECT FLIES TO FINISH THE LEVEL",
             "WRONG FLIES GET SPAT BACK OUT",
-            "TAP JUST BEFORE LANDING TO DROP THROUGH"
+            mobileHelp ? "TAP THE JUMP METER BEFORE LANDING TO DROP" : "TAP JUST BEFORE LANDING TO DROP THROUGH"
           ];
       const bookTheme = getPauseBookTheme(true);
       const bookSkin = getSelectedSkin();
@@ -18566,7 +18700,7 @@ function startRibbitRaceGame() {
         "PAUSED",
         [
           "THE FROG IS TAKING A BREAK",
-          "HOLD SPACE TO JUMP"
+          isRibbitMobileMode() ? "HOLD THE JUMP METER TO JUMP" : "HOLD SPACE TO JUMP"
         ],
         "",
         true,
@@ -19072,9 +19206,17 @@ function startRibbitRaceGame() {
 
     function getCanvasPoint(event) {
       const rect = canvas.getBoundingClientRect();
+      // In standalone/fullscreen mode Safari can letterbox the 16:9 canvas
+      // inside a wider or taller CSS box. Map touches through the actual
+      // rendered content rectangle rather than the outer element bounds.
+      const scale = Math.min(rect.width / W, rect.height / H) || 1;
+      const contentWidth = W * scale;
+      const contentHeight = H * scale;
+      const offsetX = (rect.width - contentWidth) / 2;
+      const offsetY = (rect.height - contentHeight) / 2;
       return {
-        x: (event.clientX - rect.left) * W / rect.width,
-        y: (event.clientY - rect.top) * H / rect.height
+        x: (event.clientX - rect.left - offsetX) / scale,
+        y: (event.clientY - rect.top - offsetY) / scale
       };
     }
 
@@ -19154,10 +19296,20 @@ function startRibbitRaceGame() {
       if(!OnlineVersus.checkDirectHealth()){lastFrameTime=now;accumulator=0;OnlineVersus.pumpTransport();return;}
       const elapsed=Math.max(0,(now-lastFrameTime)/1000);lastFrameTime=now;
       accumulator+=OnlineVersus.isActive()?elapsed:Math.min(.05,elapsed);
-      const maxTicks=OnlineVersus.isActive()?480:12;let ticks=0;
+      const mobilePerformance = RIBBIT_COARSE_TOUCH_DEVICE || isRibbitMobileMode();
+      const maxTicks = OnlineVersus.isActive()
+        ? (mobilePerformance ? 24 : 480)
+        : (mobilePerformance ? 8 : 12);
+      let ticks=0;
       while(accumulator>=STEP&&ticks++<maxTicks){update(STEP);OnlineVersus.afterSimulationStep(STEP);accumulator-=STEP;}
-      // Any background scheduling debt stays in the accumulator; no hidden-tab
-      // elapsed time is thrown away. Browser-frozen/sleeping devices remain a limit.
+      // Mobile Safari can create a runaway catch-up loop after a slow frame.
+      // Keep at most two fixed steps of debt in Mobile Mode so the next frame
+      // remains responsive rather than spending several seconds catching up.
+      if (mobilePerformance && ticks >= maxTicks && accumulator >= STEP) {
+        accumulator = Math.min(accumulator, STEP * 2);
+      }
+      // Desktop retains its full background scheduling debt for deterministic
+      // peer simulation. Browser-frozen/sleeping devices remain a platform limit.
       OnlineVersus.pumpTransport();
     }
     function frame(now) {
@@ -20705,12 +20857,12 @@ function startRibbitRaceGame() {
     requestAnimationFrame(frame);
 
     /* ===== client/game/90-extended-features.js ===== */
-// Ribbit Race Friends 1.4.1 — integrated extension layer
+// Ribbit Race Friends 1.5.0 — integrated extension layer
 // Responsibilities: runtime bridge, deterministic PvP event telemetry, mobile
 // input support hooks, palette operations, post-hat progression, and replay state.
 
-const RIBBIT_FRIENDS_DISPLAY_VERSION = "1.4.1";
-const RIBBIT_FRIENDS_BUILD = "2026.10.10-friends-centered-labels-themed-book-1";
+const RIBBIT_FRIENDS_DISPLAY_VERSION = "1.5.0";
+const RIBBIT_FRIENDS_BUILD = "2026.10.11-friends-mobile-experience-1";
 
 function rr14Number(value, fallback = 0) {
   const parsed = Number(value);
@@ -20892,6 +21044,9 @@ function rr14PreferSelectedSkin() {
 
 function rr14HatIds() {
   try {
+    if (typeof CUSTOM_HAT_OPTIONS !== "undefined" && Array.isArray(CUSTOM_HAT_OPTIONS)) {
+      return CUSTOM_HAT_OPTIONS.map((hat) => hat?.id).filter(Boolean);
+    }
     const catalog = (typeof HAT_CATALOG !== "undefined" && HAT_CATALOG) ||
       (typeof HATS !== "undefined" && HATS) ||
       (typeof HAT_DEFS !== "undefined" && HAT_DEFS) ||
@@ -20948,8 +21103,286 @@ function rr14RuntimeMonitor() {
     rr14PreviousState=snap.state;
   }
   rr14PreviousSnapshot=snap;
-  requestAnimationFrame(rr14RuntimeMonitor);
+  setTimeout(rr14RuntimeMonitor, 120);
 }
-requestAnimationFrame(rr14RuntimeMonitor);
+setTimeout(rr14RuntimeMonitor, 120);
+
+    /* ===== client/game/100-mobile-experience.js ===== */
+// Ribbit Race Friends 1.5.0 — canvas-native mobile controls and menu actions.
+// This module intentionally owns touch routing so one pointer can never release
+// another player's held jump button on a shared touchscreen.
+
+const RR_MOBILE_MENU_UI = Object.freeze({
+  avatar: Object.freeze({ x: 47, y: 211, w: 24, h: 24 }),
+  device: Object.freeze({ x: 74, y: 211, w: 24, h: 24 })
+});
+const RR_MOBILE_SOLO_METER = Object.freeze({ x: 8, y: 234, w: 140, h: 32 });
+const RR_MOBILE_PVP_METERS = Object.freeze([
+  Object.freeze({ x: 8, y: 234, w: 136, h: 32 }),
+  Object.freeze({ x: W - 144, y: 234, w: 136, h: 32 })
+]);
+const rrMobileHeldPointers = new Map();
+let rrMobileMenuHover = null;
+
+function rrMobileEnabled() {
+  return isRibbitMobileMode();
+}
+
+function rrDrawFramedIconButton(rect, active, drawIcon) {
+  const skin = getSelectedSkin();
+  ctx.fillStyle = "rgba(25,43,52,0.28)";
+  ctx.fillRect(rect.x + 2, rect.y + 2, rect.w, rect.h);
+  ctx.fillStyle = active ? skin.dark : COLORS.ink;
+  ctx.fillRect(rect.x, rect.y, rect.w, rect.h);
+  ctx.fillStyle = active ? mixHexColors(skin.belly, "#ffffff", 0.18) : "#f7fdff";
+  ctx.fillRect(rect.x + 2, rect.y + 2, rect.w - 4, rect.h - 4);
+  drawIcon(rect, skin, active);
+  if (active) {
+    ctx.fillStyle = COLORS.white;
+    [[3,3],[rect.w-5,3],[3,rect.h-5],[rect.w-5,rect.h-5]].forEach(([dx,dy]) =>
+      ctx.fillRect(rect.x + dx, rect.y + dy, 2, 2)
+    );
+  }
+}
+
+function rrDrawAvatarIcon(rect, skin) {
+  const cx = Math.round(rect.x + rect.w / 2);
+  ctx.fillStyle = skin.dark;
+  ctx.fillRect(cx - 3, rect.y + 5, 6, 6);
+  ctx.fillRect(cx - 7, rect.y + 12, 14, 7);
+  ctx.fillStyle = skin.light;
+  ctx.fillRect(cx - 1, rect.y + 6, 2, 2);
+  ctx.fillRect(cx - 5, rect.y + 13, 10, 2);
+}
+
+function rrDrawDeviceIcon(rect, skin) {
+  const mobile = rrMobileEnabled();
+  ctx.fillStyle = skin.dark;
+  if (mobile) {
+    ctx.fillRect(rect.x + 8, rect.y + 4, 9, 16);
+    ctx.fillStyle = "#f7fdff";
+    ctx.fillRect(rect.x + 10, rect.y + 6, 5, 10);
+    ctx.fillStyle = skin.light;
+    ctx.fillRect(rect.x + 11, rect.y + 17, 3, 1);
+  } else {
+    ctx.fillRect(rect.x + 4, rect.y + 6, 16, 11);
+    ctx.fillRect(rect.x + 10, rect.y + 17, 4, 2);
+    ctx.fillRect(rect.x + 7, rect.y + 19, 10, 2);
+    ctx.fillStyle = "#f7fdff";
+    ctx.fillRect(rect.x + 6, rect.y + 8, 12, 7);
+    ctx.fillStyle = skin.light;
+    ctx.fillRect(rect.x + 7, rect.y + 9, 10, 2);
+  }
+}
+
+function rrDrawMobileMenuTooltip() {
+  if (!rrMobileMenuHover || game.state !== "main") return;
+  const text = rrMobileMenuHover === "avatar"
+    ? "ACCOUNT • SAVES • RECORDS"
+    : rrMobileEnabled() ? "SWITCH TO COMPUTER MODE" : "SWITCH TO MOBILE MODE";
+  const width = Math.min(190, Math.max(96, measureBitmapText(text, 0.55) + 12));
+  const x = 72;
+  const y = 190;
+  ctx.fillStyle = "rgba(25,43,52,0.32)";
+  ctx.fillRect(x + 2, y + 2, width, 15);
+  ctx.fillStyle = COLORS.ink;
+  ctx.fillRect(x, y, width, 15);
+  ctx.fillStyle = "#f7fdff";
+  ctx.fillRect(x + 2, y + 2, width - 4, 11);
+  drawBitmapText(text, x + width / 2, y + 4, 0.55, "center", "#48555a");
+}
+
+const rrOriginalDrawMainMenuScreen = drawMainMenuScreen;
+drawMainMenuScreen = function() {
+  rrOriginalDrawMainMenuScreen();
+  rrDrawFramedIconButton(RR_MOBILE_MENU_UI.avatar, rrMobileMenuHover === "avatar", rrDrawAvatarIcon);
+  rrDrawFramedIconButton(RR_MOBILE_MENU_UI.device, rrMobileMenuHover === "device", rrDrawDeviceIcon);
+  rrDrawMobileMenuTooltip();
+};
+
+function rrDrawMobileJumpMeter(rect, player, palette, label, interactive = true) {
+  const held = Boolean(player?.charging || player?.inputHeld || (player === frog && game.buttonHeld));
+  const fill = held ? clamp(Number(player?.charge) || 0, 0, 1) : 0;
+  ctx.fillStyle = "rgba(25,43,52,0.35)";
+  ctx.fillRect(rect.x + 2, rect.y + 2, rect.w, rect.h);
+  ctx.fillStyle = COLORS.ink;
+  ctx.fillRect(rect.x, rect.y, rect.w, rect.h);
+  ctx.fillStyle = palette.belly;
+  ctx.fillRect(rect.x + 2, rect.y + 2, rect.w - 4, rect.h - 4);
+  const innerX = rect.x + 5, innerY = rect.y + 5, innerW = rect.w - 10, innerH = rect.h - 10;
+  ctx.fillStyle = mixHexColors(palette.belly, "#ffffff", 0.16);
+  ctx.fillRect(innerX, innerY, innerW, innerH);
+  if (fill > 0) {
+    const gradient = ctx.createLinearGradient(innerX, 0, innerX + innerW, 0);
+    gradient.addColorStop(0, palette.light);
+    gradient.addColorStop(0.68, palette.mid);
+    gradient.addColorStop(1, palette.dark);
+    ctx.fillStyle = gradient;
+    ctx.fillRect(innerX, innerY, Math.max(1, Math.floor(innerW * fill)), innerH);
+  }
+  const text = held && interactive ? "RELEASE TO JUMP" : label;
+  drawBitmapText(text, rect.x + rect.w / 2, rect.y + 11, text.length > 15 ? 0.62 : 0.78, "center", COLORS.white, COLORS.ink);
+  if (interactive) {
+    ctx.fillStyle = palette.light;
+    ctx.fillRect(rect.x + 4, rect.y + 4, rect.w - 8, 2);
+  }
+}
+
+const rrOriginalDrawHud = drawHud;
+drawHud = function() {
+  rrOriginalDrawHud();
+  if (!rrMobileEnabled()) return;
+  rrDrawMobileJumpMeter(RR_MOBILE_SOLO_METER, frog, getSelectedSkin(), "HOLD TO CHARGE", true);
+};
+
+function rrDrawMobilePauseButton() {
+  const pause = HUD_UI.pauseButton;
+  const skin = game.mode === "pvp"
+    ? getPvpSkinPalette(pvpPlayers[OnlineVersus.isActive() ? OnlineVersus.localIndex() : 0]?.skinId, "azure", 0)
+    : getSelectedSkin();
+  ctx.save();
+  ctx.globalAlpha = game.state === "paused" ? 0.84 : 0.56;
+  ctx.fillStyle = "rgba(38,54,61,0.45)";
+  ctx.fillRect(pause.x + 2, pause.y + 2, pause.w, pause.h);
+  ctx.fillStyle = COLORS.ink;
+  ctx.fillRect(pause.x, pause.y, pause.w, pause.h);
+  ctx.fillStyle = skin.belly;
+  ctx.fillRect(pause.x + 2, pause.y + 2, pause.w - 4, pause.h - 4);
+  ctx.fillStyle = skin.dark;
+  ctx.fillRect(pause.x + 7, pause.y + 5, 4, 9);
+  ctx.fillRect(pause.x + 15, pause.y + 5, 4, 9);
+  ctx.restore();
+}
+
+const rrOriginalDrawPvpHud = drawPvpHud;
+drawPvpHud = function() {
+  rrOriginalDrawPvpHud();
+  if (!rrMobileEnabled()) return;
+  const local = OnlineVersus.isActive() ? OnlineVersus.localIndex() : 0;
+  for (let index = 0; index < 2; index += 1) {
+    const palette = getPvpSkinPalette(pvpPlayers[index].skinId, index === 0 ? "azure" : "crimson", index);
+    const interactive = OnlineVersus.isActive()
+      ? index === local
+      : game.pvpCpuEnabled ? index === 0 : true;
+    const label = OnlineVersus.isActive()
+      ? (interactive ? "HOLD TO CHARGE" : "OPPONENT")
+      : game.pvpCpuEnabled
+        ? (index === 0 ? "HOLD TO CHARGE" : `CPU LV ${game.pvpCpuDifficulty}`)
+        : `P${index + 1} JUMP`;
+    rrDrawMobileJumpMeter(RR_MOBILE_PVP_METERS[index], pvpPlayers[index], palette, label, interactive);
+  }
+  rrDrawMobilePauseButton();
+};
+
+function rrStopMobilePointerEvent(event) {
+  event.preventDefault();
+  event.stopPropagation();
+  event.stopImmediatePropagation();
+}
+
+function rrBeginMobileJump(event, kind, index = 0) {
+  rrMobileHeldPointers.set(event.pointerId, { kind, index });
+  try { canvas.setPointerCapture(event.pointerId); } catch (_) {}
+  if (kind === "solo") pressMainButton();
+  else if (kind === "online") OnlineVersus.handleControlDown({ code: "PointerJump", preventDefault(){}, stopPropagation(){} });
+  else pressPvpButton(index, "human");
+}
+
+function rrReleaseMobileJump(event) {
+  const held = rrMobileHeldPointers.get(event.pointerId);
+  if (!held) return false;
+  rrMobileHeldPointers.delete(event.pointerId);
+  if (held.kind === "solo") releaseMainButton();
+  else if (held.kind === "online") OnlineVersus.handleControlUp({ code: "PointerJump", preventDefault(){}, stopPropagation(){} });
+  else releasePvpButton(held.index, "human");
+  return true;
+}
+
+function rrReleaseAllMobilePointers() {
+  for (const pointerId of [...rrMobileHeldPointers.keys()]) {
+    rrReleaseMobileJump({ pointerId });
+  }
+  rrMobileHeldPointers.clear();
+}
+
+window.addEventListener("pointerdown", (event) => {
+  if (friendsGameInputLocked() || event.target !== canvas) return;
+  const point = getCanvasPoint(event);
+
+  if (game.state === "main") {
+    if (pointInsideRect(point, RR_MOBILE_MENU_UI.avatar)) {
+      rrStopMobilePointerEvent(event);
+      window.RibbitMobileExperience?.openAccount?.();
+      return;
+    }
+    if (pointInsideRect(point, RR_MOBILE_MENU_UI.device)) {
+      rrStopMobilePointerEvent(event);
+      window.RibbitMobileExperience?.requestToggle?.();
+      return;
+    }
+  }
+
+  if (!rrMobileEnabled()) return;
+
+  if ((game.state === "playing" || game.state === "countdown") && pointInsideRect(point, HUD_UI.pauseButton)) {
+    rrStopMobilePointerEvent(event);
+    pauseGame();
+    return;
+  }
+
+  if (game.state !== "playing") return;
+
+  if (game.mode === "solo") {
+    rrStopMobilePointerEvent(event);
+    if (pointInsideRect(point, RR_MOBILE_SOLO_METER)) rrBeginMobileJump(event, "solo", 0);
+    return;
+  }
+
+  if (game.mode === "pvp") {
+    rrStopMobilePointerEvent(event);
+    if (OnlineVersus.isActive()) {
+      const local = OnlineVersus.localIndex();
+      if (pointInsideRect(point, RR_MOBILE_PVP_METERS[local])) rrBeginMobileJump(event, "online", local);
+      return;
+    }
+    if (pointInsideRect(point, RR_MOBILE_PVP_METERS[0])) rrBeginMobileJump(event, "pvp", 0);
+    else if (!game.pvpCpuEnabled && pointInsideRect(point, RR_MOBILE_PVP_METERS[1])) rrBeginMobileJump(event, "pvp", 1);
+  }
+}, { capture: true, passive: false });
+
+window.addEventListener("pointermove", (event) => {
+  if (event.target !== canvas || game.state !== "main") return;
+  const point = getCanvasPoint(event);
+  rrMobileMenuHover = pointInsideRect(point, RR_MOBILE_MENU_UI.avatar) ? "avatar"
+    : pointInsideRect(point, RR_MOBILE_MENU_UI.device) ? "device" : null;
+}, { capture: true, passive: true });
+window.addEventListener("pointerleave", (event) => {
+  if (event.target === canvas) rrMobileMenuHover = null;
+}, { capture: true, passive: true });
+
+window.addEventListener("pointerup", (event) => {
+  if (!rrReleaseMobileJump(event)) return;
+  rrStopMobilePointerEvent(event);
+}, { capture: true, passive: false });
+window.addEventListener("pointercancel", (event) => {
+  if (!rrReleaseMobileJump(event)) return;
+  rrStopMobilePointerEvent(event);
+}, { capture: true, passive: false });
+window.addEventListener("blur", rrReleaseAllMobilePointers);
+window.addEventListener("ribbit-pvp-round-ended", rrReleaseAllMobilePointers);
+window.addEventListener("ribbit-mobile-mode-changed", () => {
+  rrReleaseAllMobilePointers();
+  rrMobileMenuHover = null;
+});
+
+// Expose geometry to diagnostics and automated touch tests.
+window.RibbitRaceMobileDiagnostics = () => ({
+  enabled: rrMobileEnabled(),
+  renderScale: RENDER_SCALE,
+  soloMeter: { ...RR_MOBILE_SOLO_METER },
+  pvpMeters: RR_MOBILE_PVP_METERS.map((rect) => ({ ...rect })),
+  pauseButton: { ...HUD_UI.pauseButton },
+  heldPointers: rrMobileHeldPointers.size
+});
 
 }

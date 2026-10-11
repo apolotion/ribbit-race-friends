@@ -36,7 +36,7 @@
         "PAUSED",
         [
           "THE FROG IS TAKING A BREAK",
-          "HOLD SPACE TO JUMP"
+          isRibbitMobileMode() ? "HOLD THE JUMP METER TO JUMP" : "HOLD SPACE TO JUMP"
         ],
         "",
         true,
@@ -542,9 +542,17 @@
 
     function getCanvasPoint(event) {
       const rect = canvas.getBoundingClientRect();
+      // In standalone/fullscreen mode Safari can letterbox the 16:9 canvas
+      // inside a wider or taller CSS box. Map touches through the actual
+      // rendered content rectangle rather than the outer element bounds.
+      const scale = Math.min(rect.width / W, rect.height / H) || 1;
+      const contentWidth = W * scale;
+      const contentHeight = H * scale;
+      const offsetX = (rect.width - contentWidth) / 2;
+      const offsetY = (rect.height - contentHeight) / 2;
       return {
-        x: (event.clientX - rect.left) * W / rect.width,
-        y: (event.clientY - rect.top) * H / rect.height
+        x: (event.clientX - rect.left - offsetX) / scale,
+        y: (event.clientY - rect.top - offsetY) / scale
       };
     }
 
@@ -624,10 +632,20 @@
       if(!OnlineVersus.checkDirectHealth()){lastFrameTime=now;accumulator=0;OnlineVersus.pumpTransport();return;}
       const elapsed=Math.max(0,(now-lastFrameTime)/1000);lastFrameTime=now;
       accumulator+=OnlineVersus.isActive()?elapsed:Math.min(.05,elapsed);
-      const maxTicks=OnlineVersus.isActive()?480:12;let ticks=0;
+      const mobilePerformance = RIBBIT_COARSE_TOUCH_DEVICE || isRibbitMobileMode();
+      const maxTicks = OnlineVersus.isActive()
+        ? (mobilePerformance ? 24 : 480)
+        : (mobilePerformance ? 8 : 12);
+      let ticks=0;
       while(accumulator>=STEP&&ticks++<maxTicks){update(STEP);OnlineVersus.afterSimulationStep(STEP);accumulator-=STEP;}
-      // Any background scheduling debt stays in the accumulator; no hidden-tab
-      // elapsed time is thrown away. Browser-frozen/sleeping devices remain a limit.
+      // Mobile Safari can create a runaway catch-up loop after a slow frame.
+      // Keep at most two fixed steps of debt in Mobile Mode so the next frame
+      // remains responsive rather than spending several seconds catching up.
+      if (mobilePerformance && ticks >= maxTicks && accumulator >= STEP) {
+        accumulator = Math.min(accumulator, STEP * 2);
+      }
+      // Desktop retains its full background scheduling debt for deterministic
+      // peer simulation. Browser-frozen/sleeping devices remain a platform limit.
       OnlineVersus.pumpTransport();
     }
     function frame(now) {

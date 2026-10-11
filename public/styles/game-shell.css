@@ -95,7 +95,7 @@
       inset: 0;
       z-index: 900;
       width: 100vw;
-      height: 100vh;
+      height: 100dvh;
       max-width: none;
       aspect-ratio: auto;
       border: 0;
@@ -121,7 +121,7 @@
     #rr-queue-rail button:last-child{background:#f8d8df;}
     #game-frame.rr-queue-reserved{width:min(100vw,calc((100vh - 32px)*16/9));margin-top:29px;}
     #game-frame.rr-queue-reserved #rr-queue-rail{display:flex;}
-    #game-frame.rr-queue-reserved:fullscreen,#game-frame.rr-queue-reserved:-webkit-full-screen,#game-frame.rr-queue-reserved.ribbit-focus-mode{width:100vw;height:100vh;margin:0;padding-top:28px;box-sizing:border-box;}
+    #game-frame.rr-queue-reserved:fullscreen,#game-frame.rr-queue-reserved:-webkit-full-screen,#game-frame.rr-queue-reserved.ribbit-focus-mode{width:100vw;height:100dvh;margin:0;padding-top:28px;box-sizing:border-box;}
     #game-frame.rr-queue-reserved:fullscreen #rr-queue-rail,#game-frame.rr-queue-reserved:-webkit-full-screen #rr-queue-rail,#game-frame.rr-queue-reserved.ribbit-focus-mode #rr-queue-rail{top:0;}
     #game-frame.rr-queue-reserved:fullscreen canvas,#game-frame.rr-queue-reserved:-webkit-full-screen canvas,#game-frame.rr-queue-reserved.ribbit-focus-mode canvas{height:100%;}
     @media(max-width:620px){#rr-queue-rail{font-size:10px;gap:4px;}#rr-queue-rail button{padding:3px 4px;}}

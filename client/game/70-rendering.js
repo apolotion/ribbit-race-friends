@@ -1676,7 +1676,7 @@
     }
 
     function chooseFlyLabelRect(currentFly, anchor, width, height) {
-      // 1.4.1: the plate center is locked directly above the fly's stable anchor.
+      // 1.5.0: the plate center remains locked directly above the fly's stable anchor.
       // It never shifts sideways to avoid the score, timer, pause button, or another
       // label. When two plates would overlap, only the vertical row may change.
       const cacheKey = flyLabelCacheKey(currentFly);
@@ -2356,8 +2356,9 @@
       ctx.fillRect(x + 58, y + h - 1, 8, 7);
       ctx.fillRect(x + 60, y + h + 6, 4, 3);
 
-      drawBitmapText("HOLD SPACE TO CHARGE", x + w / 2, y + 10, 0.78, "center", "#4c555a");
-      drawBitmapText("RELEASE TO JUMP", x + w / 2, y + 27, 0.92, "center", "#4c555a");
+      const mobileInstructions = isRibbitMobileMode();
+      drawBitmapText(mobileInstructions ? "HOLD METER TO CHARGE" : "HOLD SPACE TO CHARGE", x + w / 2, y + 10, mobileInstructions ? 0.68 : 0.78, "center", "#4c555a");
+      drawBitmapText(mobileInstructions ? "RELEASE TO JUMP" : "RELEASE TO JUMP", x + w / 2, y + 27, 0.92, "center", "#4c555a");
       ctx.restore();
     }
 
@@ -2402,7 +2403,7 @@
       // The language target now occupies the center of the gray footer.
       drawVocabularyPrompt();
       if (game.sandboxMode) {
-        drawBitmapText("SHIFT: WIN / LOSE / PLAY", 306, 240, 0.72, "center", "#d9edf2");
+        drawBitmapText(isRibbitMobileMode() ? "TAP PREVIEW TO CHANGE" : "SHIFT: WIN / LOSE / PLAY", 306, 240, 0.72, "center", "#d9edf2");
         drawBitmapText(sandboxPreview.mode === "play" ? "TEST YOUR TONGUE COLOR" : sandboxPreview.mode === "win" ? "VICTORY PREVIEW" : "LOSING PREVIEW", 306, 252, 0.65, "center", getSelectedSkin().light);
       }
 
@@ -2607,6 +2608,33 @@
         }
         ctx.restore();
       }
+    }
+
+    function drawEmptyTopHatOutline(centerX, frogTopY, scale = 1, color = "#8b989d") {
+      const s = Math.max(0.7, Number(scale) || 1);
+      const px = Math.max(1, Math.round(s));
+      const left = Math.round(centerX - 8 * s);
+      const top = Math.round(frogTopY - 12 * s);
+      const dot = (x, y, w = 1, h = 1) => {
+        ctx.fillRect(
+          Math.round(left + x * s),
+          Math.round(top + y * s),
+          Math.max(px, Math.round(w * s)),
+          Math.max(px, Math.round(h * s))
+        );
+      };
+      ctx.save();
+      ctx.globalAlpha *= 0.72;
+      ctx.fillStyle = color;
+      // Dashed crown outline.
+      [0, 3, 6, 9].forEach((x) => dot(4 + x, 1, 2, 1));
+      [0, 3, 6].forEach((y) => { dot(3, 2 + y, 1, 2); dot(15, 2 + y, 1, 2); });
+      [0, 3, 6, 9].forEach((x) => dot(4 + x, 10, 2, 1));
+      // Dashed brim outline.
+      [0, 3, 6, 9, 12, 15].forEach((x) => dot(0 + x, 12, 2, 1));
+      dot(0, 13, 1, 2); dot(17, 13, 1, 2);
+      [0, 3, 6, 9, 12, 15].forEach((x) => dot(0 + x, 15, 2, 1));
+      ctx.restore();
     }
 
     function drawPixelFrogHat(centerX, frogTopY, hatId = "none", scale = 1, direction = 1, paletteTheme = null) {
@@ -3496,7 +3524,7 @@
         drawBitmapText(game.cheatToastText || "EVERYTHING UNLOCKED!", W / 2, 244, 0.82, "center", getSelectedSkin().dark);
         ctx.restore();
       } else {
-        drawBitmapText("CLICK OR ARROWS • ENTER TO SELECT", W / 2, 244, 1, "center", "#617177");
+        drawBitmapText(isRibbitMobileMode() ? "TAP A BUTTON TO SELECT" : "CLICK OR ARROWS • ENTER TO SELECT", W / 2, 244, 1, "center", "#617177");
       }
 
       // The modal is deliberately last so the footer and any unlock text cannot
@@ -3895,7 +3923,7 @@
       if (!unlocked) {
         drawMiniLockIcon(rect.x + rect.w / 2, rect.y + 6, 0.72);
       } else if (hatId === "none") {
-        drawBitmapText("   ", rect.x + rect.w / 2, rect.y + 11, 0.78, "center", skin.dark);
+        drawEmptyTopHatOutline(rect.x + rect.w / 2, rect.y + 17, 0.62, "#8b989d");
       } else {
         drawPixelFrogHat(rect.x + rect.w / 2, rect.y + 15, hatId, 0.78, 1, skin);
       }
@@ -3953,7 +3981,7 @@
       drawBitmapText("CHOOSE STYLE",panel.x+panel.w/2,panel.y+10,1.15,"center",COLORS.white,skin.dark);
       const filteredHats = getFilteredCustomHatOptions();
       const focusedHat = CUSTOM_HAT_OPTIONS[game.customHatHoveredIndex ?? game.customHatFocusIndex] || filteredHats[0] || CUSTOM_HAT_OPTIONS[0];
-      drawBitmapText(focusedHat.id === "none" ? "   " : focusedHat.name,panel.x+panel.w/2,panel.y+36,0.54,"center",skin.dark);
+      drawBitmapText(focusedHat.name,panel.x+panel.w/2,panel.y+36,0.54,"center",skin.dark);
       let lockedFocusedOption=null;
       getCustomHatOptionRects().forEach((option)=>{
         const selected=(game.customHatId||"none")===option.id;
@@ -3965,7 +3993,11 @@
         ctx.fillStyle=!unlocked?"#eef3f5":selected?skin.light:"#ffffff";ctx.fillRect(option.x+5,option.y+4,option.w-10,3);
         ctx.save(); if(!unlocked) ctx.globalAlpha=0.33;
         const selectorLift = ({ "headband":2, "flower":1, "washington-wig":2, "pink-bow":0, "party-hat":1, "mohawk":1, "baseball-cap":1 }[option.id] || 0);
-        drawPixelFrogHat(option.x+option.w/2,option.y+25-selectorLift,option.id,1.05,1,{...skin,previewCenterHat:true});
+        if (option.id === "none") {
+          drawEmptyTopHatOutline(option.x + option.w / 2, option.y + 29, 0.68, "#8b989d");
+        } else {
+          drawPixelFrogHat(option.x+option.w/2,option.y+25-selectorLift,option.id,1.05,1,{...skin,previewCenterHat:true});
+        }
         ctx.restore();
         const shortLabel=option.name.length>13?option.name.split(" ")[0]:option.name;
         drawBitmapText(shortLabel,option.x+option.w/2,option.y+35,0.43,"center",!unlocked?"#6d7a80":skin.dark);
@@ -5234,7 +5266,7 @@
         ctx.fillRect(baseX + 12, baseY - 13, 1, 12);
       });
 
-      drawBitmapText("CLICK OR ARROWS • ENTER TO SELECT", W / 2, 202, 0.78, "center", "#48555a");
+      drawBitmapText(isRibbitMobileMode() ? "TAP A BUTTON TO SELECT" : "CLICK OR ARROWS • ENTER TO SELECT", W / 2, 202, 0.78, "center", "#48555a");
       drawBitmapText(RIBBIT_CREDIT_TEXT, W / 2, RIBBIT_CREDIT_Y, 1, "center", "#617177");
     }
 
@@ -5331,7 +5363,7 @@
       drawHomeSettingsButton();
       drawHomeTimeControls();
 
-      drawBitmapText("CLICK OR ARROWS • ENTER TO PLAY", W / 2, 210, 0.75, "center", "#48555a");
+      drawBitmapText(isRibbitMobileMode() ? "TAP A LEVEL TO PLAY" : "CLICK OR ARROWS • ENTER TO PLAY", W / 2, 210, 0.75, "center", "#48555a");
       drawBitmapText(RIBBIT_CREDIT_TEXT, W / 2, RIBBIT_CREDIT_Y, 1, "center", "#617177");
 
       const recordLevelId = game.hoveredLevelId || (game.homeFocusVisible && LEVELS[game.homeSelection] ? game.homeSelection : null);
@@ -5616,26 +5648,27 @@
 
     function drawPauseHowToOverlay() {
       const panel = { x: 76, y: 70, w: 312, h: 138 };
+      const mobileHelp = isRibbitMobileMode();
       const lines = game.mode === "pvp"
         ? (game.pvpCpuEnabled ? [
-            "HOLD SPACE TO JUMP",
+            mobileHelp ? "HOLD THE JUMP METER, THEN RELEASE" : "HOLD SPACE TO JUMP",
             "THE CPU CONTROLS PLAYER 2",
             "CATCH THE FLY THAT MATCHES THE PROMPT",
             game.pvpRoundGoalMode === "endless" ? "ENDLESS: MOST FLIES BEFORE TIME ENDS" : "FIRST TO THE GOAL WINS THE ROUND",
             "BONK OR BOUNCE OFF THE OTHER FROG TO STUN THEM"
           ] : [
-            "P1: HOLD LEFT SHIFT TO JUMP",
-            "P2: HOLD RIGHT SHIFT TO JUMP",
+            mobileHelp ? "P1: HOLD THE LEFT JUMP METER" : "P1: HOLD LEFT SHIFT TO JUMP",
+            mobileHelp ? "P2: HOLD THE RIGHT JUMP METER" : "P2: HOLD RIGHT SHIFT TO JUMP",
             "CATCH THE FLY THAT MATCHES THE PROMPT",
             game.pvpRoundGoalMode === "endless" ? "ENDLESS: MOST FLIES BEFORE TIME ENDS" : "FIRST TO THE GOAL WINS THE ROUND",
             "BONK OR BOUNCE OFF THE OTHER FROG TO STUN THEM"
           ])
         : [
-            "HOLD SPACE, RELEASE TO JUMP",
+            mobileHelp ? "HOLD THE JUMP METER, THEN RELEASE" : "HOLD SPACE, RELEASE TO JUMP",
             "CATCH THE FLY THAT MATCHES THE PROMPT",
             "GET 5 CORRECT FLIES TO FINISH THE LEVEL",
             "WRONG FLIES GET SPAT BACK OUT",
-            "TAP JUST BEFORE LANDING TO DROP THROUGH"
+            mobileHelp ? "TAP THE JUMP METER BEFORE LANDING TO DROP" : "TAP JUST BEFORE LANDING TO DROP THROUGH"
           ];
       const bookTheme = getPauseBookTheme(true);
       const bookSkin = getSelectedSkin();

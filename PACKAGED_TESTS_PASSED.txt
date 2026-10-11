@@ -1,25 +1,24 @@
-RIBBIT RACE FRIENDS 1.4.1 — FINAL LOCAL VALIDATION
-Build: 2026.10.10-friends-centered-labels-themed-book-1
+RIBBIT RACE FRIENDS 1.5.0 — FINAL LOCAL VALIDATION
+Build: 2026.10.11-friends-mobile-experience-1
 
-npm run check
-PASS — Built game bundle from 9 modules (1029324 bytes).
-PASS — Server and browser modules parse; 11 external assets are present.
+SOURCE PROJECT
+- npm run check: PASS
+- npm test: 91 passed, 0 failed
+- Full test suite repeated 3 additional times: 91/91 each run
 
-npm test
-PASS — 82 tests
-PASS — 82 passed
-PASS — 0 failed
+TRUSTED MOBILE BROWSER TEST
+- Login iPhone instructions opened: PASS
+- Mobile render scale selected 960x540: PASS
+- Trusted touch entered two-human Local Versus: PASS
+- P1 and P2 held simultaneously: PASS
+- Independent release preserved the other player's hold: PASS
+- Upper-right Versus pause touch entered paused state: PASS
+- JavaScript page errors: 0
 
-Repeated npm test runs
-PASS — run 1: 82/82
-PASS — run 2: 82/82
-PASS — run 3: 82/82
+FINAL EXTRACTED COMPLETE ZIP TEST
+- npm run check: PASS
+- npm test: 91 passed, 0 failed
 
-Browser visual smoke test
-PASS — production HTML/CSS/scripts executed with test-only API/storage adapters
-PASS — no JavaScript errors
-PASS — upper-right Lake label remained centered over its fly
-PASS — running pause control was translucent
-PASS — compact book and open How To Play panel inherited the selected frog palette
-
-No live Cloudflare deployment was performed by this validation.
+LIMITS
+- No live Cloudflare deployment was performed.
+- Physical iPhone Safari, Home Screen installation, Promethean hardware, and production WebSocket play remain to be tested by the installation owner.

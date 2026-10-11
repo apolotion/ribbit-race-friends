@@ -64,7 +64,7 @@
     const canvas = document.getElementById("game");
     const gameFrame = document.getElementById("game-frame");
     const friendsGameInputLocked = () => window.RibbitFriendsGameInputLocked?.() === true;
-    const RIBBIT_DISPLAY_VERSION = "VERSION 1.4.1";
+    const RIBBIT_DISPLAY_VERSION = "VERSION 1.5.0";
     const RIBBIT_CREDIT_TEXT = "MADE BY NICK";
     const RIBBIT_CREDIT_Y = 228;
     const rgbValueEditor = document.getElementById("rgb-value-editor");
@@ -151,12 +151,26 @@
     document.addEventListener("fullscreenchange", () => { syncFullscreenButton(); canvas.focus({ preventScroll: true }); });
     document.addEventListener("webkitfullscreenchange", () => { syncFullscreenButton(); canvas.focus({ preventScroll: true }); });
 
-    // Render the original 480×270 game grid at a true 1920×1080 backing
-    // resolution. Game physics and layout remain unchanged, while text and
-    // pixel-art edges are rasterized with four times the detail.
+    // Preserve the original 480×270 logical grid. Coarse-touch devices render
+    // at 960×540 to reduce Safari's per-frame pixel workload; desktop remains
+    // at the original 1920×1080 backing resolution.
     const W = 480;
     const H = 270;
-    const RENDER_SCALE = 4;
+    const RIBBIT_COARSE_TOUCH_DEVICE = Boolean(
+      navigator.maxTouchPoints > 0 && window.matchMedia?.("(pointer: coarse)")?.matches
+    );
+    const RIBBIT_MOBILE_MODE_STORAGE_KEY = "rrFriendsMobileModeV1";
+    function isRibbitMobileMode() {
+      try { return localStorage.getItem(RIBBIT_MOBILE_MODE_STORAGE_KEY) === "1"; }
+      catch (_) { return false; }
+    }
+    function setRibbitMobileMode(enabled) {
+      try { localStorage.setItem(RIBBIT_MOBILE_MODE_STORAGE_KEY, enabled ? "1" : "0"); }
+      catch (_) {}
+      document.body.classList.toggle("rr-mobile-enabled", Boolean(enabled));
+      window.dispatchEvent(new CustomEvent("ribbit-mobile-mode-changed", { detail: { enabled: Boolean(enabled) } }));
+    }
+    const RENDER_SCALE = RIBBIT_COARSE_TOUCH_DEVICE ? 2 : 4;
     canvas.width = W * RENDER_SCALE;
     canvas.height = H * RENDER_SCALE;
 
@@ -262,7 +276,8 @@
     const DEFAULT_UNLOCKED_FROG_SKINS = Object.freeze(["azure"]);
     const FROG_UNLOCK_CHEAT = "";
     const PLAYTEST_TOGGLE_CODE = "playtest";
-    const HIDDEN_CODE_BUFFER_LENGTH = PLAYTEST_TOGGLE_CODE.length;
+    const HATS_TEST_TOGGLE_CODE = "hatstest";
+    const HIDDEN_CODE_BUFFER_LENGTH = Math.max(PLAYTEST_TOGGLE_CODE.length, HATS_TEST_TOGGLE_CODE.length);
     let playtestModeActive = false;
     let playtestSnapshot = null;
 
@@ -613,7 +628,7 @@
     let customFrogColors = { ...customFrogSlots[activeCustomFrogSlotIndex] };
 
     const CUSTOM_HAT_OPTIONS = Object.freeze([
-      Object.freeze({ id: "none", name: "NONE" }),
+      Object.freeze({ id: "none", name: "NO HAT" }),
       Object.freeze({ id: "top-hat", name: "TOP" }),
       Object.freeze({ id: "crown", name: "CROWN" }),
       Object.freeze({ id: "party-hat", name: "PARTY" }),
@@ -701,23 +716,32 @@
 
     const HAT_UNLOCK_REQUIREMENTS = Object.freeze({
       "none": { unlocked: () => true, lines: ["ALWAYS AVAILABLE", "NO REQUIREMENT"] },
-      "party-hat": { unlocked: () => isCustomHatSelectorUnlocked(), lines: ["FIRST HAT", "UNLOCK HATS"] },
-      "top-hat": { unlocked: () => statsProfile.totalWins >= 3, lines: ["WIN 3 SOLO LEVELS", `${Math.min(statsProfile.totalWins, 3)} / 3 WINS`] },
-      "crown": { unlocked: () => getFastestCompletionTime() !== null && getFastestCompletionTime() <= 25, lines: ["BEAT ANY LEVEL", "IN 25 SECONDS OR LESS"] },
-      "hard-hat": { unlocked: () => statsProfile.wallBounces >= 10, lines: ["WALL BOUNCE 10 TIMES", `${Math.min(statsProfile.wallBounces, 10)} / 10 BOUNCES`] },
-      "viking": { unlocked: () => statsProfile.pvpBonksDealt >= 10, lines: ["BONK 10 FROGS", `${Math.min(statsProfile.pvpBonksDealt, 10)} / 10 BONKS`] },
-      "straw-hat": { unlocked: () => statsProfile.maxFliesOneJump >= 3, lines: ["CATCH 3 FLIES", "IN ONE JUMP"] }
+      "party-hat": { lines: ["CATCH 50 FLIES", "AS PLUM"] },
+      "top-hat": { lines: ["CATCH 75 FLIES", "AS AZURE"] },
+      "crown": { lines: ["WIN 10 VERSUS MATCHES", "AFTER HATS UNLOCK"] },
+      "hard-hat": { lines: ["WIN JUNGLE 3 TIMES", "AS FOREST"] },
+      "viking": { lines: ["WIN 5 VERSUS MATCHES", "AS EMBER"] },
+      "straw-hat": { lines: ["FINISH PARK UNDER 25 SEC", "AS FOREST"] }
     });
 
+    function readProgressionUnlockedHatIds() {
+      try {
+        const parsed = JSON.parse(localStorage.getItem("ribbitRaceUnlockedHatsV2") || "[]");
+        return new Set(Array.isArray(parsed) ? parsed.map(String) : []);
+      } catch (_) { return new Set(); }
+    }
+
     function isHatUnlocked(hatId) {
+      if (hatId === "none") return true;
       if (isPlaytestModeActive() || isCheatUnlockAllActive()) return true;
-      const requirement = HAT_UNLOCK_REQUIREMENTS[hatId];
-      return requirement ? !!requirement.unlocked() : isCustomHatSelectorUnlocked();
+      return readProgressionUnlockedHatIds().has(String(hatId));
     }
 
     function getHatRequirementLines(hatId) {
+      const external = window.RibbitHatProgress?.requirementLines?.(hatId);
+      if (Array.isArray(external) && external.length) return external.slice(0, 2);
       const requirement = HAT_UNLOCK_REQUIREMENTS[hatId];
-      return requirement ? requirement.lines.slice(0, 2) : ["UNLOCK THE STYLE SELECTOR", "TO USE THIS STYLE"];
+      return requirement ? requirement.lines.slice(0, 2) : ["COMPLETE ITS HAT CHALLENGE", "AFTER HATS UNLOCK"];
     }
 
     function ensureValidEquippedHat() {
@@ -845,7 +869,11 @@
       return getHatForFrogSkinId(target);
     }
 
-    function isCustomHatSelectorUnlocked() { return isPlaytestModeActive() || isCheatUnlockAllActive() || isCustomFrogSlotUnlocked(1); }
+    function isCustomHatSelectorUnlocked() {
+      let hatsTest = false;
+      try { hatsTest = localStorage.getItem("ribbitRaceHatsTestUnlockedV1") === "1"; } catch (_) {}
+      return isPlaytestModeActive() || isCheatUnlockAllActive() || hatsTest || isCustomFrogSlotUnlocked(1);
+    }
     function getCustomHatIdForSlot(index = activeCustomFrogSlotIndex) {
       const slotIndex = clamp(Math.round(Number(index)||0),0,CUSTOM_FROG_SLOT_COUNT-1);
       return getHatForFrogSkinId(`custom${slotIndex + 1}`);
@@ -1711,32 +1739,51 @@
       return true;
     }
 
-    function hasRecentPlayerTwoMovement(windowSeconds = 10) {
-      if (game.mode !== "pvp" || game.pvpCpuEnabled) return false;
-      const playerTwo = pvpPlayers[1];
+    function hasRecentHumanPlayerMovement(playerIndex, windowSeconds = 10) {
+      if (game.mode !== "pvp" || !Number.isInteger(playerIndex)) return false;
+      const player = pvpPlayers[playerIndex];
       return Boolean(
-        playerTwo &&
-        playerTwo.humanInputCount > 0 &&
-        Number.isFinite(playerTwo.lastHumanInputAt) &&
-        game.pvpElapsed - playerTwo.lastHumanInputAt <= windowSeconds
+        player &&
+        player.humanInputCount > 0 &&
+        Number.isFinite(player.lastHumanInputAt) &&
+        game.pvpElapsed - player.lastHumanInputAt <= windowSeconds
       );
     }
 
+    function hasRecentPlayerTwoMovement(windowSeconds = 10) {
+      if (game.mode !== "pvp" || game.pvpCpuEnabled) return false;
+      return hasRecentHumanPlayerMovement(1, windowSeconds);
+    }
+
+    function isAchievementEligibleHumanPvpIndex(playerIndex, verifiedInteraction = false) {
+      if (!Number.isInteger(playerIndex) || playerIndex < 0 || playerIndex > 1) return false;
+      if (game.pvpCpuEnabled) return playerIndex === 0;
+      if (game.onlineMode || OnlineVersus.isActive()) {
+        const localIndex = Number(OnlineVersus.localIndex());
+        if (playerIndex !== localIndex) return false;
+        // Network prediction alone cannot unlock a collision achievement. The
+        // host-verified interaction path may bypass only the recency check.
+        if (game.onlinePredicting && !verifiedInteraction) return false;
+        return verifiedInteraction || hasRecentHumanPlayerMovement(playerIndex, 10);
+      }
+      // In local two-human Versus either side can earn the account achievement,
+      // but the side must have actually participated recently.
+      return verifiedInteraction || hasRecentHumanPlayerMovement(playerIndex, 10);
+    }
+
     function markPvpAchievementEarned(id, playerIndex = null, notify = true, options = null) {
-      if (game.onlinePredicting || (game.onlineMode && game.onlineRole === "guest")) return false;
       if (typeof playerIndex === "boolean") {
         notify = playerIndex;
         playerIndex = null;
       }
       const verifiedInteraction = Boolean(options && options.verifiedInteraction);
       if (game.mode !== "pvp" || !PVP_ACHIEVEMENT_ID_SET.has(id) || earnedPvpAchievementIds.has(id)) return false;
-      if (Number.isInteger(playerIndex) && playerIndex !== 0) return false;
-      if (game.pvpCpuEnabled && playerIndex === 1) return false;
-      // Most human PvP achievements still require recent Player 2 movement to
-      // prevent farming an idle second controller. A collision or completed CPU
-      // match that the game engine itself verifies may explicitly bypass only
-      // this activity-window check.
-      if (!game.pvpCpuEnabled && !verifiedInteraction && !hasRecentPlayerTwoMovement(10)) return false;
+      if (Number.isInteger(playerIndex) && !isAchievementEligibleHumanPvpIndex(playerIndex, verifiedInteraction)) return false;
+      if (!Number.isInteger(playerIndex)) {
+        const fallbackIndex = game.onlineMode || OnlineVersus.isActive() ? Number(OnlineVersus.localIndex()) : 0;
+        if (!isAchievementEligibleHumanPvpIndex(fallbackIndex, verifiedInteraction)) return false;
+        playerIndex = fallbackIndex;
+      }
       earnedPvpAchievementIds.add(id);
       saveEarnedPvpAchievementIds();
       if (!Array.isArray(game.roundUnlockedPvpAchievementIds)) game.roundUnlockedPvpAchievementIds = [];

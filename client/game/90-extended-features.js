@@ -1,9 +1,9 @@
-// Ribbit Race Friends 1.4.1 — integrated extension layer
+// Ribbit Race Friends 1.5.0 — integrated extension layer
 // Responsibilities: runtime bridge, deterministic PvP event telemetry, mobile
 // input support hooks, palette operations, post-hat progression, and replay state.
 
-const RIBBIT_FRIENDS_DISPLAY_VERSION = "1.4.1";
-const RIBBIT_FRIENDS_BUILD = "2026.10.10-friends-centered-labels-themed-book-1";
+const RIBBIT_FRIENDS_DISPLAY_VERSION = "1.5.0";
+const RIBBIT_FRIENDS_BUILD = "2026.10.11-friends-mobile-experience-1";
 
 function rr14Number(value, fallback = 0) {
   const parsed = Number(value);
@@ -185,6 +185,9 @@ function rr14PreferSelectedSkin() {
 
 function rr14HatIds() {
   try {
+    if (typeof CUSTOM_HAT_OPTIONS !== "undefined" && Array.isArray(CUSTOM_HAT_OPTIONS)) {
+      return CUSTOM_HAT_OPTIONS.map((hat) => hat?.id).filter(Boolean);
+    }
     const catalog = (typeof HAT_CATALOG !== "undefined" && HAT_CATALOG) ||
       (typeof HATS !== "undefined" && HATS) ||
       (typeof HAT_DEFS !== "undefined" && HAT_DEFS) ||
@@ -241,6 +244,6 @@ function rr14RuntimeMonitor() {
     rr14PreviousState=snap.state;
   }
   rr14PreviousSnapshot=snap;
-  requestAnimationFrame(rr14RuntimeMonitor);
+  setTimeout(rr14RuntimeMonitor, 120);
 }
-requestAnimationFrame(rr14RuntimeMonitor);
+setTimeout(rr14RuntimeMonitor, 120);

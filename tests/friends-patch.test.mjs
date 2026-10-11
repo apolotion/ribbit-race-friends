@@ -12,6 +12,7 @@ const browserFiles = [
   "../public/scripts/friends-api-client.js",
   "../public/scripts/auth-screen-controller.js",
   "../public/scripts/cloud-client.js",
+  "../public/scripts/mobile-experience.js",
   "../public/scripts/game.bundle.js",
   "../public/scripts/bootstrap.js",
   "../public/scripts/playtest-guard.js",
@@ -35,8 +36,8 @@ test("PIN hashing stays within Cloudflare PBKDF2 limit and matches 100000 rounds
 });
 
 test("Friends release exposes the new build marker",()=>{
-  assert.equal(BUILD,"2026.10.10-friends-centered-labels-themed-book-1");
-  assert.match(browserSource,/2026\.10\.10\-friends\-centered\-labels\-themed\-book\-1/);
+  assert.equal(BUILD,"2026.10.11-friends-mobile-experience-1");
+  assert.match(browserSource,/2026\.10\.11\-friends\-mobile\-experience\-1/);
 });
 
 test("server vocabulary is exactly the requested 15 entries",()=>{
@@ -70,13 +71,13 @@ test("auth boundary hides and inerts the runtime until sign-in or guest play",()
 
 test("index is presentation-only and gameplay source is separated by responsibility",()=>{
   assert.doesNotMatch(indexHtml,/<style\b/i);
-  assert.equal((indexHtml.match(/<script\b[^>]*src=/g)||[]).length,7);
+  assert.equal((indexHtml.match(/<script\b[^>]*src=/g)||[]).length,8);
   assert.match(indexHtml,/\/scripts\/friends-api-client\.js/);
   assert.match(indexHtml,/\/scripts\/auth-screen-controller\.js/);
   assert.match(indexHtml,/\/scripts\/cloud-client\.js/);
   assert.match(indexHtml,/\/scripts\/game\.bundle\.js/);
   const modules=fs.readdirSync(new URL("../client/game/",import.meta.url)).filter(name=>/^\d+-.+\.js$/.test(name));
-  assert.equal(modules.length,9);
+  assert.equal(modules.length,10);
   assert.match(fs.readFileSync(new URL("../scripts/build-game.mjs",import.meta.url),"utf8"),/class GameBundleBuilder/);
 });
 
@@ -322,8 +323,8 @@ test("Friends first-place notice is a world-record notice with hover details",()
   assert.doesNotMatch(indexHtml,/MIGRATE OLD PRIVATE-KEY ACCOUNT/);
 });
 
-test("version 1.4.1 remains in settings and the How To Play book footer",()=>{
-  assert.match(html,/const RIBBIT_DISPLAY_VERSION = "VERSION 1\.4\.1"/);
+test("version 1.5.0 remains in settings and the How To Play book footer",()=>{
+  assert.match(html,/const RIBBIT_DISPLAY_VERSION = "VERSION 1\.5\.0"/);
   assert.match(html,/drawVersionLabel\(panel\.x \+ panel\.w \/ 2, panel\.y \+ panel\.h - 14, "center"/);
   assert.doesNotMatch(html,/drawVersionLabel\(399, 218, "right"\)/);
   assert.match(html,/function getPauseBookTheme/);
@@ -344,16 +345,20 @@ test("frog overlap axis is deterministic and cooldown separation removes interse
   assert.equal(api.getPvpOverlapMetrics(topA,topB),null);
 });
 
-test("overlap resolution maps horizontal contact to rebound and vertical contact to bonk",()=>{
-  const source=["getPvpOverlapMetrics","resolvePvpOverlapByAxis"].map(name=>extractFunctionSource(html,name)).join("\n");
+test("overlap resolution rebounds horizontally and bonks vertically only with valid motion",()=>{
+  const source=["getPvpOverlapMetrics","canPvpVerticalContactBonk","resolvePvpOverlapByAxis"].map(name=>extractFunctionSource(html,name)).join("\n");
   const events=[];
   const make=new Function("bouncePvpPlayersSideways","bonkPvpPlayer",`${source}\nreturn {resolvePvpOverlapByAxis};`);
   const api=make((a,b)=>events.push(["rebound",a,b]),(victim,stomper)=>events.push(["bonk",victim,stomper]));
-  const a={x:0,y:0,w:20,h:20},side={x:15,y:0,w:20,h:20};
+  const a={x:0,y:0,w:20,h:20,vy:0},side={x:15,y:0,w:20,h:20,vy:0};
   assert.equal(api.resolvePvpOverlapByAxis(a,side),"rebound");
-  const top={x:0,y:0,w:20,h:20},bottom={x:0,y:15,w:20,h:20};
-  assert.equal(api.resolvePvpOverlapByAxis(top,bottom),"bonk");
-  assert.deepEqual(events.map(event=>event[0]),["rebound","bonk"]);
+  const staticTop={x:0,y:0,w:20,h:20,vy:0},staticBottom={x:0,y:15,w:20,h:20,vy:0};
+  assert.equal(api.resolvePvpOverlapByAxis(staticTop,staticBottom),"rebound");
+  const fallingTop={x:0,y:0,w:20,h:20,vy:30},bottom={x:0,y:15,w:20,h:20,vy:0};
+  assert.equal(api.resolvePvpOverlapByAxis(fallingTop,bottom),"bonk");
+  const top={x:0,y:0,w:20,h:20,vy:0},risingBottom={x:0,y:15,w:20,h:20,vy:-40};
+  assert.equal(api.resolvePvpOverlapByAxis(top,risingBottom),"bonk");
+  assert.deepEqual(events.map(event=>event[0]),["rebound","rebound","bonk","bonk"]);
 });
 
 test("fast-moving frogs use swept collision detection instead of tunneling through",()=>{
