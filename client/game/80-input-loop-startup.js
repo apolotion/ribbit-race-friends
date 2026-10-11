@@ -115,9 +115,9 @@
 
       if (frog.charging && game.state === "playing") drawArcPreview();
       for (const currentFly of flies) {
-        drawFlySpawnSparks(currentFly);
-        drawFlyAt(currentFly.x, currentFly.y, getFlySpawnScale(currentFly));
-        drawFlyNameTag(currentFly);
+        if (!window.RibbitRaceFinalCatchLabelsGone) { drawFlySpawnSparks(currentFly); }
+        if (!window.RibbitRaceFinalCatchLabelsGone) { drawFlyAt(currentFly.x, currentFly.y, getFlySpawnScale(currentFly)); }
+        if (!window.RibbitRaceFinalCatchLabelsGone) { drawFlyNameTag(currentFly); }
       }
       drawFrogAfterimages(frog);
       drawAirShadowForEntity(frog, getFrogPalette());
@@ -657,7 +657,7 @@
       }
       try {
         advanceOnlineSimulation(now);
-        drawScene();OnlineVersus.drawOnlineTooltip();OnlineVersus.drawQueueBadge();OnlineVersus.drawSyncLabel();OnlineVersus.drawExitMenu();
+        if (!window.RibbitRaceFinalCatchLabelsGone) { drawScene();OnlineVersus.drawOnlineTooltip();OnlineVersus.drawQueueBadge();OnlineVersus.drawSyncLabel();OnlineVersus.drawExitMenu(); }
         positionRgbValueEditor();
         runtimeRecoveryCount = 0;
       } catch (error) {

@@ -242,3 +242,72 @@ export class FriendsHub extends DurableObject {
   return !!own&&!own.left&&!control.aborted&&control.cpuIndex!==(info.role==='host'?0:1);
  }
 }
+
+
+// RR170_LIVE_MATCH_ENDPOINTS — live-match discovery for private and Quickplay spectators.
+const RR170_LIVE_MATCH_ENDPOINTS = true;
+(() => {
+  if (typeof FriendsHub !== "function") return;
+  const originalFetch = FriendsHub.prototype.fetch;
+  const jsonResponse = (value, status=200) => new Response(JSON.stringify(value), {
+    status,
+    headers: {"content-type":"application/json; charset=utf-8","cache-control":"no-store"}
+  });
+  const readJson = async request => {
+    try { return await request.json(); } catch (_) { return {}; }
+  };
+  const cleanText = (v,n=40) => String(v||"").replace(/[<>\x00-\x1f]/g,"").trim().slice(0,n);
+  const cleanAppearance = value => {
+    if (!value || typeof value !== "object") return null;
+    const out = {id:cleanText(value.id,24),name:cleanText(value.name,24),hat:cleanText(value.hat,40)};
+    for (const key of ["dark","mid","light","belly","accents","bump","crest","arms","feet","tongue","tongueDark"]) {
+      if (/^#[0-9a-f]{6}$/i.test(String(value[key]||""))) out[key]=String(value[key]);
+    }
+    return out;
+  };
+  FriendsHub.prototype.fetch = async function(request) {
+    const url = new URL(request.url);
+    const op = url.pathname.split("/").filter(Boolean).pop() || "";
+    if (op === "apiLiveMatchHeartbeat") {
+      const data = await readJson(request);
+      const roomCode = cleanText(data.roomCode,16).toUpperCase();
+      if (!roomCode) return jsonResponse({ok:false,code:"ROOM_REQUIRED"},400);
+      const record = {
+        roomCode,
+        quickplay:!!data.quickplay,
+        phase:cleanText(data.phase,24)||"playing",
+        hostName:cleanText(data.hostName,28)||"PLAYER 1",
+        guestName:cleanText(data.guestName,28)||"PLAYER 2",
+        hostAppearance:cleanAppearance(data.hostAppearance),
+        guestAppearance:cleanAppearance(data.guestAppearance),
+        matchId:cleanText(data.matchId,100),
+        updatedAt:Date.now(),
+        expiresAt:Date.now()+20000
+      };
+      const storage=this.ctx?.storage||this.state?.storage;
+      if(!storage)return jsonResponse({ok:false,code:"STORAGE_UNAVAILABLE"},503);
+      await storage.put("rr170-live:"+roomCode,record);
+      return jsonResponse({ok:true});
+    }
+    if (op === "apiLiveMatchEnded") {
+      const data = await readJson(request);
+      const roomCode=cleanText(data.roomCode,16).toUpperCase();
+      const storage=this.ctx?.storage||this.state?.storage;
+      if(roomCode&&storage) await storage.delete("rr170-live:"+roomCode);
+      return jsonResponse({ok:true});
+    }
+    if (op === "apiListLiveMatches") {
+      const storage=this.ctx?.storage||this.state?.storage;
+      if(!storage)return jsonResponse({ok:false,code:"STORAGE_UNAVAILABLE"},503);
+      const values=await storage.list({prefix:"rr170-live:"});
+      const now=Date.now(), matches=[];
+      for(const [key,value] of values) {
+        if(!value || Number(value.expiresAt||0)<=now) { await storage.delete(key); continue; }
+        matches.push(value);
+      }
+      matches.sort((a,b)=>Number(b.updatedAt||0)-Number(a.updatedAt||0));
+      return jsonResponse({ok:true,matches:matches.slice(0,100),serverTime:now});
+    }
+    return originalFetch.call(this,request);
+  };
+})();

@@ -68,8 +68,8 @@ function rrDrawDeviceIcon(rect, skin) {
 function rrDrawMobileMenuTooltip() {
   if (!rrMobileMenuHover || game.state !== "main") return;
   const text = rrMobileMenuHover === "avatar"
-    ? "ACCOUNT • SAVES • RECORDS"
-    : rrMobileEnabled() ? "SWITCH TO COMPUTER MODE" : "SWITCH TO MOBILE MODE";
+    ? ""
+    : rrMobileEnabled() ? "" : "";
   const width = Math.min(190, Math.max(96, measureBitmapText(text, 0.55) + 12));
   const x = 72;
   const y = 190;

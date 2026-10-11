@@ -1,0 +1,108 @@
+## check attempt 1 (exit 1)
+
+> ribbit-race-friends@1.7.0 check
+> npm run build && node scripts/check.mjs
+
+
+> ribbit-race-friends@1.7.0 build
+> node scripts/build-game.mjs
+
+Built game bundle from 12 modules (1102717 bytes).
+
+/mnt/data/Ribbit_Race_Friends_Tutorial_Spectator_Update/src/rooms-core.js:125
+     this is a reserved matchmaking room.');
+          ^^
+
+SyntaxError: Unexpected identifier 'is'
+[90m    at checkSyntax (node:internal/main/check_syntax:74:5)[39m
+
+Node.js v22.16.0
+
+
+
+## check attempt 2 (exit 1)
+
+> ribbit-race-friends@1.7.0 check
+> npm run build && node scripts/check.mjs
+
+
+> ribbit-race-friends@1.7.0 build
+> node scripts/build-game.mjs
+
+Built game bundle from 12 modules (1102717 bytes).
+
+/mnt/data/Ribbit_Race_Friends_Tutorial_Spectator_Update/src/rooms-core.js:125
+     this is a reserved matchmaking room.');
+          ^^
+
+SyntaxError: Unexpected identifier 'is'
+[90m    at checkSyntax (node:internal/main/check_syntax:74:5)[39m
+
+Node.js v22.16.0
+
+
+
+## check attempt 3 (exit 1)
+
+> ribbit-race-friends@1.7.0 check
+> npm run build && node scripts/check.mjs
+
+
+> ribbit-race-friends@1.7.0 build
+> node scripts/build-game.mjs
+
+Built game bundle from 12 modules (1102717 bytes).
+
+/mnt/data/Ribbit_Race_Friends_Tutorial_Spectator_Update/src/rooms-core.js:125
+     this is a reserved matchmaking room.');
+          ^^
+
+SyntaxError: Unexpected identifier 'is'
+[90m    at checkSyntax (node:internal/main/check_syntax:74:5)[39m
+
+Node.js v22.16.0
+
+
+
+## check attempt 4 (exit 1)
+
+> ribbit-race-friends@1.7.0 check
+> npm run build && node scripts/check.mjs
+
+
+> ribbit-race-friends@1.7.0 build
+> node scripts/build-game.mjs
+
+Built game bundle from 12 modules (1102717 bytes).
+
+/mnt/data/Ribbit_Race_Friends_Tutorial_Spectator_Update/src/rooms-core.js:125
+     this is a reserved matchmaking room.');
+          ^^
+
+SyntaxError: Unexpected identifier 'is'
+[90m    at checkSyntax (node:internal/main/check_syntax:74:5)[39m
+
+Node.js v22.16.0
+
+
+
+## FINAL CHECK (exit 1)
+
+> ribbit-race-friends@1.7.0 check
+> npm run build && node scripts/check.mjs
+
+
+> ribbit-race-friends@1.7.0 build
+> node scripts/build-game.mjs
+
+Built game bundle from 12 modules (1102717 bytes).
+
+/mnt/data/Ribbit_Race_Friends_Tutorial_Spectator_Update/src/rooms-core.js:125
+     this is a reserved matchmaking room.');
+          ^^
+
+SyntaxError: Unexpected identifier 'is'
+[90m    at checkSyntax (node:internal/main/check_syntax:74:5)[39m
+
+Node.js v22.16.0
+

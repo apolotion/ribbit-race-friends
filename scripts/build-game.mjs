@@ -15,6 +15,7 @@ class GameBundleBuilder {
   "client/game/80-input-loop-startup.js",
   "client/game/90-extended-features.js",
   "client/game/100-mobile-experience.js",  'client/game/110-online-mobile-polish.js',
+  "client/game/99-v170-hooks.js"
 ];
 
   constructor(projectRoot = process.cwd()) {

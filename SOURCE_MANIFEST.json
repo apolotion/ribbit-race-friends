@@ -1,7 +1,7 @@
 {
   "project": "Ribbit Race Friends Edition",
-  "build": "2026.10.11-friends-online-mobile-polish-1",
-  "displayVersion": "1.6.0",
+  "build": "2026.10.11-friends-tutorial-spectator-polish-1",
+  "displayVersion": "1.7.0",
   "generatedAtUtc": "2026-10-11T02:10:09.734576+00:00",
   "manifestNote": "SOURCE_MANIFEST.json is excluded from its own hash list.",
   "files": [

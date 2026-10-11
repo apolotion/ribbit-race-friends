@@ -1793,7 +1793,7 @@
       const lineHeight = Math.max(7, Math.ceil(8 * layout.scale + 1));
       const textHeight = layout.lines.length * lineHeight - 1;
       const textTop = Math.round(5 + Math.max(0, (height - 7 - textHeight) / 2));
-      drawStableFlyLabelTextToSprite(spriteContext, layout, width, textTop, lineHeight);
+      if (!window.RibbitRaceFinalCatchLabelsGone) { drawStableFlyLabelTextToSprite(spriteContext, layout, width, textTop, lineHeight); }
 
       flyLabelSpriteCache.set(cacheKey, { signature, canvas: sprite });
       return sprite;
@@ -2492,7 +2492,7 @@
         ctx.restore();
         drawBitmapText("SANDBOX", 57, 15, 0.72, "center", skin.dark);
       } else {
-        drawFlyAt(22, 17, 0.75);
+        if (!window.RibbitRaceFinalCatchLabelsGone) { drawFlyAt(22, 17, 0.75); }
         const target = getSoloTargetScore();
         const scoreLabel = isSoloEndlessMode() ? `${game.score}` : `${game.score} / ${target}`;
         drawBitmapText(scoreLabel, 55, 15, 1, "center", skin.dark);
@@ -4032,7 +4032,7 @@
       drawPageArrow(pages.prev,-1,game.customHatPageHovered==="prev");
       drawPageArrow(pages.next,1,game.customHatPageHovered==="next");
       if (!filteredHats.length) drawBitmapText("NO MATCHING HATS", panel.x + panel.w / 2, panel.y + 93, 0.78, "center", "#8a3243");
-      else if (lockedFocusedOption) drawCustomRequirementTooltip(lockedFocusedOption,"STYLE LOCKED",getHatRequirementLines(lockedFocusedOption.id),skin,190);
+      else if (lockedFocusedOption) drawCustomRequirementTooltip(lockedFocusedOption,"",getHatRequirementLines(lockedFocusedOption.id),skin,190);
     }
 
     function drawCustomColorScreen() {
@@ -4491,10 +4491,10 @@
       } else if (type === "clock") {
         rect(3,0,6,2); rect(0,3,12,10); rect(2,5,8,6,light); rect(6,6,1,4,dark); rect(6,9,3,1,dark);
       } else if (type === "double-fly") {
-        drawThemedFly(5, 6, 0.90);
-        drawThemedFly(13, 11, 0.90);
+        if (!window.RibbitRaceFinalCatchLabelsGone) { drawThemedFly(5, 6, 0.90); }
+        if (!window.RibbitRaceFinalCatchLabelsGone) { drawThemedFly(13, 11, 0.90); }
       } else if (type === "spark-fly") {
-        drawThemedFly(9, 9, 1.10);
+        if (!window.RibbitRaceFinalCatchLabelsGone) { drawThemedFly(9, 9, 1.10); }
         rect(0,1,4,1,light); rect(1,0,1,4,light);
         rect(15,12,4,1,light); rect(16,11,1,4,light);
       } else if (type === "footprints") {
@@ -4512,13 +4512,13 @@
         rect(1,1,8,8,dark); rect(3,3,4,4,light); rect(5,4,1,3,dark);
         rect(11,1,5,7,main); rect(9,7,5,3,main); rect(12,9,3,6,main);
       } else if (type === "sky-fly") {
-        rect(7,1,2,10); rect(4,3,8,2); drawThemedFly(14, 11, 0.92);
+        if (!window.RibbitRaceFinalCatchLabelsGone) { rect(7,1,2,10); rect(4,3,8,2); drawThemedFly(14, 11, 0.92); }
       } else if (type === "flies-100") {
-        drawThemedFly(5, 5, 0.82);
-        drawThemedFly(13, 10, 0.82);
+        if (!window.RibbitRaceFinalCatchLabelsGone) { drawThemedFly(5, 5, 0.82); }
+        if (!window.RibbitRaceFinalCatchLabelsGone) { drawThemedFly(13, 10, 0.82); }
         drawBitmapText("100", x + 8*s, y + 13*s, 0.42*s, "center", dark);
       } else if (type === "score-six" || type === "score-seven") {
-        drawThemedFly(5, 7, 0.82);
+        if (!window.RibbitRaceFinalCatchLabelsGone) { drawThemedFly(5, 7, 0.82); }
         drawBitmapText(type === "score-six" ? "6/5" : "7/5", x + 12*s, y + 11*s, 0.52*s, "center", dark);
       } else if (type === "sky-bonk") {
         // A frog dropping from above the stage into an impact burst.
@@ -4540,7 +4540,7 @@
         rect(9, 0, 2, 4, light); rect(6, 1, 8, 1, light);
       } else if (type === "bounce-fly") {
         drawTrampolineIcon(x + 7*s, y + 10*s, { dark, mid: main, light }, 0.55*s, !unlocked);
-        drawThemedFly(15, 5, 0.78);
+        if (!window.RibbitRaceFinalCatchLabelsGone) { drawThemedFly(15, 5, 0.78); }
       } else if (type === "pvp-shutout") {
         rect(0, 1, 5, 4, main); rect(1, 5, 3, 2, dark);
         drawBitmapText("5-0", x + 11*s, y + 7*s, 0.60*s, "center", dark);
@@ -4707,7 +4707,7 @@
       ctx.fillStyle = backFocused ? "#7d8a90" : "#f7fdff"; ctx.fillRect(back.x + 2, back.y + 2, back.w - 4, back.h - 4);
       ctx.fillStyle = backFocused ? "#d8e1e4" : COLORS.white; ctx.fillRect(back.x + 5, back.y + 4, back.w - 10, 3);
       drawBitmapText("BACK", back.x + back.w / 2, back.y + 8, 1, "center", backFocused ? COLORS.white : "#48555a", backFocused ? COLORS.ink : null);
-      drawVersionLabel(panel.x + panel.w - 12, panel.y + panel.h - 10, "right");
+      if (!window.RibbitRaceFinalCatchLabelsGone) { drawVersionLabel(panel.x + panel.w - 12, panel.y + panel.h - 10, "right"); }
     }
 
     function drawStatsMetricIcon(type, centerX, centerY, skin) {
@@ -5079,7 +5079,7 @@
 
       const recordY = layout.top + 24;
       if (game.soloEndlessMode) {
-        drawMiniFlyIcon(centerX - 33, recordY + 2, 0.64);
+        if (!window.RibbitRaceFinalCatchLabelsGone) { drawMiniFlyIcon(centerX - 33, recordY + 2, 0.64); }
         const endlessText = `${bestEndless === null ? "--" : bestEndless} FLIES • 60 SEC`;
         drawBitmapText(endlessText, centerX + 10, recordY - 3, 0.58, "center", "#48555a");
       } else {
@@ -5217,7 +5217,7 @@
       const soloBob = soloActive ? getTwoFrameMenuBob(0) : 0;
       const soloFlyBob = soloActive ? getTwoFrameMenuBob(0.55) : 0;
       drawMiniFrogSwatch(solo.x + 18, solo.y + 9 + soloBob, skin, 0.82);
-      drawFlyAt(solo.x + solo.w - 20, solo.y + 16 + soloFlyBob, 0.62);
+      if (!window.RibbitRaceFinalCatchLabelsGone) { drawFlyAt(solo.x + solo.w - 20, solo.y + 16 + soloFlyBob, 0.62); }
       drawBitmapText("SINGLE PLAYER", solo.x + solo.w / 2 + 2, solo.y + 10, 1, "center", "#34484f");
 
       const frogButton = MAIN_UI.frogButton;
@@ -5691,7 +5691,7 @@
       lines.forEach((line, index) => drawBitmapText(line, panel.x + panel.w / 2, panel.y + 38 + index * 16, 0.68, "center", bookSkin.dark));
       ctx.fillStyle = mixHexColors(bookSkin.dark, bookSkin.mid, 0.56);
       ctx.fillRect(panel.x + 18, panel.y + panel.h - 21, panel.w - 36, 1);
-      drawVersionLabel(panel.x + panel.w / 2, panel.y + panel.h - 14, "center", bookSkin.dark);
+      if (!window.RibbitRaceFinalCatchLabelsGone) { drawVersionLabel(panel.x + panel.w / 2, panel.y + panel.h - 14, "center", bookSkin.dark); }
       const close = PAUSE_UI.helpCloseButton;
       const closeActive = game.pauseHoveredSelection === "help-close" || game.pausePressedSelection === "help-close";
       ctx.fillStyle = "rgba(25,43,52,0.28)";

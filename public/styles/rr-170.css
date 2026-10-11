@@ -1,0 +1,271 @@
+
+/* Ribbit Race Friends 1.7.0 — account modal, mobile touch, tutorials, and UI polish. */
+html, body {
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+  overscroll-behavior: none;
+}
+#game, #game-frame {
+  touch-action: none;
+  -webkit-touch-callout: none;
+  -webkit-user-drag: none;
+}
+#cloud-account-button,
+#corner-controls #cloud-account-button {
+  display: none !important;
+}
+body.rr-account-modal-open::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 1190;
+  background: rgba(7, 22, 30, .72);
+  backdrop-filter: blur(2px);
+}
+#cloud-account-panel {
+  position: fixed !important;
+  left: 50% !important;
+  top: 50% !important;
+  right: auto !important;
+  bottom: auto !important;
+  transform: translate(-50%, -50%) !important;
+  z-index: 1200 !important;
+  width: min(430px, 92vw) !important;
+  max-height: min(650px, 86dvh) !important;
+  overflow: auto !important;
+  border: 6px solid #26363d !important;
+  background: #f7fdff !important;
+  padding: 18px !important;
+  box-shadow: 12px 12px 0 rgba(17,38,47,.36) !important;
+}
+#rr170-overlay-root {
+  position: absolute;
+  inset: 0;
+  z-index: 87;
+  pointer-events: none;
+  font-family: "Courier New", monospace;
+}
+.rr170-button {
+  pointer-events: auto;
+  position: absolute;
+  border: 4px solid #26363d;
+  background: rgba(247,253,255,.94);
+  color: #26363d;
+  font: 700 clamp(10px,1.25vw,16px)/1 "Courier New", monospace;
+  box-shadow: 4px 4px 0 rgba(38,54,61,.26);
+  display: grid;
+  place-items: center;
+  touch-action: none;
+  -webkit-touch-callout: none;
+  user-select: none;
+}
+.rr170-button:hover, .rr170-button.rr170-selected {
+  background: #b8f5dc;
+}
+#rr170-pause {
+  right: 2.1%;
+  top: 2.1%;
+  width: 6.3%;
+  aspect-ratio: 1;
+  font-size: clamp(18px,3vw,38px);
+}
+body.rr-mobile-mode #rr170-pause.rr170-versus {
+  top: auto;
+  bottom: 14.8%;
+  right: 1.8%;
+  width: 6.2%;
+}
+#rr170-achievement-leaderboard {
+  left: 2.1%;
+  bottom: 5.2%;
+  width: 7.1%;
+  aspect-ratio: 1;
+  font-size: clamp(18px,3vw,40px);
+}
+#rr170-solo-tutorial {
+  left: 2.1%;
+  bottom: 4.8%;
+  width: 6.6%;
+  aspect-ratio: 1;
+  font-size: clamp(18px,3vw,38px);
+}
+#rr170-pvp-tutorial {
+  left: 8.9%;
+  bottom: 4.8%;
+  width: 6.6%;
+  aspect-ratio: 1;
+  font-size: clamp(18px,3vw,38px);
+}
+.rr170-tooltip {
+  pointer-events: none;
+  position: absolute;
+  z-index: 95;
+  max-width: min(380px,80%);
+  border: 3px solid #26363d;
+  background: rgba(247,253,255,.97);
+  color: #174f65;
+  padding: 7px 10px;
+  font: 700 clamp(8px,1.05vw,13px)/1.2 "Courier New", monospace;
+  text-align: center;
+  transform: translateX(-50%);
+  box-shadow: 3px 3px 0 rgba(38,54,61,.22);
+}
+#rr170-touch-left, #rr170-touch-right {
+  position: absolute;
+  bottom: 0;
+  height: 17%;
+  pointer-events: auto;
+  touch-action: none;
+  background: transparent;
+}
+#rr170-touch-left { left: 0; width: 50%; }
+#rr170-touch-right { right: 0; width: 50%; }
+#rr170-tutorial-shell {
+  position: fixed;
+  inset: 0;
+  z-index: 2500;
+  display: grid;
+  place-items: center;
+  background: rgba(5,17,24,.86);
+  color: #26363d;
+  user-select: none;
+  -webkit-user-select: none;
+}
+#rr170-tutorial-shell[hidden] { display: none; }
+.rr170-tutorial-card {
+  width: min(1080px,96vw);
+  max-height: 92dvh;
+  overflow: auto;
+  border: 8px solid #26363d;
+  background: #f7fdff;
+  box-shadow: 14px 14px 0 rgba(17,38,47,.38);
+  padding: 18px;
+}
+.rr170-tutorial-title {
+  margin: 0 0 10px;
+  border: 5px solid #07516a;
+  background: #0f9fbb;
+  color: white;
+  padding: 12px;
+  text-align: center;
+  font: 700 clamp(24px,4.5vw,52px)/1 "Courier New",monospace;
+  text-shadow: 3px 3px #07516a;
+}
+.rr170-tutorial-canvas-wrap {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  border: 5px solid #26363d;
+  background: #78cbf4;
+}
+#rr170-tutorial-canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  image-rendering: pixelated;
+  touch-action: none;
+  -webkit-touch-callout: none;
+}
+.rr170-tutorial-copy {
+  min-height: 80px;
+  margin: 12px 0;
+  color: #34484f;
+  text-align: center;
+  font: 700 clamp(14px,2vw,22px)/1.35 "Courier New",monospace;
+}
+.rr170-tutorial-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+}
+.rr170-tutorial-actions button {
+  min-width: 150px;
+  border: 4px solid #26363d;
+  background: #f7fdff;
+  color: #26363d;
+  padding: 10px 14px;
+  font: 700 16px/1 "Courier New",monospace;
+  box-shadow: 4px 4px #aebbc0;
+}
+.rr170-tutorial-actions button.primary { background: #0f9fbb; color: white; }
+#rr170-spectator-picker {
+  position: fixed;
+  inset: 0;
+  z-index: 2200;
+  display: grid;
+  place-items: center;
+  background: rgba(5,17,24,.82);
+}
+#rr170-spectator-picker[hidden] { display:none; }
+.rr170-picker-card {
+  width: min(760px,92vw);
+  max-height: 82dvh;
+  overflow: auto;
+  border: 7px solid #26363d;
+  background: #f7fdff;
+  padding: 18px;
+  box-shadow: 10px 10px rgba(17,38,47,.35);
+}
+.rr170-match-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 10px;
+  align-items: center;
+  border: 4px solid #26363d;
+  margin: 8px 0;
+  padding: 10px;
+  background: #fff;
+}
+.rr170-round-overlay {
+  position:absolute;
+  inset: 22% 18% auto;
+  z-index: 96;
+  border: 5px solid #26363d;
+  background: rgba(247,253,255,.95);
+  padding: 16px;
+  text-align:center;
+  color:#26363d;
+  font:700 clamp(18px,3vw,38px)/1.2 "Courier New",monospace;
+  box-shadow:8px 8px rgba(38,54,61,.28);
+}
+@media (max-width: 760px), (pointer: coarse) {
+  #cloud-gate { align-items: start; overflow:auto; }
+  .cloud-card { width:min(660px,98vw)!important; max-height:none!important; padding:12px!important; }
+  .cloud-title { font-size:clamp(28px,9vw,52px)!important; padding:10px!important; }
+  .cloud-field { margin:8px 0!important; }
+  .cloud-field input { padding:9px 10px!important; font-size:18px!important; }
+  .cloud-actions { margin-top:10px!important; gap:8px!important; }
+  .cloud-button { min-width:130px!important; padding:9px 10px!important; font-size:15px!important; }
+}
+
+#rr170-account-icon, #rr170-device-icon {
+  bottom: 2.2%;
+  width: 6.5%;
+  aspect-ratio: 1;
+  font-size: clamp(18px,3vw,38px);
+}
+#rr170-account-icon { left: 2.1%; }
+#rr170-device-icon { left: 9.4%; }
+#rr170-account-icon .rr170-avatar-head {
+  width:24%;aspect-ratio:1;border-radius:50%;background:#26363d;margin:auto auto 3%;
+}
+#rr170-account-icon .rr170-avatar-body {
+  width:48%;height:30%;border-radius:50% 50% 18% 18%;background:#26363d;margin:auto;
+}
+#rr170-device-icon .rr170-device-symbol {
+  font-size:clamp(18px,3vw,36px);line-height:1;
+}
+
+#rr170-hat-hover-target {
+  position:absolute;
+  left:18%;
+  top:14%;
+  width:18%;
+  height:30%;
+  background:transparent;
+  border:0;
+  box-shadow:none;
+  opacity:.001;
+}

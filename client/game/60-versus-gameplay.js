@@ -3497,7 +3497,7 @@
         drawBitmapText(`ROUND ENDS AT ${game.pvpFirstTo} CATCHES`, W / 2, 204, 0.66, "center", "#59666b");
       }
       drawPvpSetupActionButton(PVP_SETTINGS_UI.backButton,"BACK",game.pvpSettingsFocusIndex===4,{dark:"#48555a",mid:"#7d8a90",light:"#d8e1e4"});
-      drawVersionLabel(panel.x + panel.w - 12, panel.y + panel.h - 10, "right");
+      if (!window.RibbitRaceFinalCatchLabelsGone) { drawVersionLabel(panel.x + panel.w - 12, panel.y + panel.h - 10, "right"); }
     }
 
     function drawPvpSetupTimeButton() {
@@ -3969,9 +3969,9 @@
       drawTimeOfDayWorldTint();
       pvpPlayers.forEach(p => drawEntity(p, drawPvpArcPreview));
       for (const fly of flies) {
-        drawFlySpawnSparks(fly);
-        drawFlyAt(fly.x, fly.y, getFlySpawnScale(fly));
-        drawFlyNameTag(fly);
+        if (!window.RibbitRaceFinalCatchLabelsGone) { drawFlySpawnSparks(fly); }
+        if (!window.RibbitRaceFinalCatchLabelsGone) { drawFlyAt(fly.x, fly.y, getFlySpawnScale(fly)); }
+        if (!window.RibbitRaceFinalCatchLabelsGone) { drawFlyNameTag(fly); }
       }
       pvpPlayers.forEach(p => drawEntity(p, drawFrogAfterimages));
       if (!["pvpCelebration", "won"].includes(game.state)) pvpPlayers.forEach((player)=>drawAirShadowForEntity(OnlineVersus.displayPlayer(player),getPvpSkinPalette(player.skinId,player.index===0?"azure":"crimson")));

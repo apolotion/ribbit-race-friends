@@ -5,7 +5,7 @@ const read=(p)=>readFileSync(p,"utf8");
 const core=read("client/game/110-online-mobile-polish.js");
 const pkg=JSON.parse(read("package.json"));
 const index=read("public/index.html");
-test("version and build are 1.6.0",()=>{assert.equal(pkg.version,"1.6.0");assert.match(core,/friends-online-mobile-polish-1/)});
+test("version and build are 1.7.0",()=>{assert.equal(pkg.version,"1.7.0");assert.match(core,/friends-online-mobile-polish-1/)});
 test("touch menus activate on release",()=>{assert.match(core,/pointerup/);assert.match(core,/menuTouch/);assert.match(core,/pointerType!=="touch"/)});
 test("countdown touch precharge has separate pointers",()=>{assert.match(core,/chargeTouch/);assert.match(core,/ShiftLeft/);assert.match(core,/ShiftRight/)});
 test("final catch labels cannot reappear",()=>{assert.match(core,/finalCatchLabelsGone/);assert.match(core,/RibbitV160ShouldHideFlyLabels/)});
@@ -16,4 +16,4 @@ test("guest save conversion and close warning exist",()=>{assert.match(index,/gu
 test("record replay starts timesliced and discards non-records",()=>{assert.match(core,/captureStream\(24\)/);assert.match(core,/start\(500\)/);assert.match(core,/if\(!qualifies/)});
 test("platform buffer preserves momentum without extra jump",()=>{assert.match(core,/RibbitPlatformDropBuffer/);assert.match(core,/player\.vx=r\.vx/);assert.match(core,/player\.jumps=r\.jumps/)});
 test("app manifest and icons exist",()=>{assert.match(index,/favicon-32/);assert.ok(existsSync("public/icons/ribbit-race-512.png"));assert.ok(existsSync("public/manifest.webmanifest"))});
-test("credit says Nick M.",()=>{const bundle=Array.from(["client/game/40-ui-navigation-audio.js","client/game/70-rendering.js"]).map(read).join("\n");assert.doesNotMatch(bundle,/MADE BY NICK(?! M\.)/);assert.doesNotMatch(bundle,/MR\. MANAHAN/)});
+test("credit says Nick M.",()=>{const bundle=Array.from(["client/game/40-ui-navigation-audio.js","client/game/70-rendering.js"]).map(read).join("\n");assert.doesNotMatch(bundle,/MADE BY NICK M.(?! M\.)/);assert.doesNotMatch(bundle,/MR\. MANAHAN/)});

@@ -1093,7 +1093,7 @@
         else{
           ctx.save();if(game.pvpCriticalCatchActive)applyPvpCriticalCatchCamera();
           drawBackground();for(const q of platforms)drawPlatform(q);drawTimeOfDayWorldTint();
-          for(const f of flies){drawFlySpawnSparks(f);drawFlyAt(f.x,f.y,getFlySpawnScale(f));drawFlyNameTag(f);}
+          if (!window.RibbitRaceFinalCatchLabelsGone) { for(const f of flies){drawFlySpawnSparks(f);drawFlyAt(f.x,f.y,getFlySpawnScale(f));drawFlyNameTag(f);} }
           pvpPlayers.forEach(drawPvpTongue);pvpPlayers.forEach(drawPvpPlayer);drawPvpImpactEffects();ctx.restore();drawPvpHud();
           if(game.state==='countdown')drawResumeCountdown();
           if(game.state==='won'||game.state==='pvpCelebration'){

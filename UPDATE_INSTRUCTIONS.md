@@ -1,33 +1,64 @@
-# Ribbit Race Friends 1.6.0 — installation
+# Ribbit Race Friends 1.7.0 — Update Instructions
 
-Build: `2026.10.11-friends-online-mobile-polish-1`
+Build: `2026.10.11-friends-tutorial-spectator-polish-1`
 
-## Install
+## Recommended installation
+
+Use the complete repository ZIP because this installation is modular and prior GitHub uploads have occasionally omitted required files.
 
 1. Back up the current `apolotion/ribbit-race-friends` repository.
-2. Extract `Ribbit_Race_Friends_Online_Mobile_Polish_Update.zip`.
-3. Copy the extracted **contents** into the repository root. Do not upload the ZIP itself and do not add an extra wrapper folder.
-4. Confirm the repository root contains `package.json`, `wrangler.jsonc`, `client/`, `public/`, `scripts/`, `src/`, and `tests/`.
-5. Commit to `main`, e.g. `Ribbit Race Friends 1.6.0 online and mobile polish`.
-6. Wait for Cloudflare to run `npm run check && npm test`, then `npx wrangler deploy`.
-7. Keep the existing bindings: `HUB → FriendsHub`, `ROOMS → FriendsRoom`, `ASSETS → public`. Do not recreate or delete Durable Objects.
-8. Open `/api/health` and confirm build `2026.10.11-friends-online-mobile-polish-1`.
-9. Hard-refresh desktop browsers. On iPhone, remove and re-add the Home Screen shortcut if iOS keeps the previous icon.
+2. Extract the complete update ZIP.
+3. Copy the extracted **contents** into the repository root.
+4. Confirm these paths exist directly at the root:
 
-## Recommended production checks
+```text
+package.json
+wrangler.jsonc
+client/
+public/
+scripts/
+src/
+tests/
+```
 
-- iPhone Home Screen icon and favicon.
-- Release-based menu taps and simultaneous Local Versus hold/release controls.
-- Countdown precharge.
-- Quickplay layout and all online menu hover targets.
-- Opponent name, remote jump audio, countdown beeps, and three-second CPU takeover interruption.
-- Frog Tags opponent rows and archived replays.
-- World Record previous-holder tooltip.
-- Solo replay from run start through finish; non-record runs should be discarded.
-- Guest → Create Account & Keep Save.
-- Pause Reset spawn position and Fullscreen option/F shortcut.
-- Buffered platform drop jump count and momentum.
+5. Commit to `main`, for example:
 
-## Browser limitation
+```text
+Ribbit Race Friends 1.7.0 tutorials and spectator polish
+```
 
-A web page cannot display its own custom dialog after the user has already closed the tab. Guest mode therefore uses the browser's standard leave confirmation and preserves a pending guest save snapshot. The in-game account panel provides `CREATE ACCOUNT & KEEP SAVE` while the page is open.
+6. Cloudflare should run:
+
+```text
+npm run check && npm test
+npx wrangler deploy
+```
+
+7. Keep the existing bindings:
+
+```text
+HUB     → FriendsHub
+ROOMS   → FriendsRoom
+ASSETS  → public
+```
+
+8. Do not recreate or delete the Durable Objects.
+9. After deployment, open `/api/health` and confirm the build is:
+
+```text
+2026.10.11-friends-tutorial-spectator-polish-1
+```
+
+10. Hard-refresh desktop browsers. On iPhone, close and reopen the Home Screen app.
+
+## First checks
+
+- Open the centered account popup from the main-menu avatar.
+- Open Achievements and use the gold medal button.
+- Verify the top-right desktop Pause button and bottom-right Mobile Versus Pause button.
+- Test two simultaneous touches across the full left/right bottom zones.
+- Open Spectate and choose a private or Quickplay live match.
+- Confirm custom frog palettes, trajectory previews, player-name meters, and animated round results.
+- Test Close Call with both the human and CPU catching the deciding fly.
+- Verify Lake win progress updates hats without reopening the menu.
+- On a new browser profile, confirm the Single Player tutorial launches once.
