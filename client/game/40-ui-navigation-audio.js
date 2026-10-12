@@ -46,7 +46,7 @@
       customizeButton: Object.freeze({ x: 72, y: 176, w: 120, h: 27 }), // legacy geometry
       randomButton: Object.freeze({ id: "random", x: 188, y: 154, w: 104, h: 17 }),
       backButton: Object.freeze({ id: "back", x: 180, y: 181, w: 120, h: 24 }),
-      tutorialButton: Object.freeze({ id: "tutorial", x: 355, y: 211, w: 24, h: 24 }),
+      tutorialButton: Object.freeze({ id: "tutorial", x: 47, y: 211, w: 24, h: 24 }),
       settingsButton: Object.freeze({ id: "settings", x: 382, y: 211, w: 24, h: 24 }),
       levelButtons: Object.freeze([
         Object.freeze({ id: "park",   x: 72,  y: 101, w: 104, h: 21 }),
@@ -70,7 +70,7 @@
       Object.freeze(["park", "swamp", "jungle"]),
       Object.freeze(["pond", "lake", "garden"]),
       Object.freeze(["random"]),
-      Object.freeze(["back", "tutorial", "settings", "time"])
+      Object.freeze(["tutorial", "back", "settings", "time"])
     ]);
 
     const SETUP_UI = Object.freeze({

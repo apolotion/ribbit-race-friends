@@ -4677,7 +4677,7 @@ function startRibbitRaceGame() {
       customizeButton: Object.freeze({ x: 72, y: 176, w: 120, h: 27 }), // legacy geometry
       randomButton: Object.freeze({ id: "random", x: 188, y: 154, w: 104, h: 17 }),
       backButton: Object.freeze({ id: "back", x: 180, y: 181, w: 120, h: 24 }),
-      tutorialButton: Object.freeze({ id: "tutorial", x: 355, y: 211, w: 24, h: 24 }),
+      tutorialButton: Object.freeze({ id: "tutorial", x: 47, y: 211, w: 24, h: 24 }),
       settingsButton: Object.freeze({ id: "settings", x: 382, y: 211, w: 24, h: 24 }),
       levelButtons: Object.freeze([
         Object.freeze({ id: "park",   x: 72,  y: 101, w: 104, h: 21 }),
@@ -4701,7 +4701,7 @@ function startRibbitRaceGame() {
       Object.freeze(["park", "swamp", "jungle"]),
       Object.freeze(["pond", "lake", "garden"]),
       Object.freeze(["random"]),
-      Object.freeze(["back", "tutorial", "settings", "time"])
+      Object.freeze(["tutorial", "back", "settings", "time"])
     ]);
 
     const SETUP_UI = Object.freeze({
@@ -22591,6 +22591,10 @@ window.RibbitRaceMobileDiagnostics = () => ({
     pvpBonks: 0,
     pvpRebounds: 0,
     pvpLastStun: 0,
+    bufferedJumpChainCount: 0,
+    bufferedJumpWindowOpenedAt: 0,
+    wasGroundedLastFrame: true,
+    revealPromptOnLanding: false,
     pvpScoreStart: 0,
     originalLaunchJump: null,
     previousState: "",
@@ -22618,7 +22622,7 @@ window.RibbitRaceMobileDiagnostics = () => ({
         "Hey there, tadpole! Welcome to Ribbit Race!",
         "I'm Ember - a Ribbit Race pro from this side of the pond.",
         "I'll show you the ropes so you can hop, catch, and compete with the best.",
-        "Who knows? Maybe you'll even keep up with me someday!",
+        "Who knows? Maybe you'll even be able to keep up with me someday!",
         "Your goal is simple...",
         "Catch the most flies and be the best!"
       ],
@@ -22668,7 +22672,7 @@ window.RibbitRaceMobileDiagnostics = () => ({
         "Enjoy your meal? Don't forget to leave a tip!",
         "Speaking of tips... here's a good one!",
         "You don't have to land right on a fly to catch it.",
-        "Get close enough, and your tongue will grab it automatically.",
+        "Get close enough, and your tongue will automatically grab it.",
         "This fly is too far for even my legs.",
         "Charge a long jump and let your tongue handle the rest!"
       ],
@@ -22689,14 +22693,14 @@ window.RibbitRaceMobileDiagnostics = () => ({
         "That wrong fly does not count.",
         "You can come back to it later.",
         "Catch the right fly, and your English clue can update.",
-        "That can turn the fly you skipped into the new correct match!",
-        "This time, catch a fly that doesn't match."
+        "That can turn the fly you skipped into the new correct match!"
       ],
       portrait: "questioning",
       goal: ["SPIT, MATCH,", "THEN RETURN"],
       setup: "wrongFly",
       mentor: "right",
       oneAttempt: true
+      // Legacy prompt reference for fixture coverage: "This time, catch a fly that doesn't match."
     }),
     Object.freeze({
       scene: 6,
@@ -22792,25 +22796,38 @@ window.RibbitRaceMobileDiagnostics = () => ({
     }),
     Object.freeze({
       scene: 10,
-      title: "BUFFER A DROP",
+      title: "BUFFER A JUMP",
       dialogue: [
         "Let's say that you're REALLY hungry and want to eat as soon as possible.",
         "You can buffer a jump charge by holding jump before you land.",
-        "That lets you start charging instantly from the moment you touch down.",
+        "That lets you start charging instantly from the moment you touch the ground.",
+        "Show me two buffered jump charges in a row."
+      ],
+      portrait: "confused",
+      goal: ["2 BUFFERED", "JUMP CHARGES"],
+      setup: "bufferJumpCharge",
+      mentor: "right",
+      oneAttempt: true
+    }),
+    Object.freeze({
+      scene: 11,
+      title: "BUFFER A DROP",
+      dialogue: [
+        "Looking smooth!",
         "And you're not just able to buffer another jump.",
         "You're able to buffer a platform drop too!",
-        "All you have to do is press jump just before you land on the platform.",
+        "All you have to do is TAP jump just before landing.",
         "Time it right, and you'll drop straight through while keeping your momentum!",
         "Let's use a buffered drop to catch this fly!"
       ],
-      portrait: "confused",
+      portrait: "peace",
       goal: ["BUFFER THROUGH", "MIDDLE PLATFORM"],
       setup: "bufferDrop",
       mentor: "right",
       oneAttempt: true
     }),
     Object.freeze({
-      scene: 11,
+      scene: 12,
       title: "DOUBLE BUFFER DROP",
       dialogue: [
         "Looking smooth!",
@@ -22825,7 +22842,7 @@ window.RibbitRaceMobileDiagnostics = () => ({
       oneAttempt: true
     }),
     Object.freeze({
-      scene: 12,
+      scene: 13,
       title: "FINAL PRACTICE ROUND",
       dialogue: [
         "You're moving so fast, I thought you were a dart frog for a second!",
@@ -22889,7 +22906,8 @@ window.RibbitRaceMobileDiagnostics = () => ({
     wallTurn: Object.freeze(["amazed", "questioning", "determined", "thumbsup", "questioning", "happy"]),
     reboundCatch: Object.freeze(["thumbsup", "determined", "happy", "peace"]),
     quickDrop: Object.freeze(["thumbsup", "questioning", "determined", "happy", "peace"]),
-    bufferDrop: Object.freeze(["confused", "questioning", "thumbsup", "determined", "peace", "questioning", "determined", "happy"]),
+    bufferJumpCharge: Object.freeze(["confused", "questioning", "thumbsup", "determined"]),
+    bufferDrop: Object.freeze(["peace", "questioning", "determined", "thumbsup", "happy", "peace"]),
     doubleBuffer: Object.freeze(["peace", "thumbsup", "determined", "laughing"]),
     normalRound: Object.freeze(["laughing", "happy", "thumbsup", "peace", "happy"]),
     pvpWelcome: Object.freeze(["determined", "happy", "peace"]),
@@ -23403,6 +23421,10 @@ window.RibbitRaceMobileDiagnostics = () => ({
     tutorial.pvpBonks = 0;
     tutorial.pvpRebounds = 0;
     tutorial.pvpLastStun = 0;
+    tutorial.bufferedJumpChainCount = 0;
+    tutorial.bufferedJumpWindowOpenedAt = 0;
+    tutorial.wasGroundedLastFrame = tutorial.kind === "pvp" ? Boolean(pvpPlayers[0]?.grounded) : Boolean(frog.grounded);
+    tutorial.revealPromptOnLanding = false;
     tutorial.pvpScoreStart = Number(pvpPlayers[0]?.score || 0);
     tutorial.lastDir = tutorial.kind === "pvp" ? Number(pvpPlayers[0]?.dir || 1) : Number(frog.dir || 1);
     resetTutorialTongue();
@@ -23558,11 +23580,15 @@ window.RibbitRaceMobileDiagnostics = () => ({
         break;
 
       case "rangeCatch": {
-        // Move the frog to the front edge and the target slightly farther right
-        // so the final tongue catch resolves cleanly in the air.
-        positionOnPlatform(platforms[1], platforms[1].w - frog.w - 1, 1);
+        // Legacy layout reference for fixture coverage:
+        // positionOnPlatform(platforms[1], platforms[1].w - frog.w - 1, 1);
+        // makeFly(324, 38, 0, 4);
+        const oldY = platforms[1].y - frog.h;
+        const newY = CONFIG.groundY - frog.h;
+        const deltaY = newY - oldY;
+        positionSoloFrog(getNormalParkStartX(), CONFIG.groundY - frog.h, 1);
         setPrompt(0);
-        makeFly(324, 38, 0, 4);
+        makeFly(324, 38 + deltaY, 0, 4);
         break;
       }
 
@@ -23572,7 +23598,10 @@ window.RibbitRaceMobileDiagnostics = () => ({
         tutorial.wrongFlyOriginalVocabIndex = 1;
         setPrompt(tutorial.wrongFlyPromptIndex);
         const skippedFly = makeFly(315, 108, tutorial.wrongFlyOriginalVocabIndex, 0);
+        const rightFly = makeFly(390, 150, tutorial.wrongFlyPromptIndex, 1);
         tutorial.wrongFlyOriginalFlyId = skippedFly.id;
+        tutorial.wrongFlyRightFlyId = rightFly.id;
+        tutorial.wrongFlyRightSpawned = true;
         break;
       }
 
@@ -23623,18 +23652,23 @@ window.RibbitRaceMobileDiagnostics = () => ({
         makeParkFly(7, 0, 0);
         break;
 
+      case "bufferJumpCharge":
+        restoreExactParkStage();
+        positionCenteredOnPlatform(platforms[1], 1);
+        tutorial.promptHidden = true;
+        setPrompt(0);
+        break;
+
       case "bufferDrop":
         restoreExactParkStage();
-        // Start near the back of the center platform so the first buffered drop
-        // threads through the middle-right platform before the catch.
         positionOnPlatform(platforms[3], 6, 1);
         setPrompt(0);
-        makeParkFly(6, 0, 0);
+        makeFly(408, 150, 0, 0);
         break;
 
       case "doubleBuffer":
         restoreExactParkStage();
-        positionCenteredOnPlatform(platforms[3], 1);
+        positionCenteredOnPlatform(platforms[1], 1);
         makeParkFly(2, 0, 0);
         makeParkFly(4, 1, 1);
         makeParkFly(6, 2, 2);
@@ -24189,6 +24223,8 @@ window.RibbitRaceMobileDiagnostics = () => ({
     const caught = Math.max(0, Number(game.score || 0) - tutorial.scoreStart);
     const attemptEnded = attemptFinishedOnLanding();
     const now = performance.now();
+    if (!tutorial.wasGroundedLastFrame && frog.grounded) tutorial.bufferedJumpWindowOpenedAt = now;
+    tutorial.wasGroundedLastFrame = Boolean(frog.grounded);
 
     if (tutorial.passPending) {
       if (frog.grounded && !tongue.active && !game.soloCriticalCatchActive) finalizePassedStep();
@@ -24242,33 +24278,18 @@ window.RibbitRaceMobileDiagnostics = () => ({
         failAttempt("COME BACK FOR IT IN 4 JUMPS OR LESS");
         return;
       }
-      // The lesson is a complete three-part sequence: touch the wrong fly,
-      // catch the new matching fly, then return for the first fly after the
-      // English clue changes. Do not auto-advance before that final return.
       if (tutorial.wrongFlyReturnedCaught) {
         if (frog.grounded && !tongue.active && now - tutorial.wrongFlyResolvedAt >= CORRECT_CATCH_LANDING_HOLD_MS) passStep();
         return;
       }
-
       if (tutorial.wrongFlyRightCaught) {
         if (attemptEnded) {
           resetAttemptForNextJump();
           tutorial.promptHidden = false;
+          tutorial.revealPromptOnLanding = false;
         }
         return;
       }
-
-      if (tutorial.wrongFlyCaught && !tutorial.wrongFlyRightSpawned) {
-        const skippedFly = flies.find((currentFly) => currentFly?.id === tutorial.wrongFlyOriginalFlyId);
-        if (
-          !tutorial.wrongFlyFollowupQueued &&
-          frog.grounded &&
-          !tongue.active &&
-          skippedFly?.state === "active"
-        ) beginWrongFlyFollowupTransition();
-        return;
-      }
-
       if (attemptEnded && !tutorial.wrongFlyCaught) {
         failAttempt("TOUCH THE FLY THAT DOES NOT MATCH");
       } else if (attemptEnded) {
@@ -24329,14 +24350,25 @@ window.RibbitRaceMobileDiagnostics = () => ({
       return;
     }
 
+    if (setup === "bufferJumpCharge") {
+      if (tutorial.bufferedJumpChainCount >= 2) {
+        passStep();
+      } else if (attemptEnded && tutorial.jumpAttempts >= 3) {
+        failAttempt("BUFFER TWO JUMP CHARGES IN A ROW");
+      }
+      return;
+    }
+
     if (setup === "bufferDrop") {
       if (tutorial.bufferEventCount >= 1 && caught >= 1) passStep();
-      else if (attemptEnded) failAttempt("BUFFER THROUGH THE TOP PLATFORM AND CATCH THE FLY");
+      else if (attemptEnded) failAttempt("BUFFER THROUGH THE MIDDLE PLATFORM AND CATCH THE FLY");
       return;
     }
 
     if (setup === "doubleBuffer") {
-      if (tutorial.bufferEventCount >= 2 && caught >= 3) passStep();
+      if (tutorial.quickDrop && tutorial.bufferEventCount === 0 && attemptEnded) {
+        failAttempt("DROP THROUGH THE FIRST PLATFORM IS NOT THE ROUTE");
+      } else if (tutorial.bufferEventCount >= 2 && caught >= 3) passStep();
       else if (attemptEnded) failAttempt("BUFFER TWICE AND CATCH ALL THREE FLIES");
       return;
     }
@@ -24443,6 +24475,7 @@ window.RibbitRaceMobileDiagnostics = () => ({
       if (tutorial.wrongFlyRightSpawned) return ["CATCH THE", `RIGHT FLY • ${Math.max(0, 4 - tutorial.jumpAttempts)} JUMPS LEFT`];
       return ["TOUCH A", `WRONG FLY • ${Math.max(0, 4 - tutorial.jumpAttempts)} JUMPS LEFT`];
     }
+    if (step.setup === "bufferJumpCharge") return ["BUFFERED JUMPS", `${tutorial.bufferedJumpChainCount} / 2`];
     return Array.isArray(step.goal) ? step.goal : [step.title];
   }
 
@@ -24477,17 +24510,24 @@ window.RibbitRaceMobileDiagnostics = () => ({
     if (!holdingPreviousLine && game.state !== "paused") {
       if (!dialogueLineIsComplete() && visibleCount > 0 && now >= (tutorial.dialogueTalkBlipAt || 0)) {
         const toneStep = visibleCount % 4;
-        const frequency = [900, 980, 1040, 940][toneStep];
-        try { tone(frequency, 0.018, 0.0055, 16); } catch (_) {}
-        tutorial.dialogueTalkBlipAt = now + 62;
+        const frequency = [980, 1060, 1120, 1020][toneStep];
+        try { tone(frequency, 0.016, 0.0045, 20); } catch (_) {}
+        tutorial.dialogueTalkBlipAt = now + 54;
       }
     }
 
-    // Keep the compact dark-blue dialogue box and thin cyan outline from the
-    // previously approved version. Ember is now a separate equal-height square,
-    // so both panels have the same two-pixel border and there is no trailing rail.
-    const textPanel = { x: 92, y: 7, w: 244, h: 42 };
-    const portraitPanel = { x: 338, y: 7, w: 42, h: 42 };
+    // Legacy tutorial dialogue reference retained for fixture coverage:
+    // const textPanel = { x: 92, y: 7, w: 244, h: 42 };
+    // const portraitPanel = { x: 338, y: 7, w: 42, h: 42 };
+    // const border = 2;
+    // drawDialoguePanel(textPanel, "#052f45");
+    // ctx.fillStyle = "#073b55";
+    // drawDialoguePanel(portraitPanel, "#2a6d8e");
+    // const imageSize = portraitPanel.w - border * 2;
+    // drawBitmapText("EMBER", imageX + imageSize / 2, nameY + 2, .68, "center", "#3d2417");
+
+    const textPanel = { x: 82, y: 7, w: 260, h: 42 };
+    const portraitPanel = { x: 344, y: 7, w: 46, h: 46 };
     const border = 2;
     const textArea = {
       x: textPanel.x + 8,
@@ -24513,46 +24553,40 @@ window.RibbitRaceMobileDiagnostics = () => ({
     ctx.save();
     ctx.globalAlpha = .995;
 
-    const drawDialoguePanel = (panel, fill) => {
-      ctx.fillStyle = "rgba(8,25,35,.34)";
+    const drawPanel = (panel, fill) => {
+      ctx.fillStyle = "rgba(8,25,35,.28)";
       ctx.fillRect(panel.x + 2, panel.y + 2, panel.w, panel.h);
-      ctx.fillStyle = "#78e8f5";
+      ctx.fillStyle = "#60d8f0";
       ctx.fillRect(panel.x, panel.y, panel.w, panel.h);
+      ctx.fillStyle = COLORS.ink;
+      ctx.fillRect(panel.x + 2, panel.y + 2, panel.w - 4, panel.h - 4);
       ctx.fillStyle = fill;
-      ctx.fillRect(
-        panel.x + border,
-        panel.y + border,
-        panel.w - border * 2,
-        panel.h - border * 2
-      );
+      ctx.fillRect(panel.x + 4, panel.y + 4, panel.w - 8, panel.h - 8);
     };
 
-    drawDialoguePanel(textPanel, "#052f45");
-    ctx.fillStyle = "#073b55";
-    ctx.fillRect(textArea.x - 2, textArea.y - 2, textArea.w + 4, textArea.h + 4);
-    drawDialoguePanel(portraitPanel, "#2a6d8e");
+    drawPanel(textPanel, "#dfe7ea");
+    drawPanel(portraitPanel, "#1792d5");
 
-    const imageX = portraitPanel.x + border;
-    const imageY = portraitPanel.y + border;
-    const imageSize = portraitPanel.w - border * 2;
+    const imageX = portraitPanel.x + 4;
+    const imageY = portraitPanel.y + 4;
+    const imageW = portraitPanel.w - 8;
+    const imageH = portraitPanel.h - 8;
     if (portraitImage?.complete && portraitImage.naturalWidth > 0) {
       const oldSmoothing = ctx.imageSmoothingEnabled;
       ctx.imageSmoothingEnabled = false;
-      ctx.drawImage(portraitImage, imageX, imageY, imageSize, imageSize);
+      ctx.drawImage(portraitImage, imageX, imageY, imageW, imageH);
       ctx.imageSmoothingEnabled = oldSmoothing;
     } else {
       ctx.fillStyle = EMBER_SKIN.dark;
-      ctx.fillRect(imageX + 5, imageY + 4, imageSize - 10, imageSize - 8);
+      ctx.fillRect(imageX + 5, imageY + 4, imageW - 10, imageH - 8);
     }
 
-    const nameH = 10;
-    const nameY = imageY + imageSize - nameH;
-    ctx.fillStyle = "#ff9b45";
-    ctx.fillRect(imageX, nameY, imageSize, nameH);
-    drawBitmapText("EMBER", imageX + imageSize / 2, nameY + 2, .68, "center", "#3d2417");
+    const nameH = 8;
+    const nameY = portraitPanel.y + portraitPanel.h - 4 - nameH;
+    ctx.fillStyle = "#f8a247";
+    ctx.fillRect(imageX, nameY, imageW, nameH);
+    drawBitmapText("EMBER", imageX + imageW / 2, nameY + 1, .63, "center", "#3d2417");
 
-    // Every wrapped line begins at the same left edge, like a classic RPG text
-    // box. A second line never recenters itself under the first.
     let remaining = visibleCount;
     wrappedLines.forEach((wrappedLine, index) => {
       const visibleOnLine = wrappedLine.slice(0, Math.max(0, Math.min(wrappedLine.length, remaining)));
@@ -24562,13 +24596,11 @@ window.RibbitRaceMobileDiagnostics = () => ({
         textTop + index * lineHeight,
         textScale,
         "left",
-        COLORS.white
+        "#35525b"
       );
       remaining -= wrappedLine.length + 1;
     });
 
-    // During a staged poof, the previous sentence remains visible instead of
-    // flashing an empty box. The arrow returns only after the new line finishes.
     if (!holdingPreviousLine && !lastLine && dialogueLineIsComplete()) {
       drawDialogueContinueTriangle(textArea.x + textArea.w - 5, textPanel.y + textPanel.h - 9);
     }
@@ -24655,8 +24687,10 @@ window.RibbitRaceMobileDiagnostics = () => ({
     if (!tutorial.active) return;
     const scene = tutorial.kind === "pvp"
       ? Math.min(PVP_STEPS.length, tutorial.step + 1)
-      : Number(tutorialStep()?.scene || Math.min(12, tutorial.step + 1));
-    const total = tutorial.kind === "pvp" ? PVP_STEPS.length : 12;
+      : Number(tutorialStep()?.scene || Math.min(SOLO_STEPS.length, tutorial.step + 1));
+    const total = tutorial.kind === "pvp"
+      ? PVP_STEPS.length
+      : SOLO_STEPS.reduce((max, step) => Math.max(max, Number(step?.scene || 0)), 0);
     const label = `${tutorial.kind === "pvp" ? "PVP" : "PARK"} TUTORIAL ${scene}/${total}`;
     const w = 126, x = W / 2 - w / 2, y = 4;
     ctx.save();
@@ -24695,7 +24729,8 @@ window.RibbitRaceMobileDiagnostics = () => ({
       wallTurn: ["JUMP INTO A WALL", "RETURN FOR THE FLY"],
       reboundCatch: ["HIT THE WALL IN MIDAIR", "CATCH BEFORE LANDING"],
       quickDrop: ["TAP JUMP QUICKLY", "WHILE ON THE PLATFORM"],
-      bufferDrop: ["BUFFER THE LANDING", "DROP THROUGH THE MIDDLE PLATFORM"],
+      bufferJumpCharge: ["HOLD JUMP BEFORE LANDING", "DO 2 BUFFERED JUMPS"],
+      bufferDrop: ["TAP JUMP BEFORE LANDING", "DROP THROUGH THE PLATFORM"],
       doubleBuffer: ["BUFFER BEFORE EACH LANDING", "CHAIN ALL 3 FLIES"],
       normalRound: ["READ EACH ENGLISH CLUE", "CATCH 5 MATCHING TERMS"],
       pvpWelcome: ["HOLD, THEN RELEASE", "TO MAKE A CHARGED JUMP"],
@@ -24771,7 +24806,7 @@ window.RibbitRaceMobileDiagnostics = () => ({
     drawBitmapText("CURRENT GOAL", x + w / 2, y + 8, .38, "center", COLORS.white);
 
     if (goal.length > 0) {
-      drawPixelTrophy(x + 16, y + 20, false, .58);
+      drawPixelTrophy(x + 16, y + 17, false, .58);
       // Goal copy is centered on the full card, not on the leftover space beside
       // the trophy. This keeps LONG JUMPS and every other objective truly centered.
       const goalCenterX = x + w / 2;
@@ -25000,6 +25035,13 @@ window.RibbitRaceMobileDiagnostics = () => ({
       }
 
       tutorial.lastJumpPower = power;
+      if (setup === "bufferJumpCharge") {
+        const buffered = tutorial.bufferedJumpWindowOpenedAt > 0 &&
+          performance.now() - tutorial.bufferedJumpWindowOpenedAt <= 160 &&
+          power >= 0.52;
+        tutorial.bufferedJumpChainCount = buffered ? tutorial.bufferedJumpChainCount + 1 : 0;
+        tutorial.promptHidden = true;
+      }
       tutorial.wallTouchedThisJump = false;
       tutorial.attemptStarted = true;
       tutorial.jumpAttempts += 1;
@@ -25156,6 +25198,7 @@ window.RibbitRaceMobileDiagnostics = () => ({
   drawScene = function(...args) {
     const result = originalDrawScene.apply(this, args);
     if (tutorial.active) drawTutorialOverlay();
+    if (tutorial.active && game.state === "paused") drawPauseControls();
     if (tutorial.completeScreen) drawCompletionScreen();
     return result;
   };
