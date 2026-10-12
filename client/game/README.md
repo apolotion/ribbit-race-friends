@@ -1,54 +1,19 @@
 # Browser game runtime modules
 
-The files in this folder are the human-readable source for the generated
-`public/scripts/game.bundle.js`. They intentionally share the private lexical
-scope of `startRibbitRaceGame()`. The build script discovers files by numeric
-prefix and concatenates them in that order.
+These thirteen files are the human-readable source for the generated `public/scripts/game.bundle.js`. They intentionally share the private lexical scope of `startRibbitRaceGame()`; the build step concatenates them in filename order so the historical simulation retains one closure.
 
-## Core systems
+1. `10-core-config.js` — configuration, unlocks, mirrored level geometry, achievements, and assets
+2. `20-models-and-state.js` — runtime models and shared game state
+3. `30-online-versus.js` — Cloudflare rooms, Quickplay, spectators, and online synchronization
+4. `40-ui-navigation-audio.js` — menus, navigation, settings, records, sound, and UI controllers
+5. `50-solo-gameplay.js` — Single Player rules, physics, flies, and round lifecycle
+6. `60-versus-gameplay.js` — local/online Versus rules, CPU, collisions, and critical-catch camera
+7. `70-rendering.js` — bitmap text, scenery, sprites, menus, HUD, and draw routines
+8. `80-input-loop-startup.js` — scene composition, animation loop, input routing, and startup
+9. `90-extended-features.js` — records, hats, palettes, replays, and Friends Edition extensions
+10. `99-v170-hooks.js` — version 1.7 integration hooks
+11. `100-mobile-experience.js` — canvas-native mobile controls and touch ownership
+12. `110-online-mobile-polish.js` — online/mobile refinements and runtime diagnostics
+13. `120-engine-tutorial.js` — authentication-gated real-engine tutorial, Ember dialogue, scripted checks, HUD, pause, and save isolation
 
-- `10-core-config.js` — configuration, unlocks, levels, achievements, and assets
-- `20-models-and-state.js` — shared runtime models and game state
-- `30-online-versus.js` — Cloudflare rooms, Quickplay, spectators, and sync
-- `40-ui-navigation-audio.js` — navigation, settings, records, and sound
-- `50-solo-gameplay.js` — Single Player rules, flies, physics, and rounds
-
-## Versus
-
-- `60-versus-physics.js` — players, moving platforms, collisions, and bonks
-- `61-versus-catches-rounds.js` — fly catches, cinematics, timers, and rounds
-- `62-versus-cpu.js` — CPU threat analysis, planning, and input
-- `63-versus-rendering-ui.js` — Versus rendering, setup, HUD, and results
-
-## Rendering
-
-- `70-rendering-text-world.js` — bitmap text, scenery, and platforms
-- `71-rendering-entities-hud.js` — flies, frogs, tongues, and gameplay HUD
-- `72-rendering-customization.js` — setup, hats, custom colors, and sandbox
-- `73-rendering-menus-overlays.js` — menus, pause, achievements, and victory UI
-
-## Runtime integration
-
-- `80-input-loop-startup.js` — input routing, frame loop, and startup
-- `90-extended-features.js` — records, hats, palettes, and replays
-- `100-mobile-experience.js` — mobile controls and touch ownership
-- `110-online-mobile-polish.js` — online/mobile refinements and diagnostics
-- `115-v170-hooks.js` — version 1.7 integration hooks
-
-## Tutorials and current polish layer
-
-- `120-tutorial-config.js` — tutorial constants, scripts, portraits, and state
-- `121-tutorial-runtime-dialogue.js` — runtime snapshots and dialogue lifecycle
-- `122-tutorial-scenarios.js` — authored Solo and Versus scene layouts
-- `123-tutorial-lifecycle.js` — poofs, retries, transitions, completion, and startup
-- `124-tutorial-monitoring.js` — Solo/Versus objective validation and updates
-- `125-tutorial-rendering.js` — dialogue, goals, pause, and completion rendering
-- `126-tutorial-hooks.js` — input, achievements, stats, and engine integration
-- `127-tutorial-refinements.js` — chapter navigation and final tutorial safeguards
-- `130-polish-ui-replay-language.js` — account UI, leaderboard, replays, and language
-- `131-progress-compatibility.js` — save-format and hat-progress compatibility
-- `132-cross-screen-integration.js` — cross-screen controls and custom-frog polish
-
-Run `npm run build` after editing a module. `npm run check` rebuilds automatically,
-parses browser/server sources, verifies assets, and checks dependency restrictions.
-Do not edit the generated bundle directly.
+Run `npm run build` after editing a module. `npm run check` rebuilds automatically, parses the browser/server sources, verifies assets, and checks dependency restrictions. Do not edit the generated bundle directly.

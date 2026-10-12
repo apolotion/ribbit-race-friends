@@ -1,10 +1,9 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-import { readGameModuleGroup } from "./source-reader.mjs";
 
 const read = (path) => readFileSync(new URL(`../${path}`, import.meta.url), "utf8");
-const engine = readGameModuleGroup(120, 139);
+const engine = read("client/game/120-engine-tutorial.js");
 const ui = read("client/game/40-ui-navigation-audio.js");
 const input = read("client/game/80-input-loop-startup.js");
 const index = read("public/index.html");
@@ -18,8 +17,8 @@ function block(start, end) {
 }
 
 test("polish-9 cache marker and tutorial seen key are synchronized", () => {
-  assert.match(engine, /TUTORIAL_BUILD = "2026\.10\.12-friends-polish-21"/);
-  assert.match(index, /game\.bundle\.js\?v=2026\.10\.12-friends-polish-21/);
+  assert.match(engine, /TUTORIAL_BUILD = "2026\.10\.12-friends-polish-20"/);
+  assert.match(index, /game\.bundle\.js\?v=2026\.10\.12-friends-polish-20/);
   assert.match(engine, /rrFriendsEngineTutorialSoloSeenV8/);
   assert.match(read("public/scripts/tutorial-preboot.js"), /rrFriendsEngineTutorialSoloSeenV8/);
 });

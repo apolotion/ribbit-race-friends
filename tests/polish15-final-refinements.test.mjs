@@ -1,14 +1,13 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-import { readGameModuleGroup } from "./source-reader.mjs";
 
 const read = (path) => readFileSync(path, "utf8");
-const tutorial = readGameModuleGroup(120, 139);
+const tutorial = read("client/game/120-engine-tutorial.js");
 const online = read("client/game/30-online-versus.js");
 const ui = read("client/game/40-ui-navigation-audio.js");
 const input = read("client/game/80-input-loop-startup.js");
-const rendering = readGameModuleGroup(70, 79);
+const rendering = read("client/game/70-rendering.js");
 const core = read("client/game/10-core-config.js");
 const pageHats = read("public/scripts/extended-features.js");
 
@@ -21,7 +20,7 @@ function block(source, start, end) {
 
 test("Polish 16 cache marker is wired", () => {
   for (const source of [tutorial, read("src/common.js"), read("public/index.html"), read("public/scripts/cloud-client.js")]) {
-    assert.match(source, /2026\.10\.12-friends-polish-21/);
+    assert.match(source, /2026\.10\.12-friends-polish-20/);
   }
 });
 

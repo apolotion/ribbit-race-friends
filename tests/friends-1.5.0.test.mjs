@@ -1,7 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
-import { readGameModuleGroup } from "./source-reader.mjs";
 
 const read=(path)=>readFileSync(path,"utf8");
 const html=read("public/index.html");
@@ -9,8 +8,8 @@ const mobileClient=read("public/scripts/mobile-experience.js");
 const mobileGame=read("client/game/100-mobile-experience.js");
 const polish170=read("public/scripts/rr-170-polish.js");
 const core=read("client/game/10-core-config.js");
-const render=readGameModuleGroup(70, 79);
-const versus=readGameModuleGroup(60, 69);
+const render=read("client/game/70-rendering.js");
+const versus=read("client/game/60-versus-gameplay.js");
 const input=read("client/game/80-input-loop-startup.js");
 const extension=read("public/scripts/extended-features.js");
 const css=[read("public/styles/base.css"),read("public/styles/game-shell.css"),read("public/styles/extended-features.css")].join("\n");
@@ -76,12 +75,10 @@ test("mobile pause is drawn in Versus and routes through pauseGame",()=>{
   assert.match(mobileGame,/pauseGame\(\)/);
 });
 
-test("letterboxed touchscreen coordinates are mapped through one cached content rectangle",()=>{
-  assert.match(input,/function getCanvasPointMetrics\(\)/);
+test("letterboxed touchscreen coordinates are mapped into the 480 by 270 game area",()=>{
   assert.match(input,/const scale = Math\.min\(rect\.width \/ W, rect\.height \/ H\)/);
-  assert.match(input,/offsetX: \(rect\.width - W \* scale\) \/ 2/);
-  assert.match(input,/offsetY: \(rect\.height - H \* scale\) \/ 2/);
-  assert.match(input,/requestAnimationFrame\(invalidateCanvasPointMetrics\)/);
+  assert.match(input,/const offsetX = \(rect\.width - contentWidth\) \/ 2/);
+  assert.match(input,/const offsetY = \(rect\.height - contentHeight\) \/ 2/);
 });
 
 test("mobile instructions do not tell players to use keyboard controls",()=>{

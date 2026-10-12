@@ -1,14 +1,13 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-import { readGameModuleGroup } from "./source-reader.mjs";
 
 const read = (path) => readFileSync(path, "utf8");
-const tutorial = readGameModuleGroup(120, 139);
+const tutorial = read("client/game/120-engine-tutorial.js");
 const mobile = read("client/game/100-mobile-experience.js");
 const ui = read("client/game/40-ui-navigation-audio.js");
 const input = read("client/game/80-input-loop-startup.js");
-const rendering = readGameModuleGroup(70, 79);
+const rendering = read("client/game/70-rendering.js");
 const online = read("client/game/30-online-versus.js");
 
 test("Polish 13 aligns profile/device hit geometry and removes the legacy blank tooltip", () => {

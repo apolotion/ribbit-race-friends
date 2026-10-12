@@ -1,15 +1,14 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-import { readGameModuleGroup } from "./source-reader.mjs";
 
 const read = (path) => readFileSync(path, "utf8");
-const tutorial = readGameModuleGroup(120, 139);
+const tutorial = read("client/game/120-engine-tutorial.js");
 const online = read("client/game/30-online-versus.js");
-const versus = readGameModuleGroup(60, 69);
+const versus = read("client/game/60-versus-gameplay.js");
 const input = read("client/game/80-input-loop-startup.js");
 const core = read("client/game/10-core-config.js");
-const hooks = read("client/game/115-v170-hooks.js");
+const hooks = read("client/game/99-v170-hooks.js");
 const cloud = read("public/scripts/cloud-client.js");
 const pagePolish = read("public/scripts/rr-170-polish.js");
 const onlinePage = read("public/scripts/rr-170-online.js");
@@ -18,7 +17,7 @@ const index = read("public/index.html");
 
 test("polish 11 cache marker is wired through client, worker, and asset URLs", () => {
   for (const source of [tutorial, cloud, index, read("src/common.js")]) {
-    assert.match(source, /2026\.10\.12-friends-polish-21/);
+    assert.match(source, /2026\.10\.12-friends-polish-20/);
   }
 });
 
@@ -50,7 +49,7 @@ test("final-catch fly labels remain gone while flies and sparks keep rendering",
 });
 
 test("original online panel owns rendering and input in requested order", () => {
-  assert.doesNotMatch(tutorial, /legacy block inert|function drawOnlineMain\(/);
+  assert.match(tutorial, /legacy block inert so the real menu owns rendering\/input[\s\S]{0,40}return;/);
   const hub = online.slice(online.indexOf("const ONLINE_HUB"), online.indexOf("const PROFILE_UI"));
   const order = ["quick", "spectate", "host", "join", "profile", "battle"];
   let cursor = 0;
@@ -103,7 +102,7 @@ test("R is pause-only, normal restart counts down, and tutorial retry replays di
 test("worldrecord cheat is visual-only and uses gold trophy presentation", () => {
   assert.match(core, /WORLD_RECORD_TEST_CODE = "worldrecord"/);
   assert.match(read("client/game/40-ui-navigation-audio.js"), /Visual-only QA shortcut/);
-  assert.match(readGameModuleGroup(70, 79), /worldRecordToast[\s\S]{0,220}drawPixelTrophy/);
+  assert.match(read("client/game/70-rendering.js"), /worldRecordToast[\s\S]{0,220}drawPixelTrophy/);
 });
 
 test("live hat progress reads per-skin catches and locked clicks do not pin help", () => {
@@ -111,7 +110,7 @@ test("live hat progress reads per-skin catches and locked clicks do not pin help
   assert.match(core, /CATCH 75 FLIES AS AZURE/);
   assert.match(core, /readLiveHatSkinCount\("azure"\)/);
   assert.match(tutorial, /rr-hat-progress/);
-  assert.match(readGameModuleGroup(70, 79), /customHatSuppressedRequirementIndex/);
+  assert.match(read("client/game/70-rendering.js"), /customHatSuppressedRequirementIndex/);
 });
 
 test("custom frog has compact sprite-only base picker and no legacy palette panel", () => {

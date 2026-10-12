@@ -1,13 +1,12 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import {readFileSync,existsSync} from "node:fs";
-import { readGameModuleGroup } from "./source-reader.mjs";
 const read=p=>readFileSync(new URL(`../${p}`,import.meta.url),"utf8");
 
 test("v1.7.10 engine tutorial project additions exist",()=>{
   for(const p of [
-    "client/game/115-v170-hooks.js",
-    "client/game/120-tutorial-config.js",
+    "client/game/99-v170-hooks.js",
+    "client/game/120-engine-tutorial.js",
     "public/scripts/rr-170-polish.js",
     "public/scripts/rr-170-online.js",
     "public/styles/rr-170.css",
@@ -21,7 +20,7 @@ test("v1.7.10 engine tutorial project additions exist",()=>{
 });
 
 test("tutorial uses the real Park engine instead of a popup practice canvas",()=>{
-  const engine=readGameModuleGroup(120, 139);
+  const engine=read("client/game/120-engine-tutorial.js");
   const polish=read("public/scripts/rr-170-polish.js");
   for(const word of [
     "WELCOME TO RIBBIT RACE",
@@ -49,14 +48,14 @@ test("spectator picker remains available without a floating live-matches button"
 });
 
 test("safety guards are present",()=>{
-  const s=read("client/game/115-v170-hooks.js");
+  const s=read("client/game/99-v170-hooks.js");
   assert.match(s,/closeCallEligible/);
   assert.match(s,/recentCatchKeys/);
   assert.match(s,/unlockBeanieFallback/);
 });
 
 test("tutorial hides legacy floating controls and preserves cloud progress",()=>{
-  const engine=readGameModuleGroup(120, 139);
+  const engine=read("client/game/120-engine-tutorial.js");
   const polish=read("public/scripts/rr-170-polish.js");
   const css=read("public/styles/rr-170.css");
   assert.match(engine,/beginPlaytestSession/);
@@ -70,7 +69,7 @@ test("tutorial hides legacy floating controls and preserves cloud progress",()=>
 });
 
 test("1.7.10 tutorial uses Ember dialogue, checked engine scenes, and a working pause menu",()=>{
-  const engine=readGameModuleGroup(120, 139);
+  const engine=read("client/game/120-engine-tutorial.js");
   for(const word of [
     'FROG_SKINS.ember',
     'drawTutorialDialogue',
@@ -86,7 +85,7 @@ test("1.7.10 tutorial uses Ember dialogue, checked engine scenes, and a working 
 });
 
 test("tutorial scenarios use Park layouts and reachable authored fly placement",()=>{
-  const engine=readGameModuleGroup(120, 139);
+  const engine=read("client/game/120-engine-tutorial.js");
   assert.match(engine,/oneAttempt:\s*true/);
   assert.match(engine,/platforms = cloneParkPlatforms\(\)/);
   assert.match(engine,/positionSoloFrog\(getNormalParkStartX\(\), CONFIG\.groundY - frog\.h, 1\)/);
@@ -105,7 +104,7 @@ test("tutorial completion achievement is registered in the shared gallery",()=>{
 });
 
 test("Ember dialogue is modal, left-aligned, and uses a down triangle instead of text prompts",()=>{
-  const engine=readGameModuleGroup(120, 139);
+  const engine=read("client/game/120-engine-tutorial.js");
   for(const word of [
     "EMBER_PORTRAIT_SOURCES",
     "EMBER_PORTRAIT_SEQUENCE_BY_SETUP",

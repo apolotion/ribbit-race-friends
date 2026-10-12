@@ -1,11 +1,10 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync, existsSync } from "node:fs";
-import { readGameModuleGroup } from "./source-reader.mjs";
 
 const read = (path) => readFileSync(path, "utf8");
-const tutorial = readGameModuleGroup(120, 139);
-const ui = readGameModuleGroup(70, 79);
+const tutorial = read("client/game/120-engine-tutorial.js");
+const ui = read("client/game/70-rendering.js");
 const online = read("client/game/30-online-versus.js");
 const language = read("public/scripts/language-preferences.js");
 const index = read("public/index.html");
@@ -30,7 +29,7 @@ test("achievements uses a small bottom-left leaderboard button", () => {
 });
 
 test("online menu follows requested order and contextual speech bubbles", () => {
-  const versus = readGameModuleGroup(60, 69);
+  const versus = read("client/game/60-versus-gameplay.js");
   const order = ["quick","spectate","host","join","profile","battle"];
   let cursor = online.indexOf("const ONLINE_HUB");
   for (const key of order) {

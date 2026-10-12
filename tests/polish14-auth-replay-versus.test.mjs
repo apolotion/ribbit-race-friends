@@ -1,10 +1,9 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync, existsSync } from "node:fs";
-import { readGameModuleGroup } from "./source-reader.mjs";
 
 const read = (path) => readFileSync(path, "utf8");
-const tutorial = readGameModuleGroup(120, 139);
+const tutorial = read("client/game/120-engine-tutorial.js");
 const solo = read("client/game/50-solo-gameplay.js");
 const cloud = read("public/scripts/cloud-client.js");
 const polish = read("public/scripts/rr-170-polish.js");
