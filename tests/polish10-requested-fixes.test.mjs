@@ -17,7 +17,7 @@ const index = read("public/index.html");
 
 test("polish 11 cache marker is wired through client, worker, and asset URLs", () => {
   for (const source of [tutorial, cloud, index, read("src/common.js")]) {
-    assert.match(source, /2026\.10\.12-friends-polish-14/);
+    assert.match(source, /2026\.10\.12-friends-polish-15/);
   }
 });
 
@@ -84,20 +84,19 @@ test("pointer cursor covers canvas controls and Online retains its own cursor", 
 });
 
 test("pause controls place book left, fullscreen right, and P pauses", () => {
-  assert.match(read("client/game/40-ui-navigation-audio.js"), /helpButton: \{ x: 400, y: 198, w: 20, h: 20 \}/);
-  assert.match(tutorial, /PAUSE_FULLSCREEN_BUTTON = Object\.freeze\(\{ x: 426, y: 198, w: 20, h: 20 \}\)/);
+  assert.match(read("client/game/40-ui-navigation-audio.js"), /helpButton: \{ x: 353, y: 198, w: 20, h: 20 \}/);
+  assert.match(tutorial, /PAUSE_FULLSCREEN_BUTTON = Object\.freeze\(\{ x: 379, y: 198, w: 20, h: 20 \}\)/);
   assert.match(input, /event\.code === "KeyP"/);
   assert.match(online, /state\.active&&e\.code==='KeyP'/);
 });
 
-test("R is pause-only and restart restores the start before a countdown", () => {
-  assert.match(tutorial, /function immediateResetToStart/);
-  assert.match(tutorial, /flies\.length = 0/);
-  assert.match(tutorial, /event\.code === "KeyR" && game\.state === "paused"/);
+test("R is pause-only, normal restart counts down, and tutorial retry replays dialogue", () => {
   assert.match(input, /if \(game\.state === "paused"\)[\s\S]{0,900}event\.code === "KeyR"/);
   assert.match(input, /RibbitRaceTutorialEngine\?\.active[\s\S]{0,180}activatePauseSelection\(\)[\s\S]{0,180}restartCurrentLevel\(\)/);
+  assert.match(read("client/game/40-ui-navigation-audio.js"), /function restartCurrentLevel\(\)[\s\S]{0,420}startResumeCountdown\(\)/);
   assert.doesNotMatch(input, /\["playing","countdown"\]\.includes\(game\.state\)[\s\S]{0,120}KeyR/);
-  assert.match(tutorial, /completedResetReason === "pause-retry"\) startResumeCountdown\(false\)/);
+  assert.match(tutorial, /action: rebuildCurrentScenarioWithDialogue/);
+  assert.doesNotMatch(tutorial, /completedResetReason === "pause-retry"\) startResumeCountdown/);
 });
 
 test("worldrecord cheat is visual-only and uses gold trophy presentation", () => {

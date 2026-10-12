@@ -215,6 +215,7 @@
       bonusFlyCaught: false,
       bonusFlyCount: 0,
       roundUnlockedSkinIds: [],
+      roundUnlockedHatIds: [],
       roundUnlockedLevelId: null,
       roundUnlockedAchievementIds: [],
       roundUnlockedPvpAchievementIds: [],

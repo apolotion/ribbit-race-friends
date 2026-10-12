@@ -731,7 +731,7 @@
         ctx.fillStyle=palette.light||'#5ce5e8';ctx.fillRect(r.x+7,r.y+6,r.w-14,3);
         ctx.save();ctx.beginPath();ctx.rect(r.x+4,r.y+10,r.w-8,r.h-13);ctx.clip();
         drawMiniFrogSwatchFacing(W/2,r.y+22,palette,2.15,1);ctx.restore();
-        fitText(palette.name||state.localSkinId,W/2,r.y+65,r.w-14,.85,palette.dark);
+        fitText(palette.name||state.localSkinId,W/2,r.y+58,r.w-14,.85,palette.dark);
         if(selecting){drawPagerArrowIcon(QUICK_UI.previous,-1,'#48555a');drawPagerArrowIcon(QUICK_UI.next,1,'#48555a');}
         if(selecting){
           fitText('60 SECOND ENDLESS - RANDOM STAGES - BEST OF 3',W/2,166,376,.62);
@@ -1321,33 +1321,54 @@
         drawOnlineAction({...rect,id:match?.id,label:text,icon,stripe:match?.stripe||palette?.light||'#5ce5e8',subLabel:match?.subLabel||''},selected||state.focus===match?.id);
       }
       function drawOnlineTooltip(){
-              if(!isMenuVisible()||state.screen==='quickConnecting')return;
-              let b=onlineButtons().find(v=>v.id===(state.keyboardFocus?state.focus:(state.hoverId||state.focus)));
-              if(state.screen==='settings'){
-                const tips=['Choose First to 5, First to 10, or Endless.','Choose the round timer.','Choose how many rounds make a match.','Local-mode resume countdown. Online play never pauses.','Return to the room without showing settings to your opponent.'];
-                const index=Math.max(0,Math.min(4,game.pvpSettingsFocusIndex||0));
-                b={x:190,w:100,tip:tips[index]};
-              }
-              if(!b?.tip)return;
-              let r;
-              if(['entry','join'].includes(state.screen))r={x:52,y:75,w:376,h:19};
-              else if(['room','settings','spectateList'].includes(state.screen))r={x:52,y:60,w:376,h:19};
-              else if(['quickSelect','quickQueue'].includes(state.screen))r={x:40,y:120,w:101,h:52};
-              else if(state.screen==='profile')r={x:65,y:86,w:350,h:18};
-              else if(state.screen==='battleTags')r={x:65,y:207,w:350,h:20};
-              if(!r)return;
-              const narrow=r.w<150,scale=narrow?.57:.58,lines=[];
-              if(narrow){let line='';for(const word of b.tip.toUpperCase().split(/\s+/)){const next=line?line+' '+word:word;if(measureBitmapText(next,scale)>r.w-12&&line){lines.push(line);line=word;}else line=next;}if(line)lines.push(line);}
-              else lines.push(b.tip);
-              ctx.save();ctx.fillStyle='rgba(25,43,52,.18)';ctx.fillRect(r.x+2,r.y+2,r.w,r.h);
-              ctx.fillStyle=COLORS.ink;ctx.fillRect(r.x,r.y,r.w,r.h);ctx.fillStyle='#ffffff';ctx.fillRect(r.x+2,r.y+2,r.w-4,r.h-4);
-              const top=r.y+(r.h-(lines.length*7*scale+(lines.length-1)*3))/2;
-              lines.slice(0,5).forEach((line,i)=>fitText(line,r.x+r.w/2,top+i*(7*scale+3),r.w-12,scale,'#48555a'));
-              ctx.fillStyle=COLORS.ink;
-              if(narrow){ctx.fillRect(r.x+r.w,r.y+22,4,7);ctx.fillRect(r.x+r.w+4,r.y+24,3,3);}
-              else{const px=clamp(b.x+b.w/2,r.x+10,r.x+r.w-10);ctx.fillRect(px-3,r.y+r.h,6,3);ctx.fillRect(px-1,r.y+r.h+3,2,2);}
-              ctx.restore();
-            }
+        if(!isMenuVisible()||state.screen==='quickConnecting')return;
+        let b=onlineButtons().find(v=>v.id===(state.keyboardFocus?state.focus:(state.hoverId||state.focus)));
+        if(state.screen==='settings'){
+          const tips=['Choose First to 5, First to 10, or Endless.','Choose the round timer.','Choose how many rounds make a match.','Local-mode resume countdown. Online play never pauses.','Return to the room without showing settings to your opponent.'];
+          const index=Math.max(0,Math.min(4,game.pvpSettingsFocusIndex||0));
+          const rect=index<4?PVP_SETTINGS_UI.rows[index]:PVP_SETTINGS_UI.backButton;
+          b={...rect,tip:tips[index]};
+        }
+        if(!b?.tip||!Number.isFinite(b.x)||!Number.isFinite(b.y)||!Number.isFinite(b.w)||!Number.isFinite(b.h))return;
+
+        const scale=.47;
+        const maxTextWidth=Math.min(220,Math.max(92,b.w+26));
+        const words=String(b.tip).toUpperCase().split(/\s+/).filter(Boolean);
+        const lines=[];let line='';
+        for(const word of words){
+          const next=line?`${line} ${word}`:word;
+          if(line&&measureBitmapText(next,scale)>maxTextWidth-16){lines.push(line);line=word;}
+          else line=next;
+        }
+        if(line)lines.push(line);
+        while(lines.length>3){lines[lines.length-2]+=' '+lines.pop();}
+        const widest=Math.max(...lines.map(text=>measureBitmapText(text,scale)),54);
+        const width=Math.ceil(Math.min(230,widest+16));
+        const lineStep=Math.ceil(7*scale+3);
+        const height=Math.max(20,10+lines.length*lineStep);
+        const centerX=b.x+b.w/2;
+        const x=clamp(Math.round(centerX-width/2),5,W-width-5);
+        let y=Math.round(b.y-height-8);
+        let pointerBelow=true;
+        if(y<4){y=Math.min(H-height-5,Math.round(b.y+b.h+8));pointerBelow=false;}
+        const pointerX=clamp(Math.round(centerX),x+9,x+width-9);
+
+        ctx.save();
+        ctx.fillStyle='rgba(25,43,52,.24)';ctx.fillRect(x+2,y+2,width,height);
+        ctx.fillStyle=COLORS.ink;ctx.fillRect(x,y,width,height);
+        ctx.fillStyle='#ffffff';ctx.fillRect(x+2,y+2,width-4,height-4);
+        const palette=state.localAppearance||appearanceFor(state.localSkinId)||PVP_NEUTRAL_PALETTE;
+        ctx.fillStyle=palette.light||'#5ce5e8';ctx.fillRect(x+5,y+4,width-10,2);
+        const top=y+Math.round((height-(lines.length*lineStep-3))/2);
+        lines.forEach((text,i)=>fitText(text,x+width/2,top+i*lineStep,width-12,scale,'#26363d'));
+        ctx.fillStyle=COLORS.ink;
+        if(pointerBelow){
+          ctx.fillRect(pointerX-4,y+height,9,2);ctx.fillRect(pointerX-3,y+height+2,7,2);ctx.fillRect(pointerX-2,y+height+4,5,2);ctx.fillRect(pointerX-1,y+height+6,3,1);
+        }else{
+          ctx.fillRect(pointerX-4,y-2,9,2);ctx.fillRect(pointerX-3,y-4,7,2);ctx.fillRect(pointerX-2,y-6,5,2);ctx.fillRect(pointerX-1,y-7,3,1);
+        }
+        ctx.restore();
+      }
       function drawOnlineProfile(){
         drawPanel('CUSTOMIZER');fitText('YOUR ONLINE DISPLAY NAME',240,67,375,.9,'#07516a');
         const r=PROFILE_UI.name;ctx.fillStyle=state.focus==='name'?COLORS.ink:'#9aa9ae';ctx.fillRect(r.x,r.y,r.w,r.h);ctx.fillStyle='#fff';ctx.fillRect(r.x+3,r.y+3,r.w-6,r.h-6);

@@ -65,6 +65,7 @@
       game.bonusFlyCaught = false;
       game.bonusFlyCount = 0;
       game.roundUnlockedSkinIds = [];
+      game.roundUnlockedHatIds = [];
       game.roundUnlockedLevelId = null;
       game.roundUnlockedAchievementIds = [];
       game.roundLeaderboardRecordNotices = [];

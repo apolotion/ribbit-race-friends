@@ -3,7 +3,7 @@
 // input support hooks, palette operations, post-hat progression, and replay state.
 
 const RIBBIT_FRIENDS_DISPLAY_VERSION = "1.7.10";
-const RIBBIT_FRIENDS_BUILD = "2026.10.12-friends-polish-14";
+const RIBBIT_FRIENDS_BUILD = "2026.10.12-friends-polish-15";
 
 function rr14Number(value, fallback = 0) {
   const parsed = Number(value);
@@ -100,8 +100,8 @@ function rr14Snapshot() {
   return {
     state,
     level: rr14CurrentLevel(),
-    skin: rr14CurrentSkin(),
-    time: rr14FindNumeric(/elapsed|playTime|levelTime|runTime/i, 0),
+    skin: (() => { try { return String(game?.skinId || rr14CurrentSkin() || "azure"); } catch (_) { return rr14CurrentSkin(); } })(),
+    time: (() => { try { const value=Number(game?.finishTime ?? game?.elapsed ?? 0); return Number.isFinite(value)?value:0; } catch (_) { return rr14FindNumeric(/elapsed|playTime|levelTime|runTime/i, 0); } })(),
     jumps: Math.max(0, Math.floor(rr14FindNumeric(/^jumps$|jumpCount|levelJumps/i, 0))),
     score: rr14FindNumeric(/^score$|fliesCaught|correctFlies/i, 0),
     matchWinnerIndex: Math.floor(rr14FindNumeric(/pvpMatchWinner|matchWinnerIndex/i, -1)),

@@ -1,0 +1,60 @@
+RIBBIT RACE FRIENDS — POLISH 15
+Version: 1.7.10
+Build: 2026.10.12-friends-polish-15
+
+LEADERBOARD
+1. Darkened alternating leaderboard rows and dropdown choices so gray rows are clearly distinct from white rows.
+2. Kept each player's rendered frog beside their name and preserved the in-game dropdown/pagination/replay design.
+
+ONLINE AND QUICKPLAY
+3. Rebuilt Online help bubbles around the exact hovered or keyboard-focused control.
+4. The bubble pointer now targets that control's center in every Online submenu, including Settings and Back.
+5. Help bubbles size to their text instead of leaving large unused white areas.
+6. Raised the Quickplay frog-name label so the selected color name is no longer clipped.
+
+PAUSE AND RESTART
+7. Moved the instruction book and Fullscreen controls inside the pause panel's lower-right corner.
+8. Normal Restart and paused R reset the frog/flies immediately and then run the normal 3-2-1 countdown.
+9. R remains pause-only outside tutorials.
+10. Tutorial Retry Scene replays the scene's Ember dialogue and deliberately does not add a countdown.
+11. Removed the extra Polish-layer Versus pause control, leaving the stock Versus pause button as the only one shown.
+
+HATS AND ACHIEVEMENTS
+12. Locked hats are no longer selectable: clicking one only plays the dud sound and leaves no black selection border or pinned requirement.
+13. Confirmed the RAINBOW POND achievement is awarded after all base frog colors are unlocked.
+14. Made hat progress initialize and evaluate on real catches and completed rounds.
+15. Added direct finish-time safeguards for Straw Hat, Bunny Ears, and Flower.
+16. Hat unlock events now populate the end-of-round unlock cards, including a rendered hat icon.
+17. Forest completing Park under 25 seconds now reliably unlocks Straw Hat.
+18. Ember's completed 100/100 progress display remains hidden once Ember is unlocked.
+
+CUSTOM FROG — SET BASE
+19. Reduced and centered the SET BASE FROG title.
+20. Extended the active custom-frog color streak across the full picker header.
+21. Moved the X into the extreme upper-right inner corner without leaving a white gap beside it.
+22. Kept the template icon below the preview streak and retained undo support for restoring the pre-template colors.
+23. Each base frog option continues to show its frog sprite and name.
+
+EMBER DIALOGUE
+24. The dark-blue text panel and Ember portrait card now have equal height with a visible Park-background gap between them.
+25. The EMBER plate sits at the far upper-left inside the text panel without covering its border.
+26. One-line dialogue begins at the same top baseline as the first line of two-line dialogue.
+
+SOLO TUTORIAL
+27. Missing the matching fly preserves the English clue throughout the retry poof; it hides only after a successful catch.
+28. The Find the Match prompt remains visible through the tongue lesson's final-catch cinematic.
+29. The skipped IR fly continues its normal hover animation after the correct fly changes the clue.
+30. Shifted the single buffered-drop starting frog five pixels left.
+31. Added Ember's playful closing invitation to face her in Versus after becoming Ribbit Ready.
+32. Tutorial scene retries replay the scene dialogue without a countdown.
+
+VERSUS TUTORIAL
+33. Retained the complete sixteen-scene Level 5 Ember tutorial, scripted demonstrations, authored poofs/fly reveals, and 30-second final match.
+
+DEPLOYMENT
+No new Cloudflare binding or code.gs file is required.
+Replace the repository-root contents, then run:
+  npm install
+  npm run check
+  npm test
+  npx wrangler deploy

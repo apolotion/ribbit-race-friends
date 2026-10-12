@@ -4007,8 +4007,11 @@
         const selected=(game.customHatId||"none")===option.id;
         const focused=game.customHatFocusIndex===option.index||game.customHatHoveredIndex===option.index;
         const unlocked=isHatUnlocked(option.id);
-        if (focused && !unlocked && option.index !== game.customHatSuppressedRequirementIndex && option.id !== game.customHatDismissedRequirementId) lockedFocusedOption=option;
-        ctx.fillStyle=focused||selected?COLORS.ink:"#9aa9ae";ctx.fillRect(option.x,option.y,option.w,option.h);
+        const lockedHovered=game.customHatHoveredIndex===option.index && !unlocked;
+        if (lockedHovered && option.index !== game.customHatSuppressedRequirementIndex && option.id !== game.customHatDismissedRequirementId) lockedFocusedOption=option;
+        // Locked hats are informational hover targets, not selectable buttons.
+        // A click never leaves a black focus border behind.
+        ctx.fillStyle=((focused&&unlocked)||selected)?COLORS.ink:"#9aa9ae";ctx.fillRect(option.x,option.y,option.w,option.h);
         ctx.fillStyle=!unlocked?"#d5dde0":selected?skin.belly:focused?"#e7f8fb":"#f7fdff";ctx.fillRect(option.x+2,option.y+2,option.w-4,option.h-4);
         ctx.fillStyle=!unlocked?"#eef3f5":selected?skin.light:"#ffffff";ctx.fillRect(option.x+5,option.y+4,option.w-10,3);
         ctx.save(); if(!unlocked) ctx.globalAlpha=0.33;

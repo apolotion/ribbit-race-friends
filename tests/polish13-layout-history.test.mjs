@@ -24,10 +24,11 @@ test("Achievements medal aligns to the achievement grid", () => {
   assert.match(ui, /startX: 34/);
 });
 
-test("Leaderboard renders player frogs and striped dropdown choices", () => {
+test("Leaderboard renders player frogs with visibly striped rows and dropdown choices", () => {
   assert.match(tutorial, /function leaderboardFrogPalette/);
   assert.match(tutorial, /drawMiniFrogSwatchFacing\(77, y \+ 4, rowPalette, \.43, 1\)/);
-  assert.match(tutorial, /index % 2 \? "#edf1f2" : "#ffffff"/);
+  assert.match(tutorial, /offset % 2 \? "#dfe5e7" : "#ffffff"/);
+  assert.match(tutorial, /index % 2 \? "#dce3e5" : "#ffffff"/);
 });
 
 test("Quickplay moves content upward and uses one selected-frog header palette", () => {
@@ -38,10 +39,11 @@ test("Quickplay moves content upward and uses one selected-frog header palette",
   assert.match(online, /ctx\.fillRect\(40,17,400,40\)/);
 });
 
-test("Pause utilities occupy the bottom-right and tutorial restart counts down", () => {
-  assert.match(ui, /helpButton: \{ x: 400, y: 198, w: 20, h: 20 \}/);
-  assert.match(tutorial, /PAUSE_FULLSCREEN_BUTTON = Object\.freeze\(\{ x: 426, y: 198, w: 20, h: 20 \}\)/);
-  assert.match(tutorial, /completedResetReason === "pause-retry"\) startResumeCountdown\(false\)/);
+test("Pause utilities occupy the panel bottom-right while tutorial retry replays dialogue without countdown", () => {
+  assert.match(ui, /helpButton: \{ x: 353, y: 198, w: 20, h: 20 \}/);
+  assert.match(tutorial, /PAUSE_FULLSCREEN_BUTTON = Object\.freeze\(\{ x: 379, y: 198, w: 20, h: 20 \}\)/);
+  assert.match(tutorial, /action: rebuildCurrentScenarioWithDialogue/);
+  assert.doesNotMatch(tutorial, /completedResetReason === "pause-retry"\) startResumeCountdown/);
   assert.match(input, /if \(game\.state === "paused"\)[\s\S]{0,900}KeyR/);
 });
 
@@ -58,6 +60,7 @@ test("Set Base is an undoable draft edit with a themed labeled picker", () => {
   assert.match(tutorial, /game\.customDraftBody = palette\.body/);
   assert.match(tutorial, /commitCustomColorHistoryTransaction\(\)/);
   assert.match(tutorial, /const draftSkin = getCustomDraftSkin\(\)/);
-  assert.match(tutorial, /headerRight = CUSTOM_BASE_CLOSE\.x - 4/);
+  assert.match(tutorial, /ctx\.fillRect\(panel\.x \+ 5, panel\.y \+ 5, panel\.w - 10, 24\)/);
+  assert.match(tutorial, /CUSTOM_BASE_CLOSE = Object\.freeze\(\{ x:355, y:67, w:18, h:18 \}\)/);
   assert.match(tutorial, /skin\.name \|\| option\.id/);
 });

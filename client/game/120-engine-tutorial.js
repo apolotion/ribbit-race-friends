@@ -4,7 +4,7 @@
 
   const SOLO_SEEN_KEY = "rrFriendsEngineTutorialSoloSeenV8";
   const PVP_SEEN_KEY = "rrFriendsEngineTutorialPvpSeenV8";
-  const TUTORIAL_BUILD = "2026.10.12-friends-polish-14";
+  const TUTORIAL_BUILD = "2026.10.12-friends-polish-15";
   const TUTORIAL_ACHIEVEMENT_ID = "tutorial-graduate";
   const TYPEWRITER_MS_PER_CHARACTER = 28;
   const DIALOGUE_TEXT_SCALE = 0.86;
@@ -22,7 +22,8 @@
     "pvpDemoDinnerSteal", "pvpDinnerSteal"
   ]);
   const FINAL_TUTORIAL_DIALOGUE = Object.freeze([
-    "You did it, tadpole! You're officially Ribbit Ready!"
+    "You did it, tadpole! You're officially Ribbit Ready!",
+    "If you really want a challenge, come face me in Versus. I'll be waiting!"
   ]);
   const EMBER_SKIN = Object.freeze({ ...FROG_SKINS.ember, hat: "none" });
   const EMBER_PORTRAIT_SOURCES = Object.freeze({
@@ -118,6 +119,7 @@
     resetArmFlies: true,
     resetPreserveFlyKeys: null,
     resetReason: "",
+    preservePromptDuringReset: false,
     frogHidden: false,
     wrongFlyCaught: false,
     wrongFlyCaughtAt: 0,
@@ -2105,7 +2107,7 @@
       case "bufferDrop":
         restoreExactParkStage();
         positionSoloFrog(
-          platforms[2].x + Math.round((platforms[2].w - frog.w) / 2),
+          platforms[2].x + Math.round((platforms[2].w - frog.w) / 2) - 5,
           CONFIG.groundY - frog.h,
           1
         );
@@ -2869,6 +2871,7 @@
       ? collectVisibleTutorialFlyKeys()
       : null;
     tutorial.resetReason = String(options.reason || "reset");
+    tutorial.preservePromptDuringReset = options.preservePrompt === true;
     tutorial.frogHidden = true;
     tutorial.goalHovered = false;
     clearHeldInput();
@@ -2886,6 +2889,19 @@
     restoreStepSequence();
     game.pauseHelpOpen = false;
     game.state = "playing";
+  }
+
+  function rebuildCurrentScenarioWithDialogue() {
+    if (tutorial.kind === "pvp") configurePvpStep(tutorial.step);
+    else configureSoloStep(tutorial.step);
+    tutorial.pendingStartPose = captureControlledPose();
+    tutorial.dynamicDialogueLines = null;
+    tutorial.dynamicPortraitKey = "";
+    tutorial.postSuccessAdvance = false;
+    tutorial.successDialogueShown = false;
+    tutorial.blockJumpUntilRelease = false;
+    restoreStepSequence();
+    openDialogue();
   }
 
   function beginScenarioEntryTransition() {
@@ -2911,6 +2927,7 @@
     const showFailure = tutorial.resetShowFailure;
     const armFlies = tutorial.resetArmFlies;
     const preserveFlyKeys = tutorial.resetPreserveFlyKeys;
+    const preservePrompt = tutorial.preservePromptDuringReset;
     const completedResetReason = tutorial.resetReason;
 
     tutorial.resetPending = false;
@@ -2921,6 +2938,7 @@
     tutorial.resetArmFlies = true;
     tutorial.resetPreserveFlyKeys = null;
     tutorial.resetReason = "";
+    tutorial.preservePromptDuringReset = false;
 
     try {
       if (action) action();
@@ -2940,6 +2958,7 @@
         armTutorialFlies({ preserveKeys: preserveFlyKeys });
       }
     }
+    if (preservePrompt) tutorial.promptHidden = false;
     tutorial.frogHidden = false;
     tutorial.pvpFrogsHidden = false;
     freezeControlledEntity();
@@ -2966,7 +2985,8 @@
     tutorial.enteredAt = performance.now();
     game.state = "playing";
     game.pauseHelpOpen = false;
-    if (completedResetReason === "pause-retry") startResumeCountdown(false);
+    // Tutorial retries replay Ember's scene dialogue and return without a
+    // countdown. Ordinary game restarts still use the normal 3-2-1 flow.
   }
 
   function failAttempt(message) {
@@ -3305,14 +3325,17 @@
 
   function retryThreeCatchAttempt() {
     const missedAttemptIndex = tutorial.sceneAttemptIndex;
+    tutorial.promptHidden = false;
     beginPoofTransition({
       reason: "retry-missed-fly",
       message: "CATCH THIS MATCHING FLY IN ONE JUMP",
       showFailure: true,
       preserveExistingFlies: true,
+      preservePrompt: true,
       action: () => {
-        setupThreeCatchAttempt(missedAttemptIndex, false);
+        setupThreeCatchAttempt(missedAttemptIndex, true);
         resetAttemptForNextJump();
+        tutorial.promptHidden = false;
       }
     });
   }
@@ -3985,12 +4008,12 @@
     // cyan, and white pixel framing. Ember's complete square portrait sits in
     // its own attached card, with the nameplate beneath the picture instead of
     // covering any part of it.
-    const textPanel = { x: 90, y: 6, w: 250, h: 50 };
+    const textPanel = { x: 90, y: 6, w: 242, h: 54 };
     const portraitPanel = { x: 338, y: 6, w: 54, h: 54 };
-    const namePlate = { x:textPanel.x + 8, y:textPanel.y + 7, w:48, h:10 };
+    const namePlate = { x:textPanel.x + 7, y:textPanel.y + 7, w:48, h:10 };
     const textArea = {
       x: textPanel.x + 11,
-      y: textPanel.y + 21,
+      y: textPanel.y + 22,
       w: textPanel.w - 22,
       h: textPanel.h - 27
     };
@@ -4007,7 +4030,9 @@
     const textScale = textLayout.scale;
     const lineHeight = Math.max(7, Math.ceil(8 * textScale + 2));
     const totalTextHeight = wrappedLines.length * lineHeight - 2;
-    const textTop = Math.round(textArea.y + Math.max(0, (textArea.h - totalTextHeight) / 2));
+    // One-line and two-line messages always begin on the same top baseline.
+    // This avoids making the reader's eyes jump vertically between lines.
+    const textTop = Math.round(textArea.y);
 
     ctx.save();
     ctx.globalAlpha = .995;
@@ -4516,7 +4541,14 @@
   const originalDrawVocabularyPromptForTutorial = drawVocabularyPrompt;
   drawVocabularyPrompt = function(...args) {
     const visibleDuringExplanation = tutorialPromptVisibleDuringDialogue();
-    if (tutorial.active && ((!tutorialPlayerHasControl() && !visibleDuringExplanation) || tutorial.promptHidden)) {
+    const keepDuringMissReset = Boolean(tutorial.resetPending && tutorial.preservePromptDuringReset);
+    const keepDuringTongueCinematic = Boolean(
+      tutorialStep()?.setup === "rangeCatch" &&
+      (game.soloCriticalCatchActive || tongue.active || tutorial.rangeTongueCaught)
+    );
+    if (tutorial.active && (
+      ((!tutorialPlayerHasControl() && !visibleDuringExplanation && !keepDuringMissReset && !keepDuringTongueCinematic) || tutorial.promptHidden)
+    )) {
       drawBlankTutorialVocabularyPrompt();
       return;
     }
@@ -4690,7 +4722,7 @@
       tutorial.rangeTongueCaught = true;
       tutorial.rangeTongueCaughtAt = performance.now();
       game.spawnQueue.length = 0;
-      game.targetVocabIndex = null;
+      tutorial.promptHidden = false;
     }
 
     if (activeSetup === "wrongFly") {
@@ -4741,9 +4773,9 @@
     if (tutorial.active && tutorial.kind === "solo") {
       for (const currentFly of flies) {
         if (!currentFly?.tutorialHoldAfterSpit || currentFly.state !== "active") continue;
-        currentFly.phase = 0;
-        currentFly.x = currentFly.baseX;
-        currentFly.y = currentFly.baseY;
+        // Keep rejected tutorial flies alive, but preserve their ordinary hover
+        // animation so they never look frozen or already collected.
+        currentFly.tutorialArmed = true;
       }
     }
     return result;
@@ -4864,10 +4896,11 @@
       game.pauseChargeSnapshot = null;
       game.resumeChargeAfterCountdown = false;
       beginPoofTransition({
-        reason: "pause-retry",
+        reason: "tutorial-retry",
         showFailure: false,
-        preserveExistingFlies: true,
-        action: rebuildCurrentScenarioForRetry
+        preserveExistingFlies: false,
+        armFlies: false,
+        action: rebuildCurrentScenarioWithDialogue
       });
       return;
     }
@@ -5134,7 +5167,13 @@
     get setup() { return tutorialStep()?.setup || ""; },
     retryScene() {
       if (!tutorial.active || tutorial.resetPending) return false;
-      beginPoofTransition({ reason:"hotkey-retry", showFailure:false, preserveExistingFlies:false, action:rebuildCurrentScenarioForRetry });
+      beginPoofTransition({
+        reason:"hotkey-retry",
+        showFailure:false,
+        preserveExistingFlies:false,
+        armFlies:false,
+        action:rebuildCurrentScenarioWithDialogue
+      });
       return true;
     },
     get build() { return TUTORIAL_BUILD; },
@@ -5188,7 +5227,7 @@
   const countedHatFlyObjects = new WeakSet();
   const LEADERBOARD_BUTTON = Object.freeze({ x: 34, y: 229, w: 28, h: 28 });
   const CUSTOM_BASE_BUTTON = Object.freeze({ x: 159, y: 67, w: 25, h: 22 });
-  const PAUSE_FULLSCREEN_BUTTON = Object.freeze({ x: 426, y: 198, w: 20, h: 20 });
+  const PAUSE_FULLSCREEN_BUTTON = Object.freeze({ x: 379, y: 198, w: 20, h: 20 });
   const MAIN_PROFILE_BUTTON = Object.freeze({ x: 47, y: 211, w: 24, h: 24 });
   const MAIN_DEVICE_BUTTON = Object.freeze({ x: 74, y: 211, w: 24, h: 24 });
 
@@ -5689,7 +5728,7 @@
     } else {
       rows.forEach((row, offset) => {
         const y = table.y + 20 + offset * 16;
-        ctx.fillStyle = row.isCurrent ? "#b8f5dc" : (offset % 2 ? "#eef2f3" : "#ffffff");
+        ctx.fillStyle = row.isCurrent ? "#b8f5dc" : (offset % 2 ? "#dfe5e7" : "#ffffff");
         ctx.fillRect(table.x + 2, y, table.w - 4, 16);
         ctx.fillStyle = "#d2dde0"; ctx.fillRect(table.x + 2, y + 15, table.w - 4, 1);
         drawBitmapText(String(row.rank || "—"), columns.rank, y + 5, .50, "center", "#26363d");
@@ -5733,7 +5772,7 @@
       LEADERBOARD_METRICS.forEach((entry, index) => {
         const rect = { x, y:y + index * h, w, h };
         ctx.fillStyle = COLORS.ink; ctx.fillRect(rect.x, rect.y, rect.w, rect.h);
-        ctx.fillStyle = entry.id === polish.leaderboardMetric ? skin.belly : (index % 2 ? "#edf1f2" : "#ffffff"); ctx.fillRect(rect.x + 2, rect.y + 1, rect.w - 4, rect.h - 2);
+        ctx.fillStyle = entry.id === polish.leaderboardMetric ? skin.belly : (index % 2 ? "#dce3e5" : "#ffffff"); ctx.fillRect(rect.x + 2, rect.y + 1, rect.w - 4, rect.h - 2);
         drawBitmapText(entry.label, rect.x + 7, rect.y + 5, .43, "left", "#26363d");
         polish.leaderboardHitRects[`metric:${entry.id}`] = rect;
       });
@@ -5742,7 +5781,7 @@
       LEADERBOARD_LEVELS.forEach((entry, index) => {
         const rect = { x, y:y + index * h, w, h };
         ctx.fillStyle = COLORS.ink; ctx.fillRect(rect.x, rect.y, rect.w, rect.h);
-        ctx.fillStyle = entry === polish.leaderboardLevel ? skin.belly : (index % 2 ? "#edf1f2" : "#ffffff"); ctx.fillRect(rect.x + 2, rect.y + 1, rect.w - 4, rect.h - 2);
+        ctx.fillStyle = entry === polish.leaderboardLevel ? skin.belly : (index % 2 ? "#dce3e5" : "#ffffff"); ctx.fillRect(rect.x + 2, rect.y + 1, rect.w - 4, rect.h - 2);
         drawBitmapText(entry === "any" ? "ANY LEVEL" : entry.toUpperCase(), rect.x + 7, rect.y + 5, .43, "left", "#26363d");
         polish.leaderboardHitRects[`level:${entry}`] = rect;
       });
@@ -5851,6 +5890,21 @@
     } catch (_) {}
   }
 
+  function registerRoundHatUnlock(hatId) {
+    const id = String(hatId || "").trim();
+    if (!id || id === "none") return false;
+    if (!Array.isArray(game.roundUnlockedHatIds)) game.roundUnlockedHatIds = [];
+    if (!game.roundUnlockedHatIds.includes(id) && (game.state === "playing" || game.state === "won")) {
+      game.roundUnlockedHatIds.push(id);
+      return true;
+    }
+    return false;
+  }
+
+  window.addEventListener("ribbit-hat-unlocked", (event) => {
+    registerRoundHatUnlock(event?.detail?.id);
+  });
+
   function unlockHatFromLiveProgress(hatId, displayName) {
     let unlocked = [];
     try {
@@ -5864,6 +5918,8 @@
       const cloud = typeof RibbitCloud !== "undefined" ? RibbitCloud : window.RibbitCloud;
       cloud?.queueSave?.({ ribbitRaceUnlockedHatsV2: unlocked });
     } catch (_) {}
+    registerRoundHatUnlock(hatId);
+    try { window.dispatchEvent(new CustomEvent("ribbit-hat-unlocked", { detail:{ id:hatId, at:Date.now() } })); } catch (_) {}
     try { queueAchievementToast?.({ type:"generic", text:`${displayName} UNLOCKED` }); } catch (_) {}
     try { tone(784, .08, .016, 100); tone(1047, .10, .012, 115, .06); } catch (_) {}
     return true;
@@ -5898,6 +5954,33 @@
     try { if (game.customHatOpen) drawScene(); } catch (_) {}
     return progress.bySkin[skinId];
   }
+
+  // Evaluate time-based hat challenges immediately at the real win boundary.
+  // The page-side controller still owns the full catalog and persistent counters;
+  // these direct checks guarantee that single-run hats cannot miss a qualifying
+  // finish because a state-change monitor sampled the next screen late.
+  const originalCompleteWinForHatChallenges = completeWin;
+  completeWin = function(...args) {
+    const levelId = String(game.selectedLevelId || "park").toLowerCase();
+    const skinId = String(game.skinId || "azure").toLowerCase();
+    const result = originalCompleteWinForHatChallenges.apply(this, args);
+    const training = Boolean(game.tutorialActive || window.RibbitRaceTutorialEngine?.active || window.RibbitRaceTutorialEngine?.completeScreen);
+    if (!training) {
+      const seconds = Number(game.finishTime ?? (typeof getTimerTime === "function" ? getTimerTime() : game.elapsed));
+      const snapshot = { level:levelId, skin:skinId, time:Number.isFinite(seconds) ? seconds : 0 };
+      try { window.RibbitHatProgress?.evaluate?.(snapshot); } catch (_) {}
+      if (snapshot.level === "park" && snapshot.skin === "forest" && snapshot.time > 0 && snapshot.time < 25) {
+        unlockHatFromLiveProgress("straw-hat", "STRAW HAT");
+      }
+      if (snapshot.level === "pond" && snapshot.skin === "silver" && snapshot.time > 0 && snapshot.time < 30) {
+        unlockHatFromLiveProgress("bunny-ears", "BUNNY EARS");
+      }
+      if (snapshot.level === "garden" && snapshot.skin === "blossom" && snapshot.time > 0 && snapshot.time < 30) {
+        unlockHatFromLiveProgress("flower", "FLOWER");
+      }
+    }
+    return result;
+  };
 
   function shouldCountHatCatch(targetFly) {
     if (!targetFly || typeof targetFly !== "object") return false;
@@ -5980,7 +6063,7 @@
   }
 
   const CUSTOM_BASE_PANEL = Object.freeze({ x:104, y:64, w:272, h:132 });
-  const CUSTOM_BASE_CLOSE = Object.freeze({ x:353, y:67, w:18, h:18 });
+  const CUSTOM_BASE_CLOSE = Object.freeze({ x:355, y:67, w:18, h:18 });
 
   function getCustomBaseOptionRects() {
     const ids = getBaseSkinIds();
@@ -6009,13 +6092,14 @@
     if (!polish.customBaseOpen) return;
 
     const panel = CUSTOM_BASE_PANEL;
-    const headerRight = CUSTOM_BASE_CLOSE.x - 4;
     ctx.fillStyle = "rgba(25,43,52,.34)"; ctx.fillRect(panel.x + 4, panel.y + 4, panel.w, panel.h);
     ctx.fillStyle = COLORS.ink; ctx.fillRect(panel.x, panel.y, panel.w, panel.h);
     ctx.fillStyle = "#f7fdff"; ctx.fillRect(panel.x + 3, panel.y + 3, panel.w - 6, panel.h - 6);
-    ctx.fillStyle = draftSkin.mid; ctx.fillRect(panel.x + 5, panel.y + 5, headerRight - panel.x - 8, 24);
-    ctx.fillStyle = draftSkin.light; ctx.fillRect(panel.x + 9, panel.y + 8, headerRight - panel.x - 16, 3);
-    drawBitmapText("SET BASE FROG", (panel.x + headerRight) / 2, panel.y + 10, .62, "center", COLORS.white, draftSkin.dark);
+    // Let the selected custom palette streak span the full header. The close
+    // control sits on top at the extreme corner instead of leaving a white gap.
+    ctx.fillStyle = draftSkin.mid; ctx.fillRect(panel.x + 5, panel.y + 5, panel.w - 10, 24);
+    ctx.fillStyle = draftSkin.light; ctx.fillRect(panel.x + 9, panel.y + 8, panel.w - 18, 3);
+    drawBitmapText("SET BASE FROG", panel.x + panel.w / 2, panel.y + 11, .52, "center", COLORS.white, draftSkin.dark);
 
     ctx.fillStyle = COLORS.ink; ctx.fillRect(CUSTOM_BASE_CLOSE.x, CUSTOM_BASE_CLOSE.y, CUSTOM_BASE_CLOSE.w, CUSTOM_BASE_CLOSE.h);
     ctx.fillStyle = "#f7fdff"; ctx.fillRect(CUSTOM_BASE_CLOSE.x + 2, CUSTOM_BASE_CLOSE.y + 2, CUSTOM_BASE_CLOSE.w - 4, CUSTOM_BASE_CLOSE.h - 4);
@@ -6312,7 +6396,8 @@
     drawCustomBaseButton();
     drawPauseFullscreenButton();
     drawWorldRecordNotice();
-    drawPvpPauseButtonPolish8();
+    // The stock Versus HUD already owns the single pause button.
+    // Do not draw the obsolete second II button here.
     return result;
   };
 
@@ -6495,9 +6580,6 @@
         event.preventDefault(); event.stopImmediatePropagation(); closeLeaderboard();
       }
       return;
-    }
-    if (event.code === "KeyR" && game.state === "paused") {
-      event.preventDefault(); event.stopImmediatePropagation(); immediateResetToStart();
     }
   }, { capture:true, passive:false });
 

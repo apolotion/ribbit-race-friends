@@ -200,6 +200,7 @@
     function getVictoryNoticeKey(card) {
       if (!card) return "";
       if (card.type === "frog") return `frog:${card.frogId || ""}`;
+      if (card.type === "hat") return `hat:${card.hatId || ""}`;
       if (card.type === "achievement") return `achievement:${card.achievementId || ""}`;
       if (card.type === "level") return `level:${card.levelId || ""}`;
       if (card.type === "leaderboard") return `leaderboard:${card.record?.scope || "school"}:${card.record?.metric || ""}:${card.record?.level || "all"}:${card.record?.score || ""}`;
@@ -209,6 +210,7 @@
     function getVictoryNoticeRequirementLines(card) {
       if (!card) return [];
       if (card.type === "frog") return FROG_SKIN_ACHIEVEMENTS[card.frogId]?.lines || [];
+      if (card.type === "hat") return getHatRequirementLines(card.hatId) || [];
       if (card.type === "achievement") return getAchievementDefinition(card.achievementId)?.lines || [];
       if (card.type === "level") return getAchievementDefinition(`level-${card.levelId}`)?.lines || [];
       if (card.type === "custom") return getAchievementDefinition("custom-colors")?.lines || [];
@@ -220,6 +222,11 @@
       const items = [];
       for (const frogId of game.roundUnlockedSkinIds.filter((id) => FROG_SKINS[id])) {
         items.push({ type: "frog", frogId, title: `${FROG_SKINS[frogId].name} FROG UNLOCKED`, subtitle: "CLICK TO EQUIP", palette: FROG_SKINS[frogId] });
+      }
+      for (const hatId of (game.roundUnlockedHatIds || [])) {
+        const hat = CUSTOM_HAT_OPTIONS.find((item) => item.id === hatId);
+        if (!hat) continue;
+        items.push({ type: "hat", hatId, title: `${hat.name} UNLOCKED`, subtitle: "HAT UNLOCKED", palette: getSelectedSkin() });
       }
       if (game.roundCustomColorUnlocked) {
         items.push({ type: "custom", title: "CUSTOM COLORS UNLOCKED", subtitle: "CLICK TO CREATE", palette: getCustomFrogSkin() });
@@ -381,6 +388,15 @@
           );
         } else if (card.type === "achievement") {
           drawAchievementIcon(card.icon, card.x + 12, card.y + Math.max(6, (card.h - 17) / 2), true, compact ? 0.78 : 1.0);
+        } else if (card.type === "hat") {
+          drawPixelFrogHat(
+            card.x + Math.round(previewW / 2),
+            card.y + Math.round(card.h / 2) + (compact ? 2 : 3),
+            card.hatId,
+            compact ? 0.78 : 1.02,
+            1,
+            { ...getSelectedSkin(), previewCenterHat:true }
+          );
         } else if (card.type === "leaderboard") {
           drawPixelTrophy(card.x + Math.round(previewW / 2), card.y + Math.max(6, (card.h - 20) / 2), false, compact ? 0.72 : 0.92);
         } else {
@@ -1489,7 +1505,18 @@
         const closeRect = { x:386, y:39, w:20, h:20 };
         const pageButtons = getCustomHatPageButtons();
         const chosen = getCustomHatOptionRects().find((option) => pointInsideRect(point, option));
-        if (chosen) { game.customHatFocusIndex = chosen.index; applyHatSelectorChoice(chosen.id, true); }
+        if (chosen) {
+          if (!isHatUnlocked(chosen.id)) {
+            game.customHatSuppressedRequirementIndex = chosen.index;
+            game.customHatDismissedRequirementId = chosen.id;
+            game.customHatHoveredIndex = null;
+            game.customHatFocusIndex = Math.max(0, CUSTOM_HAT_OPTIONS.findIndex((hat) => hat.id === (game.customHatId || "none")));
+            playLockedSkinSound();
+          } else {
+            game.customHatFocusIndex = chosen.index;
+            applyHatSelectorChoice(chosen.id, true);
+          }
+        }
         else if (pointInsideRect(point, pageButtons.removeAll)) { removeAllFrogHats(true); game.customHatRemoveAllHovered = true; }
         else if (pointInsideRect(point, pageButtons.search) || pointInsideRect(point, game.customHatSearchInputRect || {x:0,y:0,w:0,h:0})) { openCustomHatSearch(); }
         else if (pointInsideRect(point, pageButtons.prev)) { setCustomHatPage(game.customHatPage - 1, true); tone(390,0.04,0.009,-25); }

@@ -2121,6 +2121,7 @@ function startRibbitRaceGame() {
       bonusFlyCaught: false,
       bonusFlyCount: 0,
       roundUnlockedSkinIds: [],
+      roundUnlockedHatIds: [],
       roundUnlockedLevelId: null,
       roundUnlockedAchievementIds: [],
       roundUnlockedPvpAchievementIds: [],
@@ -3071,7 +3072,7 @@ function startRibbitRaceGame() {
         ctx.fillStyle=palette.light||'#5ce5e8';ctx.fillRect(r.x+7,r.y+6,r.w-14,3);
         ctx.save();ctx.beginPath();ctx.rect(r.x+4,r.y+10,r.w-8,r.h-13);ctx.clip();
         drawMiniFrogSwatchFacing(W/2,r.y+22,palette,2.15,1);ctx.restore();
-        fitText(palette.name||state.localSkinId,W/2,r.y+65,r.w-14,.85,palette.dark);
+        fitText(palette.name||state.localSkinId,W/2,r.y+58,r.w-14,.85,palette.dark);
         if(selecting){drawPagerArrowIcon(QUICK_UI.previous,-1,'#48555a');drawPagerArrowIcon(QUICK_UI.next,1,'#48555a');}
         if(selecting){
           fitText('60 SECOND ENDLESS - RANDOM STAGES - BEST OF 3',W/2,166,376,.62);
@@ -3661,33 +3662,54 @@ function startRibbitRaceGame() {
         drawOnlineAction({...rect,id:match?.id,label:text,icon,stripe:match?.stripe||palette?.light||'#5ce5e8',subLabel:match?.subLabel||''},selected||state.focus===match?.id);
       }
       function drawOnlineTooltip(){
-              if(!isMenuVisible()||state.screen==='quickConnecting')return;
-              let b=onlineButtons().find(v=>v.id===(state.keyboardFocus?state.focus:(state.hoverId||state.focus)));
-              if(state.screen==='settings'){
-                const tips=['Choose First to 5, First to 10, or Endless.','Choose the round timer.','Choose how many rounds make a match.','Local-mode resume countdown. Online play never pauses.','Return to the room without showing settings to your opponent.'];
-                const index=Math.max(0,Math.min(4,game.pvpSettingsFocusIndex||0));
-                b={x:190,w:100,tip:tips[index]};
-              }
-              if(!b?.tip)return;
-              let r;
-              if(['entry','join'].includes(state.screen))r={x:52,y:75,w:376,h:19};
-              else if(['room','settings','spectateList'].includes(state.screen))r={x:52,y:60,w:376,h:19};
-              else if(['quickSelect','quickQueue'].includes(state.screen))r={x:40,y:120,w:101,h:52};
-              else if(state.screen==='profile')r={x:65,y:86,w:350,h:18};
-              else if(state.screen==='battleTags')r={x:65,y:207,w:350,h:20};
-              if(!r)return;
-              const narrow=r.w<150,scale=narrow?.57:.58,lines=[];
-              if(narrow){let line='';for(const word of b.tip.toUpperCase().split(/\s+/)){const next=line?line+' '+word:word;if(measureBitmapText(next,scale)>r.w-12&&line){lines.push(line);line=word;}else line=next;}if(line)lines.push(line);}
-              else lines.push(b.tip);
-              ctx.save();ctx.fillStyle='rgba(25,43,52,.18)';ctx.fillRect(r.x+2,r.y+2,r.w,r.h);
-              ctx.fillStyle=COLORS.ink;ctx.fillRect(r.x,r.y,r.w,r.h);ctx.fillStyle='#ffffff';ctx.fillRect(r.x+2,r.y+2,r.w-4,r.h-4);
-              const top=r.y+(r.h-(lines.length*7*scale+(lines.length-1)*3))/2;
-              lines.slice(0,5).forEach((line,i)=>fitText(line,r.x+r.w/2,top+i*(7*scale+3),r.w-12,scale,'#48555a'));
-              ctx.fillStyle=COLORS.ink;
-              if(narrow){ctx.fillRect(r.x+r.w,r.y+22,4,7);ctx.fillRect(r.x+r.w+4,r.y+24,3,3);}
-              else{const px=clamp(b.x+b.w/2,r.x+10,r.x+r.w-10);ctx.fillRect(px-3,r.y+r.h,6,3);ctx.fillRect(px-1,r.y+r.h+3,2,2);}
-              ctx.restore();
-            }
+        if(!isMenuVisible()||state.screen==='quickConnecting')return;
+        let b=onlineButtons().find(v=>v.id===(state.keyboardFocus?state.focus:(state.hoverId||state.focus)));
+        if(state.screen==='settings'){
+          const tips=['Choose First to 5, First to 10, or Endless.','Choose the round timer.','Choose how many rounds make a match.','Local-mode resume countdown. Online play never pauses.','Return to the room without showing settings to your opponent.'];
+          const index=Math.max(0,Math.min(4,game.pvpSettingsFocusIndex||0));
+          const rect=index<4?PVP_SETTINGS_UI.rows[index]:PVP_SETTINGS_UI.backButton;
+          b={...rect,tip:tips[index]};
+        }
+        if(!b?.tip||!Number.isFinite(b.x)||!Number.isFinite(b.y)||!Number.isFinite(b.w)||!Number.isFinite(b.h))return;
+
+        const scale=.47;
+        const maxTextWidth=Math.min(220,Math.max(92,b.w+26));
+        const words=String(b.tip).toUpperCase().split(/\s+/).filter(Boolean);
+        const lines=[];let line='';
+        for(const word of words){
+          const next=line?`${line} ${word}`:word;
+          if(line&&measureBitmapText(next,scale)>maxTextWidth-16){lines.push(line);line=word;}
+          else line=next;
+        }
+        if(line)lines.push(line);
+        while(lines.length>3){lines[lines.length-2]+=' '+lines.pop();}
+        const widest=Math.max(...lines.map(text=>measureBitmapText(text,scale)),54);
+        const width=Math.ceil(Math.min(230,widest+16));
+        const lineStep=Math.ceil(7*scale+3);
+        const height=Math.max(20,10+lines.length*lineStep);
+        const centerX=b.x+b.w/2;
+        const x=clamp(Math.round(centerX-width/2),5,W-width-5);
+        let y=Math.round(b.y-height-8);
+        let pointerBelow=true;
+        if(y<4){y=Math.min(H-height-5,Math.round(b.y+b.h+8));pointerBelow=false;}
+        const pointerX=clamp(Math.round(centerX),x+9,x+width-9);
+
+        ctx.save();
+        ctx.fillStyle='rgba(25,43,52,.24)';ctx.fillRect(x+2,y+2,width,height);
+        ctx.fillStyle=COLORS.ink;ctx.fillRect(x,y,width,height);
+        ctx.fillStyle='#ffffff';ctx.fillRect(x+2,y+2,width-4,height-4);
+        const palette=state.localAppearance||appearanceFor(state.localSkinId)||PVP_NEUTRAL_PALETTE;
+        ctx.fillStyle=palette.light||'#5ce5e8';ctx.fillRect(x+5,y+4,width-10,2);
+        const top=y+Math.round((height-(lines.length*lineStep-3))/2);
+        lines.forEach((text,i)=>fitText(text,x+width/2,top+i*lineStep,width-12,scale,'#26363d'));
+        ctx.fillStyle=COLORS.ink;
+        if(pointerBelow){
+          ctx.fillRect(pointerX-4,y+height,9,2);ctx.fillRect(pointerX-3,y+height+2,7,2);ctx.fillRect(pointerX-2,y+height+4,5,2);ctx.fillRect(pointerX-1,y+height+6,3,1);
+        }else{
+          ctx.fillRect(pointerX-4,y-2,9,2);ctx.fillRect(pointerX-3,y-4,7,2);ctx.fillRect(pointerX-2,y-6,5,2);ctx.fillRect(pointerX-1,y-7,3,1);
+        }
+        ctx.restore();
+      }
       function drawOnlineProfile(){
         drawPanel('CUSTOMIZER');fitText('YOUR ONLINE DISPLAY NAME',240,67,375,.9,'#07516a');
         const r=PROFILE_UI.name;ctx.fillStyle=state.focus==='name'?COLORS.ink:'#9aa9ae';ctx.fillRect(r.x,r.y,r.w,r.h);ctx.fillStyle='#fff';ctx.fillRect(r.x+3,r.y+3,r.w-6,r.h-6);
@@ -4832,7 +4854,7 @@ function startRibbitRaceGame() {
       continueButton: { x: 105, y: 163, w: 130, h: 20 },
       restartButton: { x: 245, y: 163, w: 130, h: 20 },
       homeButton: { x: 176, y: 190, w: 128, h: 20 },
-      helpButton: { x: 400, y: 198, w: 20, h: 20 },
+      helpButton: { x: 353, y: 198, w: 20, h: 20 },
       helpCloseButton: { x: 366, y: 73, w: 19, h: 19 }
     });
 
@@ -7554,6 +7576,7 @@ function startRibbitRaceGame() {
       game.bonusFlyCaught = false;
       game.bonusFlyCount = 0;
       game.roundUnlockedSkinIds = [];
+      game.roundUnlockedHatIds = [];
       game.roundUnlockedLevelId = null;
       game.roundUnlockedAchievementIds = [];
       game.roundLeaderboardRecordNotices = [];
@@ -16871,8 +16894,11 @@ function startRibbitRaceGame() {
         const selected=(game.customHatId||"none")===option.id;
         const focused=game.customHatFocusIndex===option.index||game.customHatHoveredIndex===option.index;
         const unlocked=isHatUnlocked(option.id);
-        if (focused && !unlocked && option.index !== game.customHatSuppressedRequirementIndex && option.id !== game.customHatDismissedRequirementId) lockedFocusedOption=option;
-        ctx.fillStyle=focused||selected?COLORS.ink:"#9aa9ae";ctx.fillRect(option.x,option.y,option.w,option.h);
+        const lockedHovered=game.customHatHoveredIndex===option.index && !unlocked;
+        if (lockedHovered && option.index !== game.customHatSuppressedRequirementIndex && option.id !== game.customHatDismissedRequirementId) lockedFocusedOption=option;
+        // Locked hats are informational hover targets, not selectable buttons.
+        // A click never leaves a black focus border behind.
+        ctx.fillStyle=((focused&&unlocked)||selected)?COLORS.ink:"#9aa9ae";ctx.fillRect(option.x,option.y,option.w,option.h);
         ctx.fillStyle=!unlocked?"#d5dde0":selected?skin.belly:focused?"#e7f8fb":"#f7fdff";ctx.fillRect(option.x+2,option.y+2,option.w-4,option.h-4);
         ctx.fillStyle=!unlocked?"#eef3f5":selected?skin.light:"#ffffff";ctx.fillRect(option.x+5,option.y+4,option.w-10,3);
         ctx.save(); if(!unlocked) ctx.globalAlpha=0.33;
@@ -19062,6 +19088,7 @@ function startRibbitRaceGame() {
     function getVictoryNoticeKey(card) {
       if (!card) return "";
       if (card.type === "frog") return `frog:${card.frogId || ""}`;
+      if (card.type === "hat") return `hat:${card.hatId || ""}`;
       if (card.type === "achievement") return `achievement:${card.achievementId || ""}`;
       if (card.type === "level") return `level:${card.levelId || ""}`;
       if (card.type === "leaderboard") return `leaderboard:${card.record?.scope || "school"}:${card.record?.metric || ""}:${card.record?.level || "all"}:${card.record?.score || ""}`;
@@ -19071,6 +19098,7 @@ function startRibbitRaceGame() {
     function getVictoryNoticeRequirementLines(card) {
       if (!card) return [];
       if (card.type === "frog") return FROG_SKIN_ACHIEVEMENTS[card.frogId]?.lines || [];
+      if (card.type === "hat") return getHatRequirementLines(card.hatId) || [];
       if (card.type === "achievement") return getAchievementDefinition(card.achievementId)?.lines || [];
       if (card.type === "level") return getAchievementDefinition(`level-${card.levelId}`)?.lines || [];
       if (card.type === "custom") return getAchievementDefinition("custom-colors")?.lines || [];
@@ -19082,6 +19110,11 @@ function startRibbitRaceGame() {
       const items = [];
       for (const frogId of game.roundUnlockedSkinIds.filter((id) => FROG_SKINS[id])) {
         items.push({ type: "frog", frogId, title: `${FROG_SKINS[frogId].name} FROG UNLOCKED`, subtitle: "CLICK TO EQUIP", palette: FROG_SKINS[frogId] });
+      }
+      for (const hatId of (game.roundUnlockedHatIds || [])) {
+        const hat = CUSTOM_HAT_OPTIONS.find((item) => item.id === hatId);
+        if (!hat) continue;
+        items.push({ type: "hat", hatId, title: `${hat.name} UNLOCKED`, subtitle: "HAT UNLOCKED", palette: getSelectedSkin() });
       }
       if (game.roundCustomColorUnlocked) {
         items.push({ type: "custom", title: "CUSTOM COLORS UNLOCKED", subtitle: "CLICK TO CREATE", palette: getCustomFrogSkin() });
@@ -19243,6 +19276,15 @@ function startRibbitRaceGame() {
           );
         } else if (card.type === "achievement") {
           drawAchievementIcon(card.icon, card.x + 12, card.y + Math.max(6, (card.h - 17) / 2), true, compact ? 0.78 : 1.0);
+        } else if (card.type === "hat") {
+          drawPixelFrogHat(
+            card.x + Math.round(previewW / 2),
+            card.y + Math.round(card.h / 2) + (compact ? 2 : 3),
+            card.hatId,
+            compact ? 0.78 : 1.02,
+            1,
+            { ...getSelectedSkin(), previewCenterHat:true }
+          );
         } else if (card.type === "leaderboard") {
           drawPixelTrophy(card.x + Math.round(previewW / 2), card.y + Math.max(6, (card.h - 20) / 2), false, compact ? 0.72 : 0.92);
         } else {
@@ -20351,7 +20393,18 @@ function startRibbitRaceGame() {
         const closeRect = { x:386, y:39, w:20, h:20 };
         const pageButtons = getCustomHatPageButtons();
         const chosen = getCustomHatOptionRects().find((option) => pointInsideRect(point, option));
-        if (chosen) { game.customHatFocusIndex = chosen.index; applyHatSelectorChoice(chosen.id, true); }
+        if (chosen) {
+          if (!isHatUnlocked(chosen.id)) {
+            game.customHatSuppressedRequirementIndex = chosen.index;
+            game.customHatDismissedRequirementId = chosen.id;
+            game.customHatHoveredIndex = null;
+            game.customHatFocusIndex = Math.max(0, CUSTOM_HAT_OPTIONS.findIndex((hat) => hat.id === (game.customHatId || "none")));
+            playLockedSkinSound();
+          } else {
+            game.customHatFocusIndex = chosen.index;
+            applyHatSelectorChoice(chosen.id, true);
+          }
+        }
         else if (pointInsideRect(point, pageButtons.removeAll)) { removeAllFrogHats(true); game.customHatRemoveAllHovered = true; }
         else if (pointInsideRect(point, pageButtons.search) || pointInsideRect(point, game.customHatSearchInputRect || {x:0,y:0,w:0,h:0})) { openCustomHatSearch(); }
         else if (pointInsideRect(point, pageButtons.prev)) { setCustomHatPage(game.customHatPage - 1, true); tone(390,0.04,0.009,-25); }
@@ -21072,7 +21125,7 @@ function startRibbitRaceGame() {
 // input support hooks, palette operations, post-hat progression, and replay state.
 
 const RIBBIT_FRIENDS_DISPLAY_VERSION = "1.7.10";
-const RIBBIT_FRIENDS_BUILD = "2026.10.12-friends-polish-14";
+const RIBBIT_FRIENDS_BUILD = "2026.10.12-friends-polish-15";
 
 function rr14Number(value, fallback = 0) {
   const parsed = Number(value);
@@ -21169,8 +21222,8 @@ function rr14Snapshot() {
   return {
     state,
     level: rr14CurrentLevel(),
-    skin: rr14CurrentSkin(),
-    time: rr14FindNumeric(/elapsed|playTime|levelTime|runTime/i, 0),
+    skin: (() => { try { return String(game?.skinId || rr14CurrentSkin() || "azure"); } catch (_) { return rr14CurrentSkin(); } })(),
+    time: (() => { try { const value=Number(game?.finishTime ?? game?.elapsed ?? 0); return Number.isFinite(value)?value:0; } catch (_) { return rr14FindNumeric(/elapsed|playTime|levelTime|runTime/i, 0); } })(),
     jumps: Math.max(0, Math.floor(rr14FindNumeric(/^jumps$|jumpCount|levelJumps/i, 0))),
     score: rr14FindNumeric(/^score$|fliesCaught|correctFlies/i, 0),
     matchWinnerIndex: Math.floor(rr14FindNumeric(/pvpMatchWinner|matchWinnerIndex/i, -1)),
@@ -21594,7 +21647,7 @@ window.RibbitRaceMobileDiagnostics = () => ({
  */
 (() => {
   "use strict";
-  const BUILD = "2026.10.12-friends-polish-14";
+  const BUILD = "2026.10.12-friends-polish-15";
   const RR_V160_CANDIDATES = {"catchFly":["attemptFlyCatch","attemptPvpFlyCatch","catchSandboxFly","getPvpImminentCatchFly","recordFlyEaten","scheduleFlyReplacementFromCatch"],"jumpSound":["playJumpSound"],"beep":["playCountdownGoSound","playCountdownSound"],"replayUpload":["saveRecordDate"],"restart":["resetGame","resetPvpGame","resetPvpPlayer","resetRoundLifecycle","resetRoundNetwork","restartCurrentLevel"],"drop":[],"render":["drawPvpScene","drawScene"],"worldRecord":[],"fullscreen":["getFullscreenElement","hideFullscreenFallback","showFullscreenFallback","syncFullscreenButton","toggleRibbitFullscreen"],"onlineSubmit":[],"leaderboard":["isSoloEndlessLeaderboardEligible","savePvpMatchWinsForLeaderboard"]};
   const RR_V160_VARS = {"onlineSelect":[],"achievementSelect":["activeAchievementIndex","hoveredAchievementCard"],"backRect":[]};
 
@@ -22577,7 +22630,7 @@ window.RibbitRaceMobileDiagnostics = () => ({
 
   const SOLO_SEEN_KEY = "rrFriendsEngineTutorialSoloSeenV8";
   const PVP_SEEN_KEY = "rrFriendsEngineTutorialPvpSeenV8";
-  const TUTORIAL_BUILD = "2026.10.12-friends-polish-14";
+  const TUTORIAL_BUILD = "2026.10.12-friends-polish-15";
   const TUTORIAL_ACHIEVEMENT_ID = "tutorial-graduate";
   const TYPEWRITER_MS_PER_CHARACTER = 28;
   const DIALOGUE_TEXT_SCALE = 0.86;
@@ -22595,7 +22648,8 @@ window.RibbitRaceMobileDiagnostics = () => ({
     "pvpDemoDinnerSteal", "pvpDinnerSteal"
   ]);
   const FINAL_TUTORIAL_DIALOGUE = Object.freeze([
-    "You did it, tadpole! You're officially Ribbit Ready!"
+    "You did it, tadpole! You're officially Ribbit Ready!",
+    "If you really want a challenge, come face me in Versus. I'll be waiting!"
   ]);
   const EMBER_SKIN = Object.freeze({ ...FROG_SKINS.ember, hat: "none" });
   const EMBER_PORTRAIT_SOURCES = Object.freeze({
@@ -22691,6 +22745,7 @@ window.RibbitRaceMobileDiagnostics = () => ({
     resetArmFlies: true,
     resetPreserveFlyKeys: null,
     resetReason: "",
+    preservePromptDuringReset: false,
     frogHidden: false,
     wrongFlyCaught: false,
     wrongFlyCaughtAt: 0,
@@ -24678,7 +24733,7 @@ window.RibbitRaceMobileDiagnostics = () => ({
       case "bufferDrop":
         restoreExactParkStage();
         positionSoloFrog(
-          platforms[2].x + Math.round((platforms[2].w - frog.w) / 2),
+          platforms[2].x + Math.round((platforms[2].w - frog.w) / 2) - 5,
           CONFIG.groundY - frog.h,
           1
         );
@@ -25442,6 +25497,7 @@ window.RibbitRaceMobileDiagnostics = () => ({
       ? collectVisibleTutorialFlyKeys()
       : null;
     tutorial.resetReason = String(options.reason || "reset");
+    tutorial.preservePromptDuringReset = options.preservePrompt === true;
     tutorial.frogHidden = true;
     tutorial.goalHovered = false;
     clearHeldInput();
@@ -25459,6 +25515,19 @@ window.RibbitRaceMobileDiagnostics = () => ({
     restoreStepSequence();
     game.pauseHelpOpen = false;
     game.state = "playing";
+  }
+
+  function rebuildCurrentScenarioWithDialogue() {
+    if (tutorial.kind === "pvp") configurePvpStep(tutorial.step);
+    else configureSoloStep(tutorial.step);
+    tutorial.pendingStartPose = captureControlledPose();
+    tutorial.dynamicDialogueLines = null;
+    tutorial.dynamicPortraitKey = "";
+    tutorial.postSuccessAdvance = false;
+    tutorial.successDialogueShown = false;
+    tutorial.blockJumpUntilRelease = false;
+    restoreStepSequence();
+    openDialogue();
   }
 
   function beginScenarioEntryTransition() {
@@ -25484,6 +25553,7 @@ window.RibbitRaceMobileDiagnostics = () => ({
     const showFailure = tutorial.resetShowFailure;
     const armFlies = tutorial.resetArmFlies;
     const preserveFlyKeys = tutorial.resetPreserveFlyKeys;
+    const preservePrompt = tutorial.preservePromptDuringReset;
     const completedResetReason = tutorial.resetReason;
 
     tutorial.resetPending = false;
@@ -25494,6 +25564,7 @@ window.RibbitRaceMobileDiagnostics = () => ({
     tutorial.resetArmFlies = true;
     tutorial.resetPreserveFlyKeys = null;
     tutorial.resetReason = "";
+    tutorial.preservePromptDuringReset = false;
 
     try {
       if (action) action();
@@ -25513,6 +25584,7 @@ window.RibbitRaceMobileDiagnostics = () => ({
         armTutorialFlies({ preserveKeys: preserveFlyKeys });
       }
     }
+    if (preservePrompt) tutorial.promptHidden = false;
     tutorial.frogHidden = false;
     tutorial.pvpFrogsHidden = false;
     freezeControlledEntity();
@@ -25539,7 +25611,8 @@ window.RibbitRaceMobileDiagnostics = () => ({
     tutorial.enteredAt = performance.now();
     game.state = "playing";
     game.pauseHelpOpen = false;
-    if (completedResetReason === "pause-retry") startResumeCountdown(false);
+    // Tutorial retries replay Ember's scene dialogue and return without a
+    // countdown. Ordinary game restarts still use the normal 3-2-1 flow.
   }
 
   function failAttempt(message) {
@@ -25878,14 +25951,17 @@ window.RibbitRaceMobileDiagnostics = () => ({
 
   function retryThreeCatchAttempt() {
     const missedAttemptIndex = tutorial.sceneAttemptIndex;
+    tutorial.promptHidden = false;
     beginPoofTransition({
       reason: "retry-missed-fly",
       message: "CATCH THIS MATCHING FLY IN ONE JUMP",
       showFailure: true,
       preserveExistingFlies: true,
+      preservePrompt: true,
       action: () => {
-        setupThreeCatchAttempt(missedAttemptIndex, false);
+        setupThreeCatchAttempt(missedAttemptIndex, true);
         resetAttemptForNextJump();
+        tutorial.promptHidden = false;
       }
     });
   }
@@ -26558,12 +26634,12 @@ window.RibbitRaceMobileDiagnostics = () => ({
     // cyan, and white pixel framing. Ember's complete square portrait sits in
     // its own attached card, with the nameplate beneath the picture instead of
     // covering any part of it.
-    const textPanel = { x: 90, y: 6, w: 250, h: 50 };
+    const textPanel = { x: 90, y: 6, w: 242, h: 54 };
     const portraitPanel = { x: 338, y: 6, w: 54, h: 54 };
-    const namePlate = { x:textPanel.x + 8, y:textPanel.y + 7, w:48, h:10 };
+    const namePlate = { x:textPanel.x + 7, y:textPanel.y + 7, w:48, h:10 };
     const textArea = {
       x: textPanel.x + 11,
-      y: textPanel.y + 21,
+      y: textPanel.y + 22,
       w: textPanel.w - 22,
       h: textPanel.h - 27
     };
@@ -26580,7 +26656,9 @@ window.RibbitRaceMobileDiagnostics = () => ({
     const textScale = textLayout.scale;
     const lineHeight = Math.max(7, Math.ceil(8 * textScale + 2));
     const totalTextHeight = wrappedLines.length * lineHeight - 2;
-    const textTop = Math.round(textArea.y + Math.max(0, (textArea.h - totalTextHeight) / 2));
+    // One-line and two-line messages always begin on the same top baseline.
+    // This avoids making the reader's eyes jump vertically between lines.
+    const textTop = Math.round(textArea.y);
 
     ctx.save();
     ctx.globalAlpha = .995;
@@ -27089,7 +27167,14 @@ window.RibbitRaceMobileDiagnostics = () => ({
   const originalDrawVocabularyPromptForTutorial = drawVocabularyPrompt;
   drawVocabularyPrompt = function(...args) {
     const visibleDuringExplanation = tutorialPromptVisibleDuringDialogue();
-    if (tutorial.active && ((!tutorialPlayerHasControl() && !visibleDuringExplanation) || tutorial.promptHidden)) {
+    const keepDuringMissReset = Boolean(tutorial.resetPending && tutorial.preservePromptDuringReset);
+    const keepDuringTongueCinematic = Boolean(
+      tutorialStep()?.setup === "rangeCatch" &&
+      (game.soloCriticalCatchActive || tongue.active || tutorial.rangeTongueCaught)
+    );
+    if (tutorial.active && (
+      ((!tutorialPlayerHasControl() && !visibleDuringExplanation && !keepDuringMissReset && !keepDuringTongueCinematic) || tutorial.promptHidden)
+    )) {
       drawBlankTutorialVocabularyPrompt();
       return;
     }
@@ -27263,7 +27348,7 @@ window.RibbitRaceMobileDiagnostics = () => ({
       tutorial.rangeTongueCaught = true;
       tutorial.rangeTongueCaughtAt = performance.now();
       game.spawnQueue.length = 0;
-      game.targetVocabIndex = null;
+      tutorial.promptHidden = false;
     }
 
     if (activeSetup === "wrongFly") {
@@ -27314,9 +27399,9 @@ window.RibbitRaceMobileDiagnostics = () => ({
     if (tutorial.active && tutorial.kind === "solo") {
       for (const currentFly of flies) {
         if (!currentFly?.tutorialHoldAfterSpit || currentFly.state !== "active") continue;
-        currentFly.phase = 0;
-        currentFly.x = currentFly.baseX;
-        currentFly.y = currentFly.baseY;
+        // Keep rejected tutorial flies alive, but preserve their ordinary hover
+        // animation so they never look frozen or already collected.
+        currentFly.tutorialArmed = true;
       }
     }
     return result;
@@ -27437,10 +27522,11 @@ window.RibbitRaceMobileDiagnostics = () => ({
       game.pauseChargeSnapshot = null;
       game.resumeChargeAfterCountdown = false;
       beginPoofTransition({
-        reason: "pause-retry",
+        reason: "tutorial-retry",
         showFailure: false,
-        preserveExistingFlies: true,
-        action: rebuildCurrentScenarioForRetry
+        preserveExistingFlies: false,
+        armFlies: false,
+        action: rebuildCurrentScenarioWithDialogue
       });
       return;
     }
@@ -27707,7 +27793,13 @@ window.RibbitRaceMobileDiagnostics = () => ({
     get setup() { return tutorialStep()?.setup || ""; },
     retryScene() {
       if (!tutorial.active || tutorial.resetPending) return false;
-      beginPoofTransition({ reason:"hotkey-retry", showFailure:false, preserveExistingFlies:false, action:rebuildCurrentScenarioForRetry });
+      beginPoofTransition({
+        reason:"hotkey-retry",
+        showFailure:false,
+        preserveExistingFlies:false,
+        armFlies:false,
+        action:rebuildCurrentScenarioWithDialogue
+      });
       return true;
     },
     get build() { return TUTORIAL_BUILD; },
@@ -27761,7 +27853,7 @@ window.RibbitRaceMobileDiagnostics = () => ({
   const countedHatFlyObjects = new WeakSet();
   const LEADERBOARD_BUTTON = Object.freeze({ x: 34, y: 229, w: 28, h: 28 });
   const CUSTOM_BASE_BUTTON = Object.freeze({ x: 159, y: 67, w: 25, h: 22 });
-  const PAUSE_FULLSCREEN_BUTTON = Object.freeze({ x: 426, y: 198, w: 20, h: 20 });
+  const PAUSE_FULLSCREEN_BUTTON = Object.freeze({ x: 379, y: 198, w: 20, h: 20 });
   const MAIN_PROFILE_BUTTON = Object.freeze({ x: 47, y: 211, w: 24, h: 24 });
   const MAIN_DEVICE_BUTTON = Object.freeze({ x: 74, y: 211, w: 24, h: 24 });
 
@@ -28262,7 +28354,7 @@ window.RibbitRaceMobileDiagnostics = () => ({
     } else {
       rows.forEach((row, offset) => {
         const y = table.y + 20 + offset * 16;
-        ctx.fillStyle = row.isCurrent ? "#b8f5dc" : (offset % 2 ? "#eef2f3" : "#ffffff");
+        ctx.fillStyle = row.isCurrent ? "#b8f5dc" : (offset % 2 ? "#dfe5e7" : "#ffffff");
         ctx.fillRect(table.x + 2, y, table.w - 4, 16);
         ctx.fillStyle = "#d2dde0"; ctx.fillRect(table.x + 2, y + 15, table.w - 4, 1);
         drawBitmapText(String(row.rank || "—"), columns.rank, y + 5, .50, "center", "#26363d");
@@ -28306,7 +28398,7 @@ window.RibbitRaceMobileDiagnostics = () => ({
       LEADERBOARD_METRICS.forEach((entry, index) => {
         const rect = { x, y:y + index * h, w, h };
         ctx.fillStyle = COLORS.ink; ctx.fillRect(rect.x, rect.y, rect.w, rect.h);
-        ctx.fillStyle = entry.id === polish.leaderboardMetric ? skin.belly : (index % 2 ? "#edf1f2" : "#ffffff"); ctx.fillRect(rect.x + 2, rect.y + 1, rect.w - 4, rect.h - 2);
+        ctx.fillStyle = entry.id === polish.leaderboardMetric ? skin.belly : (index % 2 ? "#dce3e5" : "#ffffff"); ctx.fillRect(rect.x + 2, rect.y + 1, rect.w - 4, rect.h - 2);
         drawBitmapText(entry.label, rect.x + 7, rect.y + 5, .43, "left", "#26363d");
         polish.leaderboardHitRects[`metric:${entry.id}`] = rect;
       });
@@ -28315,7 +28407,7 @@ window.RibbitRaceMobileDiagnostics = () => ({
       LEADERBOARD_LEVELS.forEach((entry, index) => {
         const rect = { x, y:y + index * h, w, h };
         ctx.fillStyle = COLORS.ink; ctx.fillRect(rect.x, rect.y, rect.w, rect.h);
-        ctx.fillStyle = entry === polish.leaderboardLevel ? skin.belly : (index % 2 ? "#edf1f2" : "#ffffff"); ctx.fillRect(rect.x + 2, rect.y + 1, rect.w - 4, rect.h - 2);
+        ctx.fillStyle = entry === polish.leaderboardLevel ? skin.belly : (index % 2 ? "#dce3e5" : "#ffffff"); ctx.fillRect(rect.x + 2, rect.y + 1, rect.w - 4, rect.h - 2);
         drawBitmapText(entry === "any" ? "ANY LEVEL" : entry.toUpperCase(), rect.x + 7, rect.y + 5, .43, "left", "#26363d");
         polish.leaderboardHitRects[`level:${entry}`] = rect;
       });
@@ -28424,6 +28516,21 @@ window.RibbitRaceMobileDiagnostics = () => ({
     } catch (_) {}
   }
 
+  function registerRoundHatUnlock(hatId) {
+    const id = String(hatId || "").trim();
+    if (!id || id === "none") return false;
+    if (!Array.isArray(game.roundUnlockedHatIds)) game.roundUnlockedHatIds = [];
+    if (!game.roundUnlockedHatIds.includes(id) && (game.state === "playing" || game.state === "won")) {
+      game.roundUnlockedHatIds.push(id);
+      return true;
+    }
+    return false;
+  }
+
+  window.addEventListener("ribbit-hat-unlocked", (event) => {
+    registerRoundHatUnlock(event?.detail?.id);
+  });
+
   function unlockHatFromLiveProgress(hatId, displayName) {
     let unlocked = [];
     try {
@@ -28437,6 +28544,8 @@ window.RibbitRaceMobileDiagnostics = () => ({
       const cloud = typeof RibbitCloud !== "undefined" ? RibbitCloud : window.RibbitCloud;
       cloud?.queueSave?.({ ribbitRaceUnlockedHatsV2: unlocked });
     } catch (_) {}
+    registerRoundHatUnlock(hatId);
+    try { window.dispatchEvent(new CustomEvent("ribbit-hat-unlocked", { detail:{ id:hatId, at:Date.now() } })); } catch (_) {}
     try { queueAchievementToast?.({ type:"generic", text:`${displayName} UNLOCKED` }); } catch (_) {}
     try { tone(784, .08, .016, 100); tone(1047, .10, .012, 115, .06); } catch (_) {}
     return true;
@@ -28471,6 +28580,33 @@ window.RibbitRaceMobileDiagnostics = () => ({
     try { if (game.customHatOpen) drawScene(); } catch (_) {}
     return progress.bySkin[skinId];
   }
+
+  // Evaluate time-based hat challenges immediately at the real win boundary.
+  // The page-side controller still owns the full catalog and persistent counters;
+  // these direct checks guarantee that single-run hats cannot miss a qualifying
+  // finish because a state-change monitor sampled the next screen late.
+  const originalCompleteWinForHatChallenges = completeWin;
+  completeWin = function(...args) {
+    const levelId = String(game.selectedLevelId || "park").toLowerCase();
+    const skinId = String(game.skinId || "azure").toLowerCase();
+    const result = originalCompleteWinForHatChallenges.apply(this, args);
+    const training = Boolean(game.tutorialActive || window.RibbitRaceTutorialEngine?.active || window.RibbitRaceTutorialEngine?.completeScreen);
+    if (!training) {
+      const seconds = Number(game.finishTime ?? (typeof getTimerTime === "function" ? getTimerTime() : game.elapsed));
+      const snapshot = { level:levelId, skin:skinId, time:Number.isFinite(seconds) ? seconds : 0 };
+      try { window.RibbitHatProgress?.evaluate?.(snapshot); } catch (_) {}
+      if (snapshot.level === "park" && snapshot.skin === "forest" && snapshot.time > 0 && snapshot.time < 25) {
+        unlockHatFromLiveProgress("straw-hat", "STRAW HAT");
+      }
+      if (snapshot.level === "pond" && snapshot.skin === "silver" && snapshot.time > 0 && snapshot.time < 30) {
+        unlockHatFromLiveProgress("bunny-ears", "BUNNY EARS");
+      }
+      if (snapshot.level === "garden" && snapshot.skin === "blossom" && snapshot.time > 0 && snapshot.time < 30) {
+        unlockHatFromLiveProgress("flower", "FLOWER");
+      }
+    }
+    return result;
+  };
 
   function shouldCountHatCatch(targetFly) {
     if (!targetFly || typeof targetFly !== "object") return false;
@@ -28553,7 +28689,7 @@ window.RibbitRaceMobileDiagnostics = () => ({
   }
 
   const CUSTOM_BASE_PANEL = Object.freeze({ x:104, y:64, w:272, h:132 });
-  const CUSTOM_BASE_CLOSE = Object.freeze({ x:353, y:67, w:18, h:18 });
+  const CUSTOM_BASE_CLOSE = Object.freeze({ x:355, y:67, w:18, h:18 });
 
   function getCustomBaseOptionRects() {
     const ids = getBaseSkinIds();
@@ -28582,13 +28718,14 @@ window.RibbitRaceMobileDiagnostics = () => ({
     if (!polish.customBaseOpen) return;
 
     const panel = CUSTOM_BASE_PANEL;
-    const headerRight = CUSTOM_BASE_CLOSE.x - 4;
     ctx.fillStyle = "rgba(25,43,52,.34)"; ctx.fillRect(panel.x + 4, panel.y + 4, panel.w, panel.h);
     ctx.fillStyle = COLORS.ink; ctx.fillRect(panel.x, panel.y, panel.w, panel.h);
     ctx.fillStyle = "#f7fdff"; ctx.fillRect(panel.x + 3, panel.y + 3, panel.w - 6, panel.h - 6);
-    ctx.fillStyle = draftSkin.mid; ctx.fillRect(panel.x + 5, panel.y + 5, headerRight - panel.x - 8, 24);
-    ctx.fillStyle = draftSkin.light; ctx.fillRect(panel.x + 9, panel.y + 8, headerRight - panel.x - 16, 3);
-    drawBitmapText("SET BASE FROG", (panel.x + headerRight) / 2, panel.y + 10, .62, "center", COLORS.white, draftSkin.dark);
+    // Let the selected custom palette streak span the full header. The close
+    // control sits on top at the extreme corner instead of leaving a white gap.
+    ctx.fillStyle = draftSkin.mid; ctx.fillRect(panel.x + 5, panel.y + 5, panel.w - 10, 24);
+    ctx.fillStyle = draftSkin.light; ctx.fillRect(panel.x + 9, panel.y + 8, panel.w - 18, 3);
+    drawBitmapText("SET BASE FROG", panel.x + panel.w / 2, panel.y + 11, .52, "center", COLORS.white, draftSkin.dark);
 
     ctx.fillStyle = COLORS.ink; ctx.fillRect(CUSTOM_BASE_CLOSE.x, CUSTOM_BASE_CLOSE.y, CUSTOM_BASE_CLOSE.w, CUSTOM_BASE_CLOSE.h);
     ctx.fillStyle = "#f7fdff"; ctx.fillRect(CUSTOM_BASE_CLOSE.x + 2, CUSTOM_BASE_CLOSE.y + 2, CUSTOM_BASE_CLOSE.w - 4, CUSTOM_BASE_CLOSE.h - 4);
@@ -28885,7 +29022,8 @@ window.RibbitRaceMobileDiagnostics = () => ({
     drawCustomBaseButton();
     drawPauseFullscreenButton();
     drawWorldRecordNotice();
-    drawPvpPauseButtonPolish8();
+    // The stock Versus HUD already owns the single pause button.
+    // Do not draw the obsolete second II button here.
     return result;
   };
 
@@ -29068,9 +29206,6 @@ window.RibbitRaceMobileDiagnostics = () => ({
         event.preventDefault(); event.stopImmediatePropagation(); closeLeaderboard();
       }
       return;
-    }
-    if (event.code === "KeyR" && game.state === "paused") {
-      event.preventDefault(); event.stopImmediatePropagation(); immediateResetToStart();
     }
   }, { capture:true, passive:false });
 

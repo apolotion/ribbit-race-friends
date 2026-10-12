@@ -18,8 +18,8 @@ function block(start, end) {
 
 test("1.7.10 polished tutorial build and first-boot marker are installed", () => {
   assert.equal(JSON.parse(read("package.json")).version, "1.7.10");
-  assert.match(read("src/common.js"), /2026\.10\.12-friends-polish-14/);
-  assert.match(engine, /const TUTORIAL_BUILD = "2026\.10\.12-friends-polish-14"/);
+  assert.match(read("src/common.js"), /2026\.10\.12-friends-polish-15/);
+  assert.match(engine, /const TUTORIAL_BUILD = "2026\.10\.12-friends-polish-15"/);
   assert.match(engine, /rrFriendsEngineTutorialSoloSeenV8/);
 });
 
@@ -51,7 +51,7 @@ test("dialogue uses large left-aligned two-line RPG typography, hold-to-speed, a
 
 test("dialogue matches the layered cyan-and-white reference with a full square Ember portrait", () => {
   const dialogue = block("function drawTutorialDialogue", "function drawTutorialStatus");
-  assert.match(dialogue, /const textPanel = \{ x: 90, y: 6, w: 250, h: 50 \}/);
+  assert.match(dialogue, /const textPanel = \{ x: 90, y: 6, w: 242, h: 54 \}/);
   assert.match(dialogue, /const portraitPanel = \{ x: 338, y: 6, w: 54, h: 54 \}/);
   assert.match(dialogue, /const drawReferencePanel/);
   assert.match(dialogue, /Five-layer pixel frame: black -> cyan -> white -> cyan -> black/);
@@ -60,7 +60,7 @@ test("dialogue matches the layered cyan-and-white reference with a full square E
   assert.match(dialogue, /const imageSize = portraitPanel\.w - 10/);
   assert.match(dialogue, /const fit = Math\.min\(imageSize \/ sourceW, imageSize \/ sourceH\)/);
   assert.match(dialogue, /ctx\.drawImage\(portraitImage, 0, 0, sourceW, sourceH, drawX, drawY, drawW, drawH\)/);
-  assert.match(dialogue, /const namePlate = \{ x:textPanel\.x \+ 8, y:textPanel\.y \+ 7, w:48, h:10 \}/);
+  assert.match(dialogue, /const namePlate = \{ x:textPanel\.x \+ 7, y:textPanel\.y \+ 7, w:48, h:10 \}/);
   assert.match(dialogue, /drawBitmapText\("EMBER", namePlate\.x \+ namePlate\.w \/ 2, namePlate\.y \+ 2, \.58, "center"/);
   assert.doesNotMatch(dialogue, /indigo|rightRail|portraitRail/i);
 });
@@ -168,7 +168,7 @@ test("multi-fly lessons use the requested mirrored and three-fly routes", () => 
   assert.match(engine, /case "comboThree":[\s\S]{0,260}positionCenteredOnPlatform\(platforms\[2\], 1\)[\s\S]{0,120}makeFly\(242, 52, 0, 0\)[\s\S]{0,100}makeFly\(365, 52, 1, 1\)[\s\S]{0,100}makeFly\(430, 111, 2, 2\)/);
   assert.match(engine, /activeSetup === "comboMixed" && wasCorrect[\s\S]{0,420}wrongPromptIndex/);
   assert.match(engine, /function retryThreeCatchAttempt/);
-  assert.match(engine, /setupThreeCatchAttempt\(missedAttemptIndex, false\)/);
+  assert.match(engine, /setupThreeCatchAttempt\(missedAttemptIndex, true\)/);
 });
 
 test("correct three-catch landings hold for half a second before the next poof", () => {

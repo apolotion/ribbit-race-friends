@@ -137,7 +137,7 @@
       continueButton: { x: 105, y: 163, w: 130, h: 20 },
       restartButton: { x: 245, y: 163, w: 130, h: 20 },
       homeButton: { x: 176, y: 190, w: 128, h: 20 },
-      helpButton: { x: 400, y: 198, w: 20, h: 20 },
+      helpButton: { x: 353, y: 198, w: 20, h: 20 },
       helpCloseButton: { x: 366, y: 73, w: 19, h: 19 }
     });
 

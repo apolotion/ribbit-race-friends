@@ -16,19 +16,19 @@ function block(start, end) {
 }
 
 test("polish-9 cache marker forces the rebuilt tutorial and Versus lesson UI to load", () => {
-  assert.match(engine, /2026\.10\.12-friends-polish-14/);
-  assert.match(index, /game\.bundle\.js\?v=2026\.10\.12-friends-polish-14/);
+  assert.match(engine, /2026\.10\.12-friends-polish-15/);
+  assert.match(index, /game\.bundle\.js\?v=2026\.10\.12-friends-polish-15/);
 });
 
 test("dialogue uses the new reference framing and keeps Ember's full square unobstructed", () => {
   const dialogue = block("function drawTutorialDialogue", "function drawTutorialStatus");
-  assert.match(dialogue, /const textPanel = \{ x: 90, y: 6, w: 250, h: 50 \}/);
+  assert.match(dialogue, /const textPanel = \{ x: 90, y: 6, w: 242, h: 54 \}/);
   assert.match(dialogue, /const portraitPanel = \{ x: 338, y: 6, w: 54, h: 54 \}/);
   assert.match(dialogue, /drawReferencePanel\(textPanel, "#0b4462", "#052b43"\)/);
   assert.match(dialogue, /drawReferencePanel\(portraitPanel, "#159ee4", "#087cc5"\)/);
   assert.match(dialogue, /const imageSize = portraitPanel\.w - 10/);
   assert.match(dialogue, /const fit = Math\.min\(imageSize \/ sourceW, imageSize \/ sourceH\)/);
-  assert.match(dialogue, /const namePlate = \{ x:textPanel\.x \+ 8, y:textPanel\.y \+ 7, w:48, h:10 \}/);
+  assert.match(dialogue, /const namePlate = \{ x:textPanel\.x \+ 7, y:textPanel\.y \+ 7, w:48, h:10 \}/);
   assert.match(dialogue, /drawBitmapText\("EMBER", namePlate\.x \+ namePlate\.w \/ 2, namePlate\.y \+ 2, \.58, "center"/);
 });
 
@@ -67,8 +67,8 @@ test("buffered jump charge lesson precedes platform-drop buffering", () => {
   assert.match(engine, /All you have to do is TAP jump just before each landing\./);
 });
 
-test("buffered-drop placements are centered and triple-buffer starts bottom-left", () => {
-  assert.match(engine, /case "bufferDrop":[\s\S]{0,220}makeFly\(408, 150, 0, 0\)/);
+test("buffered-drop placement is five pixels left and triple-buffer starts bottom-left", () => {
+  assert.match(engine, /case "bufferDrop":[\s\S]{0,260}platforms\[2\]\.x \+ Math\.round\(\(platforms\[2\]\.w - frog\.w\) \/ 2\) - 5[\s\S]{0,180}makeFly\(408, 150, 0, 0\)/);
   assert.match(engine, /case "doubleBuffer":[\s\S]{0,160}positionCenteredOnPlatform\(platforms\[1\], 1\)/);
   assert.match(engine, /setup === "doubleBuffer"[\s\S]{0,100}failAttempt\("START WITH A CHARGED JUMP"\)/);
 });

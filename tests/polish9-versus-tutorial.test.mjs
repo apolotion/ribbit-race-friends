@@ -17,8 +17,8 @@ function block(start, end) {
 }
 
 test("polish-9 cache marker and tutorial seen key are synchronized", () => {
-  assert.match(engine, /TUTORIAL_BUILD = "2026\.10\.12-friends-polish-14"/);
-  assert.match(index, /game\.bundle\.js\?v=2026\.10\.12-friends-polish-14/);
+  assert.match(engine, /TUTORIAL_BUILD = "2026\.10\.12-friends-polish-15"/);
+  assert.match(index, /game\.bundle\.js\?v=2026\.10\.12-friends-polish-15/);
   assert.match(engine, /rrFriendsEngineTutorialSoloSeenV8/);
   assert.match(read("public/scripts/tutorial-preboot.js"), /rrFriendsEngineTutorialSoloSeenV8/);
 });
@@ -43,7 +43,7 @@ test("Ember portrait fills its square and the centered nameplate sits in the tex
   assert.match(dialogue, /const portraitPanel = \{ x: 338, y: 6, w: 54, h: 54 \}/);
   assert.match(dialogue, /const imageSize = portraitPanel\.w - 10/);
   assert.match(dialogue, /ctx\.drawImage\(portraitImage, 0, 0, sourceW, sourceH, drawX, drawY, drawW, drawH\)/);
-  assert.match(dialogue, /const namePlate = \{ x:textPanel\.x \+ 8, y:textPanel\.y \+ 7, w:48, h:10 \}/);
+  assert.match(dialogue, /const namePlate = \{ x:textPanel\.x \+ 7, y:textPanel\.y \+ 7, w:48, h:10 \}/);
   assert.match(dialogue, /name now sits in the upper-left of the dialogue panel/);
   assert.match(dialogue, /drawBitmapText\("EMBER", namePlate\.x \+ namePlate\.w \/ 2, namePlate\.y \+ 2, \.58, "center"/);
 });

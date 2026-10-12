@@ -18,14 +18,14 @@ function block(start, end) {
 }
 
 test("polish 12 cache marker is wired", () => {
-  assert.match(engine, /2026\.10\.12-friends-polish-14/);
-  assert.match(read("public/index.html"), /game\.bundle\.js\?v=2026\.10\.12-friends-polish-14/);
-  assert.match(read("src/common.js"), /2026\.10\.12-friends-polish-14/);
+  assert.match(engine, /2026\.10\.12-friends-polish-15/);
+  assert.match(read("public/index.html"), /game\.bundle\.js\?v=2026\.10\.12-friends-polish-15/);
+  assert.match(read("src/common.js"), /2026\.10\.12-friends-polish-15/);
 });
 
 test("Ember nameplate is centered in the upper-left of the dialogue panel", () => {
   const dialogue = block("function drawTutorialDialogue", "function drawTutorialStatus");
-  assert.match(dialogue, /const namePlate = \{ x:textPanel\.x \+ 8, y:textPanel\.y \+ 7, w:48, h:10 \}/);
+  assert.match(dialogue, /const namePlate = \{ x:textPanel\.x \+ 7, y:textPanel\.y \+ 7, w:48, h:10 \}/);
   assert.match(dialogue, /drawBitmapText\("EMBER", namePlate\.x \+ namePlate\.w \/ 2, namePlate\.y \+ 2, \.58, "center"/);
   assert.doesNotMatch(dialogue, /nameY = imageY \+ imageSize/);
 });
