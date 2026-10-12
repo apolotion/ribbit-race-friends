@@ -20961,7 +20961,7 @@ function startRibbitRaceGame() {
 // input support hooks, palette operations, post-hat progression, and replay state.
 
 const RIBBIT_FRIENDS_DISPLAY_VERSION = "1.7.10";
-const RIBBIT_FRIENDS_BUILD = "2026.10.12-friends-tutorial-polish-5";
+const RIBBIT_FRIENDS_BUILD = "2026.10.12-friends-tutorial-polish-6";
 
 function rr14Number(value, fallback = 0) {
   const parsed = Number(value);
@@ -21492,7 +21492,7 @@ window.RibbitRaceMobileDiagnostics = () => ({
  */
 (() => {
   "use strict";
-  const BUILD = "2026.10.12-friends-tutorial-polish-5";
+  const BUILD = "2026.10.12-friends-tutorial-polish-6";
   const RR_V160_CANDIDATES = {"catchFly":["attemptFlyCatch","attemptPvpFlyCatch","catchSandboxFly","getPvpImminentCatchFly","recordFlyEaten","scheduleFlyReplacementFromCatch"],"jumpSound":["playJumpSound"],"beep":["playCountdownGoSound","playCountdownSound"],"replayUpload":["saveRecordDate"],"restart":["resetGame","resetPvpGame","resetPvpPlayer","resetRoundLifecycle","resetRoundNetwork","restartCurrentLevel"],"drop":[],"render":["drawPvpScene","drawScene"],"worldRecord":[],"fullscreen":["getFullscreenElement","hideFullscreenFallback","showFullscreenFallback","syncFullscreenButton","toggleRibbitFullscreen"],"onlineSubmit":[],"leaderboard":["isSoloEndlessLeaderboardEligible","savePvpMatchWinsForLeaderboard"]};
   const RR_V160_VARS = {"onlineSelect":[],"achievementSelect":["activeAchievementIndex","hoveredAchievementCard"],"backRect":[]};
 
@@ -22447,7 +22447,7 @@ window.RibbitRaceMobileDiagnostics = () => ({
 
   const SOLO_SEEN_KEY = "rrFriendsEngineTutorialSoloSeenV8";
   const PVP_SEEN_KEY = "rrFriendsEngineTutorialPvpSeenV8";
-  const TUTORIAL_BUILD = "2026.10.12-friends-tutorial-polish-5";
+  const TUTORIAL_BUILD = "2026.10.12-friends-tutorial-polish-6";
   const TUTORIAL_ACHIEVEMENT_ID = "tutorial-graduate";
   const TYPEWRITER_MS_PER_CHARACTER = 28;
   const DIALOGUE_TEXT_SCALE = 0.86;
@@ -22700,7 +22700,6 @@ window.RibbitRaceMobileDiagnostics = () => ({
       setup: "wrongFly",
       mentor: "right",
       oneAttempt: true
-      // Legacy prompt reference for fixture coverage: "This time, catch a fly that doesn't match."
     }),
     Object.freeze({
       scene: 6,
@@ -22832,7 +22831,7 @@ window.RibbitRaceMobileDiagnostics = () => ({
       dialogue: [
         "Looking smooth!",
         "You can chain those drops together, too.",
-        "All you have to do is press jump just before each landing.",
+        "All you have to do is TAP jump just before each landing.",
         "Drop through one platform, then the next, and catch all three flies!"
       ],
       portrait: "peace",
@@ -23205,6 +23204,7 @@ window.RibbitRaceMobileDiagnostics = () => ({
 
   function armTutorialFlies(options = {}) {
     const preserveKeys = options.preserveKeys instanceof Set ? options.preserveKeys : null;
+    const revealPrompt = options.revealPrompt !== false;
     let spawned = 0;
     for (const currentFly of flies) {
       if (!currentFly?.tutorialAuthored || currentFly.tutorialArmed !== false) continue;
@@ -23223,7 +23223,7 @@ window.RibbitRaceMobileDiagnostics = () => ({
       }
     }
     if (spawned > 0) {
-      tutorial.promptHidden = false;
+      if (revealPrompt) tutorial.promptHidden = false;
       try { playFlySpawnSound(); } catch (_) { tone(760, .045, .012, 80); }
     }
     return spawned;
@@ -23250,6 +23250,7 @@ window.RibbitRaceMobileDiagnostics = () => ({
         tutorial.pendingStartPose = null;
         tutorial.scenePositionedDuringDialogue = true;
         restoreStepSequence();
+        if (tutorialStep()?.setup === "wrongFly") tutorial.promptHidden = false;
         tutorial.enteredAt = performance.now();
       }
     });
@@ -23580,9 +23581,6 @@ window.RibbitRaceMobileDiagnostics = () => ({
         break;
 
       case "rangeCatch": {
-        // Legacy layout reference for fixture coverage:
-        // positionOnPlatform(platforms[1], platforms[1].w - frog.w - 1, 1);
-        // makeFly(324, 38, 0, 4);
         const oldY = platforms[1].y - frog.h;
         const newY = CONFIG.groundY - frog.h;
         const deltaY = newY - oldY;
@@ -23774,8 +23772,13 @@ window.RibbitRaceMobileDiagnostics = () => ({
     tutorial.dialogueOpen = false;
     tutorial.dialoguePointerId = null;
     tutorial.blockJumpUntilRelease = false;
-    if (showDialogue) openDialogue();
-    else {
+    if (showDialogue) {
+      openDialogue();
+      if (tutorial.kind === "solo" && tutorialStep()?.setup === "wrongFly") {
+        armTutorialFlies({ revealPrompt: false });
+        tutorial.promptHidden = true;
+      }
+    } else {
       restoreStepSequence();
       armTutorialFlies();
       tutorial.enteredAt = performance.now();
@@ -23857,6 +23860,7 @@ window.RibbitRaceMobileDiagnostics = () => ({
         applyControlledPose(intendedStartPose);
         tutorial.pendingStartPose = null;
         restoreStepSequence();
+        if (tutorialStep()?.setup === "wrongFly") tutorial.promptHidden = false;
         tutorial.enteredAt = performance.now();
       }
     });
@@ -24223,7 +24227,15 @@ window.RibbitRaceMobileDiagnostics = () => ({
     const caught = Math.max(0, Number(game.score || 0) - tutorial.scoreStart);
     const attemptEnded = attemptFinishedOnLanding();
     const now = performance.now();
-    if (!tutorial.wasGroundedLastFrame && frog.grounded) tutorial.bufferedJumpWindowOpenedAt = now;
+    const landedThisFrame = !tutorial.wasGroundedLastFrame && frog.grounded;
+    if (landedThisFrame) {
+      tutorial.bufferedJumpWindowOpenedAt = now;
+      if (setup === "bufferJumpCharge") {
+        tutorial.bufferedJumpChainCount = game.buttonHeld
+          ? tutorial.bufferedJumpChainCount + 1
+          : 0;
+      }
+    }
     tutorial.wasGroundedLastFrame = Boolean(frog.grounded);
 
     if (tutorial.passPending) {
@@ -24291,9 +24303,10 @@ window.RibbitRaceMobileDiagnostics = () => ({
         return;
       }
       if (attemptEnded && !tutorial.wrongFlyCaught) {
-        failAttempt("TOUCH THE FLY THAT DOES NOT MATCH");
+        failAttempt("CATCH THE FLY THAT DOES NOT MATCH");
       } else if (attemptEnded) {
         resetAttemptForNextJump();
+        tutorial.promptHidden = false;
       }
       return;
     }
@@ -24468,12 +24481,12 @@ window.RibbitRaceMobileDiagnostics = () => ({
     if (!step) return ["TUTORIAL"];
     if (!tutorialPlayerHasControl() && step.setup !== "threeCatches" && step.setup !== "wrongFly") return [];
     if (step.setup === "longJumps") return ["LONG JUMPS", `${tutorial.longJumpStreak} / 3`];
-    if (step.setup === "threeCatches") return ["MATCHES", `${tutorial.sceneCatchCount + (tutorial.sceneAttemptCaught ? 1 : 0)} / 3`];
+    if (step.setup === "threeCatches") return ["MATCHES", `${Math.min(3, tutorial.sceneCatchCount + (tutorial.sceneAttemptCaught ? 1 : 0))} / 3`];
     if (step.setup === "wrongFly") {
       if (tutorial.wrongFlyReturnedCaught) return ["RETURNED", "FOR THE MATCH"];
       if (tutorial.wrongFlyRightCaught) return ["RETURN FOR", `THE OLD FLY • ${Math.max(0, 4 - tutorial.jumpAttempts)} JUMPS LEFT`];
       if (tutorial.wrongFlyRightSpawned) return ["CATCH THE", `RIGHT FLY • ${Math.max(0, 4 - tutorial.jumpAttempts)} JUMPS LEFT`];
-      return ["TOUCH A", `WRONG FLY • ${Math.max(0, 4 - tutorial.jumpAttempts)} JUMPS LEFT`];
+      return ["TRY THE WRONG", `FLY • ${Math.max(0, 4 - tutorial.jumpAttempts)} JUMPS LEFT`];
     }
     if (step.setup === "bufferJumpCharge") return ["BUFFERED JUMPS", `${tutorial.bufferedJumpChainCount} / 2`];
     return Array.isArray(step.goal) ? step.goal : [step.title];
@@ -24516,24 +24529,15 @@ window.RibbitRaceMobileDiagnostics = () => ({
       }
     }
 
-    // Legacy tutorial dialogue reference retained for fixture coverage:
-    // const textPanel = { x: 92, y: 7, w: 244, h: 42 };
-    // const portraitPanel = { x: 338, y: 7, w: 42, h: 42 };
-    // const border = 2;
-    // drawDialoguePanel(textPanel, "#052f45");
-    // ctx.fillStyle = "#073b55";
-    // drawDialoguePanel(portraitPanel, "#2a6d8e");
-    // const imageSize = portraitPanel.w - border * 2;
-    // drawBitmapText("EMBER", imageX + imageSize / 2, nameY + 2, .68, "center", "#3d2417");
-
-    const textPanel = { x: 82, y: 7, w: 260, h: 42 };
-    const portraitPanel = { x: 344, y: 7, w: 46, h: 46 };
-    const border = 2;
+    // Baseline: dark navy RPG text panel with black/cyan/white pixel framing,
+    // plus a slightly taller portrait card and a compact Ember nameplate.
+    const textPanel = { x: 92, y: 7, w: 246, h: 46 };
+    const portraitPanel = { x: 340, y: 7, w: 50, h: 52 };
     const textArea = {
-      x: textPanel.x + 8,
-      y: textPanel.y + 6,
-      w: textPanel.w - 16,
-      h: textPanel.h - 12
+      x: textPanel.x + 10,
+      y: textPanel.y + 8,
+      w: textPanel.w - 20,
+      h: textPanel.h - 16
     };
     const portraitKey = holdingPreviousLine
       ? tutorial.dialogueHeldPortraitKey
@@ -24553,24 +24557,28 @@ window.RibbitRaceMobileDiagnostics = () => ({
     ctx.save();
     ctx.globalAlpha = .995;
 
-    const drawPanel = (panel, fill) => {
-      ctx.fillStyle = "rgba(8,25,35,.28)";
+    const drawBaselinePanel = (panel, fill) => {
+      ctx.fillStyle = "rgba(8,25,35,.32)";
       ctx.fillRect(panel.x + 2, panel.y + 2, panel.w, panel.h);
-      ctx.fillStyle = "#60d8f0";
-      ctx.fillRect(panel.x, panel.y, panel.w, panel.h);
       ctx.fillStyle = COLORS.ink;
+      ctx.fillRect(panel.x, panel.y, panel.w, panel.h);
+      ctx.fillStyle = "#51e7f5";
+      ctx.fillRect(panel.x + 1, panel.y + 1, panel.w - 2, panel.h - 2);
+      ctx.fillStyle = "#dffcff";
       ctx.fillRect(panel.x + 2, panel.y + 2, panel.w - 4, panel.h - 4);
+      ctx.fillStyle = COLORS.ink;
+      ctx.fillRect(panel.x + 3, panel.y + 3, panel.w - 6, panel.h - 6);
       ctx.fillStyle = fill;
-      ctx.fillRect(panel.x + 4, panel.y + 4, panel.w - 8, panel.h - 8);
+      ctx.fillRect(panel.x + 5, panel.y + 5, panel.w - 10, panel.h - 10);
     };
 
-    drawPanel(textPanel, "#dfe7ea");
-    drawPanel(portraitPanel, "#1792d5");
+    drawBaselinePanel(textPanel, "#07364e");
+    drawBaselinePanel(portraitPanel, "#168fce");
 
-    const imageX = portraitPanel.x + 4;
-    const imageY = portraitPanel.y + 4;
-    const imageW = portraitPanel.w - 8;
-    const imageH = portraitPanel.h - 8;
+    const imageX = portraitPanel.x + 5;
+    const imageY = portraitPanel.y + 5;
+    const imageW = portraitPanel.w - 10;
+    const imageH = portraitPanel.h - 10;
     if (portraitImage?.complete && portraitImage.naturalWidth > 0) {
       const oldSmoothing = ctx.imageSmoothingEnabled;
       ctx.imageSmoothingEnabled = false;
@@ -24582,10 +24590,12 @@ window.RibbitRaceMobileDiagnostics = () => ({
     }
 
     const nameH = 8;
-    const nameY = portraitPanel.y + portraitPanel.h - 4 - nameH;
-    ctx.fillStyle = "#f8a247";
+    const nameY = imageY + imageH - nameH;
+    ctx.fillStyle = "#ff9b45";
     ctx.fillRect(imageX, nameY, imageW, nameH);
-    drawBitmapText("EMBER", imageX + imageW / 2, nameY + 1, .63, "center", "#3d2417");
+    ctx.fillStyle = "#9d5221";
+    ctx.fillRect(imageX, nameY, imageW, 1);
+    drawBitmapText("EMBER", imageX + imageW / 2, nameY + 1, .61, "center", "#3d2417");
 
     let remaining = visibleCount;
     wrappedLines.forEach((wrappedLine, index) => {
@@ -24596,13 +24606,13 @@ window.RibbitRaceMobileDiagnostics = () => ({
         textTop + index * lineHeight,
         textScale,
         "left",
-        "#35525b"
+        COLORS.white
       );
       remaining -= wrappedLine.length + 1;
     });
 
     if (!holdingPreviousLine && !lastLine && dialogueLineIsComplete()) {
-      drawDialogueContinueTriangle(textArea.x + textArea.w - 5, textPanel.y + textPanel.h - 9);
+      drawDialogueContinueTriangle(textArea.x + textArea.w - 5, textPanel.y + textPanel.h - 10);
     }
     ctx.restore();
   }
@@ -24708,7 +24718,7 @@ window.RibbitRaceMobileDiagnostics = () => ({
     // Match the vocabulary card's y-level and the normal TIME/JUMPS/BEST width.
     // The two-pixel gutter after x=326 prevents either black outline from
     // painting over the other.
-    return { x:328, y:235, w:150, h:31 };
+    return { x:328, y:234, w:150, h:33 };
   }
 
   function currentGoalHowToLines() {
@@ -24716,7 +24726,7 @@ window.RibbitRaceMobileDiagnostics = () => ({
     if (setup === "wrongFly") {
       if (tutorial.wrongFlyRightCaught) return ["THE OLD FLY NOW MATCHES", "YOU MAY RETURN FOR IT"];
       if (tutorial.wrongFlyRightSpawned) return ["CATCH THE FLY THAT MATCHES", "WATCH THE CLUE UPDATE"];
-      return ["TOUCH THE NON-MATCH", "IT WILL SPIT BACK OUT"];
+      return ["TRY THE WRONG FLY", "IT WILL SPIT BACK OUT"];
     }
     const instructions = {
       intro: ["READ EMBER'S TIPS"],
@@ -24806,7 +24816,12 @@ window.RibbitRaceMobileDiagnostics = () => ({
     drawBitmapText("CURRENT GOAL", x + w / 2, y + 8, .38, "center", COLORS.white);
 
     if (goal.length > 0) {
-      drawPixelTrophy(x + 16, y + 17, false, .58);
+      const trophyScale = .58;
+      const trophyHeight = 17 * trophyScale;
+      const contentTop = y + 16;
+      const contentBottom = y + h - 3;
+      const trophyTop = Math.round(contentTop + (contentBottom - contentTop - trophyHeight) / 2);
+      drawPixelTrophy(x + 16, trophyTop, false, trophyScale);
       // Goal copy is centered on the full card, not on the leftover space beside
       // the trophy. This keeps LONG JUMPS and every other objective truly centered.
       const goalCenterX = x + w / 2;
@@ -24814,11 +24829,11 @@ window.RibbitRaceMobileDiagnostics = () => ({
       if (goal.length > 1) {
         const scale0 = Math.min(.44, goalWidth / Math.max(1, measureBitmapText(goal[0], 1)));
         const scale1 = Math.min(.44, goalWidth / Math.max(1, measureBitmapText(goal[1], 1)));
-        drawBitmapText(goal[0], goalCenterX, y + 17, scale0, "center", "#34484f");
-        drawBitmapText(goal[1], goalCenterX, y + 24, scale1, "center", "#34484f");
+        drawBitmapText(goal[0], goalCenterX, y + 18, scale0, "center", "#34484f");
+        drawBitmapText(goal[1], goalCenterX, y + 26, scale1, "center", "#34484f");
       } else {
         const scale = Math.min(.48, goalWidth / Math.max(1, measureBitmapText(goal[0], 1)));
-        drawBitmapText(goal[0], goalCenterX, y + 21, scale, "center", "#34484f");
+        drawBitmapText(goal[0], goalCenterX, y + 22, scale, "center", "#34484f");
       }
     }
 
@@ -24835,11 +24850,7 @@ window.RibbitRaceMobileDiagnostics = () => ({
   }
 
   function drawTutorialOverlay() {
-    if (!tutorial.active || game.state === "countdown") return;
-    if (game.state === "paused") {
-      if (tutorial.dialogueOpen) drawTutorialDialogue();
-      return;
-    }
+    if (!tutorial.active || game.state === "paused" || game.state === "countdown") return;
     const finalPractice = tutorialStep()?.setup === "normalRound";
     if (!finalPractice) drawCurrentGoalHud();
     drawTutorialSmoke();
@@ -24879,12 +24890,24 @@ window.RibbitRaceMobileDiagnostics = () => ({
     );
   }
 
+
+  function tutorialPromptVisibleDuringDialogue() {
+    return Boolean(
+      tutorial.active &&
+      tutorial.dialogueOpen &&
+      tutorialStep()?.setup === "threeCatches" &&
+      tutorial.dialogueLineIndex >= 3 &&
+      flies.some((currentFly) => currentFly?.tutorialAuthored && currentFly.tutorialArmed !== false)
+    );
+  }
+
   // The next vocabulary target is allowed to exist internally for authored fly
   // logic, but it is not revealed in the footer until the frog is actually back
   // under player control. Scene retries and poof resets therefore stay blank.
   const originalDrawVocabularyPromptForTutorial = drawVocabularyPrompt;
   drawVocabularyPrompt = function(...args) {
-    if (tutorial.active && (!tutorialPlayerHasControl() || tutorial.promptHidden)) {
+    const visibleDuringExplanation = tutorialPromptVisibleDuringDialogue();
+    if (tutorial.active && ((!tutorialPlayerHasControl() && !visibleDuringExplanation) || tutorial.promptHidden)) {
       drawBlankTutorialVocabularyPrompt();
       return;
     }
@@ -25030,18 +25053,13 @@ window.RibbitRaceMobileDiagnostics = () => ({
           tutorial.attemptStarted = true;
           tutorial.attemptWasAirborne = true;
           tutorial.attemptEnded = false;
+        } else if (setup === "doubleBuffer") {
+          failAttempt("START WITH A CHARGED JUMP");
         }
         return result;
       }
 
       tutorial.lastJumpPower = power;
-      if (setup === "bufferJumpCharge") {
-        const buffered = tutorial.bufferedJumpWindowOpenedAt > 0 &&
-          performance.now() - tutorial.bufferedJumpWindowOpenedAt <= 160 &&
-          power >= 0.52;
-        tutorial.bufferedJumpChainCount = buffered ? tutorial.bufferedJumpChainCount + 1 : 0;
-        tutorial.promptHidden = true;
-      }
       tutorial.wallTouchedThisJump = false;
       tutorial.attemptStarted = true;
       tutorial.jumpAttempts += 1;
@@ -25059,6 +25077,12 @@ window.RibbitRaceMobileDiagnostics = () => ({
   drawSpeechBubble = function(...args) {
     if (tutorial.active) return;
     return originalDrawSpeechBubble.apply(this, args);
+  };
+
+  const originalDrawSoloPauseOverlayForTutorial = drawSoloPauseOverlay;
+  drawSoloPauseOverlay = function(...args) {
+    if (tutorial.active && tutorial.dialogueOpen) drawTutorialDialogue();
+    return originalDrawSoloPauseOverlayForTutorial.apply(this, args);
   };
 
   // Keep the normal pause flow available during the tutorial. The two lower
@@ -25198,7 +25222,6 @@ window.RibbitRaceMobileDiagnostics = () => ({
   drawScene = function(...args) {
     const result = originalDrawScene.apply(this, args);
     if (tutorial.active) drawTutorialOverlay();
-    if (tutorial.active && game.state === "paused") drawPauseControls();
     if (tutorial.completeScreen) drawCompletionScreen();
     return result;
   };

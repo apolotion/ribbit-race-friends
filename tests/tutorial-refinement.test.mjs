@@ -18,10 +18,10 @@ function block(start, end) {
 
 test("1.7.10 tutorial-polish build is wired everywhere", () => {
   assert.equal(JSON.parse(read("package.json")).version, "1.7.10");
-  assert.match(read("src/common.js"), /2026\.10\.12-friends-tutorial-polish-5/);
-  assert.match(read("client/game/110-online-mobile-polish.js"), /2026\.10\.12-friends-tutorial-polish-5/);
-  assert.match(read("public/scripts/cloud-client.js"), /2026\.10\.12-friends-tutorial-polish-5/);
-  assert.match(index, /2026\.10\.12-tutorial-polish-5/);
+  assert.match(read("src/common.js"), /2026\.10\.12-friends-tutorial-polish-6/);
+  assert.match(read("client/game/110-online-mobile-polish.js"), /2026\.10\.12-friends-tutorial-polish-6/);
+  assert.match(read("public/scripts/cloud-client.js"), /2026\.10\.12-friends-tutorial-polish-6/);
+  assert.match(index, /2026\.10\.12-tutorial-polish-6/);
   assert.doesNotMatch(index, /tutorial-scripted-1/);
 });
 
@@ -36,22 +36,22 @@ test("first-boot tutorial waits for auth and suppresses the menu before first pa
     "rr-authenticated"
   ]) assert.ok(polish.includes(phrase), phrase);
   assert.match(index, /<body class="ribbit-auth-locked rr-tutorial-pending">/);
-  assert.match(index, /tutorial-preboot\.js\?v=2026\.10\.12-tutorial-polish-5/);
+  assert.match(index, /tutorial-preboot\.js\?v=2026\.10\.12-tutorial-polish-6/);
   assert.match(read("public/scripts/tutorial-preboot.js"), /rrFriendsEngineTutorialSoloSeenV7/);
   assert.match(css, /body\.rr-tutorial-pending:not\(\.ribbit-auth-locked\) #game\s*\{[\s\S]{0,120}visibility:\s*hidden\s*!important/);
   assert.doesNotMatch(polish, /requestAnimationFrame\(\(\) => requestAnimationFrame/);
 });
 
-test("Ember dialogue keeps the dark approved box, larger left-aligned text, and a square equal-height portrait", () => {
+test("Ember dialogue uses the requested framed baseline, left-aligned text, taller portrait, and smaller nameplate", () => {
   const dialogue = block("function drawTutorialDialogue", "function drawTutorialStatus");
   assert.match(engine, /DIALOGUE_TEXT_SCALE = 0\.86/);
-  assert.match(dialogue, /const textPanel = \{ x: 92, y: 7, w: 244, h: 42 \}/);
-  assert.match(dialogue, /const portraitPanel = \{ x: 338, y: 7, w: 42, h: 42 \}/);
-  assert.match(dialogue, /const border = 2/);
-  assert.match(dialogue, /const imageSize = portraitPanel\.w - border \* 2/);
-  assert.match(dialogue, /ctx\.drawImage\(portraitImage, imageX, imageY, imageSize, imageSize\)/);
-  assert.match(dialogue, /drawDialoguePanel\(textPanel, "#052f45"\)/);
-  assert.match(dialogue, /drawBitmapText\("EMBER", imageX \+ imageSize \/ 2, nameY \+ 2, \.68, "center"/);
+  assert.match(dialogue, /const textPanel = \{ x: 92, y: 7, w: 246, h: 46 \}/);
+  assert.match(dialogue, /const portraitPanel = \{ x: 340, y: 7, w: 50, h: 52 \}/);
+  assert.match(dialogue, /drawBaselinePanel\(textPanel, "#07364e"\)/);
+  assert.match(dialogue, /drawBaselinePanel\(portraitPanel, "#168fce"\)/);
+  assert.match(dialogue, /ctx\.drawImage\(portraitImage, imageX, imageY, imageW, imageH\)/);
+  assert.match(dialogue, /const nameH = 8/);
+  assert.match(dialogue, /drawBitmapText\("EMBER", imageX \+ imageW \/ 2, nameY \+ 1, \.61, "center"/);
   assert.match(dialogue, /const textTop = Math\.round\(textArea\.y \+ Math\.max\(0, \(textArea\.h - totalTextHeight\) \/ 2\)\)/);
   assert.match(dialogue, /visibleOnLine,[\s\S]{0,80}textArea\.x,[\s\S]{0,120}"left"/);
   assert.doesNotMatch(dialogue, /fullLineWidth|textArea\.x \+ textArea\.w \/ 2/);
@@ -112,35 +112,35 @@ test("closing the final dialogue with Space consumes that physical key press", (
 test("tutorial restart keeps terms blank while preserving live goals for catch sequencing", () => {
   assert.match(engine, /function tutorialPlayerHasControl/);
   assert.match(engine, /if \(!tutorialPlayerHasControl\(\) && step\.setup !== "threeCatches" && step\.setup !== "wrongFly"\) return \[\]/);
-  assert.match(engine, /if \(tutorial\.active && \(!tutorialPlayerHasControl\(\) \|\| tutorial\.promptHidden\)\) \{\s*drawBlankTutorialVocabularyPrompt\(\)/);
+  assert.match(engine, /const visibleDuringExplanation = tutorialPromptVisibleDuringDialogue\(\)/);
+  assert.match(engine, /\(\(!tutorialPlayerHasControl\(\) && !visibleDuringExplanation\) \|\| tutorial\.promptHidden\)/);
   assert.match(engine, /tutorial\.resetPending/);
 });
 
 test("three-catch prompt stays blank from the catch until the next fly poofs in", () => {
   assert.match(engine, /activeSetup === "threeCatches" && wasCorrect[\s\S]{0,180}tutorial\.promptHidden = true/);
-  assert.match(engine, /function armTutorialFlies[\s\S]{0,850}tutorial\.promptHidden = false/);
+  assert.match(engine, /function armTutorialFlies[\s\S]{0,1100}if \(revealPrompt\) tutorial\.promptHidden = false/);
   assert.match(engine, /tutorial\.promptHidden = !armed/);
 });
 
-test("wrong-fly lesson demonstrates skip, correct catch, and clue conversion", () => {
+test("wrong-fly lesson begins with both targets visible and converts the skipped fly after the right catch", () => {
   for (const phrase of [
     "That wrong fly does not count.",
     "You can come back to it later.",
     "Catch the right fly, and your English clue can update.",
     "That can turn the fly you skipped into the new correct match!"
   ]) assert.ok(engine.includes(phrase), phrase);
-  assert.match(engine, /function beginWrongFlyFollowupTransition/);
-  assert.match(engine, /reason: "wrong-fly-followup"/);
-  assert.match(engine, /preserveExistingFlies: true/);
-  assert.match(engine, /makeParkFly\(6, tutorial\.wrongFlyPromptIndex, 1\)/);
+  const setup = engine.slice(engine.indexOf('case "wrongFly"'), engine.indexOf('case "comboMixed"'));
+  assert.match(setup, /makeFly\(315, 108, tutorial\.wrongFlyOriginalVocabIndex, 0\)/);
+  assert.match(setup, /makeFly\(390, 150, tutorial\.wrongFlyPromptIndex, 1\)/);
+  assert.match(engine, /armTutorialFlies\(\{ revealPrompt: false \}\)/);
   assert.match(engine, /setPrompt\(tutorial\.wrongFlyOriginalVocabIndex\)/);
   assert.match(engine, /tutorial\.wrongFlyRightCaught = true/);
   assert.match(engine, /tutorial\.promptHidden = true/);
-  assert.match(engine, /if \(attemptEnded\) \{[\s\S]{0,160}tutorial\.promptHidden = false/);
+  assert.match(engine, /resetAttemptForNextJump\(\);\s*tutorial\.promptHidden = false/);
   assert.match(engine, /jumpAttempts > 4/);
-  assert.ok(engine.includes("This time, catch a fly that doesn't match."));
+  assert.doesNotMatch(engine, /"This time, catch a fly that doesn't match\."/);
   assert.match(engine, /if \(tutorial\.wrongFlyReturnedCaught\)[\s\S]{0,240}passStep\(\)/);
-  assert.match(engine, /if \(tutorial\.wrongFlyRightCaught\)[\s\S]{0,180}resetAttemptForNextJump\(\)/);
   assert.match(engine, /return \["RETURN FOR", `THE OLD FLY • \$\{Math\.max\(0, 4 - tutorial\.jumpAttempts\)\} JUMPS LEFT`\]/);
 });
 

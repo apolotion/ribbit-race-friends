@@ -18,8 +18,8 @@ function block(start, end) {
 
 test("1.7.10 polished tutorial build and first-boot marker are installed", () => {
   assert.equal(JSON.parse(read("package.json")).version, "1.7.10");
-  assert.match(read("src/common.js"), /2026\.10\.12-friends-tutorial-polish-5/);
-  assert.match(engine, /const TUTORIAL_BUILD = "2026\.10\.12-friends-tutorial-polish-5"/);
+  assert.match(read("src/common.js"), /2026\.10\.12-friends-tutorial-polish-6/);
+  assert.match(engine, /const TUTORIAL_BUILD = "2026\.10\.12-friends-tutorial-polish-6"/);
   assert.match(engine, /rrFriendsEngineTutorialSoloSeenV8/);
 });
 
@@ -49,17 +49,17 @@ test("dialogue uses large left-aligned two-line RPG typography, hold-to-speed, a
   assert.doesNotMatch(engine, /SPACE (?:FOR NEXT|TO PLAY)|TAP (?:FOR NEXT|TO PLAY)/);
 });
 
-test("dialogue keeps the approved dark box while Ember uses an equal-height border with no right-side rail", () => {
+test("dialogue matches the dark cyan-and-white baseline with a taller Ember card and compact nameplate", () => {
   const dialogue = block("function drawTutorialDialogue", "function drawTutorialStatus");
-  assert.match(dialogue, /const textPanel = \{ x: 92, y: 7, w: 244, h: 42 \}/);
-  assert.match(dialogue, /const portraitPanel = \{ x: 338, y: 7, w: 42, h: 42 \}/);
-  assert.match(dialogue, /const border = 2/);
-  assert.match(dialogue, /drawDialoguePanel\(textPanel, "#052f45"\)/);
-  assert.match(dialogue, /ctx\.fillStyle = "#073b55"/);
-  assert.match(dialogue, /drawDialoguePanel\(portraitPanel, "#2a6d8e"\)/);
-  assert.match(dialogue, /const imageSize = portraitPanel\.w - border \* 2/);
-  assert.match(dialogue, /drawBitmapText\("EMBER"[\s\S]{0,100}\.68, "center"/);
-  assert.doesNotMatch(dialogue, /strokeRect\(|indigo|rightRail|portraitRail/i);
+  assert.match(dialogue, /const textPanel = \{ x: 92, y: 7, w: 246, h: 46 \}/);
+  assert.match(dialogue, /const portraitPanel = \{ x: 340, y: 7, w: 50, h: 52 \}/);
+  assert.match(dialogue, /function|const drawBaselinePanel/);
+  assert.match(dialogue, /drawBaselinePanel\(textPanel, "#07364e"\)/);
+  assert.match(dialogue, /drawBaselinePanel\(portraitPanel, "#168fce"\)/);
+  assert.match(dialogue, /const nameH = 8/);
+  assert.match(dialogue, /ctx\.drawImage\(portraitImage, imageX, imageY, imageW, imageH\)/);
+  assert.match(dialogue, /drawBitmapText\("EMBER"[\s\S]{0,100}\.61, "center"/);
+  assert.doesNotMatch(dialogue, /indigo|rightRail|portraitRail/i);
 });
 
 test("first boot waits for login and starts without a one-frame main-menu reveal", () => {
@@ -145,10 +145,11 @@ test("each proper long-jump landing gets the normal catch sparkle and success so
   assert.match(monitor, /longJumpStreak >= 3/);
 });
 
-test("tongue lesson poofs to the front edge and invokes the stock final-catch cinematic", () => {
+test("tongue lesson starts at the normal ground position, lowers the fly by the same offset, and invokes the stock cinematic", () => {
   const range = engine.slice(engine.indexOf('case "rangeCatch"'), engine.indexOf('case "wrongFly"'));
-  assert.match(range, /positionOnPlatform\(platforms\[1\], platforms\[1\]\.w - frog\.w - 1, 1\)/);
-  assert.match(range, /makeFly\(324, 38, 0, 4\)/);
+  assert.match(range, /positionSoloFrog\(getNormalParkStartX\(\), CONFIG\.groundY - frog\.h, 1\)/);
+  assert.match(range, /const deltaY = newY - oldY/);
+  assert.match(range, /makeFly\(324, 38 \+ deltaY, 0, 4\)/);
   assert.match(engine, /activeSetup === "rangeCatch" && wasCorrect && source !== "tongue"/);
   assert.match(engine, /const originalShouldStartSoloCriticalCatchForTutorial = shouldStartSoloCriticalCatch/);
   assert.match(engine, /const isRangeMatch = activeSetup === "rangeCatch"/);
@@ -189,7 +190,7 @@ test("successful wall techniques continue physics to landing before freezing", (
 });
 
 test("Current Goal uses the normal stats footprint and the clue shadow stops at its boundary", () => {
-  assert.match(engine, /return \{ x:328, y:235, w:150, h:31 \}/);
+  assert.match(engine, /return \{ x:328, y:234, w:150, h:33 \}/);
   assert.match(engine, /const goalCenterX = x \+ w \/ 2/);
   assert.match(render, /ctx\.fillRect\(left \+ 2, top \+ 2, width - 2, height\)/);
   assert.match(engine, /function currentGoalHowToLines/);
@@ -198,7 +199,7 @@ test("Current Goal uses the normal stats footprint and the clue shadow stops at 
 
 test("terms stay blank until controls return while the three-catch goal remains live", () => {
   assert.match(engine, /if \(!tutorialPlayerHasControl\(\) && step\.setup !== "threeCatches" && step\.setup !== "wrongFly"\) return \[\]/);
-  assert.match(engine, /sceneCatchCount \+ \(tutorial\.sceneAttemptCaught \? 1 : 0\)/);
+  assert.match(engine, /Math\.min\(3, tutorial\.sceneCatchCount \+ \(tutorial\.sceneAttemptCaught \? 1 : 0\)\)/);
   assert.match(engine, /drawBlankTutorialVocabularyPrompt\(\)/);
   assert.match(engine, /const finalPractice = tutorialStep\(\)\?\.setup === "normalRound"/);
   assert.match(engine, /if \(!finalPractice\) drawCurrentGoalHud\(\)/);

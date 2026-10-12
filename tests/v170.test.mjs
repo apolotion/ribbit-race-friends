@@ -86,8 +86,8 @@ test("tutorial scenarios use Park layouts and reachable authored fly placement",
   const engine=read("client/game/120-engine-tutorial.js");
   assert.match(engine,/oneAttempt:\s*true/);
   assert.match(engine,/platforms = cloneParkPlatforms\(\)/);
-  assert.match(engine,/positionOnPlatform\(platforms\[1\], platforms\[1\]\.w - frog\.w - 1, 1\)/);
-  assert.match(engine,/makeFly\(324, 38, 0, 4\)/);
+  assert.match(engine,/positionSoloFrog\(getNormalParkStartX\(\), CONFIG\.groundY - frog\.h, 1\)/);
+  assert.match(engine,/makeFly\(324, 38 \+ deltaY, 0, 4\)/);
   assert.match(engine,/makeFly\(240, 108, 1, 1\)/);
   assert.match(engine,/bufferEventCount >= 2/);
   assert.match(engine,/catch all three matching flies before you land!/i);
@@ -113,7 +113,7 @@ test("Ember dialogue is modal, left-aligned, and uses a down triangle instead of
     'portrait: "smile"',
     "Hey there, tadpole! Welcome to Ribbit Race!"
   ]) assert.match(engine,new RegExp(word.replace(/[.*+?^${}()|[\]\\]/g,"\\$&")));
-  assert.match(engine,/const portraitPanel = \{ x: 338/);
+  assert.match(engine,/const portraitPanel = \{ x: 340/);
   assert.match(engine,/visibleOnLine,[\s\S]{0,80}textArea\.x,[\s\S]{0,120}"left"/);
   assert.match(engine,/if \(tutorial\.active && tutorial\.dialogueOpen && game\.state !== "paused"/);
   assert.match(engine,/armScenarioAfterDialogue\(\)/);

@@ -3,7 +3,7 @@
 // input support hooks, palette operations, post-hat progression, and replay state.
 
 const RIBBIT_FRIENDS_DISPLAY_VERSION = "1.7.10";
-const RIBBIT_FRIENDS_BUILD = "2026.10.12-friends-tutorial-polish-5";
+const RIBBIT_FRIENDS_BUILD = "2026.10.12-friends-tutorial-polish-6";
 
 function rr14Number(value, fallback = 0) {
   const parsed = Number(value);

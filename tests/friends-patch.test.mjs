@@ -36,8 +36,8 @@ test("PIN hashing stays within Cloudflare PBKDF2 limit and matches 100000 rounds
 });
 
 test("Friends release exposes the new build marker",()=>{
-  assert.equal(BUILD,"2026.10.12-friends-tutorial-polish-5");
-  assert.match(browserSource,/2026\.10\.12\-friends\-tutorial\-polish\-5/);
+  assert.equal(BUILD,"2026.10.12-friends-tutorial-polish-6");
+  assert.match(browserSource,/2026\.10\.12\-friends\-tutorial\-polish\-6/);
 });
 
 test("server vocabulary is exactly the requested 15 entries",()=>{
