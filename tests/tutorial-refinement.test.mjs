@@ -18,9 +18,9 @@ function block(start, end) {
 
 test("1.7.10 tutorial-polish build is wired everywhere", () => {
   assert.equal(JSON.parse(read("package.json")).version, "1.7.10");
-  assert.match(read("src/common.js"), /2026\.10\.12-friends-friends-polish-8/);
-  assert.match(read("client/game/110-online-mobile-polish.js"), /2026\.10\.12-friends-friends-polish-8/);
-  assert.match(read("public/scripts/cloud-client.js"), /2026\.10\.12-friends-friends-polish-8/);
+  assert.match(read("src/common.js"), /2026\.10\.12-friends-polish-8/);
+  assert.match(read("client/game/110-online-mobile-polish.js"), /2026\.10\.12-friends-polish-8/);
+  assert.match(read("public/scripts/cloud-client.js"), /2026\.10\.12-friends-polish-8/);
   assert.match(index, /2026\.10\.12-friends-polish-8/);
   assert.doesNotMatch(index, /tutorial-scripted-1/);
 });

@@ -16,7 +16,7 @@ function block(start, end) {
 }
 
 test("polish-8 cache marker forces the rebuilt tutorial UI to load", () => {
-  assert.match(engine, /2026\.10\.12-friends-friends-polish-8/);
+  assert.match(engine, /2026\.10\.12-friends-polish-8/);
   assert.match(index, /game\.bundle\.js\?v=2026\.10\.12-friends-polish-8/);
 });
 
