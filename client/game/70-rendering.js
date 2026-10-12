@@ -4055,7 +4055,14 @@
       drawPageArrow(pages.next,1,game.customHatPageHovered==="next");
       if (!filteredHats.length) drawBitmapText("NO MATCHING HATS", panel.x + panel.w / 2, panel.y + 93, 0.78, "center", "#8a3243");
       else if (lockedFocusedOption) drawCustomRequirementTooltip(lockedFocusedOption,"",getHatRequirementLines(lockedFocusedOption.id),skin,190);
-    }
+    
+      // POLISH19_HAT_INFO_BAND
+      try {
+        const chosen = typeof getSelectedHat === "function" ? getSelectedHat() : null;
+        const unlockText = chosen?.unlockText || chosen?.description || chosen?.requirementText || "";
+        if (unlockText) drawBitmapText(String(unlockText).toUpperCase(), W / 2, 61, Math.min(.42, 330 / Math.max(1, measureBitmapText(String(unlockText).toUpperCase(), 1))), "center", "#48555a");
+      } catch (_) {}
+}
 
     function drawCustomColorScreen() {
       ensureValidEquippedHat();

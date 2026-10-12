@@ -1,6 +1,6 @@
-RIBBIT RACE FRIENDS — POLISH 18
+RIBBIT RACE FRIENDS — POLISH 19
 Displayed version: VERSION 1.7.10
-Build: 2026.10.12-friends-polish-18
+Build: 2026.10.12-friends-polish-19
 
 VERSUS TUTORIAL
 1. Moved the tutorial chapter strip directly above Find the Match so it does not clash with Ember dialogue or Watch Ember.

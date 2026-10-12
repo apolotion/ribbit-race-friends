@@ -1322,49 +1322,20 @@
         drawOnlineAction({...rect,id:match?.id,label:text,icon,stripe:match?.stripe||palette?.light||'#5ce5e8',subLabel:match?.subLabel||''},selected||state.focus===match?.id);
       }
       function drawOnlineTooltip(){
-        // Help bubbles belong only on the first Online menu. Secondary menus
-        // already label their controls clearly and no longer show hover popups.
-        if(!isMenuVisible()||state.screen!=='entry')return;
+        if(!isMenuVisible()||state.screen!=="entry")return;
         const focusId=state.keyboardFocus?state.focus:(state.hoverId||state.focus);
-        if(!focusId||focusId==='back')return;
         const b=onlineButtons().find(v=>v.id===focusId);
-        if(!b?.tip||!Number.isFinite(b.x)||!Number.isFinite(b.y)||!Number.isFinite(b.w)||!Number.isFinite(b.h))return;
-
-        const scale=.46;
-        const width=218;
-        const height=30;
-        const words=String(b.tip).toUpperCase().split(/\s+/).filter(Boolean);
-        const lines=[];let line='';
-        for(const word of words){
-          const next=line?`${line} ${word}`:word;
-          if(line&&measureBitmapText(next,scale)>width-18){lines.push(line);line=word;}
-          else line=next;
-        }
-        if(line)lines.push(line);
-        while(lines.length>2){lines[lines.length-2]+=' '+lines.pop();}
-        const centerX=b.x+b.w/2;
-        const x=clamp(Math.round(centerX-width/2),5,W-width-5);
-        let y=Math.round(b.y-height-8);
-        let pointerBelow=true;
-        if(y<4){y=Math.min(H-height-7,Math.round(b.y+b.h+8));pointerBelow=false;}
-        const pointerX=clamp(Math.round(centerX),x+10,x+width-10);
-
-        ctx.save();
-        ctx.fillStyle='rgba(25,43,52,.24)';ctx.fillRect(x+2,y+2,width,height);
-        ctx.fillStyle=COLORS.ink;ctx.fillRect(x,y,width,height);
-        ctx.fillStyle='#ffffff';ctx.fillRect(x+2,y+2,width-4,height-4);
-        const palette=state.localAppearance||appearanceFor(state.localSkinId)||PVP_NEUTRAL_PALETTE;
-        ctx.fillStyle=palette.light||'#5ce5e8';ctx.fillRect(x+5,y+4,width-10,2);
-        const lineStep=8;
-        const textTop=y+(lines.length===1?11:7);
-        lines.slice(0,2).forEach((text,i)=>fitText(text,x+width/2,textTop+i*lineStep,width-14,scale,'#26363d'));
-        ctx.fillStyle=COLORS.ink;
-        if(pointerBelow){
-          ctx.fillRect(pointerX-4,y+height,9,2);ctx.fillRect(pointerX-3,y+height+2,7,2);ctx.fillRect(pointerX-2,y+height+4,5,2);ctx.fillRect(pointerX-1,y+height+6,3,1);
-        }else{
-          ctx.fillRect(pointerX-4,y-2,9,2);ctx.fillRect(pointerX-3,y-4,7,2);ctx.fillRect(pointerX-2,y-6,5,2);ctx.fillRect(pointerX-1,y-7,3,1);
-        }
-        ctx.restore();
+        if(!b?.tip||b.id==="back")return;
+        const skin=(()=>{try{return getPvpSetupPreviewPalette?.(0)||getSelectedSkin();}catch(_){return getSelectedSkin();}})();
+        const scale=.46,maxTextW=190,words=String(b.tip).toUpperCase().split(/\s+/);let lines=[],line="";
+        for(const word of words){const test=line?line+" "+word:word;if(measureBitmapText(test,scale)<=maxTextW||!line)line=test;else{lines.push(line);line=word;}}
+        if(line)lines.push(line);lines=lines.slice(0,3);
+        const widest=Math.max(72,...lines.map(v=>measureBitmapText(v,scale)));
+        const width=Math.ceil(widest+18),lineH=8,height=Math.max(22,12+lines.length*lineH);
+        const cx=b.x+b.w/2,x=clamp(Math.round(cx-width/2),5,W-width-5),y=Math.max(4,b.y-height-8),px=clamp(Math.round(cx),x+10,x+width-10);
+        ctx.save();ctx.fillStyle="rgba(25,43,52,.28)";ctx.fillRect(x+2,y+2,width,height);ctx.fillStyle=COLORS.ink;ctx.fillRect(x,y,width,height);ctx.fillStyle="#f7fdff";ctx.fillRect(x+2,y+2,width-4,height-4);ctx.fillStyle=skin.light;ctx.fillRect(x+5,y+4,width-10,2);
+        const firstY=y+(height-(lines.length*lineH-1))/2-1;lines.forEach((s,i)=>drawBitmapText(s,x+width/2,firstY+i*lineH,scale,"center","#26363d"));
+        ctx.fillStyle=COLORS.ink;ctx.fillRect(px-4,y+height,9,2);ctx.fillRect(px-3,y+height+2,7,2);ctx.fillRect(px-2,y+height+4,5,2);ctx.fillRect(px-1,y+height+6,3,1);ctx.restore();
       }
       function drawOnlineProfile(){
         drawPanel('CUSTOMIZER');fitText('YOUR ONLINE DISPLAY NAME',240,67,375,.9,'#07516a');
@@ -2317,7 +2288,7 @@
         let text=state.cpuIndex>=0?departedLabel+' - CPU LV 5':direct?'SERVER '+Math.round(rtt)+' MS':gate.lossAt?'RECONNECTING':gate.expectedDeparture?'PARTNER LEFT':gate.finishedOffline?'SERVER ENDED':'SERVER REQUIRED';
         if(stale&&state.cpuIndex<0)text='WAITING FOR HOST - LIVE';
         else if(net.correctionMessageUntil>now()&&state.cpuIndex<0)text='SHARED CATCH CORRECTED';
-        const r={x:localIndex()===0?12:W-124,y:236,w:112,h:8};
+        const r={x:154,y:222,w:172,h:8};
         ctx.save();ctx.globalAlpha=.94;ctx.fillStyle=stale&&state.cpuIndex<0?'#f8c7cc':'#f7fdff';ctx.fillRect(r.x,r.y,r.w,r.h);
         fitText(text,r.x+r.w/2,r.y+2,r.w-6,.48,stale&&state.cpuIndex<0?'#8c3048':'#52666b');ctx.restore();
         if(state.cpuIndex>=0&&state.takeoverNoticeUntil>now()){

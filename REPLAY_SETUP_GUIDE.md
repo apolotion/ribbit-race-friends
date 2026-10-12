@@ -107,7 +107,7 @@ The browser does not currently have a valid Friends session cookie for that game
 The record predates replay capture, the player's run was not a new PB, recording was unsupported, the video exceeded the limit, or the upload did not complete.
 
 ### The leaderboard shows the player but playback finds the wrong account
-Polish 18 sends the immutable account ID and login username in the leaderboard response. Both the Worker and browser files from this ZIP must be deployed together.
+Polish 19 sends the immutable account ID and login username in the leaderboard response. Both the Worker and browser files from this ZIP must be deployed together.
 
 ## When a separate video host would make sense
 
