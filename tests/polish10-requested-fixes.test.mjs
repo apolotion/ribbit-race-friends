@@ -17,7 +17,7 @@ const index = read("public/index.html");
 
 test("polish 11 cache marker is wired through client, worker, and asset URLs", () => {
   for (const source of [tutorial, cloud, index, read("src/common.js")]) {
-    assert.match(source, /2026\.10\.12-friends-polish-11/);
+    assert.match(source, /2026\.10\.12-friends-polish-12/);
   }
 });
 

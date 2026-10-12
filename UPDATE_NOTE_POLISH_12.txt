@@ -1,0 +1,38 @@
+RIBBIT RACE FRIENDS — POLISH 12
+Version: 1.7.10
+Build: 2026.10.12-friends-polish-12
+
+EMBER DIALOGUE
+- Moved the orange EMBER nameplate from the portrait to the upper-left corner of the dialogue box.
+- Centered EMBER precisely inside the orange plate.
+- Kept Ember's full square portrait unobstructed.
+
+TUTORIAL FLY LABELS
+- Reset both final-catch label-suppression systems whenever a new tutorial scene is configured.
+- Restored terms above the flies in Catch the Right Fly, Match + Spit, Two Matches, and every later tutorial scene.
+- Kept normal final-catch behavior intact within the scene where the cinematic occurs.
+
+SPIT-OUT FLY CONTINUITY
+- Authored wrong flies now stay fixed at their return position after the spit-back animation.
+- The rejected fly remains visible during the transition dialogue after Match + Spit.
+- It is removed only when the next two-fly setup poofs into place, so it never looks like a successful catch.
+
+THREE-FLY TONGUE FINISH
+- Landing no longer fails the three-fly exercise while the tongue or final-catch cinematic is still resolving the third fly.
+- The lesson waits for the catch result before deciding whether to pass or retry.
+
+FINAL TUTORIAL MESSAGE
+- Uncaught flies remain on the field while Ember says, "You're officially Ribbit Ready!"
+- Remaining flies are cleared only after the closing message finishes and the level-complete card appears.
+
+VERSUS TUTORIAL
+- Preserves the complete 16-scene Versus tutorial.
+- Ember remains a Level 5 CPU using the Ember skin.
+- Scripted demonstrations control both frogs during WATCH EMBER, and practice input returns only at YOUR TURN.
+
+VERIFICATION
+- npm run check: passed
+- Generated gameplay modules: 13
+- Bundle size: 1,372,806 bytes
+- Required external assets: 23
+- npm test: 210 passed, 0 failed

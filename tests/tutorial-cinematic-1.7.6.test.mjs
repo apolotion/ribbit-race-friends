@@ -18,8 +18,8 @@ function block(start, end) {
 
 test("1.7.10 polished tutorial build and first-boot marker are installed", () => {
   assert.equal(JSON.parse(read("package.json")).version, "1.7.10");
-  assert.match(read("src/common.js"), /2026\.10\.12-friends-polish-11/);
-  assert.match(engine, /const TUTORIAL_BUILD = "2026\.10\.12-friends-polish-11"/);
+  assert.match(read("src/common.js"), /2026\.10\.12-friends-polish-12/);
+  assert.match(engine, /const TUTORIAL_BUILD = "2026\.10\.12-friends-polish-12"/);
   assert.match(engine, /rrFriendsEngineTutorialSoloSeenV8/);
 });
 
@@ -60,8 +60,8 @@ test("dialogue matches the layered cyan-and-white reference with a full square E
   assert.match(dialogue, /const imageSize = portraitPanel\.w - 10/);
   assert.match(dialogue, /const fit = Math\.min\(imageSize \/ sourceW, imageSize \/ sourceH\)/);
   assert.match(dialogue, /ctx\.drawImage\(portraitImage, 0, 0, sourceW, sourceH, drawX, drawY, drawW, drawH\)/);
-  assert.match(dialogue, /const nameH = 11/);
-  assert.match(dialogue, /const nameY = imageY \+ imageSize - nameH \+ 1/);
+  assert.match(dialogue, /const namePlate = \{ x:textPanel\.x \+ 8, y:textPanel\.y \+ 7, w:48, h:10 \}/);
+  assert.match(dialogue, /drawBitmapText\("EMBER", namePlate\.x \+ namePlate\.w \/ 2, namePlate\.y \+ 2, \.58, "center"/);
   assert.doesNotMatch(dialogue, /indigo|rightRail|portraitRail/i);
 });
 

@@ -4,7 +4,7 @@
 
   const SOLO_SEEN_KEY = "rrFriendsEngineTutorialSoloSeenV8";
   const PVP_SEEN_KEY = "rrFriendsEngineTutorialPvpSeenV8";
-  const TUTORIAL_BUILD = "2026.10.12-friends-polish-11";
+  const TUTORIAL_BUILD = "2026.10.12-friends-polish-12";
   const TUTORIAL_ACHIEVEMENT_ID = "tutorial-graduate";
   const TYPEWRITER_MS_PER_CHARACTER = 28;
   const DIALOGUE_TEXT_SCALE = 0.86;
@@ -148,6 +148,7 @@
     wrongFlyReturnedCaught: false,
     wrongFlyResolvedAt: 0,
     wrongFlyFollowupQueued: false,
+    carryoverFlySnapshots: [],
     goalHovered: false,
     authStartQueued: false,
     authQueuedKind: "solo",
@@ -1781,6 +1782,7 @@
     tutorial.wrongFlyReturnedCaught = false;
     tutorial.wrongFlyResolvedAt = 0;
     tutorial.wrongFlyFollowupQueued = false;
+    tutorial.carryoverFlySnapshots = [];
     tutorial.goalHovered = false;
     tutorial.pvpBonks = 0;
     tutorial.pvpRebounds = 0;
@@ -2527,6 +2529,7 @@
 
   function configureStep(showDialogue = true, options = {}) {
     const preservedVisualPose = options.preserveVisualPose || null;
+    try { window.RibbitRaceResetFinalCatchLabels?.(); } catch (_) {}
     if (tutorial.kind === "pvp") configurePvpStep(tutorial.step);
     else configureSoloStep(tutorial.step);
     tutorial.pendingStartPose = captureControlledPose();
@@ -2661,6 +2664,7 @@
     }
 
     resetTutorialTongue();
+    clearTutorialCarryoverFlies();
     if (armFlies) {
       const setup = tutorialStep()?.setup || "";
       if (tutorial.kind === "pvp" && pvpFlyRevealDelayMs(setup) > 0) {
@@ -2781,7 +2785,8 @@
     game.winPending = false;
     game.targetVocabIndex = null;
     game.spawnQueue.length = 0;
-    flies.length = 0;
+    // Keep every uncaught fly visible while Ember delivers the final message.
+    // They are cleared only after the message closes and the completion card opens.
     resetTutorialTongue();
     clearHeldInput();
     freezeControlledEntity();
@@ -2808,6 +2813,9 @@
     tutorial.frogHidden = false;
     resetDialogueSpaceHold();
     game.tutorialActive = false;
+    flies.length = 0;
+    game.spawnQueue.length = 0;
+    resetTutorialTongue();
     tutorial.completeScreen = true;
     game.winPending = false;
     game.buttonHeld = false;
@@ -2895,16 +2903,60 @@
     game.cheatToastTimer = CONFIG.achievementToastDuration;
   }
 
+  function captureTutorialCarryoverFlies() {
+    return flies
+      .filter((currentFly) => currentFly?.tutorialAuthored && currentFly.state !== "eaten")
+      .map((currentFly) => ({
+        vocabIndex: Number(currentFly.vocabIndex) || 0,
+        x: Number(currentFly.returnX ?? currentFly.baseX ?? currentFly.x) || 0,
+        y: Number(currentFly.returnY ?? currentFly.baseY ?? currentFly.y) || 0,
+        spawnIndex: Number(currentFly.spawnIndex) || 0
+      }));
+  }
+
+  function installTutorialCarryoverFlies(snapshots = []) {
+    tutorial.carryoverFlySnapshots = Array.isArray(snapshots) ? snapshots.slice() : [];
+    for (const snapshot of tutorial.carryoverFlySnapshots) {
+      const carryover = makeFly(snapshot.x, snapshot.y, snapshot.vocabIndex, snapshot.spawnIndex);
+      carryover.tutorialArmed = true;
+      carryover.tutorialCarryover = true;
+      carryover.touchLocked = true;
+      carryover.blockedPromptSerial = Number.MAX_SAFE_INTEGER;
+      carryover.state = "active";
+      carryover.spawnAge = Math.max(CONFIG.flySpawnEffectDuration + 0.1, CONFIG.flyGrowDuration + 0.1);
+      carryover.phase = 0;
+      carryover.baseX = carryover.x = snapshot.x;
+      carryover.baseY = carryover.y = snapshot.y;
+    }
+    clearLabelCaches();
+  }
+
+  function clearTutorialCarryoverFlies() {
+    let removed = false;
+    for (let index = flies.length - 1; index >= 0; index -= 1) {
+      if (!flies[index]?.tutorialCarryover) continue;
+      flies.splice(index, 1);
+      removed = true;
+    }
+    tutorial.carryoverFlySnapshots = [];
+    if (removed) clearLabelCaches();
+  }
+
   function nextStep() {
     const steps = tutorial.kind === "pvp" ? PVP_STEPS : SOLO_STEPS;
     if (tutorial.step >= steps.length - 1) {
       finish(true);
       return;
     }
+    const previousSetup = tutorialStep()?.setup || "";
+    const carryoverFlies = tutorial.kind === "solo" && previousSetup === "comboMixed"
+      ? captureTutorialCarryoverFlies()
+      : [];
     const visualPose = captureControlledPose();
     freezeControlledEntity();
     tutorial.step += 1;
     configureStep(true, { preserveVisualPose: visualPose });
+    if (carryoverFlies.length) installTutorialCarryoverFlies(carryoverFlies);
   }
 
   function start(kind = "solo") {
@@ -3055,6 +3107,14 @@
     const caught = Math.max(0, Number(game.score || 0) - tutorial.scoreStart);
     const attemptEnded = attemptFinishedOnLanding();
     const now = performance.now();
+
+    // A landing can occur on the same frame that the tongue is still carrying
+    // the third fly. Keep the attempt alive until that catch resolves instead
+    // of treating the landing as a miss and poofing the frog away.
+    if (setup === "comboThree" && attemptEnded && (tongue.active || game.soloCriticalCatchActive)) {
+      tutorial.attemptEnded = false;
+      return;
+    }
     const landedThisFrame = !tutorial.wasGroundedLastFrame && frog.grounded;
     if (landedThisFrame) {
       tutorial.bufferedJumpWindowOpenedAt = now;
@@ -3431,7 +3491,19 @@
     frog.catchSparkleTimer = Math.max(0, frog.catchSparkleTimer - safeDt);
     frog.wrongCatchBubbleTimer = Math.max(0, frog.wrongCatchBubbleTimer - safeDt);
     frog.landingSquash = Math.max(0, frog.landingSquash - safeDt * 4.5);
-    if (options.animateFlies !== false) animateFlies(safeDt);
+    if (options.animateFlies !== false) {
+      const frozenCarryovers = flies
+        .filter((currentFly) => currentFly?.tutorialCarryover)
+        .map((currentFly) => ({ currentFly, x:currentFly.baseX, y:currentFly.baseY }));
+      animateFlies(safeDt);
+      for (const frozen of frozenCarryovers) {
+        frozen.currentFly.phase = 0;
+        frozen.currentFly.x = frozen.x;
+        frozen.currentFly.y = frozen.y;
+        frozen.currentFly.baseX = frozen.x;
+        frozen.currentFly.baseY = frozen.y;
+      }
+    }
   }
 
   function updateTutorial() {
@@ -3559,11 +3631,12 @@
     // covering any part of it.
     const textPanel = { x: 90, y: 6, w: 250, h: 50 };
     const portraitPanel = { x: 338, y: 6, w: 54, h: 54 };
+    const namePlate = { x:textPanel.x + 8, y:textPanel.y + 7, w:48, h:10 };
     const textArea = {
-      x: textPanel.x + 12,
-      y: textPanel.y + 10,
-      w: textPanel.w - 24,
-      h: textPanel.h - 20
+      x: textPanel.x + 11,
+      y: textPanel.y + 21,
+      w: textPanel.w - 22,
+      h: textPanel.h - 27
     };
     const portraitKey = holdingPreviousLine
       ? tutorial.dialogueHeldPortraitKey
@@ -3643,25 +3716,21 @@
       ctx.fillRect(imageX + 5, imageY + 4, imageSize - 10, imageSize - 8);
     }
 
-    // Layer the nameplate directly over the bottom of the image. There is no
-    // separate dark strip between the portrait and label, and the art continues
-    // behind the plate so it reads as one assembled card rather than a pasted image.
-    const nameH = 11;
-    const nameX = imageX;
-    const nameY = imageY + imageSize - nameH + 1;
-    const nameW = imageSize;
+    // Ember's name now sits in the upper-left of the dialogue panel instead
+    // of covering her portrait. The label text is mathematically centered in
+    // its orange plate, while the full square portrait remains unobstructed.
     ctx.fillStyle = "rgba(42,22,12,.42)";
-    ctx.fillRect(nameX + 1, nameY + nameH - 1, nameW - 2, 2);
-    const nameFill = ctx.createLinearGradient(nameX, nameY, nameX, nameY + nameH);
+    ctx.fillRect(namePlate.x + 1, namePlate.y + namePlate.h - 1, namePlate.w - 2, 2);
+    const nameFill = ctx.createLinearGradient(namePlate.x, namePlate.y, namePlate.x, namePlate.y + namePlate.h);
     nameFill.addColorStop(0, "#ffd777");
     nameFill.addColorStop(1, "#f39a3b");
     ctx.fillStyle = nameFill;
-    ctx.fillRect(nameX, nameY, nameW, nameH);
+    ctx.fillRect(namePlate.x, namePlate.y, namePlate.w, namePlate.h);
     ctx.fillStyle = "#fff0a8";
-    ctx.fillRect(nameX + 3, nameY + 2, nameW - 6, 1);
+    ctx.fillRect(namePlate.x + 3, namePlate.y + 2, namePlate.w - 6, 1);
     ctx.fillStyle = "#b55f24";
-    ctx.fillRect(nameX + 2, nameY + nameH - 2, nameW - 4, 1);
-    drawBitmapText("EMBER", nameX + nameW / 2, nameY + 2, .62, "center", "#2f1b12");
+    ctx.fillRect(namePlate.x + 2, namePlate.y + namePlate.h - 2, namePlate.w - 4, 1);
+    drawBitmapText("EMBER", namePlate.x + namePlate.w / 2, namePlate.y + 2, .58, "center", "#2f1b12");
 
     let remaining = visibleCount;
     wrappedLines.forEach((wrappedLine, index) => {
@@ -4230,6 +4299,10 @@
     const result = originalAttemptFlyCatch.call(this, targetFly, source, ...rest);
     if (!result || !activeSetup) return result;
 
+    if (!wasCorrect && ["wrongFly", "comboMixed"].includes(activeSetup) && targetFly) {
+      targetFly.tutorialHoldAfterSpit = true;
+    }
+
     if (activeSetup === "comboMixed" && wasCorrect) {
       const remainingFly = flies.find((currentFly) =>
         currentFly?.tutorialAuthored && currentFly.state === "active"
@@ -4284,6 +4357,23 @@
       tutorial.catchEvents.push(wasCorrect);
     }
 
+    return result;
+  };
+
+  // Once an authored wrong fly finishes its spit-back animation, keep it at
+  // its authored point. This makes it clear that it was rejected rather than
+  // collected, and it remains visible until the next setup poof.
+  const originalAnimateFliesForTutorialHold = animateFlies;
+  animateFlies = function(dt, ...rest) {
+    const result = originalAnimateFliesForTutorialHold.call(this, dt, ...rest);
+    if (tutorial.active && tutorial.kind === "solo") {
+      for (const currentFly of flies) {
+        if (!currentFly?.tutorialHoldAfterSpit || currentFly.state !== "active") continue;
+        currentFly.phase = 0;
+        currentFly.x = currentFly.baseX;
+        currentFly.y = currentFly.baseY;
+      }
+    }
     return result;
   };
 

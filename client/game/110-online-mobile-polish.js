@@ -5,7 +5,7 @@
  */
 (() => {
   "use strict";
-  const BUILD = "2026.10.12-friends-polish-11";
+  const BUILD = "2026.10.12-friends-polish-12";
   const RR_V160_CANDIDATES = {"catchFly":["attemptFlyCatch","attemptPvpFlyCatch","catchSandboxFly","getPvpImminentCatchFly","recordFlyEaten","scheduleFlyReplacementFromCatch"],"jumpSound":["playJumpSound"],"beep":["playCountdownGoSound","playCountdownSound"],"replayUpload":["saveRecordDate"],"restart":["resetGame","resetPvpGame","resetPvpPlayer","resetRoundLifecycle","resetRoundNetwork","restartCurrentLevel"],"drop":[],"render":["drawPvpScene","drawScene"],"worldRecord":[],"fullscreen":["getFullscreenElement","hideFullscreenFallback","showFullscreenFallback","syncFullscreenButton","toggleRibbitFullscreen"],"onlineSubmit":[],"leaderboard":["isSoloEndlessLeaderboardEligible","savePvpMatchWinsForLeaderboard"]};
   const RR_V160_VARS = {"onlineSelect":[],"achievementSelect":["activeAchievementIndex","hoveredAchievementCard"],"backRect":[]};
 
@@ -135,6 +135,10 @@
 
   // Final Catch labels are one-way faded. They cannot reappear until the state changes.
   window.RibbitV160ShouldHideFlyLabels=()=>V.finalCatchLabelsGone;
+  window.RibbitV160ResetFinalCatchLabels=()=>{
+    V.finalCatchStarted=0;
+    V.finalCatchLabelsGone=false;
+  };
   window.RibbitV160FlyLabelAlpha=(base=1)=>{
     if(!V.finalCatchStarted) return base;
     const t=(performance.now()-V.finalCatchStarted)/900;

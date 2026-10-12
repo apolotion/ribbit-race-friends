@@ -16,11 +16,11 @@ function block(start, end) {
 }
 
 test("polish-9 cache marker forces the rebuilt tutorial and Versus lesson UI to load", () => {
-  assert.match(engine, /2026\.10\.12-friends-polish-11/);
-  assert.match(index, /game\.bundle\.js\?v=2026\.10\.12-friends-polish-11/);
+  assert.match(engine, /2026\.10\.12-friends-polish-12/);
+  assert.match(index, /game\.bundle\.js\?v=2026\.10\.12-friends-polish-12/);
 });
 
-test("dialogue uses the new reference framing and keeps Ember's full square above the nameplate", () => {
+test("dialogue uses the new reference framing and keeps Ember's full square unobstructed", () => {
   const dialogue = block("function drawTutorialDialogue", "function drawTutorialStatus");
   assert.match(dialogue, /const textPanel = \{ x: 90, y: 6, w: 250, h: 50 \}/);
   assert.match(dialogue, /const portraitPanel = \{ x: 338, y: 6, w: 54, h: 54 \}/);
@@ -28,8 +28,8 @@ test("dialogue uses the new reference framing and keeps Ember's full square abov
   assert.match(dialogue, /drawReferencePanel\(portraitPanel, "#159ee4", "#087cc5"\)/);
   assert.match(dialogue, /const imageSize = portraitPanel\.w - 10/);
   assert.match(dialogue, /const fit = Math\.min\(imageSize \/ sourceW, imageSize \/ sourceH\)/);
-  assert.match(dialogue, /const nameY = imageY \+ imageSize - nameH \+ 1/);
-  assert.match(dialogue, /const nameH = 11/);
+  assert.match(dialogue, /const namePlate = \{ x:textPanel\.x \+ 8, y:textPanel\.y \+ 7, w:48, h:10 \}/);
+  assert.match(dialogue, /drawBitmapText\("EMBER", namePlate\.x \+ namePlate\.w \/ 2, namePlate\.y \+ 2, \.58, "center"/);
 });
 
 test("pause panel renders above an active Ember dialogue", () => {

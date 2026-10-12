@@ -18,10 +18,10 @@ function block(start, end) {
 
 test("1.7.10 tutorial-polish build is wired everywhere", () => {
   assert.equal(JSON.parse(read("package.json")).version, "1.7.10");
-  assert.match(read("src/common.js"), /2026\.10\.12-friends-polish-11/);
-  assert.match(read("client/game/110-online-mobile-polish.js"), /2026\.10\.12-friends-polish-11/);
-  assert.match(read("public/scripts/cloud-client.js"), /2026\.10\.12-friends-polish-11/);
-  assert.match(index, /2026\.10\.12-friends-polish-11/);
+  assert.match(read("src/common.js"), /2026\.10\.12-friends-polish-12/);
+  assert.match(read("client/game/110-online-mobile-polish.js"), /2026\.10\.12-friends-polish-12/);
+  assert.match(read("public/scripts/cloud-client.js"), /2026\.10\.12-friends-polish-12/);
+  assert.match(index, /2026\.10\.12-friends-polish-12/);
   assert.doesNotMatch(index, /tutorial-scripted-1/);
 });
 
@@ -36,7 +36,7 @@ test("first-boot tutorial waits for auth and suppresses the menu before first pa
     "rr-authenticated"
   ]) assert.ok(polish.includes(phrase), phrase);
   assert.match(index, /<body class="ribbit-auth-locked rr-tutorial-pending">/);
-  assert.match(index, /tutorial-preboot\.js\?v=2026\.10\.12-friends-polish-11/);
+  assert.match(index, /tutorial-preboot\.js\?v=2026\.10\.12-friends-polish-12/);
   assert.match(read("public/scripts/tutorial-preboot.js"), /rrFriendsEngineTutorialSoloSeenV8/);
   assert.match(css, /body\.rr-tutorial-pending:not\(\.ribbit-auth-locked\) #game\s*\{[\s\S]{0,120}visibility:\s*hidden\s*!important/);
   assert.doesNotMatch(polish, /requestAnimationFrame\(\(\) => requestAnimationFrame/);
@@ -52,8 +52,8 @@ test("Ember dialogue uses the supplied layered reference, left-aligned text, and
   assert.match(dialogue, /const imageSize = portraitPanel\.w - 10/);
   assert.match(dialogue, /const fit = Math\.min\(imageSize \/ sourceW, imageSize \/ sourceH\)/);
   assert.match(dialogue, /ctx\.drawImage\(portraitImage, 0, 0, sourceW, sourceH, drawX, drawY, drawW, drawH\)/);
-  assert.match(dialogue, /const nameY = imageY \+ imageSize - nameH \+ 1/);
-  assert.match(dialogue, /const nameH = 11/);
+  assert.match(dialogue, /const namePlate = \{ x:textPanel\.x \+ 8, y:textPanel\.y \+ 7, w:48, h:10 \}/);
+  assert.match(dialogue, /drawBitmapText\("EMBER", namePlate\.x \+ namePlate\.w \/ 2, namePlate\.y \+ 2, \.58, "center"/);
   assert.match(dialogue, /const textTop = Math\.round\(textArea\.y \+ Math\.max\(0, \(textArea\.h - totalTextHeight\) \/ 2\)\)/);
   assert.match(dialogue, /visibleOnLine,[\s\S]{0,80}textArea\.x,[\s\S]{0,120}"left"/);
   assert.doesNotMatch(dialogue, /fullLineWidth|textArea\.x \+ textArea\.w \/ 2/);

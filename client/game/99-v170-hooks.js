@@ -474,6 +474,12 @@
   // remainder of the round.
   let finalCatchLabelsGone = false;
   let finalCatchWasActive = false;
+  window.RibbitRaceResetFinalCatchLabels = () => {
+    finalCatchLabelsGone = false;
+    finalCatchWasActive = false;
+    window.RibbitRaceFinalCatchLabelsGone = false;
+    try { window.RibbitV160ResetFinalCatchLabels?.(); } catch (_) {}
+  };
   function finalCatchGuard() {
     const g = gameObject();
     const state = stateName();

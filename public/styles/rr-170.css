@@ -289,7 +289,7 @@ body.rr-tutorial-pending #game-frame {
   display: none !important;
 }
 
-/* Polish 11: the leaderboard lives inside the canvas and Set Base replaces the
+/* Polish 12: the leaderboard lives inside the canvas and Set Base replaces the
    old DOM palette-copy panel. */
 #cloud-leaderboard,
 #leaderboard-overlay,
