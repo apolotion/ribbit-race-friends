@@ -808,8 +808,7 @@
     // These lessons move the frog and reveal every authored fly on the exact
     // sentence that describes the new setup.
     if ((setup === "rangeCatch" && nextIndex === 4) ||
-        (setup === "comboMixed" && nextIndex === 2) ||
-        (setup === "wallTurn" && nextIndex === 5)) {
+        (setup === "comboMixed" && nextIndex === 2)) {
       beginDialogueScenarioPlacement(nextIndex);
       return;
     }
@@ -1809,7 +1808,10 @@
       }
 
       if (tutorial.wrongFlyRightCaught) {
-        if (attemptEnded) resetAttemptForNextJump();
+        if (attemptEnded) {
+          resetAttemptForNextJump();
+          tutorial.promptHidden = false;
+        }
         return;
       }
 
@@ -2519,7 +2521,7 @@
       tutorial.promptHidden = true;
     }
 
-    if (["comboMixed", "comboTwo", "comboThree"].includes(activeSetup)) {
+    if (["comboMixed", "comboTwo", "comboThree", "doubleBuffer"].includes(activeSetup)) {
       tutorial.catchEvents.push(wasCorrect);
     }
 

@@ -4657,7 +4657,7 @@
     }
 
 
-    function drawMiniBookIcon(cx, cy, color = "#48555a") {
+    function drawMiniTutorialBookIcon(cx, cy, color = "#48555a") {
       ctx.fillStyle = COLORS.ink;
       ctx.fillRect(cx - 7, cy - 6, 14, 12);
       ctx.fillStyle = "#f7fdff";
@@ -4684,7 +4684,7 @@
         ? mixHexColors(getSelectedSkin().belly, "#ffffff", 0.18)
         : "#f7fdff";
       ctx.fillRect(button.x + 2, button.y + 2, button.w - 4, button.h - 4);
-      drawMiniBookIcon(button.x + button.w / 2, button.y + button.h / 2, active ? getSelectedSkin().mid : "#48555a");
+      drawMiniTutorialBookIcon(button.x + button.w / 2, button.y + button.h / 2, active ? getSelectedSkin().mid : "#48555a");
       if (focused) {
         ctx.fillStyle = getSelectedSkin().dark;
         ctx.fillRect(button.x + 3, button.y + 3, 2, 2);

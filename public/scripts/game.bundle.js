@@ -12187,7 +12187,7 @@ function startRibbitRaceGame() {
       ctx.fillRect(rect.x + 2, rect.y + 2, rect.w - 4, rect.h - 4);
       ctx.fillStyle = focused ? palette.light : "#ffffff";
       ctx.fillRect(rect.x + 5, rect.y + 4, rect.w - 10, 2);
-      drawMiniBookIcon(rect.x + rect.w / 2, rect.y + rect.h / 2, focused ? palette.mid : "#48555a");
+      drawMiniTutorialBookIcon(rect.x + rect.w / 2, rect.y + rect.h / 2, focused ? palette.mid : "#48555a");
       if (focused) {
         ctx.fillStyle = COLORS.white;
         [[3,3],[rect.w-5,3],[3,rect.h-5],[rect.w-5,rect.h-5]].forEach(([dx,dy]) => ctx.fillRect(rect.x + dx, rect.y + dy, 2, 2));
@@ -17425,7 +17425,7 @@ function startRibbitRaceGame() {
     }
 
 
-    function drawMiniBookIcon(cx, cy, color = "#48555a") {
+    function drawMiniTutorialBookIcon(cx, cy, color = "#48555a") {
       ctx.fillStyle = COLORS.ink;
       ctx.fillRect(cx - 7, cy - 6, 14, 12);
       ctx.fillStyle = "#f7fdff";
@@ -17452,7 +17452,7 @@ function startRibbitRaceGame() {
         ? mixHexColors(getSelectedSkin().belly, "#ffffff", 0.18)
         : "#f7fdff";
       ctx.fillRect(button.x + 2, button.y + 2, button.w - 4, button.h - 4);
-      drawMiniBookIcon(button.x + button.w / 2, button.y + button.h / 2, active ? getSelectedSkin().mid : "#48555a");
+      drawMiniTutorialBookIcon(button.x + button.w / 2, button.y + button.h / 2, active ? getSelectedSkin().mid : "#48555a");
       if (focused) {
         ctx.fillStyle = getSelectedSkin().dark;
         ctx.fillRect(button.x + 3, button.y + 3, 2, 2);
@@ -20961,7 +20961,7 @@ function startRibbitRaceGame() {
 // input support hooks, palette operations, post-hat progression, and replay state.
 
 const RIBBIT_FRIENDS_DISPLAY_VERSION = "1.7.10";
-const RIBBIT_FRIENDS_BUILD = "2026.10.12-friends-tutorial-polish-4";
+const RIBBIT_FRIENDS_BUILD = "2026.10.12-friends-tutorial-polish-5";
 
 function rr14Number(value, fallback = 0) {
   const parsed = Number(value);
@@ -21492,7 +21492,7 @@ window.RibbitRaceMobileDiagnostics = () => ({
  */
 (() => {
   "use strict";
-  const BUILD = "2026.10.12-friends-tutorial-polish-4";
+  const BUILD = "2026.10.12-friends-tutorial-polish-5";
   const RR_V160_CANDIDATES = {"catchFly":["attemptFlyCatch","attemptPvpFlyCatch","catchSandboxFly","getPvpImminentCatchFly","recordFlyEaten","scheduleFlyReplacementFromCatch"],"jumpSound":["playJumpSound"],"beep":["playCountdownGoSound","playCountdownSound"],"replayUpload":["saveRecordDate"],"restart":["resetGame","resetPvpGame","resetPvpPlayer","resetRoundLifecycle","resetRoundNetwork","restartCurrentLevel"],"drop":[],"render":["drawPvpScene","drawScene"],"worldRecord":[],"fullscreen":["getFullscreenElement","hideFullscreenFallback","showFullscreenFallback","syncFullscreenButton","toggleRibbitFullscreen"],"onlineSubmit":[],"leaderboard":["isSoloEndlessLeaderboardEligible","savePvpMatchWinsForLeaderboard"]};
   const RR_V160_VARS = {"onlineSelect":[],"achievementSelect":["activeAchievementIndex","hoveredAchievementCard"],"backRect":[]};
 
@@ -23251,8 +23251,7 @@ window.RibbitRaceMobileDiagnostics = () => ({
     // These lessons move the frog and reveal every authored fly on the exact
     // sentence that describes the new setup.
     if ((setup === "rangeCatch" && nextIndex === 4) ||
-        (setup === "comboMixed" && nextIndex === 2) ||
-        (setup === "wallTurn" && nextIndex === 5)) {
+        (setup === "comboMixed" && nextIndex === 2)) {
       beginDialogueScenarioPlacement(nextIndex);
       return;
     }
@@ -24252,7 +24251,10 @@ window.RibbitRaceMobileDiagnostics = () => ({
       }
 
       if (tutorial.wrongFlyRightCaught) {
-        if (attemptEnded) resetAttemptForNextJump();
+        if (attemptEnded) {
+          resetAttemptForNextJump();
+          tutorial.promptHidden = false;
+        }
         return;
       }
 
@@ -24962,7 +24964,7 @@ window.RibbitRaceMobileDiagnostics = () => ({
       tutorial.promptHidden = true;
     }
 
-    if (["comboMixed", "comboTwo", "comboThree"].includes(activeSetup)) {
+    if (["comboMixed", "comboTwo", "comboThree", "doubleBuffer"].includes(activeSetup)) {
       tutorial.catchEvents.push(wasCorrect);
     }
 

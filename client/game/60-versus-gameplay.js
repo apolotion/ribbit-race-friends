@@ -3465,7 +3465,7 @@
       ctx.fillRect(rect.x + 2, rect.y + 2, rect.w - 4, rect.h - 4);
       ctx.fillStyle = focused ? palette.light : "#ffffff";
       ctx.fillRect(rect.x + 5, rect.y + 4, rect.w - 10, 2);
-      drawMiniBookIcon(rect.x + rect.w / 2, rect.y + rect.h / 2, focused ? palette.mid : "#48555a");
+      drawMiniTutorialBookIcon(rect.x + rect.w / 2, rect.y + rect.h / 2, focused ? palette.mid : "#48555a");
       if (focused) {
         ctx.fillStyle = COLORS.white;
         [[3,3],[rect.w-5,3],[3,rect.h-5],[rect.w-5,rect.h-5]].forEach(([dx,dy]) => ctx.fillRect(rect.x + dx, rect.y + dy, 2, 2));
