@@ -16,14 +16,14 @@ function block(start, end) {
 }
 
 test("polish-9 cache marker forces the rebuilt tutorial and Versus lesson UI to load", () => {
-  assert.match(engine, /2026\.10\.12-friends-polish-18/);
-  assert.match(index, /game\.bundle\.js\?v=2026\.10\.12-friends-polish-18/);
+  assert.match(engine, /2026\.10\.12-friends-polish-20/);
+  assert.match(index, /game\.bundle\.js\?v=2026\.10\.12-friends-polish-20/);
 });
 
 test("dialogue uses the new reference framing and keeps Ember's full square unobstructed", () => {
   const dialogue = block("function drawTutorialDialogue", "function drawTutorialStatus");
-  assert.match(dialogue, /const textPanel = \{ x: 85, y: 6, w: 247, h: 54 \}/);
-  assert.match(dialogue, /const portraitPanel = \{ x: 338, y: 6, w: 54, h: 54 \}/);
+  assert.match(dialogue, /const textPanel = \{ x: 90, y: 6, w: 239, h: 54 \}/);
+  assert.match(dialogue, /const portraitPanel = \{ x: 335, y: 6, w: 54, h: 54 \}/);
   assert.match(dialogue, /drawReferencePanel\(textPanel, "#0b4462", "#052b43"\)/);
   assert.match(dialogue, /drawReferencePanel\(portraitPanel, "#159ee4", "#087cc5"\)/);
   assert.match(dialogue, /const imageSize = portraitPanel\.w - 10/);
@@ -74,9 +74,9 @@ test("buffered-drop placement is five pixels left and triple-buffer starts botto
 });
 
 test("Solo tutorial book occupies the former settings slot with settings immediately to its left", () => {
-  assert.match(ui, /settingsButton: Object\.freeze\(\{ id: "settings", x: 355, y: 211, w: 24, h: 24 \}\)/);
+  assert.match(ui, /settingsButton: Object\.freeze\(\{ id: "settings", x: 358, y: 211, w: 24, h: 24 \}\)/);
   assert.match(ui, /tutorialButton: Object\.freeze\(\{ id: "tutorial", x: 382, y: 211, w: 24, h: 24 \}\)/);
-  assert.match(ui, /timeButton: Object\.freeze\(\{ x: 409, y: 211, w: 24, h: 24 \}\)/);
+  assert.match(ui, /timeButton: Object\.freeze\(\{ x: 406, y: 211, w: 24, h: 24 \}\)/);
 });
 
 test("English clue is ready during its explanation and match count is capped", () => {
@@ -96,7 +96,7 @@ test("Current Goal trophy is centered from the header to the lower border", () =
 test("polish-9 centers the drop frog, moves buffer-drop start to ground, and changes the second smooth line", () => {
   assert.match(engine, /case "quickDrop":[\s\S]{0,140}positionCenteredOnPlatform\(platforms\[2\], 1\)/);
   assert.match(engine, /case "bufferDrop":[\s\S]{0,260}platforms\[2\]\.x \+ Math\.round\(\(platforms\[2\]\.w - frog\.w\) \/ 2\)[\s\S]{0,100}CONFIG\.groundY - frog\.h/);
-  assert.match(engine, /"Dropping it like it's hot!"/);
+  assert.match(engine, /"And you're not just able to buffer another jump\."/);
   assert.match(engine, /"You don't have to land right on top of a fly to catch it\."/);
 });
 

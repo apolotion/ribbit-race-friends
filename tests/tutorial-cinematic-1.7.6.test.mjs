@@ -18,8 +18,8 @@ function block(start, end) {
 
 test("1.7.10 polished tutorial build and first-boot marker are installed", () => {
   assert.equal(JSON.parse(read("package.json")).version, "1.7.10");
-  assert.match(read("src/common.js"), /2026\.10\.12-friends-polish-18/);
-  assert.match(engine, /const TUTORIAL_BUILD = "2026\.10\.12-friends-polish-18"/);
+  assert.match(read("src/common.js"), /2026\.10\.12-friends-polish-20/);
+  assert.match(engine, /const TUTORIAL_BUILD = "2026\.10\.12-friends-polish-20"/);
   assert.match(engine, /rrFriendsEngineTutorialSoloSeenV8/);
 });
 
@@ -51,8 +51,8 @@ test("dialogue uses large left-aligned two-line RPG typography, hold-to-speed, a
 
 test("dialogue matches the layered cyan-and-white reference with a full square Ember portrait", () => {
   const dialogue = block("function drawTutorialDialogue", "function drawTutorialStatus");
-  assert.match(dialogue, /const textPanel = \{ x: 85, y: 6, w: 247, h: 54 \}/);
-  assert.match(dialogue, /const portraitPanel = \{ x: 338, y: 6, w: 54, h: 54 \}/);
+  assert.match(dialogue, /const textPanel = \{ x: 90, y: 6, w: 239, h: 54 \}/);
+  assert.match(dialogue, /const portraitPanel = \{ x: 335, y: 6, w: 54, h: 54 \}/);
   assert.match(dialogue, /const drawReferencePanel/);
   assert.match(dialogue, /Five-layer pixel frame: black -> cyan -> white -> cyan -> black/);
   assert.match(dialogue, /drawReferencePanel\(textPanel, "#0b4462", "#052b43"\)/);
@@ -85,7 +85,7 @@ test("background and armed flies keep animating while dialogue locks only the fr
   assert.doesNotMatch(open, /armTutorialFlies\(\)/);
   assert.match(open, /Authored tutorial flies stay hidden until the frog's matching poof-in/);
   assert.match(engine, /function tutorialBlocksLiveInput/);
-  assert.match(engine, /tutorialMovementLocked\(\) \|\| tutorial\.pvpDemoActive \|\| tutorial\.passPending \|\| tutorial\.blockJumpUntilRelease/);
+  assert.match(engine, /tutorialMovementLocked\(\) \|\| tutorial\.pvpDemoActive \|\| tutorial\.pvpPlayerScriptLocked/);
 });
 
 test("the dinner fly finishes its poof, then waits half a second before the line", () => {
@@ -236,6 +236,6 @@ test("tutorial completion waits for Ember, then shows a dancing-frog completion 
   assert.match(engine, /homeButton: \{ x: Math\.round\(W \/ 2 - 60\), y: 232, w: 120, h: 22 \}/);
   assert.match(engine, /frog\.x = Math\.round\(W \/ 2 - frog\.w \/ 2\)/);
   assert.match(engine, /playWinSound\(\)/);
-  assert.match(engine, /id !== TUTORIAL_ACHIEVEMENT_ID/);
+  assert.match(engine, /PVP_TUTORIAL_ACHIEVEMENT_ID/);
   assert.match(engine, /markAchievementEarned\(TUTORIAL_ACHIEVEMENT_ID, false\)/);
 });

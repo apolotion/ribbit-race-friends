@@ -17,8 +17,8 @@ function block(start, end) {
 }
 
 test("polish-9 cache marker and tutorial seen key are synchronized", () => {
-  assert.match(engine, /TUTORIAL_BUILD = "2026\.10\.12-friends-polish-18"/);
-  assert.match(index, /game\.bundle\.js\?v=2026\.10\.12-friends-polish-18/);
+  assert.match(engine, /TUTORIAL_BUILD = "2026\.10\.12-friends-polish-20"/);
+  assert.match(index, /game\.bundle\.js\?v=2026\.10\.12-friends-polish-20/);
   assert.match(engine, /rrFriendsEngineTutorialSoloSeenV8/);
   assert.match(read("public/scripts/tutorial-preboot.js"), /rrFriendsEngineTutorialSoloSeenV8/);
 });
@@ -40,7 +40,7 @@ test("latest Solo tutorial copy and mechanics are installed", () => {
 
 test("Ember portrait fills its square and the centered nameplate sits in the text panel", () => {
   const dialogue = block("function drawTutorialDialogue", "function drawTutorialStatus");
-  assert.match(dialogue, /const portraitPanel = \{ x: 338, y: 6, w: 54, h: 54 \}/);
+  assert.match(dialogue, /const portraitPanel = \{ x: 335, y: 6, w: 54, h: 54 \}/);
   assert.match(dialogue, /const imageSize = portraitPanel\.w - 10/);
   assert.match(dialogue, /ctx\.drawImage\(portraitImage, 0, 0, sourceW, sourceH, drawX, drawY, drawW, drawH\)/);
   assert.match(dialogue, /const namePlate = \{ x:textPanel\.x \+ 7, y:textPanel\.y \+ 7, w:48, h:10 \}/);

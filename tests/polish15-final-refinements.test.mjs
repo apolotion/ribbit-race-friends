@@ -20,7 +20,7 @@ function block(source, start, end) {
 
 test("Polish 16 cache marker is wired", () => {
   for (const source of [tutorial, read("src/common.js"), read("public/index.html"), read("public/scripts/cloud-client.js")]) {
-    assert.match(source, /2026\.10\.12-friends-polish-18/);
+    assert.match(source, /2026\.10\.12-friends-polish-20/);
   }
 });
 
@@ -31,10 +31,10 @@ test("leaderboard rows and dropdowns use visibly different gray stripes", () => 
 
 test("online tooltip follows the exact hovered button with compact width", () => {
   const tooltip = block(online, "function drawOnlineTooltip", "function drawOnlineProfile");
-  assert.match(tooltip, /const centerX=b\.x\+b\.w\/2/);
-  assert.match(tooltip, /const width=218/);
-  assert.match(tooltip, /const pointerX=clamp\(Math\.round\(centerX\)/);
-  assert.match(tooltip, /state\.screen!==\'entry\'/);
+  assert.match(tooltip, /const cx=b\.x\+b\.w\/2/);
+  assert.match(tooltip, /const width=Math\.ceil\(widest\+18\)/);
+  assert.match(tooltip, /px=clamp\(Math\.round\(cx\)/);
+  assert.match(tooltip, /state\.screen!=="entry"/);
 });
 
 test("Quickplay frog label is raised clear of the frame", () => {
@@ -78,8 +78,8 @@ test("Set Base header spans the picker and close sits at the extreme inner corne
 
 test("Ember nameplate is top-left while equal-height panels retain a visible gap", () => {
   const dialogue = block(tutorial, "function drawTutorialDialogue", "function drawTutorialStatus");
-  assert.match(dialogue, /const textPanel = \{ x: 85, y: 6, w: 247, h: 54 \}/);
-  assert.match(dialogue, /const portraitPanel = \{ x: 338, y: 6, w: 54, h: 54 \}/);
+  assert.match(dialogue, /const textPanel = \{ x: 90, y: 6, w: 239, h: 54 \}/);
+  assert.match(dialogue, /const portraitPanel = \{ x: 335, y: 6, w: 54, h: 54 \}/);
   assert.match(dialogue, /const namePlate = \{ x:textPanel\.x \+ 7, y:textPanel\.y \+ 7, w:48, h:10 \}/);
   assert.match(dialogue, /const textTop = Math\.round\(textArea\.y\)/);
 });

@@ -17,7 +17,7 @@ const index = read("public/index.html");
 
 test("polish 11 cache marker is wired through client, worker, and asset URLs", () => {
   for (const source of [tutorial, cloud, index, read("src/common.js")]) {
-    assert.match(source, /2026\.10\.12-friends-polish-18/);
+    assert.match(source, /2026\.10\.12-friends-polish-20/);
   }
 });
 
@@ -31,7 +31,7 @@ test("account and device controls share one aligned geometry and readable speech
 
 test("Achievements uses an inset medal button and canvas-native dropdown leaderboard", () => {
   assert.match(tutorial, /LEADERBOARD_BUTTON = Object\.freeze\(\{ x: 416, y: 229, w: 28, h: 28 \}\)/);
-  assert.match(tutorial, /large circular gold medal/);
+  assert.match(tutorial, /Monochrome ribbons and medallion inherit the active frog palette/);
   assert.match(tutorial, /LEADERBOARD_METRICS/);
   assert.match(tutorial, /drawLeaderboardDropdown/);
   assert.match(tutorial, /RANK BY/);

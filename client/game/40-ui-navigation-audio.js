@@ -30,8 +30,8 @@
       pvpButton: Object.freeze({ id: "pvp", x: 140, y: 115, w: 200, h: 30 }),
       frogButton: Object.freeze({ id: "frog", x: 140, y: 150, w: 200, h: 30 }),
       profileButton: Object.freeze({ id: "profile", x: 47, y: 211, w: 24, h: 24 }),
-      deviceButton: Object.freeze({ id: "device", x: 74, y: 211, w: 24, h: 24 }),
-      achievementsButton: Object.freeze({ id: "achievements", x: 382, y: 211, w: 24, h: 24 }),
+      deviceButton: Object.freeze({ id: "device", x: 71, y: 211, w: 24, h: 24 }),
+      achievementsButton: Object.freeze({ id: "achievements", x: 385, y: 211, w: 24, h: 24 }),
       statsButton: Object.freeze({ id: "stats", x: 409, y: 211, w: 24, h: 24 })
     });
 
@@ -48,7 +48,7 @@
       customizeButton: Object.freeze({ x: 72, y: 176, w: 120, h: 27 }), // legacy geometry
       randomButton: Object.freeze({ id: "random", x: 188, y: 154, w: 104, h: 17 }),
       backButton: Object.freeze({ id: "back", x: 180, y: 181, w: 120, h: 24 }),
-      settingsButton: Object.freeze({ id: "settings", x: 355, y: 211, w: 24, h: 24 }),
+      settingsButton: Object.freeze({ id: "settings", x: 358, y: 211, w: 24, h: 24 }),
       tutorialButton: Object.freeze({ id: "tutorial", x: 382, y: 211, w: 24, h: 24 }),
       levelButtons: Object.freeze([
         Object.freeze({ id: "park",   x: 72,  y: 101, w: 104, h: 21 }),
@@ -58,7 +58,7 @@
         Object.freeze({ id: "lake",   x: 188, y: 130, w: 104, h: 21 }),
         Object.freeze({ id: "garden", x: 304, y: 130, w: 104, h: 21 })
       ]),
-      timeButton: Object.freeze({ x: 409, y: 211, w: 24, h: 24 })
+      timeButton: Object.freeze({ x: 406, y: 211, w: 24, h: 24 })
     });
 
     const SOLO_SETTINGS_UI = Object.freeze({
@@ -169,10 +169,10 @@
       vsButton: Object.freeze({ x: 223, y: 174, w: 34, h: 21 }),
       cpuDifficultyButton: Object.freeze({ x: 284, y: 210, w: 84, h: 15 }),
       wifiButton: Object.freeze({ x: 34, y: 225, w: 24, h: 24 }),
-      tutorialButton: Object.freeze({ x: 62, y: 225, w: 24, h: 24 }),
+      tutorialButton: Object.freeze({ x: 58, y: 225, w: 24, h: 24 }),
       startButton: Object.freeze({ x: 132, y: 228, w: 100, h: 23 }),
       backButton: Object.freeze({ x: 248, y: 228, w: 100, h: 23 }),
-      settingsButton: Object.freeze({ x: 394, y: 225, w: 24, h: 24 }),
+      settingsButton: Object.freeze({ x: 398, y: 225, w: 24, h: 24 }),
       timeButton: Object.freeze({ x: 422, y: 225, w: 24, h: 24 })
     });
 

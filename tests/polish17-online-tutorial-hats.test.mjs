@@ -64,10 +64,10 @@ test('Online entry order, room display-name button, and leave flow match the req
 });
 
 test('Only the first Online page draws a fixed-size centered help bubble and Back has no popup', () => {
-  assert.match(online, /function drawOnlineTooltip\(\)[\s\S]*?state\.screen!=='entry'/);
-  assert.match(online, /if\(!focusId\|\|focusId==='back'\)return/);
-  assert.match(online, /const width=218;[\s\S]*?const height=30/);
-  assert.match(online, /const centerX=b\.x\+b\.w\/2/);
+  assert.match(online, /function drawOnlineTooltip\(\)[\s\S]*?state\.screen!=="entry"/);
+  assert.match(online, /if\(!b\?\.tip\|\|b\.id==="back"\)return/);
+  assert.match(online, /const width=Math\.ceil\(widest\+18\)[\s\S]*?height=Math\.max\(22/);
+  assert.match(online, /const cx=b\.x\+b\.w\/2/);
   assert.match(online, /id:'back'[\s\S]{0,120}tip:''/);
   assert.match(tutorial, /Keep the old generic helper disabled[\s\S]*?return;/);
 });
@@ -96,8 +96,8 @@ test('Custom Frog has random/template tools with history and hover labels', () =
   assert.match(tutorial, /Pixel die: show, don't tell/);
   assert.match(tutorial, /"RANDOMIZE"/);
   assert.match(tutorial, /"CHOOSE TEMPLATE"/);
-  assert.match(tutorial, /"UNDO"/);
-  assert.match(tutorial, /"REDO"/);
+  assert.doesNotMatch(tutorial, /drawSpeechBubble\([^\n]*"UNDO"/);
+  assert.doesNotMatch(tutorial, /drawSpeechBubble\([^\n]*"REDO"/);
   assert.match(tutorial, /CHOOSE BASE FROG/);
 });
 
@@ -137,7 +137,7 @@ test('Tutorial progression cannot write ordinary hats, stats, jumps, or achievem
   for (const fn of ['recordFlyEaten', 'recordCorrectCatchForAchievements', 'saveTotalFlyCount', 'saveTotalJumpCount', 'saveStatsProfile']) {
     assert.match(tutorial, new RegExp(`${fn} = function\\([\\s\\S]{0,180}tutorialTrainingSessionActive\\(\\)`));
   }
-  assert.match(tutorial, /if \(trainingSession && id !== TUTORIAL_ACHIEVEMENT_ID\) return false/);
+  assert.match(tutorial, /trainingSession && !\[TUTORIAL_ACHIEVEMENT_ID, PVP_TUTORIAL_ACHIEVEMENT_ID\]\.includes\(id\)/);
   assert.match(tutorial, /if \(game\.tutorialActive \|\| window\.RibbitRaceTutorialEngine\?\.active\) return false/);
 });
 

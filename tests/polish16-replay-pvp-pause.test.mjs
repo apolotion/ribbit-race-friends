@@ -19,7 +19,7 @@ function block(source, start, end) {
 
 test("Polish 16 is wired and restores the prior packaged app icons", () => {
   for (const source of [tutorial, read("src/common.js"), index, read("public/scripts/cloud-client.js")]) {
-    assert.match(source, /2026\.10\.12-friends-polish-18/);
+    assert.match(source, /2026\.10\.12-friends-polish-20/);
   }
   assert.match(index, /\/icons\/favicon-32\.png/);
   assert.match(index, /\/icons\/ribbit-race-180\.png/);
@@ -64,7 +64,7 @@ test("tutorial pause is topmost and includes chapter navigation", () => {
   assert.match(tutorial, /function selectTutorialChapter/);
   assert.match(tutorial, /drawTutorialPauseArrow/);
   assert.match(tutorial, /drawBitmapText\("TUTORIAL"/);
-  assert.match(tutorial, /CHAPTER \$\{currentIndex \+ 1\} \/ \$\{catalog\.length\}/);
+  assert.match(tutorial, /CHAPTER \$\{previewIndex \+ 1\} \/ \$\{catalog\.length\}/);
   assert.match(tutorial, /drawPauseControls\(\)/);
 });
 
@@ -110,7 +110,7 @@ test("frog poofs retract both PvP tongues and lesson timer chrome stays hidden",
 test("drop-bonk layouts are authored for clear lower and high routes", () => {
   assert.match(tutorial, /case "pvpDemoDropLow"[\s\S]{0,280}lowerMiddle/);
   assert.match(tutorial, /case "pvpDropLow"[\s\S]{0,280}lowerMiddle/);
-  assert.match(tutorial, /case "pvpDemoDropHigh"[\s\S]{0,360}positionPvpOnPlatform\(ember, top, 1, offset\)/);
+  assert.match(tutorial, /case "pvpDemoDropHigh"[\s\S]{0,360}positionPvpOnPlatform\(ember, top, -1, offset\)/);
   assert.match(tutorial, /case "pvpDropHigh"[\s\S]{0,320}positionPvpOnPlatform\(p1, top, -1, offset\)/);
   assert.match(tutorial, /RibbitRaceTutorialShouldIgnorePvpPlatform/);
   assert.match(versus, /RibbitRaceTutorialShouldIgnorePvpPlatform/);

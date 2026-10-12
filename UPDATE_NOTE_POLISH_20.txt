@@ -1,0 +1,36 @@
+RIBBIT RACE FRIENDS — POLISH 20
+Displayed version: VERSION 1.7.10
+Build: 2026.10.12-friends-polish-20
+
+MAIN MENU / UTILITY WINDOWS
+- Rebuilt Account & Language and Computer / Mobile Mode as nested Ribbit Race menus using the same world backdrop, white framed panel, and themed header treatment as the main menu.
+- Added matching keyboard-focus glow to the profile and device icons.
+- Made nearby icon groups contiguous so hover/focus transitions no longer expose visual gaps.
+- Prevented the Random stage button from highlighting when the Tutorial book is highlighted.
+
+ACHIEVEMENTS
+- Recolored the leaderboard medal to a monochrome version of the currently selected frog palette.
+
+CUSTOM FROG
+- Scaled and centered Undo/Redo artwork so it remains inside each box.
+- Removed the Undo/Redo hover helper bubbles while preserving the original arrow design and functionality.
+
+VERSUS TUTORIAL
+- Removed the gameplay chapter strip; chapter selection remains in Pause.
+- Centered Ember dialogue between the Player 1 and Player 2 scoreboards.
+- Pause chapter arrows now preview a chapter without closing Pause; the selected chapter loads only after Continue/unpause.
+- Chapter browsing hides the old dialogue until the selected chapter opens its own dialogue.
+- Cleared all stale demonstration state when applying a chapter preview, preventing Watch Ember/input-control desynchronization after jumping from the high-drop lesson.
+- Kept the prior dialogue visible through authored poofs until the next line begins typing, eliminating blank dialogue flashes.
+- Authored lower and high drop-bonk layouts now use clearer mirrored lanes and correct facing directions.
+- Ember’s facing is locked to legal gameplay behavior: she can turn only after a wall bounce or side rebound, except during the final normal CPU match.
+- Live input is blocked while a scripted demonstration controls the player’s frog and while frogs are hidden by a poof; Space can no longer cancel the scripted jump.
+
+NAVIGATION / CACHE
+- Updated all game, Worker, and asset cache markers to 2026.10.12-friends-polish-20.
+
+VERIFICATION
+- npm run check: passed
+- Generated gameplay modules: 13
+- Required external assets: 23 present
+- npm test: 286 passed, 0 failed

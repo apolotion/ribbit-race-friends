@@ -1,1 +1,0 @@
-client/game/70-rendering.js:drawCustomHatSelector:hat

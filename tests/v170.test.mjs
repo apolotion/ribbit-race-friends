@@ -115,7 +115,7 @@ test("Ember dialogue is modal, left-aligned, and uses a down triangle instead of
     'portrait: "happy"',
     "Hey there, tadpole! Welcome to Ribbit Race!"
   ]) assert.match(engine,new RegExp(word.replace(/[.*+?^${}()|[\]\\]/g,"\\$&")));
-  assert.match(engine,/const portraitPanel = \{ x: 338/);
+  assert.match(engine,/const portraitPanel = \{ x: 335/);
   assert.match(engine,/drawEmberDialogueLine\([\s\S]{0,160}textArea\.x/);
   assert.match(engine,/if \(tutorial\.active && tutorial\.dialogueOpen && game\.state !== "paused"/);
   assert.match(engine,/armScenarioAfterDialogue\(\)/);

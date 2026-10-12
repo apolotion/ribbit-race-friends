@@ -4740,8 +4740,8 @@ function startRibbitRaceGame() {
       pvpButton: Object.freeze({ id: "pvp", x: 140, y: 115, w: 200, h: 30 }),
       frogButton: Object.freeze({ id: "frog", x: 140, y: 150, w: 200, h: 30 }),
       profileButton: Object.freeze({ id: "profile", x: 47, y: 211, w: 24, h: 24 }),
-      deviceButton: Object.freeze({ id: "device", x: 74, y: 211, w: 24, h: 24 }),
-      achievementsButton: Object.freeze({ id: "achievements", x: 382, y: 211, w: 24, h: 24 }),
+      deviceButton: Object.freeze({ id: "device", x: 71, y: 211, w: 24, h: 24 }),
+      achievementsButton: Object.freeze({ id: "achievements", x: 385, y: 211, w: 24, h: 24 }),
       statsButton: Object.freeze({ id: "stats", x: 409, y: 211, w: 24, h: 24 })
     });
 
@@ -4758,7 +4758,7 @@ function startRibbitRaceGame() {
       customizeButton: Object.freeze({ x: 72, y: 176, w: 120, h: 27 }), // legacy geometry
       randomButton: Object.freeze({ id: "random", x: 188, y: 154, w: 104, h: 17 }),
       backButton: Object.freeze({ id: "back", x: 180, y: 181, w: 120, h: 24 }),
-      settingsButton: Object.freeze({ id: "settings", x: 355, y: 211, w: 24, h: 24 }),
+      settingsButton: Object.freeze({ id: "settings", x: 358, y: 211, w: 24, h: 24 }),
       tutorialButton: Object.freeze({ id: "tutorial", x: 382, y: 211, w: 24, h: 24 }),
       levelButtons: Object.freeze([
         Object.freeze({ id: "park",   x: 72,  y: 101, w: 104, h: 21 }),
@@ -4768,7 +4768,7 @@ function startRibbitRaceGame() {
         Object.freeze({ id: "lake",   x: 188, y: 130, w: 104, h: 21 }),
         Object.freeze({ id: "garden", x: 304, y: 130, w: 104, h: 21 })
       ]),
-      timeButton: Object.freeze({ x: 409, y: 211, w: 24, h: 24 })
+      timeButton: Object.freeze({ x: 406, y: 211, w: 24, h: 24 })
     });
 
     const SOLO_SETTINGS_UI = Object.freeze({
@@ -4879,10 +4879,10 @@ function startRibbitRaceGame() {
       vsButton: Object.freeze({ x: 223, y: 174, w: 34, h: 21 }),
       cpuDifficultyButton: Object.freeze({ x: 284, y: 210, w: 84, h: 15 }),
       wifiButton: Object.freeze({ x: 34, y: 225, w: 24, h: 24 }),
-      tutorialButton: Object.freeze({ x: 62, y: 225, w: 24, h: 24 }),
+      tutorialButton: Object.freeze({ x: 58, y: 225, w: 24, h: 24 }),
       startButton: Object.freeze({ x: 132, y: 228, w: 100, h: 23 }),
       backButton: Object.freeze({ x: 248, y: 228, w: 100, h: 23 }),
-      settingsButton: Object.freeze({ x: 394, y: 225, w: 24, h: 24 }),
+      settingsButton: Object.freeze({ x: 398, y: 225, w: 24, h: 24 }),
       timeButton: Object.freeze({ x: 422, y: 225, w: 24, h: 24 })
     });
 
@@ -16598,8 +16598,10 @@ function startRibbitRaceGame() {
       const pixel = (x, y, w, h, color = dark) => { ctx.fillStyle = color; ctx.fillRect(Math.round(x), Math.round(y), w, h); };
 
       ctx.save();
-      ctx.translate(centerX, centerY);
-      ctx.scale(direction < 0 ? 1 : -1, 1);
+      ctx.translate(centerX, centerY + 1);
+      // The original arrow is preserved, but scaled to 72% so its head and tail
+      // remain fully inside the history button instead of protruding past it.
+      ctx.scale(direction < 0 ? 0.72 : -0.72, 0.72);
       // Thicker undo arrow with a more open tail-to-head gap so the icon reads clearly.
       pixel(-6, -8, 10, 3);
       pixel(2, -5, 4, 3);
@@ -18054,7 +18056,8 @@ function startRibbitRaceGame() {
       // Random and Back/Time from appearing selected at the same time.
       const anotherControlHovered = Boolean(
         game.hoveredLevelId || game.achievementButtonHovered || game.statsButtonHovered ||
-        game.homeSettingsButtonHovered || game.timeButtonHovered || game.homeHoverSelection === "back"
+        game.homeTutorialButtonHovered || game.homeSettingsButtonHovered ||
+        game.timeButtonHovered || game.homeHoverSelection === "back"
       );
       const active = game.soloRandomLevelMode && (!game.homeFocusVisible || focused) && !anotherControlHovered;
       const hovered = game.randomButtonHovered;
@@ -18254,12 +18257,22 @@ function startRibbitRaceGame() {
 
       const drawSmallMainIconButton = (rect, id, drawer) => {
         const active = isMainOptionActive(id);
+        if (active) {
+          // A visible two-pixel themed halo makes keyboard focus on the player
+          // and device icons read as clearly as Achievements and Stats.
+          ctx.fillStyle = skin.light;
+          ctx.fillRect(rect.x - 2, rect.y - 2, rect.w + 4, rect.h + 4);
+          ctx.fillStyle = skin.mid;
+          ctx.fillRect(rect.x - 1, rect.y - 1, rect.w + 2, rect.h + 2);
+        }
         ctx.fillStyle = "rgba(25,43,52,0.28)";
         ctx.fillRect(rect.x + 2, rect.y + 2, rect.w, rect.h);
         ctx.fillStyle = active ? skin.dark : COLORS.ink;
         ctx.fillRect(rect.x, rect.y, rect.w, rect.h);
         ctx.fillStyle = active ? mixHexColors(skin.belly, "#ffffff", 0.18) : "#f7fdff";
         ctx.fillRect(rect.x + 2, rect.y + 2, rect.w - 4, rect.h - 4);
+        ctx.fillStyle = active ? skin.light : COLORS.white;
+        ctx.fillRect(rect.x + 5, rect.y + 4, rect.w - 10, 3);
         drawer(rect, active);
         if (active) {
           ctx.fillStyle = COLORS.white;
@@ -21236,7 +21249,7 @@ function startRibbitRaceGame() {
 // input support hooks, palette operations, post-hat progression, and replay state.
 
 const RIBBIT_FRIENDS_DISPLAY_VERSION = "1.7.10";
-const RIBBIT_FRIENDS_BUILD = "2026.10.12-friends-polish-19";
+const RIBBIT_FRIENDS_BUILD = "2026.10.12-friends-polish-20";
 
 function rr14Number(value, fallback = 0) {
   const parsed = Number(value);
@@ -21758,7 +21771,7 @@ window.RibbitRaceMobileDiagnostics = () => ({
  */
 (() => {
   "use strict";
-  const BUILD = "2026.10.12-friends-polish-19";
+  const BUILD = "2026.10.12-friends-polish-20";
   const RR_V160_CANDIDATES = {"catchFly":["attemptFlyCatch","attemptPvpFlyCatch","catchSandboxFly","getPvpImminentCatchFly","recordFlyEaten","scheduleFlyReplacementFromCatch"],"jumpSound":["playJumpSound"],"beep":["playCountdownGoSound","playCountdownSound"],"replayUpload":["saveRecordDate"],"restart":["resetGame","resetPvpGame","resetPvpPlayer","resetRoundLifecycle","resetRoundNetwork","restartCurrentLevel"],"drop":[],"render":["drawPvpScene","drawScene"],"worldRecord":[],"fullscreen":["getFullscreenElement","hideFullscreenFallback","showFullscreenFallback","syncFullscreenButton","toggleRibbitFullscreen"],"onlineSubmit":[],"leaderboard":["isSoloEndlessLeaderboardEligible","savePvpMatchWinsForLeaderboard"]};
   const RR_V160_VARS = {"onlineSelect":[],"achievementSelect":["activeAchievementIndex","hoveredAchievementCard"],"backRect":[]};
 
@@ -22741,7 +22754,7 @@ window.RibbitRaceMobileDiagnostics = () => ({
 
   const SOLO_SEEN_KEY = "rrFriendsEngineTutorialSoloSeenV8";
   const PVP_SEEN_KEY = "rrFriendsEngineTutorialPvpSeenV8";
-  const TUTORIAL_BUILD = "2026.10.12-friends-polish-19";
+  const TUTORIAL_BUILD = "2026.10.12-friends-polish-20";
   const TUTORIAL_ACHIEVEMENT_ID = "tutorial-graduate";
   const PVP_TUTORIAL_ACHIEVEMENT_ID = "versus-tutorial-graduate";
   const TYPEWRITER_MS_PER_CHARACTER = 28;
@@ -22819,6 +22832,9 @@ window.RibbitRaceMobileDiagnostics = () => ({
     dialoguePointerId: null,
     dialogueTalkBlipAt: 0,
     dialogueTalkCharCount: 0,
+    transitionHeldLineText: "",
+    transitionHeldPortraitKey: "",
+    chapterNavigationPending: false,
     blockJumpUntilRelease: false,
     startQueued: false,
     kind: "solo",
@@ -22922,6 +22938,7 @@ window.RibbitRaceMobileDiagnostics = () => ({
     pendingPvpVisualPoses: null,
     pendingPvpTargetPoses: null,
     pauseChapterHover: "",
+    pauseChapterPreviewIndex: null,
     pvpCaption: "",
     pvpCaptionUntil: 0,
     pvpPracticeCount: 0,
@@ -22965,6 +22982,8 @@ window.RibbitRaceMobileDiagnostics = () => ({
     pvpEmberJumpScheduledAt: 0,
     pvpLastP1Grounded: true,
     pvpLastEmberGrounded: true,
+    pvpEmberFacingLock: -1,
+    pvpPlayerScriptLocked: false,
     originalLaunchJump: null,
     previousState: "",
     completionButton: Object.freeze({ x: 151, y: 199, w: 178, h: 30 })
@@ -24652,6 +24671,8 @@ window.RibbitRaceMobileDiagnostics = () => ({
     tutorial.pvpEmberJumpScheduledAt = 0;
     tutorial.pvpLastP1Grounded = Boolean(pvpPlayers[0]?.grounded);
     tutorial.pvpLastEmberGrounded = Boolean(pvpPlayers[1]?.grounded);
+    tutorial.pvpEmberFacingLock = Number(pvpPlayers[1]?.dir || -1);
+    tutorial.pvpPlayerScriptLocked = false;
     tutorial.bufferedJumpChainCount = 0;
     tutorial.bufferedJumpWindowOpenedAt = 0;
     tutorial.bufferedJumpReleased = false;
@@ -25096,34 +25117,37 @@ window.RibbitRaceMobileDiagnostics = () => ({
         break;
       case "pvpDemoDropLow": {
         const lowerMiddle = PARK_PLATFORMS[3];
-        // Ember begins on the right half of the lower-middle platform; the
-        // player is diagonally down-left, giving the drop a forgiving 45° line.
-        positionPvp(p1, lowerMiddle.x + 7, CONFIG.groundY - p1.h, 1);
-        positionPvpOnPlatform(ember, lowerMiddle, -1, lowerMiddle.w - ember.w - 7);
+        // Ember occupies the right half of the lower-middle platform while the
+        // player waits diagonally down-left and faces her. This gives the drop a
+        // clear, forgiving line instead of forcing a near-perfect vertical hit.
+        const emberOffset = lowerMiddle.w - ember.w - 6;
+        positionPvpOnPlatform(ember, lowerMiddle, -1, emberOffset);
+        positionPvp(p1, lowerMiddle.x + emberOffset - 18, CONFIG.groundY - p1.h, 1);
         break;
       }
       case "pvpDropLow": {
         const lowerMiddle = PARK_PLATFORMS[3];
-        // Mirror the demonstration for player practice.
-        positionPvpOnPlatform(p1, lowerMiddle, 1, 7);
-        positionPvp(ember, lowerMiddle.x + lowerMiddle.w - ember.w - 7, CONFIG.groundY - ember.h, -1);
+        // Mirror the demonstration for the player's attempt.
+        const playerOffset = 6;
+        positionPvpOnPlatform(p1, lowerMiddle, 1, playerOffset);
+        positionPvp(ember, lowerMiddle.x + playerOffset + 18, CONFIG.groundY - ember.h, -1);
         break;
       }
       case "pvpDemoDropHigh": {
-        // Flip the original route: Ember uses the left/back half and faces right;
-        // the player waits below the matching edge.
-        const offset = 5;
+        // Ember stands on the right side of the top platform facing left. The
+        // grounded player faces right beneath the same edge.
+        const offset = top.w - ember.w - 4;
         const dropX = top.x + offset;
-        positionPvp(p1, dropX + 3, CONFIG.groundY - p1.h, 1);
-        positionPvpOnPlatform(ember, top, 1, offset);
+        positionPvpOnPlatform(ember, top, -1, offset);
+        positionPvp(p1, dropX - 3, CONFIG.groundY - p1.h, 1);
         break;
       }
       case "pvpDropHigh": {
-        // Mirror Ember's route on the opposite edge for the player's attempt.
-        const offset = top.w - p1.w - 5;
+        // Reverse the roles while retaining the same clear drop lane.
+        const offset = top.w - p1.w - 4;
         const dropX = top.x + offset;
         positionPvpOnPlatform(p1, top, -1, offset);
-        positionPvp(ember, dropX - 3, CONFIG.groundY - ember.h, -1);
+        positionPvp(ember, dropX - 3, CONFIG.groundY - ember.h, 1);
         break;
       }
       case "pvpDemoBufferedBonk":
@@ -25235,6 +25259,7 @@ window.RibbitRaceMobileDiagnostics = () => ({
     ember.skinId = "ember";
     game.pvpSetupSkinIds[1] = "ember";
     clearScenarioState();
+    tutorial.pvpEmberFacingLock = Number(ember.dir || -1);
     // Tutorial lessons without an authored fly keep the vocabulary body blank.
     // Fly scenes reveal the clue only when their fly is actually armed.
     tutorial.promptHidden = !step.finalMatch;
@@ -25277,6 +25302,10 @@ window.RibbitRaceMobileDiagnostics = () => ({
     if (Number(facing) === 1 || Number(facing) === -1) {
       player.dir = Number(facing);
       player.chargeFacingDir = Number(facing);
+      if (index === 1) tutorial.pvpEmberFacingLock = Number(facing);
+    }
+    if (tutorial.active && tutorial.kind === "pvp" && tutorial.pvpDemoActive && index === 0) {
+      tutorial.pvpPlayerScriptLocked = true;
     }
     player.inputHeld = false;
     try {
@@ -25435,6 +25464,7 @@ window.RibbitRaceMobileDiagnostics = () => ({
       tutorial.pvpDemoActive = true;
       tutorial.pvpDemoKind = setup;
       tutorial.pvpDemoBegun = false;
+      tutorial.pvpPlayerScriptLocked = true;
       tutorial.pvpDemoDuration = /Boost|Recovery|BufferedSky/.test(setup) ? 8.0 : /BonkCatch|ReboundCatch|DinnerSteal/.test(setup) ? 6.5 : 5.0;
       tutorial.pvpCaption = "WATCH EMBER!";
       tutorial.pvpCaptionUntil = performance.now() + 3000;
@@ -25455,6 +25485,7 @@ window.RibbitRaceMobileDiagnostics = () => ({
     tutorial.pvpDemoActive = true;
     tutorial.pvpDemoKind = setup;
     tutorial.pvpDemoBegun = false;
+    tutorial.pvpPlayerScriptLocked = true;
     tutorial.pvpCaption = "WATCH EMBER!";
     tutorial.pvpCaptionUntil = performance.now() + 3000;
     beginPoofTransition({
@@ -25545,6 +25576,7 @@ window.RibbitRaceMobileDiagnostics = () => ({
         now - tutorial.pvpDemoBonkAt >= 1000 && !tutorial.pvpDemoBonkHandled) {
       tutorial.pvpDemoBonkHandled = true;
       tutorial.pvpDemoActive = false;
+      tutorial.pvpPlayerScriptLocked = false;
       clearPvpScriptActions();
       freezeControlledEntity();
       passStep();
@@ -25573,6 +25605,7 @@ window.RibbitRaceMobileDiagnostics = () => ({
     if (completed || elapsed >= tutorial.pvpDemoDuration + 2.0) {
       clearPvpScriptActions();
       tutorial.pvpDemoActive = false;
+      tutorial.pvpPlayerScriptLocked = false;
       tutorial.pvpCaption = "";
       passStep();
     }
@@ -25643,7 +25676,16 @@ window.RibbitRaceMobileDiagnostics = () => ({
     if (prePoofBeforeDialogue && preservedPvpVisualPoses) {
       tutorial.dialogueOpen = true;
       tutorial.scenePositionedDuringDialogue = false;
+      const heldTransitionText = tutorial.transitionHeldLineText;
+      const heldTransitionPortrait = tutorial.transitionHeldPortraitKey;
       beginDialogueLine(0, { delayMs:POOF_TRANSITION_MS + 1000, holdPreviousText:false });
+      if (heldTransitionText) {
+        tutorial.dialogueHeldLineText = heldTransitionText;
+        tutorial.dialogueHeldPortraitKey = heldTransitionPortrait;
+        tutorial.dialogueHeldUntil = tutorial.dialogueLineStartedAt + TYPEWRITER_MS_PER_CHARACTER;
+      }
+      tutorial.transitionHeldLineText = "";
+      tutorial.transitionHeldPortraitKey = "";
       game.state = "playing";
       game.pauseHelpOpen = false;
       beginPoofTransition({
@@ -25660,6 +25702,8 @@ window.RibbitRaceMobileDiagnostics = () => ({
         }
       });
     } else if (showDialogue) {
+      tutorial.transitionHeldLineText = "";
+      tutorial.transitionHeldPortraitKey = "";
       openDialogue();
     } else {
       restoreStepSequence();
@@ -26162,6 +26206,8 @@ window.RibbitRaceMobileDiagnostics = () => ({
       : [];
     const visualPose = captureControlledPose();
     const pvpVisualPoses = tutorial.kind === "pvp" ? capturePvpTutorialPoses() : null;
+    tutorial.transitionHeldLineText = String(tutorial.dialogueHeldLineText || currentDialogueLine() || "");
+    tutorial.transitionHeldPortraitKey = String(tutorial.dialogueHeldPortraitKey || currentEmberPortraitKey() || "");
     freezeControlledEntity();
     tutorial.step += 1;
     configureStep(true, { preserveVisualPose: visualPose, preservePvpVisualPoses: pvpVisualPoses });
@@ -26819,8 +26865,8 @@ window.RibbitRaceMobileDiagnostics = () => ({
   function tutorialMovementLocked() {
     return Boolean(
       tutorial.active &&
-      (tutorial.dialogueOpen || tutorial.resetPending || tutorial.frogHidden || tutorial.passed ||
-        tutorial.sceneLandingDelayUntil > performance.now())
+      (tutorial.dialogueOpen || tutorial.resetPending || tutorial.frogHidden || tutorial.pvpFrogsHidden ||
+        tutorial.pvpPlayerScriptLocked || tutorial.passed || tutorial.sceneLandingDelayUntil > performance.now())
     );
   }
 
@@ -26915,8 +26961,10 @@ window.RibbitRaceMobileDiagnostics = () => ({
       game.state === "playing" &&
       !tutorial.dialogueOpen &&
       !tutorial.pvpDemoActive &&
+      !tutorial.pvpPlayerScriptLocked &&
       !tutorial.resetPending &&
       !tutorial.frogHidden &&
+      !tutorial.pvpFrogsHidden &&
       !tutorial.passed &&
       !tutorial.passPending &&
       tutorial.sceneLandingDelayUntil <= performance.now() &&
@@ -27023,8 +27071,10 @@ window.RibbitRaceMobileDiagnostics = () => ({
     // cyan, and white pixel framing. Ember's complete square portrait sits in
     // its own attached card, with the nameplate beneath the picture instead of
     // covering any part of it.
-    const textPanel = { x: 85, y: 6, w: 247, h: 54 };
-    const portraitPanel = { x: 338, y: 6, w: 54, h: 54 };
+    // Center the complete dialogue group between the left and right scoreboards.
+    // The group spans x=90..389, leaving an equal visual gutter on both sides.
+    const textPanel = { x: 90, y: 6, w: 239, h: 54 };
+    const portraitPanel = { x: 335, y: 6, w: 54, h: 54 };
     const namePlate = { x:textPanel.x + 7, y:textPanel.y + 7, w:48, h:10 };
     const textArea = {
       x: textPanel.x + 11,
@@ -27224,7 +27274,7 @@ window.RibbitRaceMobileDiagnostics = () => ({
   }
 
   function drawTutorialProgress() {
-    if (!tutorial.active) return;
+    if (!tutorial.active || tutorial.kind === "pvp") return;
     const scene = Number(tutorialStep()?.scene || (tutorial.step + 1));
     const total = tutorial.kind === "pvp"
       ? PVP_STEPS.reduce((max, step) => Math.max(max, Number(step?.scene || 0)), 0)
@@ -27428,20 +27478,59 @@ window.RibbitRaceMobileDiagnostics = () => ({
   function selectTutorialChapter(delta) {
     if (!tutorial.active || game.state !== "paused") return false;
     const catalog = tutorialSceneCatalog();
+    if (!catalog.length) return false;
     const currentScene = Number(tutorialStep()?.scene || 1);
     const currentIndex = Math.max(0, catalog.findIndex((entry) => entry.scene === currentScene));
-    const target = catalog[clamp(currentIndex + Math.sign(delta || 0), 0, catalog.length - 1)];
-    if (!target || target.index === tutorial.step) return false;
-    const visualPose = captureControlledPose();
-    const pvpVisualPoses = tutorial.kind === "pvp" ? capturePvpTutorialPoses() : null;
+    const baseIndex = Number.isInteger(tutorial.pauseChapterPreviewIndex)
+      ? tutorial.pauseChapterPreviewIndex
+      : currentIndex;
+    const nextIndex = (baseIndex + Math.sign(delta || 0) + catalog.length) % catalog.length;
+    tutorial.pauseChapterPreviewIndex = nextIndex;
+    tutorial.chapterNavigationPending = true;
+    tutorial.dialogueOpen = false;
+    tutorial.dialogueHeldLineText = "";
+    tutorial.dialogueHeldPortraitKey = "";
+    resetDialogueSpaceHold();
+    clearHeldInput();
+    tone(440, .04, .010, delta < 0 ? -30 : 30);
+    return true;
+  }
+
+  function applyTutorialChapterPreview() {
+    if (!tutorial.active || !Number.isInteger(tutorial.pauseChapterPreviewIndex)) return false;
+    const catalog = tutorialSceneCatalog();
+    const target = catalog[tutorial.pauseChapterPreviewIndex];
+    tutorial.pauseChapterPreviewIndex = null;
+    tutorial.chapterNavigationPending = false;
+    if (!target) return false;
+
     clearPvpScriptActions();
     tutorial.pvpDemoActive = false;
+    tutorial.pvpDemoBegun = false;
+    tutorial.pvpPlayerScriptLocked = false;
+    tutorial.pvpCaption = "";
+    tutorial.pvpCaptionUntil = 0;
+    tutorial.deferredPoofOptions = null;
+    tutorial.resetPending = false;
+    tutorial.passed = false;
+    tutorial.passPending = false;
+    tutorial.dynamicDialogueLines = null;
+    tutorial.dynamicPortraitKey = "";
+    tutorial.successDialogueShown = false;
+    tutorial.dialogueOpen = false;
+    tutorial.dialogueHeldLineText = "";
+    tutorial.dialogueHeldPortraitKey = "";
+    tutorial.transitionHeldLineText = "";
+    tutorial.transitionHeldPortraitKey = "";
     tutorial.step = target.index;
-    game.state = "playing";
-    game.pauseHelpOpen = false;
-    game.pauseChargeSnapshot = null;
-    configureStep(true, { preserveVisualPose:visualPose, preservePvpVisualPoses:pvpVisualPoses });
-    tone(440, .04, .010, delta < 0 ? -30 : 30);
+
+    if (tutorial.kind === "pvp") configurePvpStep(tutorial.step);
+    else configureSoloStep(tutorial.step);
+    tutorial.pendingStartPose = captureControlledPose();
+    tutorial.pendingPvpTargetPoses = tutorial.kind === "pvp" ? capturePvpTutorialPoses() : null;
+    restoreStepSequence();
+    clearHeldInput();
+    openDialogue();
     return true;
   }
 
@@ -27477,14 +27566,17 @@ window.RibbitRaceMobileDiagnostics = () => ({
     const catalog = tutorialSceneCatalog();
     const currentScene = Number(tutorialStep()?.scene || 1);
     const currentIndex = Math.max(0, catalog.findIndex((entry) => entry.scene === currentScene));
-    const entry = catalog[currentIndex] || { title:"TUTORIAL", scene:1 };
+    const previewIndex = Number.isInteger(tutorial.pauseChapterPreviewIndex)
+      ? tutorial.pauseChapterPreviewIndex
+      : currentIndex;
+    const entry = catalog[previewIndex] || { title:"TUTORIAL", scene:1 };
     const rects = getTutorialPauseChapterRects();
-    drawTutorialPauseArrow(rects.previous, "previous", currentIndex <= 0);
-    drawTutorialPauseArrow(rects.next, "next", currentIndex >= catalog.length - 1);
+    drawTutorialPauseArrow(rects.previous, "previous", false);
+    drawTutorialPauseArrow(rects.next, "next", false);
     drawBitmapText("TUTORIAL", W / 2, 80, 1.05, "center", "#34484f");
     const titleScale = Math.min(.58, 214 / Math.max(1, measureBitmapText(entry.title, 1)));
     drawBitmapText(entry.title.toUpperCase(), W / 2, 105, titleScale, "center", "#48555a");
-    drawBitmapText(`CHAPTER ${currentIndex + 1} / ${catalog.length}`, W / 2, 118, .42, "center", "#68787e");
+    drawBitmapText(`CHAPTER ${previewIndex + 1} / ${catalog.length}`, W / 2, 118, .42, "center", "#68787e");
     drawPauseControls();
     drawBitmapText(RIBBIT_CREDIT_TEXT, W / 2, 216, 1, "center", "#48555a");
   }
@@ -28013,6 +28105,7 @@ window.RibbitRaceMobileDiagnostics = () => ({
       game.resumeChargeAfterCountdown = false;
       game.pauseHelpOpen = false;
       restorePauseChargeSnapshot();
+      if (Number.isInteger(tutorial.pauseChapterPreviewIndex)) applyTutorialChapterPreview();
       return;
     }
     return originalResumePausedGameForTutorial.apply(this, args);
@@ -28047,7 +28140,8 @@ window.RibbitRaceMobileDiagnostics = () => ({
   function tutorialBlocksLiveInput() {
     return Boolean(
       tutorial.active && game.state === "playing" &&
-      (tutorialMovementLocked() || tutorial.pvpDemoActive || tutorial.passPending || tutorial.blockJumpUntilRelease)
+      (tutorialMovementLocked() || tutorial.pvpDemoActive || tutorial.pvpPlayerScriptLocked ||
+        tutorial.pvpFrogsHidden || tutorial.passPending || tutorial.blockJumpUntilRelease)
     );
   }
 
@@ -28097,21 +28191,13 @@ window.RibbitRaceMobileDiagnostics = () => ({
 
   const originalPressPvpButtonForTutorial = pressPvpButton;
   pressPvpButton = function(index, ...rest) {
-    if (tutorialBlocksLiveInput()) {
-      const player = pvpPlayers[index];
-      if (player) { player.inputHeld = false; player.charging = false; player.chargeHoldTime = 0; }
-      return;
-    }
+    if (tutorialBlocksLiveInput()) return;
     return originalPressPvpButtonForTutorial.call(this, index, ...rest);
   };
 
   const originalReleasePvpButtonForTutorial = releasePvpButton;
   releasePvpButton = function(index, ...rest) {
-    if (tutorialBlocksLiveInput()) {
-      const player = pvpPlayers[index];
-      if (player) { player.inputHeld = false; player.charging = false; player.chargeHoldTime = 0; }
-      return;
-    }
+    if (tutorialBlocksLiveInput()) return;
     return originalReleasePvpButtonForTutorial.call(this, index, ...rest);
   };
 
@@ -28419,19 +28505,17 @@ window.RibbitRaceMobileDiagnostics = () => ({
   const polish19OriginalConfigurePvpStep = configurePvpStep;
   configurePvpStep = function(index){
     const result=polish19OriginalConfigurePvpStep.call(this,index);
-    polish19ApplyPvpChapterPose(index);
+    // The authored configurePvpStep layouts are the source of truth. The older
+    // generic chapter pose pass used to overwrite them and caused incorrect
+    // facing/positioning after chapter navigation.
     polish19RetractPvpTongues();
+    tutorial.pvpEmberFacingLock = Number(pvpPlayers[1]?.dir || -1);
     polish19.lastPvpStep=index;
     return result;
   };
   function polish19EffectsFinished(){ return !(game.pvpImpactEffects||[]).some(effect=>Number(effect.elapsed||0)<Number(effect.duration||.4)); }
   function polish19ApplyChapterPreview(){
-    if(!tutorial.active||polish19.pauseChapterPreview===null)return;
-    const list=polish19StepList(), next=clamp(polish19.pauseChapterPreview,0,list.length-1);
-    polish19.pauseChapterPreview=null;
-    tutorial.step=next; tutorial.passed=false; tutorial.passPending=false; tutorial.resetPending=false; tutorial.dialogueOpen=true; tutorial.dialogueLineIndex=0;
-    if(tutorial.kind==="pvp"){configurePvpStep(next);polish19ApplyPvpChapterPose(next);}else configureSoloStep(next);
-    tutorial.pendingStartPose=captureControlledPose(); beginDialogueLine(0); game.state="playing"; clearHeldInput(); polish19RetractPvpTongues();
+    return applyTutorialChapterPreview();
   }
 
 
@@ -28446,11 +28530,27 @@ window.RibbitRaceMobileDiagnostics = () => ({
     if(/dinner|dizzy/.test(key)){
       const fx=control?405:75,fy=104;
       for(const f of flies){if(f?.tutorialAuthored||flies.length===1){if(f.state==='active'){f.baseX=fx;f.baseY=fy;f.x=fx;f.y=fy;}}}
-      if(!control&&!ember.grounded)ember.dir=-1;
+      if(!control&&!ember.grounded){tutorial.pvpEmberFacingLock=-1;ember.dir=-1;ember.chargeFacingDir=-1;}
       if(control&&!player.grounded)player.dir=1;
     }
     // Keep all tongues retracted through a poof/reset.
     if(tutorial.resetPending||tutorial.frogHidden)polish19RetractPvpTongues();
+
+    // Outside the final match, Ember can only reverse under the same physical
+    // rules as every other frog: a wall bounce or a side-to-side rebound. This
+    // blocks AI/script drift from making her turn around in open air.
+    const finalLesson=/final|race|match/.test(key);
+    if(!finalLesson&&ember){
+      const legalTurn=Boolean(ember.wallBouncedThisJump||
+        (ember.bouncedOffOpponentThisJump&&ember.lastOpponentBounceType==="rebound"));
+      if(legalTurn){
+        tutorial.pvpEmberFacingLock=Number(ember.dir||tutorial.pvpEmberFacingLock||-1);
+      }else if(!tutorial.resetPending&&!tutorial.pvpFrogsHidden){
+        const locked=Number(tutorial.pvpEmberFacingLock||ember.dir||-1) < 0 ? -1 : 1;
+        ember.dir=locked;
+        ember.chargeFacingDir=locked;
+      }
+    }
     // Final race hands control to the existing Level 5 CPU and normal fly system.
     if(/final|race|match/.test(key)){
       game.pvpCpuEnabled=true;game.pvpCpuDifficulty=5;game.pvpCpuLevel=5;game.pvpTimeLimitSeconds=30;game.pvpBestOf=1;game.pvpRoundGoalMode='endless';
@@ -28470,12 +28570,31 @@ window.RibbitRaceMobileDiagnostics = () => ({
     get stepTitlePolish19(){ return String(tutorialStep()?.title||""); },
     get polish19Setup(){ return String(tutorialStep()?.setup||""); },
     get sceneFlyGoal(){ return polish19SceneFlyGoal(); },
-    get chapterPreview(){ return polish19.pauseChapterPreview; },
-    setChapterPreview(index){ const list=polish19StepList(); polish19.pauseChapterPreview=(Number(index)+list.length)%list.length; return polish19.pauseChapterPreview; },
-    applyChapterPreview(){ polish19ApplyChapterPreview(); },
-    currentChapterTitle(){ return polish19StepTitle(polish19.pauseChapterPreview===null?tutorial.step:polish19.pauseChapterPreview); },
-    currentChapterNumber(){ return (polish19.pauseChapterPreview===null?tutorial.step:polish19.pauseChapterPreview)+1; },
-    chapterCount(){ return polish19StepList().length; },
+    get chapterPreview(){ return tutorial.pauseChapterPreviewIndex; },
+    setChapterPreview(index){
+      const catalog = tutorialSceneCatalog();
+      if (!catalog.length) return null;
+      tutorial.pauseChapterPreviewIndex = (Number(index) + catalog.length) % catalog.length;
+      tutorial.chapterNavigationPending = true;
+      tutorial.dialogueOpen = false;
+      clearHeldInput();
+      return tutorial.pauseChapterPreviewIndex;
+    },
+    applyChapterPreview(){ return applyTutorialChapterPreview(); },
+    currentChapterTitle(){
+      const catalog = tutorialSceneCatalog();
+      const currentScene = Number(tutorialStep()?.scene || 1);
+      const fallback = Math.max(0, catalog.findIndex((entry) => entry.scene === currentScene));
+      const index = Number.isInteger(tutorial.pauseChapterPreviewIndex) ? tutorial.pauseChapterPreviewIndex : fallback;
+      return String(catalog[index]?.title || "TUTORIAL").toUpperCase();
+    },
+    currentChapterNumber(){
+      const catalog = tutorialSceneCatalog();
+      const currentScene = Number(tutorialStep()?.scene || 1);
+      const fallback = Math.max(0, catalog.findIndex((entry) => entry.scene === currentScene));
+      return (Number.isInteger(tutorial.pauseChapterPreviewIndex) ? tutorial.pauseChapterPreviewIndex : fallback) + 1;
+    },
+    chapterCount(){ return tutorialSceneCatalog().length; },
     retryScene(){ retryCurrentScene?.(); },
     start,
     exit: () => finish(false),
@@ -28589,17 +28708,45 @@ window.RibbitRaceMobileDiagnostics = () => ({
     } catch (_) { return "GUEST"; }
   }
 
-  function drawUtilityWindowFrame(title) {
+  function drawUtilityWindowFrame(title, subtitle = "") {
     const skin = getSelectedSkin();
-    ctx.fillStyle = "#edf5f7"; ctx.fillRect(0,0,W,H);
-    ctx.fillStyle = skin.dark; ctx.fillRect(0,0,W,6);
-    ctx.fillStyle = "rgba(12,26,33,.28)"; ctx.fillRect(27,13,430,248);
-    ctx.fillStyle = COLORS.ink; ctx.fillRect(20,7,440,248);
-    ctx.fillStyle = "#f7fdff"; ctx.fillRect(24,11,432,240);
-    ctx.fillStyle = skin.dark; ctx.fillRect(34,20,412,38);
-    ctx.fillStyle = skin.mid; ctx.fillRect(37,23,406,32);
-    ctx.fillStyle = skin.light; ctx.fillRect(42,26,396,3);
-    drawBitmapText(title,W/2,31,1.40,"center",COLORS.white,skin.dark);
+    const previewLevelId = game.selectedLevelId || "park";
+    const previewLevel = LEVELS[previewLevelId] || LEVELS.park;
+    const chrome = TIME_OF_DAY_CHROME[game.timeOfDay] || TIME_OF_DAY_CHROME.afternoon;
+
+    // Reuse the same world-backed frame as the main menu so these screens feel
+    // like nested Ribbit Race menus rather than unrelated full-screen forms.
+    ctx.fillStyle = chrome.outer;
+    ctx.fillRect(0, 0, W, H);
+    try {
+      drawBackground(previewLevelId);
+      for (const platform of previewLevel.platforms) drawPlatform(platform, previewLevelId);
+      drawTimeOfDayWorldTint(previewLevelId);
+    } catch (_) {}
+    ctx.fillStyle = "rgba(18,33,41,0.22)";
+    ctx.fillRect(0, 0, W, H);
+
+    const panel = { x:38, y:15, w:404, h:228 };
+    ctx.fillStyle = "rgba(12,26,33,0.30)";
+    ctx.fillRect(panel.x + 7, panel.y + 8, panel.w, panel.h);
+    ctx.fillStyle = COLORS.ink;
+    ctx.fillRect(panel.x + 4, panel.y, panel.w - 8, panel.h);
+    ctx.fillRect(panel.x, panel.y + 4, panel.w, panel.h - 8);
+    ctx.fillStyle = "#f7fdff";
+    ctx.fillRect(panel.x + 7, panel.y + 4, panel.w - 14, panel.h - 8);
+    ctx.fillRect(panel.x + 4, panel.y + 8, panel.w - 8, panel.h - 16);
+
+    const header = { x:52, y:25, w:376, h:29 };
+    ctx.fillStyle = skin.dark;
+    ctx.fillRect(header.x, header.y, header.w, header.h);
+    ctx.fillStyle = skin.mid;
+    ctx.fillRect(header.x + 2, header.y + 2, header.w - 4, header.h - 4);
+    ctx.fillStyle = skin.light;
+    ctx.fillRect(header.x + 5, header.y + 4, header.w - 10, 3);
+    const titleScale = Math.min(1.12, (header.w - 28) / Math.max(1, measureBitmapText(title, 1)));
+    drawBitmapText(title, W / 2, header.y + 9, titleScale, "center", COLORS.white, skin.dark);
+    if (subtitle) drawBitmapText(subtitle, W / 2, 58, .48, "center", "#59666b");
+    return { panel, header };
   }
 
   function drawUtilityRow(rect, label, selected, value = "") {
@@ -28613,7 +28760,7 @@ window.RibbitRaceMobileDiagnostics = () => ({
   }
 
   function drawProfileMenu() {
-    drawUtilityWindowFrame("ACCOUNT & LANGUAGE");
+    drawUtilityWindowFrame("ACCOUNT & LANGUAGE", "PLAYER SETTINGS");
     const skin = getSelectedSkin();
     drawBitmapText(`PLAYER: ${accountDisplayName().toUpperCase()}`,W/2,62,.55,"center","#48555a");
     PROFILE_MENU_RECTS.forEach((rect,index) => {
@@ -28638,7 +28785,7 @@ window.RibbitRaceMobileDiagnostics = () => ({
   }
 
   function drawDeviceMenu() {
-    drawUtilityWindowFrame("COMPUTER / MOBILE MODE");
+    drawUtilityWindowFrame("COMPUTER / MOBILE MODE", "CHOOSE AN INPUT STYLE");
     const selectedMode=isRibbitMobileMode()?1:0;
     drawDeviceModeIcon(DEVICE_MENU_RECTS.computer,false,polish.deviceSelection===0);
     drawDeviceModeIcon(DEVICE_MENU_RECTS.mobile,true,polish.deviceSelection===1);
@@ -28825,31 +28972,28 @@ window.RibbitRaceMobileDiagnostics = () => ({
     ctx.fillStyle = active ? skin.light : "#ffffff";
     ctx.fillRect(rect.x + 5, rect.y + 4, rect.w - 10, 2);
 
-    // Two ribbons and a large circular gold medal. The silhouette intentionally
-    // avoids the old trophy/cup shape so it reads as a medal at menu scale.
     const cx = Math.round(rect.x + rect.w / 2);
     const ribbonY = rect.y + 6;
-    ctx.fillStyle = "#7d2638";
+    // Monochrome ribbons and medallion inherit the active frog palette.
+    ctx.fillStyle = skin.dark;
     ctx.fillRect(cx - 7, ribbonY, 5, 9);
     ctx.fillRect(cx + 2, ribbonY, 5, 9);
-    ctx.fillStyle = "#ef7582";
+    ctx.fillStyle = skin.mid;
     ctx.fillRect(cx - 6, ribbonY + 1, 3, 7);
-    ctx.fillStyle = "#5c8ed0";
     ctx.fillRect(cx + 3, ribbonY + 1, 3, 7);
 
     const medalY = rect.y + 14;
-    ctx.fillStyle = "#855018";
+    ctx.fillStyle = skin.dark;
     ctx.fillRect(cx - 8, medalY + 2, 16, 8);
     ctx.fillRect(cx - 6, medalY, 12, 12);
-    ctx.fillStyle = "#e2a62e";
+    ctx.fillStyle = skin.mid;
     ctx.fillRect(cx - 6, medalY + 2, 12, 8);
     ctx.fillRect(cx - 4, medalY + 1, 8, 10);
-    ctx.fillStyle = "#ffe37a";
+    ctx.fillStyle = skin.light;
     ctx.fillRect(cx - 4, medalY + 2, 6, 4);
-    ctx.fillStyle = "#fff1ad";
+    ctx.fillStyle = mixHexColors(skin.belly, "#ffffff", .28);
     ctx.fillRect(cx - 3, medalY + 3, 2, 2);
-    // Tiny centered star/award mark.
-    ctx.fillStyle = "#855018";
+    ctx.fillStyle = skin.dark;
     ctx.fillRect(cx - 1, medalY + 5, 3, 5);
     ctx.fillRect(cx - 3, medalY + 7, 7, 2);
 
@@ -29668,8 +29812,6 @@ window.RibbitRaceMobileDiagnostics = () => ({
     const hover=polish.customToolHover;
     if(hover==="random")drawSpeechBubble(CUSTOM_RANDOM_BUTTON,"RANDOMIZE",{maxWidth:96,scale:.46});
     else if(hover==="base")drawSpeechBubble(CUSTOM_BASE_BUTTON,"CHOOSE TEMPLATE",{maxWidth:126,scale:.44});
-    else if(hover==="undo")drawSpeechBubble(CUSTOM_UI.undoButton,"UNDO",{maxWidth:70,scale:.50});
-    else if(hover==="redo")drawSpeechBubble(CUSTOM_UI.redoButton,"REDO",{maxWidth:70,scale:.50});
   }
 
   function toggleFullscreen() {
@@ -30025,8 +30167,6 @@ window.RibbitRaceMobileDiagnostics = () => ({
     if(game.state === "custom" && !polish.customBaseOpen){
       if(pointIn(point,CUSTOM_RANDOM_BUTTON))polish.customToolHover="random";
       else if(pointIn(point,CUSTOM_BASE_BUTTON))polish.customToolHover="base";
-      else if(pointIn(point,CUSTOM_UI.undoButton))polish.customToolHover="undo";
-      else if(pointIn(point,CUSTOM_UI.redoButton))polish.customToolHover="redo";
     }
     try { canvas.style.setProperty("cursor", interactiveRectForPoint(point) ? "pointer" : "default", "important"); } catch (_) {}
   }, { capture:true, passive:true });
@@ -30476,19 +30616,8 @@ window.RibbitRaceMobileDiagnostics = () => ({
   // Tutorial HUD: denominator follows the current authored fly objective.
   const priorDrawSoloHudP19=typeof drawSoloHud==="function"?drawSoloHud:null;
   if(priorDrawSoloHudP19){drawSoloHud=function(...args){const e=engine();if(e?.active&&game.mode==="solo"){const old=game.soloCatchGoal;const goal=Number(e.sceneFlyGoal||0);if(goal>0)game.soloCatchGoal=goal;const result=priorDrawSoloHudP19.apply(this,args);game.soloCatchGoal=old;return result;}return priorDrawSoloHudP19.apply(this,args);};}
-  // Pause chapter selector previews only; Continue applies it.
-  const priorPauseP19=drawPauseControls;
-  drawPauseControls=function(...args){
-    const result=priorPauseP19.apply(this,args),e=engine(); if(!e?.active||game.state!=="paused")return result;
-    const centerX=W/2,y=219,left={x:centerX-94,y,w:24,h:20},right={x:centerX+70,y,w:24,h:20};P19.pauseRects={left,right};
-    const preview=P19.pausePreview===null?e.currentChapterNumber()-1:P19.pausePreview,count=e.chapterCount();const title=e.currentChapterTitle();
-    ctx.fillStyle=COLORS.ink;ctx.fillRect(centerX-68,y,136,20);ctx.fillStyle="#f7fdff";ctx.fillRect(centerX-66,y+2,132,16);drawBitmapText(`${preview+1}/${count}  ${title}`,centerX,y+6,Math.min(.47,126/Math.max(1,measureBitmapText(`${preview+1}/${count}  ${title}`,1))),"center","#48555a");scrollArrow(left,-1,false);scrollArrow(right,1,false);
-    return result;
-  };
-  canvas.addEventListener("pointerdown",event=>{const e=engine();if(!e?.active||game.state!=="paused")return;const p=getCanvasPoint(event);let d=0;if(inside(p,P19.pauseRects.left))d=-1;else if(inside(p,P19.pauseRects.right))d=1;if(!d)return;event.preventDefault();event.stopImmediatePropagation();const count=e.chapterCount();const current=P19.pausePreview===null?e.currentChapterNumber()-1:P19.pausePreview;P19.pausePreview=(current+d+count)%count;e.setChapterPreview(P19.pausePreview);tone(430,.035,.008,d>0?25:-25);},{capture:true,passive:false});
-  // Apply preview only when Continue/unpause happens.
-  const priorResumeP19=resumeGame;
-  resumeGame=function(...args){const e=engine();if(e?.active&&P19.pausePreview!==null){e.applyChapterPreview();P19.pausePreview=null;}return priorResumeP19.apply(this,args);};
+  // Chapter previewing is owned by the pause overlay above. Arrow presses only
+  // update the preview; resumePausedGame applies the selected chapter.
   // Keep Fullscreen present but dimmed while the book is open.
   const priorDrawSceneP19=drawScene;
   drawScene=function(...args){const result=priorDrawSceneP19.apply(this,args);if(game.state==="paused"&&game.pauseHelpOpen){const r={x:448,y:238,w:22,h:22};ctx.save();ctx.globalAlpha=.28;ctx.fillStyle=COLORS.ink;ctx.fillRect(r.x,r.y,r.w,r.h);ctx.fillStyle="#f7fdff";ctx.fillRect(r.x+2,r.y+2,r.w-4,r.h-4);ctx.fillStyle="#48555a";ctx.fillRect(r.x+5,r.y+5,4,2);ctx.fillRect(r.x+5,r.y+5,2,4);ctx.fillRect(r.x+r.w-9,r.y+5,4,2);ctx.fillRect(r.x+r.w-7,r.y+5,2,4);ctx.fillRect(r.x+5,r.y+r.h-7,4,2);ctx.fillRect(r.x+5,r.y+r.h-9,2,4);ctx.fillRect(r.x+r.w-9,r.y+r.h-7,4,2);ctx.fillRect(r.x+r.w-7,r.y+r.h-9,2,4);ctx.restore();}return result;};

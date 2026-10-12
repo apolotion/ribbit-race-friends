@@ -3649,8 +3649,10 @@
       const pixel = (x, y, w, h, color = dark) => { ctx.fillStyle = color; ctx.fillRect(Math.round(x), Math.round(y), w, h); };
 
       ctx.save();
-      ctx.translate(centerX, centerY);
-      ctx.scale(direction < 0 ? 1 : -1, 1);
+      ctx.translate(centerX, centerY + 1);
+      // The original arrow is preserved, but scaled to 72% so its head and tail
+      // remain fully inside the history button instead of protruding past it.
+      ctx.scale(direction < 0 ? 0.72 : -0.72, 0.72);
       // Thicker undo arrow with a more open tail-to-head gap so the icon reads clearly.
       pixel(-6, -8, 10, 3);
       pixel(2, -5, 4, 3);
@@ -5105,7 +5107,8 @@
       // Random and Back/Time from appearing selected at the same time.
       const anotherControlHovered = Boolean(
         game.hoveredLevelId || game.achievementButtonHovered || game.statsButtonHovered ||
-        game.homeSettingsButtonHovered || game.timeButtonHovered || game.homeHoverSelection === "back"
+        game.homeTutorialButtonHovered || game.homeSettingsButtonHovered ||
+        game.timeButtonHovered || game.homeHoverSelection === "back"
       );
       const active = game.soloRandomLevelMode && (!game.homeFocusVisible || focused) && !anotherControlHovered;
       const hovered = game.randomButtonHovered;
@@ -5305,12 +5308,22 @@
 
       const drawSmallMainIconButton = (rect, id, drawer) => {
         const active = isMainOptionActive(id);
+        if (active) {
+          // A visible two-pixel themed halo makes keyboard focus on the player
+          // and device icons read as clearly as Achievements and Stats.
+          ctx.fillStyle = skin.light;
+          ctx.fillRect(rect.x - 2, rect.y - 2, rect.w + 4, rect.h + 4);
+          ctx.fillStyle = skin.mid;
+          ctx.fillRect(rect.x - 1, rect.y - 1, rect.w + 2, rect.h + 2);
+        }
         ctx.fillStyle = "rgba(25,43,52,0.28)";
         ctx.fillRect(rect.x + 2, rect.y + 2, rect.w, rect.h);
         ctx.fillStyle = active ? skin.dark : COLORS.ink;
         ctx.fillRect(rect.x, rect.y, rect.w, rect.h);
         ctx.fillStyle = active ? mixHexColors(skin.belly, "#ffffff", 0.18) : "#f7fdff";
         ctx.fillRect(rect.x + 2, rect.y + 2, rect.w - 4, rect.h - 4);
+        ctx.fillStyle = active ? skin.light : COLORS.white;
+        ctx.fillRect(rect.x + 5, rect.y + 4, rect.w - 10, 3);
         drawer(rect, active);
         if (active) {
           ctx.fillStyle = COLORS.white;
