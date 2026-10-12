@@ -66,20 +66,9 @@ function rrDrawDeviceIcon(rect, skin) {
 }
 
 function rrDrawMobileMenuTooltip() {
-  if (!rrMobileMenuHover || game.state !== "main") return;
-  const text = rrMobileMenuHover === "avatar"
-    ? ""
-    : rrMobileEnabled() ? "" : "";
-  const width = Math.min(190, Math.max(96, measureBitmapText(text, 0.55) + 12));
-  const x = 72;
-  const y = 190;
-  ctx.fillStyle = "rgba(25,43,52,0.32)";
-  ctx.fillRect(x + 2, y + 2, width, 15);
-  ctx.fillStyle = COLORS.ink;
-  ctx.fillRect(x, y, width, 15);
-  ctx.fillStyle = "#f7fdff";
-  ctx.fillRect(x + 2, y + 2, width - 4, 11);
-  drawBitmapText(text, x + width / 2, y + 4, 0.55, "center", "#48555a");
+  // Polish 13: the shared speech-bubble renderer owns these tooltips. Keeping
+  // this legacy helper silent prevents a second blank white box from appearing.
+  return;
 }
 
 const rrOriginalDrawMainMenuScreen = drawMainMenuScreen;

@@ -1275,7 +1275,12 @@
         }
         if (event.code === "KeyR") {
           event.preventDefault();
-          restartCurrentLevel();
+          if (window.RibbitRaceTutorialEngine?.active) {
+            game.pauseSelection = "restart";
+            activatePauseSelection();
+          } else {
+            restartCurrentLevel();
+          }
           return;
         }
         if (event.code === "KeyQ") {
@@ -1334,21 +1339,6 @@
         if (event.code === "Enter" || event.code === "NumpadEnter" || event.key === "Enter" || event.code === "Space") {
           event.preventDefault();
           activateVictorySelection();
-          return;
-        }
-        if (event.code === "KeyR") {
-          event.preventDefault();
-          if (game.mode === "pvp") continuePvpMatch();
-          else startNewGameCountdown();
-          return;
-        }
-      }
-
-      if (event.code === "KeyR") {
-        if (["playing","countdown"].includes(game.state)) {
-          event.preventDefault();
-          if (game.mode === "pvp") startNewPvpCountdown();
-          else resetGame(true);
           return;
         }
       }

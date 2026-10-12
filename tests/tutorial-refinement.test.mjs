@@ -18,10 +18,10 @@ function block(start, end) {
 
 test("1.7.10 tutorial-polish build is wired everywhere", () => {
   assert.equal(JSON.parse(read("package.json")).version, "1.7.10");
-  assert.match(read("src/common.js"), /2026\.10\.12-friends-polish-12/);
-  assert.match(read("client/game/110-online-mobile-polish.js"), /2026\.10\.12-friends-polish-12/);
-  assert.match(read("public/scripts/cloud-client.js"), /2026\.10\.12-friends-polish-12/);
-  assert.match(index, /2026\.10\.12-friends-polish-12/);
+  assert.match(read("src/common.js"), /2026\.10\.12-friends-polish-13/);
+  assert.match(read("client/game/110-online-mobile-polish.js"), /2026\.10\.12-friends-polish-13/);
+  assert.match(read("public/scripts/cloud-client.js"), /2026\.10\.12-friends-polish-13/);
+  assert.match(index, /2026\.10\.12-friends-polish-13/);
   assert.doesNotMatch(index, /tutorial-scripted-1/);
 });
 
@@ -36,7 +36,7 @@ test("first-boot tutorial waits for auth and suppresses the menu before first pa
     "rr-authenticated"
   ]) assert.ok(polish.includes(phrase), phrase);
   assert.match(index, /<body class="ribbit-auth-locked rr-tutorial-pending">/);
-  assert.match(index, /tutorial-preboot\.js\?v=2026\.10\.12-friends-polish-12/);
+  assert.match(index, /tutorial-preboot\.js\?v=2026\.10\.12-friends-polish-13/);
   assert.match(read("public/scripts/tutorial-preboot.js"), /rrFriendsEngineTutorialSoloSeenV8/);
   assert.match(css, /body\.rr-tutorial-pending:not\(\.ribbit-auth-locked\) #game\s*\{[\s\S]{0,120}visibility:\s*hidden\s*!important/);
   assert.doesNotMatch(polish, /requestAnimationFrame\(\(\) => requestAnimationFrame/);

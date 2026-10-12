@@ -559,9 +559,9 @@
         counts:null,countsAt:0,statsBusy:false,nextStatsAt:0,joinedAt:0,error:'',message:'',
         connectingAt:0,roundStages:[],victoryKey:'',rematch:false,opponentRematch:false,
         pendingAction:'',changingMatch:false,queued:false,background:false,peekActivity:null,suspendedActivity:null,lastLocalSkin:'',queueTimer:null};
-      const QUICK_UI={quick:{x:115,y:144,w:250,h:31},
-        preview:{x:151,y:104,w:178,h:77},previous:{x:159,y:124,w:22,h:27},next:{x:299,y:124,w:22,h:27},
-        enter:{x:144,y:196,w:192,h:26},cancel:{x:185,y:226,w:110,h:22},minimize:{x:115,y:194,w:250,h:28}};
+      const QUICK_UI={quick:{x:115,y:137,w:250,h:31},
+        preview:{x:151,y:91,w:178,h:72},previous:{x:159,y:111,w:22,h:27},next:{x:299,y:111,w:22,h:27},
+        enter:{x:144,y:176,w:192,h:26},cancel:{x:185,y:232,w:110,h:22},minimize:{x:115,y:178,w:250,h:28}};
       function isQuickplay(){return !!state.quickplay;}
       function quickRoundStage(number){return quick.roundStages[Math.max(0,Number(number)-1)]||'park';}
       function updateQuickCounts(counts){
@@ -723,7 +723,7 @@
         drawPanel('QUICKPLAY');
         const selecting=state.screen==='quickSelect',queued=state.screen==='quickQueue';
         const title=selecting?'CHOOSE YOUR FROG':queued?'FINDING AN OPPONENT':'MATCH FOUND';
-        fitText(title,W/2,64,372,.92,'#174f65');drawQuickCounts(82);
+        fitText(title,W/2,61,372,.92,'#174f65');drawQuickCounts(76);
         const r=QUICK_UI.preview,palette=state.localAppearance||appearanceFor(state.localSkinId);
         ctx.fillStyle='rgba(25,43,52,.22)';ctx.fillRect(r.x+2,r.y+2,r.w,r.h);
         ctx.fillStyle=palette.dark||COLORS.ink;ctx.fillRect(r.x,r.y,r.w,r.h);
@@ -734,16 +734,16 @@
         fitText(palette.name||state.localSkinId,W/2,r.y+65,r.w-14,.85,palette.dark);
         if(selecting){drawPagerArrowIcon(QUICK_UI.previous,-1,'#48555a');drawPagerArrowIcon(QUICK_UI.next,1,'#48555a');}
         if(selecting){
-          fitText('60 SECOND ENDLESS - RANDOM STAGES - BEST OF 3',W/2,185,376,.62);
+          fitText('60 SECOND ENDLESS - RANDOM STAGES - BEST OF 3',W/2,166,376,.62);
           drawPvpSetupActionButton(QUICK_UI.enter,state.busy?'CHECKING DEVICE':'FIND MATCH',state.focus==='quickEnter',palette);
         }else {
           const wait=Math.max(0,Math.floor((Date.now()-quick.joinedAt)/1000));
-          fitText(queued?`SEARCHING ${wait} SEC`:(state.remoteConnected?roomPlayerLabel(1-localIndex()):'CONNECTING TO OPPONENT'),W/2,190,360,.88,'#174f65');
+          fitText(queued?`SEARCHING ${wait} SEC`:(state.remoteConnected?roomPlayerLabel(1-localIndex()):'CONNECTING TO OPPONENT'),W/2,170,360,.88,'#174f65');
           if(queued)drawPvpSetupActionButton(QUICK_UI.minimize,'PLAY WHILE WAITING',state.focus==='quickMinimize',palette);
-          else fitText(directStatus(),W/2,207,390,.62,'#07516a');
+          else fitText(directStatus(),W/2,201,390,.62,'#07516a');
         }
-        if(quick.error)fitText(quick.error,W/2,224,390,.53,'#96334c');
-        else if(selecting)fitText(state.busy?'CHECKING WEBRTC - PARTNER TEST FOLLOWS MATCHING':'FRIENDS ONLINE - NO AUTOMATIC RELAY FALLBACK',240,225,386,.5,'#07516a');
+        if(quick.error)fitText(quick.error,W/2,211,390,.53,'#96334c');
+        else if(selecting)fitText(state.busy?'CHECKING WEBRTC - PARTNER TEST FOLLOWS MATCHING':'FRIENDS ONLINE - NO AUTOMATIC RELAY FALLBACK',240,211,386,.5,'#07516a');
         else if(queued){/* Status is centered inside PLAY WHILE WAITING. */}
         if(selecting||queued)drawPvpSetupActionButton(QUICK_UI.cancel,selecting?'BACK':'CANCEL',state.focus==='quickCancel',PVP_NEUTRAL_PALETTE);
         else drawOnlineAction({...ENTRY.back,label:'CANCEL',icon:'back',stripe:'#bac8cf'},state.focus==='back');
@@ -2246,11 +2246,13 @@
         ctx.fillStyle='rgba(12,26,33,.34)';ctx.fillRect(35,16,424,254);ctx.fillStyle=COLORS.ink;
         ctx.fillRect(32,8,416,254);ctx.fillRect(28,12,424,246);ctx.fillStyle='#f7fdff';
         ctx.fillRect(35,12,410,246);ctx.fillRect(32,16,416,238);
-        const a=getPvpSkinPalette(state.localSkinId,'azure'),b=FROG_SKINS.crimson;
-        ctx.fillStyle=a.dark;ctx.fillRect(40,17,200,40);ctx.fillStyle=b.dark;ctx.fillRect(240,17,200,40);
-        ctx.fillStyle=a.mid;ctx.fillRect(42,19,198,35);ctx.fillStyle=b.mid;ctx.fillRect(240,19,198,35);
-        ctx.fillStyle=a.light;ctx.fillRect(45,21,195,4);ctx.fillStyle=b.light;ctx.fillRect(240,21,195,4);
-        drawBitmapText(title,W/2,27,1.7,'center',COLORS.white,COLORS.ink);return panel;
+        const a=state.localAppearance||getPvpSkinPalette(state.localSkinId,'azure');
+        // All Online screens use one continuous header in the selected frog's
+        // palette instead of the old Azure/Crimson split bar.
+        ctx.fillStyle=a.dark;ctx.fillRect(40,17,400,40);
+        ctx.fillStyle=a.mid;ctx.fillRect(42,19,396,35);
+        ctx.fillStyle=a.light;ctx.fillRect(45,21,390,4);
+        drawBitmapText(title,W/2,27,1.7,'center',COLORS.white,a.dark);return panel;
       }
       function drawEntry(){drawOnlineEntry();}
       function drawReadyBars(){

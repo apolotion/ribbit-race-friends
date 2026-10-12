@@ -22,7 +22,7 @@ test("polish 8 ships canvas-native leaderboard and replay controls", () => {
 });
 
 test("achievements uses a small bottom-left leaderboard button", () => {
-  assert.match(tutorial, /LEADERBOARD_BUTTON = Object\.freeze\(\{ x: 22, y: 229, w: 28, h: 28 \}\)/);
+  assert.match(tutorial, /LEADERBOARD_BUTTON = Object\.freeze\(\{ x: 34, y: 229, w: 28, h: 28 \}\)/);
   assert.match(tutorial, /drawMiniMedalButton/);
   assert.match(tutorial, /LEADERBOARD & REPLAYS/);
 });

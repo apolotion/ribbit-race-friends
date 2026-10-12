@@ -36,8 +36,8 @@ test("PIN hashing stays within Cloudflare PBKDF2 limit and matches 100000 rounds
 });
 
 test("Friends release exposes the new build marker",()=>{
-  assert.equal(BUILD,"2026.10.12-friends-polish-12");
-  assert.match(browserSource,/2026\.10\.12\-friends\-polish\-12/);
+  assert.equal(BUILD,"2026.10.12-friends-polish-13");
+  assert.match(browserSource,/2026\.10\.12\-friends\-polish\-13/);
 });
 
 test("server vocabulary is exactly the requested 15 entries",()=>{
@@ -134,8 +134,8 @@ test("Quickplay partner connection check is capped at 30 seconds",()=>{
 });
 
 test("queued device-check status is centered inside Play While Waiting",()=>{
-  assert.match(html,/minimize:\{x:115,y:194,w:250,h:28\}/);
-  assert.match(html,/cancel:\{x:185,y:226,w:110,h:22\}/);
+  assert.match(html,/minimize:\{x:115,y:178,w:250,h:28\}/);
+  assert.match(html,/cancel:\{x:185,y:232,w:110,h:22\}/);
   assert.match(html,/DEVICE CHECK PASSED - PARTNER LINK NOT YET TESTED/);
   assert.match(html,/const groupTop=y\+\(h-\(mainHeight\+gap\+subHeight\)\)\/2;/);
   assert.match(html,/drawBitmapText\(spec\.subLabel,\(left\+right\)\/2,groupTop\+mainHeight\+gap,subScale/);

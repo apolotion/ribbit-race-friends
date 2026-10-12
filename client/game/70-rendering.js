@@ -3452,7 +3452,7 @@
         drawBitmapText(line, W / 2, achievementStartY + index * 8, 1, "center", "#59666b");
       });
 
-      if (displayFocusId === "ember") {
+      if (displayFocusId === "ember" && !isFrogSkinUnlocked("ember")) {
         const progressX = 169;
         const progressY = 131;
         const progressW = 142;
@@ -3718,8 +3718,9 @@
       if (!isHatUnlocked(normalizedHat)) {
         game.customHatSuppressedRequirementIndex = CUSTOM_HAT_OPTIONS.findIndex((hat) => hat.id === normalizedHat);
         game.customHatDismissedRequirementId = normalizedHat;
-        // Leave focus where it is, play the dud, and suppress the requirement
-        // until the player intentionally hovers/focuses a different hat.
+        game.customHatHoveredIndex = null;
+        // A click is only a dud response. It never pins the unlock requirement;
+        // the requirement may appear again only after a fresh hover/focus change.
         playLockedSkinSound();
         return false;
       }

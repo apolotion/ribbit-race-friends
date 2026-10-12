@@ -4,7 +4,7 @@
 
   const SOLO_SEEN_KEY = "rrFriendsEngineTutorialSoloSeenV8";
   const PVP_SEEN_KEY = "rrFriendsEngineTutorialPvpSeenV8";
-  const TUTORIAL_BUILD = "2026.10.12-friends-polish-12";
+  const TUTORIAL_BUILD = "2026.10.12-friends-polish-13";
   const TUTORIAL_ACHIEVEMENT_ID = "tutorial-graduate";
   const TYPEWRITER_MS_PER_CHARACTER = 28;
   const DIALOGUE_TEXT_SCALE = 0.86;
@@ -2645,6 +2645,7 @@
     const showFailure = tutorial.resetShowFailure;
     const armFlies = tutorial.resetArmFlies;
     const preserveFlyKeys = tutorial.resetPreserveFlyKeys;
+    const completedResetReason = tutorial.resetReason;
 
     tutorial.resetPending = false;
     tutorial.resetAt = 0;
@@ -2699,6 +2700,7 @@
     tutorial.enteredAt = performance.now();
     game.state = "playing";
     game.pauseHelpOpen = false;
+    if (completedResetReason === "pause-retry") startResumeCountdown(false);
   }
 
   function failAttempt(message) {
@@ -4766,11 +4768,11 @@
   const HAT_PROGRESS_KEY = "ribbitRaceHatProgressV2";
   const ONLINE_HISTORY_KEY = "ribbitRaceOnlineHistoryV2";
   const countedHatFlyObjects = new WeakSet();
-  const LEADERBOARD_BUTTON = Object.freeze({ x: 22, y: 229, w: 28, h: 28 });
-  const CUSTOM_BASE_BUTTON = Object.freeze({ x: 156, y: 58, w: 25, h: 22 });
-  const PAUSE_FULLSCREEN_BUTTON = Object.freeze({ x: 346, y: 198, w: 20, h: 20 });
-  const MAIN_PROFILE_BUTTON = Object.freeze({ x: 16, y: 211, w: 24, h: 24 });
-  const MAIN_DEVICE_BUTTON = Object.freeze({ x: 43, y: 211, w: 24, h: 24 });
+  const LEADERBOARD_BUTTON = Object.freeze({ x: 34, y: 229, w: 28, h: 28 });
+  const CUSTOM_BASE_BUTTON = Object.freeze({ x: 159, y: 67, w: 25, h: 22 });
+  const PAUSE_FULLSCREEN_BUTTON = Object.freeze({ x: 426, y: 198, w: 20, h: 20 });
+  const MAIN_PROFILE_BUTTON = Object.freeze({ x: 47, y: 211, w: 24, h: 24 });
+  const MAIN_DEVICE_BUTTON = Object.freeze({ x: 74, y: 211, w: 24, h: 24 });
 
   function safeCall(candidate, ...args) {
     try { return typeof candidate === "function" ? candidate(...args) : undefined; }
@@ -4903,7 +4905,7 @@
     ctx.fillRect(x + 2, y + 2, width - 4, height - 4);
     ctx.fillStyle = getSelectedSkin().light;
     ctx.fillRect(x + 5, y + 4, width - 10, 2);
-    drawBitmapText(message, x + width / 2, y + 8, scale, "center", "#24353c");
+    drawBitmapText(message, x + width / 2, y + 8, scale, "center", "#111a1e");
     ctx.fillStyle = COLORS.ink;
     ctx.fillRect(pointerX - 4, y + height, 9, 2);
     ctx.fillRect(pointerX - 3, y + height + 2, 7, 2);
@@ -5056,7 +5058,8 @@
         level:String(record.level || (level === "any" ? "ALL" : level)).toUpperCase(),
         date:String(record.date || ""),
         replayId:record.replayId || null,
-        skinId:entry.skinId || entry.skin || "azure",
+        skinId:entry.skinId || entry.skin || entry.frogSkin || "azure",
+        appearance:entry.appearance || entry.frogAppearance || entry.palette || null,
         isCurrent:Boolean(entry.isCurrent)
       });
     }
@@ -5163,6 +5166,15 @@
     ctx.fillRect(cx + 1, cy - 1, 2, 3);
   }
 
+  function leaderboardFrogPalette(row) {
+    const appearance = row?.appearance;
+    if (appearance && typeof appearance === "object" && appearance.dark && appearance.mid && appearance.light && appearance.belly) {
+      return appearance;
+    }
+    try { return getPvpSkinPalette(row?.skinId || "azure", "azure"); }
+    catch (_) { return FROG_SKINS[row?.skinId] || FROG_SKINS.azure; }
+  }
+
   function drawLeaderboardArrow(cx, cy, direction = 1, active = false) {
     ctx.fillStyle = active ? getSelectedSkin().dark : "#48555a";
     if (direction > 0) {
@@ -5249,8 +5261,10 @@
         ctx.fillRect(table.x + 2, y, table.w - 4, 16);
         ctx.fillStyle = "#d2dde0"; ctx.fillRect(table.x + 2, y + 15, table.w - 4, 1);
         drawBitmapText(String(row.rank || "—"), columns.rank, y + 5, .50, "center", "#26363d");
-        const nameScale = Math.min(.50, 120 / Math.max(1, measureBitmapText(row.name.toUpperCase(), 1)));
-        drawBitmapText(row.name.toUpperCase(), 73, y + 5, nameScale, "left", "#26363d");
+        const rowPalette = leaderboardFrogPalette(row);
+        drawMiniFrogSwatchFacing(77, y + 4, rowPalette, .43, 1);
+        const nameScale = Math.min(.50, 105 / Math.max(1, measureBitmapText(row.name.toUpperCase(), 1)));
+        drawBitmapText(row.name.toUpperCase(), 89, y + 5, nameScale, "left", "#26363d");
         drawBitmapText(row.level, columns.level, y + 5, .48, "center", "#26363d");
         drawBitmapText(formatLeaderboardValue(row), columns.result, y + 5, .50, "center", "#26363d");
         drawBitmapText(formatLeaderboardDate(row.date), columns.date, y + 5, .45, "center", "#26363d");
@@ -5279,7 +5293,7 @@
       LEADERBOARD_METRICS.forEach((entry, index) => {
         const rect = { x, y:y + index * h, w, h };
         ctx.fillStyle = COLORS.ink; ctx.fillRect(rect.x, rect.y, rect.w, rect.h);
-        ctx.fillStyle = entry.id === polish.leaderboardMetric ? skin.belly : "#f7fdff"; ctx.fillRect(rect.x + 2, rect.y + 1, rect.w - 4, rect.h - 2);
+        ctx.fillStyle = entry.id === polish.leaderboardMetric ? skin.belly : (index % 2 ? "#edf1f2" : "#ffffff"); ctx.fillRect(rect.x + 2, rect.y + 1, rect.w - 4, rect.h - 2);
         drawBitmapText(entry.label, rect.x + 7, rect.y + 5, .43, "left", "#26363d");
         polish.leaderboardHitRects[`metric:${entry.id}`] = rect;
       });
@@ -5288,7 +5302,7 @@
       LEADERBOARD_LEVELS.forEach((entry, index) => {
         const rect = { x, y:y + index * h, w, h };
         ctx.fillStyle = COLORS.ink; ctx.fillRect(rect.x, rect.y, rect.w, rect.h);
-        ctx.fillStyle = entry === polish.leaderboardLevel ? skin.belly : "#f7fdff"; ctx.fillRect(rect.x + 2, rect.y + 1, rect.w - 4, rect.h - 2);
+        ctx.fillStyle = entry === polish.leaderboardLevel ? skin.belly : (index % 2 ? "#edf1f2" : "#ffffff"); ctx.fillRect(rect.x + 2, rect.y + 1, rect.w - 4, rect.h - 2);
         drawBitmapText(entry === "any" ? "ANY LEVEL" : entry.toUpperCase(), rect.x + 7, rect.y + 5, .43, "left", "#26363d");
         polish.leaderboardHitRects[`level:${entry}`] = rect;
       });
@@ -5475,23 +5489,19 @@
     const skin = FROG_SKINS?.[skinId];
     if (!skin) return false;
     try {
+      finalizeCustomEditorForHistory();
+      beginCustomColorHistoryTransaction();
       const palette = normalizeCustomPalette({
         body: skin.mid,
         belly: skin.belly,
         accents: skin.accents || skin.light
       });
-      const slotIndex = clamp(Math.round(Number(game.customSlotIndex ?? activeCustomFrogSlotIndex) || 0), 0, CUSTOM_FROG_SLOT_COUNT - 1);
-      activeCustomFrogSlotIndex = slotIndex;
-      customFrogColors = { ...palette };
-      customFrogSlots[slotIndex] = { ...palette };
-      game.customSlotIndex = slotIndex;
       game.customDraftBody = palette.body;
       game.customDraftBelly = palette.belly;
       game.customDraftAccents = palette.accents;
       polish.baseSkinIndex = Math.max(0, getBaseSkinIds().indexOf(skinId));
-      saveCustomFrogColors();
-      try { resetCustomColorHistory(); } catch (_) {}
-      try { requestCustomPreviewRender(); } catch (_) { try { drawScene(); } catch (_) {} }
+      commitCustomColorHistoryTransaction();
+      requestCustomPreviewRender();
       try { tone(650, .05, .012, 65); } catch (_) {}
       return true;
     } catch (error) {
@@ -5500,47 +5510,58 @@
     }
   }
 
-  const CUSTOM_BASE_PANEL = Object.freeze({ x:111, y:66, w:258, h:125 });
-  const CUSTOM_BASE_CLOSE = Object.freeze({ x:342, y:72, w:18, h:18 });
+  const CUSTOM_BASE_PANEL = Object.freeze({ x:104, y:64, w:272, h:132 });
+  const CUSTOM_BASE_CLOSE = Object.freeze({ x:353, y:67, w:18, h:18 });
 
   function getCustomBaseOptionRects() {
     const ids = getBaseSkinIds();
     return ids.map((id, index) => ({
       id,
-      x:124 + (index % 4) * 57,
-      y:98 + Math.floor(index / 4) * 41,
-      w:48,
-      h:34
+      x:116 + (index % 4) * 63,
+      y:98 + Math.floor(index / 4) * 44,
+      w:56,
+      h:40
     }));
   }
 
   function drawCustomBaseButton() {
     if (game.state !== "custom") return;
     const rect = CUSTOM_BASE_BUTTON;
+    const draftSkin = getCustomDraftSkin();
     ctx.fillStyle = "rgba(25,43,52,.28)"; ctx.fillRect(rect.x + 2, rect.y + 2, rect.w, rect.h);
-    ctx.fillStyle = polish.customBaseOpen ? getSelectedSkin().dark : COLORS.ink; ctx.fillRect(rect.x, rect.y, rect.w, rect.h);
-    ctx.fillStyle = polish.customBaseOpen ? getSelectedSkin().belly : "#f7fdff"; ctx.fillRect(rect.x + 2, rect.y + 2, rect.w - 4, rect.h - 4);
-    if (typeof drawMiniPaletteIcon === "function") drawMiniPaletteIcon(rect.x + 5, rect.y + 4, 0.75);
-    drawBitmapText("BASE", rect.x + rect.w / 2, rect.y + 14, .38, "center", "#48555a");
+    ctx.fillStyle = polish.customBaseOpen ? draftSkin.dark : COLORS.ink; ctx.fillRect(rect.x, rect.y, rect.w, rect.h);
+    ctx.fillStyle = polish.customBaseOpen ? draftSkin.belly : "#f7fdff"; ctx.fillRect(rect.x + 2, rect.y + 2, rect.w - 4, rect.h - 4);
+    // Template icon: two stacked cards with a miniature frog on the front card.
+    ctx.fillStyle = "#94a4a9"; ctx.fillRect(rect.x + 9, rect.y + 5, 10, 9);
+    ctx.fillStyle = "#ffffff"; ctx.fillRect(rect.x + 11, rect.y + 7, 6, 5);
+    ctx.fillStyle = draftSkin.dark; ctx.fillRect(rect.x + 5, rect.y + 8, 11, 9);
+    ctx.fillStyle = "#f7fdff"; ctx.fillRect(rect.x + 7, rect.y + 10, 7, 5);
+    drawMiniFrogSwatchFacing(rect.x + 11, rect.y + 11, draftSkin, .30, 1);
     if (!polish.customBaseOpen) return;
 
     const panel = CUSTOM_BASE_PANEL;
+    const headerRight = CUSTOM_BASE_CLOSE.x - 4;
     ctx.fillStyle = "rgba(25,43,52,.34)"; ctx.fillRect(panel.x + 4, panel.y + 4, panel.w, panel.h);
     ctx.fillStyle = COLORS.ink; ctx.fillRect(panel.x, panel.y, panel.w, panel.h);
     ctx.fillStyle = "#f7fdff"; ctx.fillRect(panel.x + 3, panel.y + 3, panel.w - 6, panel.h - 6);
-    ctx.fillStyle = getSelectedSkin().mid; ctx.fillRect(panel.x + 5, panel.y + 5, panel.w - 10, 24);
-    ctx.fillStyle = getSelectedSkin().light; ctx.fillRect(panel.x + 9, panel.y + 8, panel.w - 18, 3);
-    drawBitmapText("SET BASE FROG", panel.x + panel.w / 2, panel.y + 10, .68, "center", COLORS.white, getSelectedSkin().dark);
+    ctx.fillStyle = draftSkin.mid; ctx.fillRect(panel.x + 5, panel.y + 5, headerRight - panel.x - 8, 24);
+    ctx.fillStyle = draftSkin.light; ctx.fillRect(panel.x + 9, panel.y + 8, headerRight - panel.x - 16, 3);
+    drawBitmapText("SET BASE FROG", (panel.x + headerRight) / 2, panel.y + 10, .62, "center", COLORS.white, draftSkin.dark);
 
     ctx.fillStyle = COLORS.ink; ctx.fillRect(CUSTOM_BASE_CLOSE.x, CUSTOM_BASE_CLOSE.y, CUSTOM_BASE_CLOSE.w, CUSTOM_BASE_CLOSE.h);
     ctx.fillStyle = "#f7fdff"; ctx.fillRect(CUSTOM_BASE_CLOSE.x + 2, CUSTOM_BASE_CLOSE.y + 2, CUSTOM_BASE_CLOSE.w - 4, CUSTOM_BASE_CLOSE.h - 4);
-    ctx.fillStyle = getSelectedSkin().dark;
+    ctx.fillStyle = draftSkin.dark;
     for (let i = 0; i < 7; i += 1) {
       ctx.fillRect(CUSTOM_BASE_CLOSE.x + 5 + i, CUSTOM_BASE_CLOSE.y + 5 + i, 2, 2);
       ctx.fillRect(CUSTOM_BASE_CLOSE.x + 11 - i, CUSTOM_BASE_CLOSE.y + 5 + i, 2, 2);
     }
 
-    const selectedId = getBaseSkinIds()[polish.baseSkinIndex] || "azure";
+    const selectedId = getBaseSkinIds().find((id) => {
+      const skin = FROG_SKINS[id];
+      return normalizeHexColor(draftSkin.mid, "") === normalizeHexColor(skin.mid, "") &&
+        normalizeHexColor(draftSkin.belly, "") === normalizeHexColor(skin.belly, "") &&
+        normalizeHexColor(draftSkin.accents || draftSkin.light, "") === normalizeHexColor(skin.accents || skin.light, "");
+    }) || "";
     for (const option of getCustomBaseOptionRects()) {
       const skin = FROG_SKINS[option.id];
       const selected = option.id === selectedId;
@@ -5550,7 +5571,11 @@
       ctx.fillRect(option.x + 2, option.y + 2, option.w - 4, option.h - 4);
       ctx.fillStyle = skin.light;
       ctx.fillRect(option.x + 5, option.y + 4, option.w - 10, 3);
-      drawMiniFrogSwatchFacing(option.x + option.w / 2, option.y + 10, skin, .82, 1);
+      drawMiniFrogSwatchFacing(option.x + option.w / 2, option.y + 11, skin, .72, 1);
+      ctx.fillStyle = "#ffffff";
+      ctx.fillRect(option.x + 3, option.y + 27, option.w - 6, 10);
+      const labelScale = Math.min(.40, (option.w - 8) / Math.max(1, measureBitmapText(skin.name || option.id.toUpperCase(), 1)));
+      drawBitmapText((skin.name || option.id).toUpperCase(), option.x + option.w / 2, option.y + 29, labelScale, "center", skin.dark);
       if (selected) {
         ctx.fillStyle = skin.dark;
         ctx.fillRect(option.x + 3, option.y + 3, 2, 2);
@@ -5612,6 +5637,8 @@
   function drawMainMenuTooltips() {
     if (game.state !== "main" || !polish.mainHoverKey) return;
     const lookup = {
+      profile:[MAIN_PROFILE_BUTTON, "ACCOUNT & LANGUAGE"],
+      device:[MAIN_DEVICE_BUTTON, "COMPUTER / MOBILE MODE"],
       achievements:[MAIN_UI.achievementsButton, "ACHIEVEMENTS"],
       stats:[MAIN_UI.statsButton, "STATS & RECORDS"]
     };
@@ -5983,9 +6010,6 @@
     if (game.state === "paused" && game.onlineMode && pointIn(point, PAUSE_UI.homeButton)) {
       event.preventDefault(); event.stopImmediatePropagation(); clearQuickplayAndHome(); return;
     }
-    if ((game.state === "setup" || game.state === "custom") && game.customHatOpen) {
-      setTimeout(clearPinnedHatRequirement, 0);
-    }
   }, { capture:true, passive:false });
 
   window.addEventListener("keydown", (event) => {
@@ -5995,7 +6019,7 @@
       }
       return;
     }
-    if (event.code === "KeyR" && ["playing","paused","countdown"].includes(game.state)) {
+    if (event.code === "KeyR" && game.state === "paused") {
       event.preventDefault(); event.stopImmediatePropagation(); immediateResetToStart();
     }
   }, { capture:true, passive:false });

@@ -17,7 +17,7 @@ const index = read("public/index.html");
 
 test("polish 11 cache marker is wired through client, worker, and asset URLs", () => {
   for (const source of [tutorial, cloud, index, read("src/common.js")]) {
-    assert.match(source, /2026\.10\.12-friends-polish-12/);
+    assert.match(source, /2026\.10\.12-friends-polish-13/);
   }
 });
 
@@ -30,7 +30,7 @@ test("account and device controls share one aligned geometry and readable speech
 });
 
 test("Achievements uses an inset medal button and canvas-native dropdown leaderboard", () => {
-  assert.match(tutorial, /LEADERBOARD_BUTTON = Object\.freeze\(\{ x: 22, y: 229, w: 28, h: 28 \}\)/);
+  assert.match(tutorial, /LEADERBOARD_BUTTON = Object\.freeze\(\{ x: 34, y: 229, w: 28, h: 28 \}\)/);
   assert.match(tutorial, /large circular gold medal/);
   assert.match(tutorial, /LEADERBOARD_METRICS/);
   assert.match(tutorial, /drawLeaderboardDropdown/);
@@ -84,16 +84,20 @@ test("pointer cursor covers canvas controls and Online retains its own cursor", 
 });
 
 test("pause controls place book left, fullscreen right, and P pauses", () => {
-  assert.match(read("client/game/40-ui-navigation-audio.js"), /helpButton: \{ x: 320, y: 198, w: 20, h: 20 \}/);
-  assert.match(tutorial, /PAUSE_FULLSCREEN_BUTTON = Object\.freeze\(\{ x: 346, y: 198, w: 20, h: 20 \}\)/);
+  assert.match(read("client/game/40-ui-navigation-audio.js"), /helpButton: \{ x: 400, y: 198, w: 20, h: 20 \}/);
+  assert.match(tutorial, /PAUSE_FULLSCREEN_BUTTON = Object\.freeze\(\{ x: 426, y: 198, w: 20, h: 20 \}\)/);
   assert.match(input, /event\.code === "KeyP"/);
   assert.match(online, /state\.active&&e\.code==='KeyP'/);
 });
 
-test("R reset restores the start immediately and then runs countdown", () => {
+test("R is pause-only and restart restores the start before a countdown", () => {
   assert.match(tutorial, /function immediateResetToStart/);
   assert.match(tutorial, /flies\.length = 0/);
-  assert.match(tutorial, /startResumeCountdown\(false\)/);
+  assert.match(tutorial, /event\.code === "KeyR" && game\.state === "paused"/);
+  assert.match(input, /if \(game\.state === "paused"\)[\s\S]{0,900}event\.code === "KeyR"/);
+  assert.match(input, /RibbitRaceTutorialEngine\?\.active[\s\S]{0,180}activatePauseSelection\(\)[\s\S]{0,180}restartCurrentLevel\(\)/);
+  assert.doesNotMatch(input, /\["playing","countdown"\]\.includes\(game\.state\)[\s\S]{0,120}KeyR/);
+  assert.match(tutorial, /completedResetReason === "pause-retry"\) startResumeCountdown\(false\)/);
 });
 
 test("worldrecord cheat is visual-only and uses gold trophy presentation", () => {
@@ -115,8 +119,11 @@ test("custom frog has compact sprite-only base picker and no legacy palette pane
   assert.match(tutorial, /CUSTOM_BASE_PANEL/);
   assert.match(tutorial, /CUSTOM_BASE_CLOSE/);
   assert.match(tutorial, /drawMiniFrogSwatchFacing/);
-  assert.match(tutorial, /customFrogColors = \{ \.\.\.palette \}/);
-  assert.match(tutorial, /saveCustomFrogColors\(\)/);
+  assert.match(tutorial, /beginCustomColorHistoryTransaction\(\)/);
+  assert.match(tutorial, /game\.customDraftBody = palette\.body/);
+  assert.match(tutorial, /commitCustomColorHistoryTransaction\(\)/);
+  assert.match(tutorial, /Template icon: two stacked cards/);
+  assert.match(tutorial, /skin\.name \|\| option\.id/);
 });
 
 test("Solo tutorial retains the requested fixes", () => {
