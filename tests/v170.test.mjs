@@ -74,7 +74,8 @@ test("1.7.10 tutorial uses Ember dialogue, checked engine scenes, and a working 
     'drawTutorialDialogue',
     'drawCurrentGoalHud',
     'DOUBLE BUFFER DROP',
-    'chooseVictoryMessage("park")',
+    'FINAL_TUTORIAL_DIALOGUE',
+    'TUTORIAL COMPLETE!',
     'tutorial-graduate',
     'RETRY SCENE',
     'SKIP TUTORIAL'
@@ -113,7 +114,7 @@ test("Ember dialogue is modal, left-aligned, and uses a down triangle instead of
     'portrait: "smile"',
     "Hey there, tadpole! Welcome to Ribbit Race!"
   ]) assert.match(engine,new RegExp(word.replace(/[.*+?^${}()|[\]\\]/g,"\\$&")));
-  assert.match(engine,/const portraitPanel = \{ x: 340/);
+  assert.match(engine,/const portraitPanel = \{ x: 338/);
   assert.match(engine,/visibleOnLine,[\s\S]{0,80}textArea\.x,[\s\S]{0,120}"left"/);
   assert.match(engine,/if \(tutorial\.active && tutorial\.dialogueOpen && game\.state !== "paused"/);
   assert.match(engine,/armScenarioAfterDialogue\(\)/);

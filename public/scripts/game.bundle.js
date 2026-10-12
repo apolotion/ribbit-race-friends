@@ -20961,7 +20961,7 @@ function startRibbitRaceGame() {
 // input support hooks, palette operations, post-hat progression, and replay state.
 
 const RIBBIT_FRIENDS_DISPLAY_VERSION = "1.7.10";
-const RIBBIT_FRIENDS_BUILD = "2026.10.12-friends-tutorial-polish-6";
+const RIBBIT_FRIENDS_BUILD = "2026.10.12-friends-tutorial-polish-7";
 
 function rr14Number(value, fallback = 0) {
   const parsed = Number(value);
@@ -21492,7 +21492,7 @@ window.RibbitRaceMobileDiagnostics = () => ({
  */
 (() => {
   "use strict";
-  const BUILD = "2026.10.12-friends-tutorial-polish-6";
+  const BUILD = "2026.10.12-friends-tutorial-polish-7";
   const RR_V160_CANDIDATES = {"catchFly":["attemptFlyCatch","attemptPvpFlyCatch","catchSandboxFly","getPvpImminentCatchFly","recordFlyEaten","scheduleFlyReplacementFromCatch"],"jumpSound":["playJumpSound"],"beep":["playCountdownGoSound","playCountdownSound"],"replayUpload":["saveRecordDate"],"restart":["resetGame","resetPvpGame","resetPvpPlayer","resetRoundLifecycle","resetRoundNetwork","restartCurrentLevel"],"drop":[],"render":["drawPvpScene","drawScene"],"worldRecord":[],"fullscreen":["getFullscreenElement","hideFullscreenFallback","showFullscreenFallback","syncFullscreenButton","toggleRibbitFullscreen"],"onlineSubmit":[],"leaderboard":["isSoloEndlessLeaderboardEligible","savePvpMatchWinsForLeaderboard"]};
   const RR_V160_VARS = {"onlineSelect":[],"achievementSelect":["activeAchievementIndex","hoveredAchievementCard"],"backRect":[]};
 
@@ -22447,7 +22447,7 @@ window.RibbitRaceMobileDiagnostics = () => ({
 
   const SOLO_SEEN_KEY = "rrFriendsEngineTutorialSoloSeenV8";
   const PVP_SEEN_KEY = "rrFriendsEngineTutorialPvpSeenV8";
-  const TUTORIAL_BUILD = "2026.10.12-friends-tutorial-polish-6";
+  const TUTORIAL_BUILD = "2026.10.12-friends-tutorial-polish-7";
   const TUTORIAL_ACHIEVEMENT_ID = "tutorial-graduate";
   const TYPEWRITER_MS_PER_CHARACTER = 28;
   const DIALOGUE_TEXT_SCALE = 0.86;
@@ -22458,6 +22458,9 @@ window.RibbitRaceMobileDiagnostics = () => ({
   const DIALOGUE_SCENE_SETTLE_MS = 120;
   const CORRECT_CATCH_LANDING_HOLD_MS = 500;
   const FLY_DIALOGUE_REVEAL_HOLD_MS = 500;
+  const FINAL_TUTORIAL_DIALOGUE = Object.freeze([
+    "You did it, tadpole! You're officially Ribbit Ready!"
+  ]);
   const EMBER_SKIN = Object.freeze({ ...FROG_SKINS.ember, hat: "none" });
   const EMBER_PORTRAIT_SOURCES = Object.freeze({
     amazed: "/tutorial/ember-amazed.png",
@@ -22671,7 +22674,7 @@ window.RibbitRaceMobileDiagnostics = () => ({
       dialogue: [
         "Enjoy your meal? Don't forget to leave a tip!",
         "Speaking of tips... here's a good one!",
-        "You don't have to land right on a fly to catch it.",
+        "You don't have to land right on top of a fly to catch it.",
         "Get close enough, and your tongue will automatically grab it.",
         "This fly is too far for even my legs.",
         "Charge a long jump and let your tongue handle the rest!"
@@ -22829,7 +22832,7 @@ window.RibbitRaceMobileDiagnostics = () => ({
       scene: 12,
       title: "DOUBLE BUFFER DROP",
       dialogue: [
-        "Looking smooth!",
+        "Dropping it like it's hot!",
         "You can chain those drops together, too.",
         "All you have to do is TAP jump just before each landing.",
         "Drop through one platform, then the next, and catch all three flies!"
@@ -23098,6 +23101,7 @@ window.RibbitRaceMobileDiagnostics = () => ({
   }
 
   function dialogueLinesForCurrentStep() {
+    if (tutorial.finalDialogueActive) return FINAL_TUTORIAL_DIALOGUE;
     const step = tutorialStep();
     return Array.isArray(step?.dialogue) && step.dialogue.length ? step.dialogue : [step?.title || "TUTORIAL"];
   }
@@ -23108,6 +23112,7 @@ window.RibbitRaceMobileDiagnostics = () => ({
   }
 
   function currentEmberPortraitKey() {
+    if (tutorial.finalDialogueActive) return "thumbsup";
     const step = tutorialStep();
     const sequence = EMBER_PORTRAIT_SEQUENCE_BY_SETUP[step?.setup] || [];
     if (sequence.length) return sequence[tutorial.dialogueLineIndex % sequence.length];
@@ -23340,6 +23345,13 @@ window.RibbitRaceMobileDiagnostics = () => ({
     game.state = "playing";
     game.pauseHelpOpen = false;
 
+    if (tutorial.finalDialogueActive) {
+      tutorial.finalDialogueActive = false;
+      tone(620, .06, .016, 90);
+      beginCompletionScreen();
+      return true;
+    }
+
     if (step?.autoAdvanceAfterDialogue) {
       tone(420, .035, .010, 45);
       nextStep();
@@ -23426,6 +23438,8 @@ window.RibbitRaceMobileDiagnostics = () => ({
     tutorial.bufferedJumpWindowOpenedAt = 0;
     tutorial.wasGroundedLastFrame = tutorial.kind === "pvp" ? Boolean(pvpPlayers[0]?.grounded) : Boolean(frog.grounded);
     tutorial.revealPromptOnLanding = false;
+    tutorial.finalDialogueActive = false;
+    tutorial.finalDialogueStartedAt = 0;
     tutorial.pvpScoreStart = Number(pvpPlayers[0]?.score || 0);
     tutorial.lastDir = tutorial.kind === "pvp" ? Number(pvpPlayers[0]?.dir || 1) : Number(frog.dir || 1);
     resetTutorialTongue();
@@ -23645,7 +23659,7 @@ window.RibbitRaceMobileDiagnostics = () => ({
 
       case "quickDrop":
         restoreExactParkStage();
-        positionOnPlatform(platforms[2], 10, 1);
+        positionCenteredOnPlatform(platforms[2], 1);
         setPrompt(0);
         makeParkFly(7, 0, 0);
         break;
@@ -23659,7 +23673,11 @@ window.RibbitRaceMobileDiagnostics = () => ({
 
       case "bufferDrop":
         restoreExactParkStage();
-        positionOnPlatform(platforms[3], 6, 1);
+        positionSoloFrog(
+          platforms[2].x + Math.round((platforms[2].w - frog.w) / 2),
+          CONFIG.groundY - frog.h,
+          1
+        );
         setPrompt(0);
         makeFly(408, 150, 0, 0);
         break;
@@ -23774,10 +23792,6 @@ window.RibbitRaceMobileDiagnostics = () => ({
     tutorial.blockJumpUntilRelease = false;
     if (showDialogue) {
       openDialogue();
-      if (tutorial.kind === "solo" && tutorialStep()?.setup === "wrongFly") {
-        armTutorialFlies({ revealPrompt: false });
-        tutorial.promptHidden = true;
-      }
     } else {
       restoreStepSequence();
       armTutorialFlies();
@@ -23972,10 +23986,39 @@ window.RibbitRaceMobileDiagnostics = () => ({
     return runtime;
   }
 
+  function beginFinalTutorialMessage() {
+    if (!tutorial.active || tutorial.finalDialogueActive || tutorial.completeScreen) return false;
+    tutorial.finalDialogueActive = true;
+    tutorial.finalDialogueStartedAt = performance.now();
+    tutorial.dialogueOpen = true;
+    tutorial.dialogueLineIndex = 0;
+    tutorial.dialoguePointerId = null;
+    tutorial.dialogueForceComplete = false;
+    tutorial.dialoguePreLineDelayUntil = 0;
+    tutorial.dialogueHeldLineText = "";
+    tutorial.dialogueHeldPortraitKey = "";
+    tutorial.dialogueHeldUntil = 0;
+    tutorial.blockJumpUntilRelease = false;
+    tutorial.promptHidden = true;
+    game.winPending = false;
+    game.targetVocabIndex = null;
+    game.spawnQueue.length = 0;
+    flies.length = 0;
+    resetTutorialTongue();
+    clearHeldInput();
+    freezeControlledEntity();
+    beginDialogueLine(0);
+    game.state = "playing";
+    game.pauseHelpOpen = false;
+    try { drawScene(); } catch (_) {}
+    return true;
+  }
+
   function beginCompletionScreen() {
     if (!tutorial.active) return;
     const alreadyWon = game.state === "won";
     tutorial.active = false;
+    tutorial.finalDialogueActive = false;
     tutorial.dialogueOpen = false;
     tutorial.blockJumpUntilRelease = false;
     tutorial.resetPending = false;
@@ -23996,7 +24039,8 @@ window.RibbitRaceMobileDiagnostics = () => ({
       clearFrogAfterimages(frog);
       frog.danceTime = 0;
       frog.grounded = true;
-      frog.y = Math.min(frog.y, CONFIG.groundY - frog.h);
+      frog.x = Math.round(W / 2 - frog.w / 2);
+      frog.y = CONFIG.groundY - frog.h;
       game.state = "won";
       game.finishTime = Number.isFinite(Number(game.finishTime)) ? game.finishTime : game.elapsed;
       game.newBestTime = false;
@@ -24004,7 +24048,7 @@ window.RibbitRaceMobileDiagnostics = () => ({
       game.newEndlessBest = false;
       game.bestTime = readBestTime("park");
       game.bestJumps = readFewestJumps("park");
-      game.victoryMessage = chooseVictoryMessage("park");
+      game.victoryMessage = "TUTORIAL COMPLETE!";
       game.victorySelection = "home";
       game.victoryMouseMode = false;
       game.victoryHoveredSelection = null;
@@ -24264,7 +24308,6 @@ window.RibbitRaceMobileDiagnostics = () => ({
       if (tutorial.sceneLandingDelayUntil > 0) {
         if (now < tutorial.sceneLandingDelayUntil) return;
         tutorial.sceneLandingDelayUntil = 0;
-        tutorial.sceneCatchCount += 1;
         if (tutorial.sceneCatchCount >= 3) passStep();
         else advanceThreeCatchAttempt();
         return;
@@ -24481,7 +24524,7 @@ window.RibbitRaceMobileDiagnostics = () => ({
     if (!step) return ["TUTORIAL"];
     if (!tutorialPlayerHasControl() && step.setup !== "threeCatches" && step.setup !== "wrongFly") return [];
     if (step.setup === "longJumps") return ["LONG JUMPS", `${tutorial.longJumpStreak} / 3`];
-    if (step.setup === "threeCatches") return ["MATCHES", `${Math.min(3, tutorial.sceneCatchCount + (tutorial.sceneAttemptCaught ? 1 : 0))} / 3`];
+    if (step.setup === "threeCatches") return ["MATCHES", `${Math.min(3, tutorial.sceneCatchCount)} / 3`];
     if (step.setup === "wrongFly") {
       if (tutorial.wrongFlyReturnedCaught) return ["RETURNED", "FOR THE MATCH"];
       if (tutorial.wrongFlyRightCaught) return ["RETURN FOR", `THE OLD FLY • ${Math.max(0, 4 - tutorial.jumpAttempts)} JUMPS LEFT`];
@@ -24529,15 +24572,17 @@ window.RibbitRaceMobileDiagnostics = () => ({
       }
     }
 
-    // Baseline: dark navy RPG text panel with black/cyan/white pixel framing,
-    // plus a slightly taller portrait card and a compact Ember nameplate.
-    const textPanel = { x: 92, y: 7, w: 246, h: 46 };
-    const portraitPanel = { x: 340, y: 7, w: 50, h: 52 };
+    // Reference baseline: a long dark-navy text window with layered black,
+    // cyan, and white pixel framing. Ember's complete square portrait sits in
+    // its own attached card, with the nameplate beneath the picture instead of
+    // covering any part of it.
+    const textPanel = { x: 90, y: 6, w: 250, h: 50 };
+    const portraitPanel = { x: 338, y: 6, w: 54, h: 64 };
     const textArea = {
-      x: textPanel.x + 10,
-      y: textPanel.y + 8,
-      w: textPanel.w - 20,
-      h: textPanel.h - 16
+      x: textPanel.x + 12,
+      y: textPanel.y + 10,
+      w: textPanel.w - 24,
+      h: textPanel.h - 20
     };
     const portraitKey = holdingPreviousLine
       ? tutorial.dialogueHeldPortraitKey
@@ -24557,45 +24602,78 @@ window.RibbitRaceMobileDiagnostics = () => ({
     ctx.save();
     ctx.globalAlpha = .995;
 
-    const drawBaselinePanel = (panel, fill) => {
-      ctx.fillStyle = "rgba(8,25,35,.32)";
-      ctx.fillRect(panel.x + 2, panel.y + 2, panel.w, panel.h);
-      ctx.fillStyle = COLORS.ink;
+    const drawReferencePanel = (panel, topColor, bottomColor) => {
+      ctx.fillStyle = "rgba(4,18,28,.42)";
+      ctx.fillRect(panel.x + 2, panel.y + 3, panel.w, panel.h);
+
+      // Five-layer pixel frame: black -> cyan -> white -> cyan -> black.
+      ctx.fillStyle = "#031723";
       ctx.fillRect(panel.x, panel.y, panel.w, panel.h);
-      ctx.fillStyle = "#51e7f5";
+      ctx.fillStyle = "#06dff2";
       ctx.fillRect(panel.x + 1, panel.y + 1, panel.w - 2, panel.h - 2);
-      ctx.fillStyle = "#dffcff";
+      ctx.fillStyle = "#f5ffff";
       ctx.fillRect(panel.x + 2, panel.y + 2, panel.w - 4, panel.h - 4);
-      ctx.fillStyle = COLORS.ink;
+      ctx.fillStyle = "#17d8ed";
       ctx.fillRect(panel.x + 3, panel.y + 3, panel.w - 6, panel.h - 6);
-      ctx.fillStyle = fill;
+      ctx.fillStyle = "#05202e";
       ctx.fillRect(panel.x + 5, panel.y + 5, panel.w - 10, panel.h - 10);
+
+      const fill = ctx.createLinearGradient(panel.x, panel.y + 5, panel.x, panel.y + panel.h - 5);
+      fill.addColorStop(0, topColor);
+      fill.addColorStop(1, bottomColor);
+      ctx.fillStyle = fill;
+      ctx.fillRect(panel.x + 7, panel.y + 7, panel.w - 14, panel.h - 14);
+
+      // White and cyan corner pixels echo the supplied frame design.
+      ctx.fillStyle = "#ffffff";
+      ctx.fillRect(panel.x + 7, panel.y + 7, 3, 2);
+      ctx.fillRect(panel.x + 7, panel.y + 7, 2, 4);
+      ctx.fillStyle = "#50f4ff";
+      ctx.fillRect(panel.x + panel.w - 10, panel.y + panel.h - 9, 3, 2);
+      ctx.fillRect(panel.x + panel.w - 9, panel.y + panel.h - 10, 2, 3);
     };
 
-    drawBaselinePanel(textPanel, "#07364e");
-    drawBaselinePanel(portraitPanel, "#168fce");
+    drawReferencePanel(textPanel, "#0b4462", "#052b43");
+    drawReferencePanel(portraitPanel, "#159ee4", "#087cc5");
 
-    const imageX = portraitPanel.x + 5;
-    const imageY = portraitPanel.y + 5;
-    const imageW = portraitPanel.w - 10;
-    const imageH = portraitPanel.h - 10;
+    const imageSize = portraitPanel.w - 12;
+    const imageX = portraitPanel.x + 6;
+    const imageY = portraitPanel.y + 6;
+    ctx.fillStyle = "#168fd5";
+    ctx.fillRect(imageX, imageY, imageSize, imageSize);
+
     if (portraitImage?.complete && portraitImage.naturalWidth > 0) {
       const oldSmoothing = ctx.imageSmoothingEnabled;
       ctx.imageSmoothingEnabled = false;
-      ctx.drawImage(portraitImage, imageX, imageY, imageW, imageH);
+      const sourceW = portraitImage.naturalWidth;
+      const sourceH = portraitImage.naturalHeight;
+      const fit = Math.min(imageSize / sourceW, imageSize / sourceH);
+      const drawW = Math.max(1, Math.round(sourceW * fit));
+      const drawH = Math.max(1, Math.round(sourceH * fit));
+      const drawX = imageX + Math.round((imageSize - drawW) / 2);
+      const drawY = imageY + Math.round((imageSize - drawH) / 2);
+      ctx.drawImage(portraitImage, 0, 0, sourceW, sourceH, drawX, drawY, drawW, drawH);
       ctx.imageSmoothingEnabled = oldSmoothing;
     } else {
       ctx.fillStyle = EMBER_SKIN.dark;
-      ctx.fillRect(imageX + 5, imageY + 4, imageW - 10, imageH - 8);
+      ctx.fillRect(imageX + 5, imageY + 4, imageSize - 10, imageSize - 8);
     }
 
-    const nameH = 8;
-    const nameY = imageY + imageH - nameH;
-    ctx.fillStyle = "#ff9b45";
-    ctx.fillRect(imageX, nameY, imageW, nameH);
-    ctx.fillStyle = "#9d5221";
-    ctx.fillRect(imageX, nameY, imageW, 1);
-    drawBitmapText("EMBER", imageX + imageW / 2, nameY + 1, .61, "center", "#3d2417");
+    // Separate nameplate beneath the full square portrait.
+    const nameX = imageX;
+    const nameY = imageY + imageSize + 1;
+    const nameW = imageSize;
+    const nameH = 9;
+    ctx.fillStyle = "#3d2417";
+    ctx.fillRect(nameX, nameY, nameW, nameH);
+    const nameFill = ctx.createLinearGradient(nameX, nameY + 1, nameX, nameY + nameH - 1);
+    nameFill.addColorStop(0, "#ffd06a");
+    nameFill.addColorStop(1, "#f49a3b");
+    ctx.fillStyle = nameFill;
+    ctx.fillRect(nameX + 1, nameY + 1, nameW - 2, nameH - 2);
+    ctx.fillStyle = "#ffe69a";
+    ctx.fillRect(nameX + 3, nameY + 2, nameW - 6, 1);
+    drawBitmapText("EMBER", nameX + nameW / 2, nameY + 1, .62, "center", "#2f1b12");
 
     let remaining = visibleCount;
     wrappedLines.forEach((wrappedLine, index) => {
@@ -24612,7 +24690,7 @@ window.RibbitRaceMobileDiagnostics = () => ({
     });
 
     if (!holdingPreviousLine && !lastLine && dialogueLineIsComplete()) {
-      drawDialogueContinueTriangle(textArea.x + textArea.w - 5, textPanel.y + textPanel.h - 10);
+      drawDialogueContinueTriangle(textArea.x + textArea.w - 6, textPanel.y + textPanel.h - 11);
     }
     ctx.restore();
   }
@@ -24860,9 +24938,91 @@ window.RibbitRaceMobileDiagnostics = () => ({
     if (tutorial.dialogueOpen) drawTutorialDialogue();
   }
 
-  function drawCompletionScreen() {
-    // The tutorial now uses Ribbit Race's normal Single Player victory screen.
+  function getTutorialCompletionButtonRects() {
+    return {
+      replayButton: { x: -300, y: -300, w: 1, h: 1 },
+      homeButton: { x: Math.round(W / 2 - 60), y: 232, w: 120, h: 22 }
+    };
   }
+
+  function drawTutorialCompletionHomeButton(rect) {
+    const skin = getSelectedSkin();
+    const selected = game.victoryHoveredSelection === "home" ||
+      game.victoryPressedSelection === "home" ||
+      (!game.victoryMouseMode && game.victorySelection === "home");
+    ctx.fillStyle = "rgba(7,24,34,.34)";
+    ctx.fillRect(rect.x + 2, rect.y + 2, rect.w, rect.h);
+    ctx.fillStyle = selected ? COLORS.ink : "#8fa6ac";
+    ctx.fillRect(rect.x, rect.y, rect.w, rect.h);
+    ctx.fillStyle = selected ? skin.dark : "#f7fdff";
+    ctx.fillRect(rect.x + 2, rect.y + 2, rect.w - 4, rect.h - 4);
+    ctx.fillStyle = selected ? skin.mid : COLORS.white;
+    ctx.fillRect(rect.x + 4, rect.y + 4, rect.w - 8, rect.h - 8);
+    ctx.fillStyle = selected ? skin.light : "#dceff3";
+    ctx.fillRect(rect.x + 7, rect.y + 5, rect.w - 14, 3);
+    drawBitmapText("HOME", rect.x + rect.w / 2, rect.y + 8, 1, "center", selected ? COLORS.white : "#34484f", selected ? skin.dark : null);
+  }
+
+  function drawCompletionScreen() {
+    if (!tutorial.completeScreen || game.state !== "won") return;
+    const skin = getSelectedSkin();
+    const panel = { x: 82, y: 18, w: 316, h: 58 };
+
+    ctx.save();
+    ctx.fillStyle = "rgba(6,22,31,.42)";
+    ctx.fillRect(panel.x + 4, panel.y + 5, panel.w, panel.h);
+    ctx.fillStyle = COLORS.ink;
+    ctx.fillRect(panel.x, panel.y, panel.w, panel.h);
+    ctx.fillStyle = "#06dff2";
+    ctx.fillRect(panel.x + 2, panel.y + 2, panel.w - 4, panel.h - 4);
+    ctx.fillStyle = "#f5ffff";
+    ctx.fillRect(panel.x + 3, panel.y + 3, panel.w - 6, panel.h - 6);
+    ctx.fillStyle = skin.dark;
+    ctx.fillRect(panel.x + 5, panel.y + 5, panel.w - 10, panel.h - 10);
+    ctx.fillStyle = skin.mid;
+    ctx.fillRect(panel.x + 7, panel.y + 7, panel.w - 14, panel.h - 14);
+    ctx.fillStyle = skin.light;
+    ctx.fillRect(panel.x + 10, panel.y + 9, panel.w - 20, 4);
+
+    const title = "TUTORIAL COMPLETE!";
+    const titleScale = Math.min(1.8, (panel.w - 24) / Math.max(1, measureBitmapText(title, 1)));
+    drawBitmapText(title, W / 2, panel.y + 20, titleScale, "center", COLORS.white, skin.dark);
+    drawBitmapText("RIBBIT READY!", W / 2, panel.y + 42, .92, "center", COLORS.white, skin.dark);
+
+    drawTutorialCompletionHomeButton(getTutorialCompletionButtonRects().homeButton);
+    ctx.restore();
+  }
+
+  const originalDrawVictoryScreenForTutorial = drawVictoryScreen;
+  drawVictoryScreen = function(...args) {
+    if (tutorial.completeScreen) return;
+    return originalDrawVictoryScreenForTutorial.apply(this, args);
+  };
+
+  const originalGetVictoryButtonRectsForTutorial = getVictoryButtonRects;
+  getVictoryButtonRects = function(...args) {
+    if (tutorial.completeScreen) return getTutorialCompletionButtonRects();
+    return originalGetVictoryButtonRectsForTutorial.apply(this, args);
+  };
+
+  const originalSelectVictoryOptionForTutorial = selectVictoryOption;
+  selectVictoryOption = function(option, ...rest) {
+    if (tutorial.completeScreen) {
+      game.victorySelection = "home";
+      game.victoryMouseMode = false;
+      return;
+    }
+    return originalSelectVictoryOptionForTutorial.call(this, option, ...rest);
+  };
+
+  const originalActivateVictorySelectionForTutorial = activateVictorySelection;
+  activateVictorySelection = function(...args) {
+    if (tutorial.completeScreen) {
+      dismissCompletionScreen();
+      return;
+    }
+    return originalActivateVictorySelectionForTutorial.apply(this, args);
+  };
 
 
   function drawBlankTutorialVocabularyPrompt() {
@@ -24946,6 +25106,16 @@ window.RibbitRaceMobileDiagnostics = () => ({
     return originalGetFlySpawnScaleForTutorial.call(this, currentFly, ...rest);
   };
 
+  const originalCompleteWinForTutorial = completeWin;
+  completeWin = function(...args) {
+    const finalSoloTutorial = tutorial.active && tutorial.kind === "solo" && tutorialStep()?.setup === "normalRound";
+    if (finalSoloTutorial) {
+      beginFinalTutorialMessage();
+      return;
+    }
+    return originalCompleteWinForTutorial.apply(this, args);
+  };
+
   // The tongue lesson opts into the exact stock final-catch cinematic. By
   // extending the engine's own eligibility check, beginTongueCatch triggers the
   // normal slow-motion physics, camera zoom, impact overlay, and sound timing.
@@ -25018,6 +25188,9 @@ window.RibbitRaceMobileDiagnostics = () => ({
     }
 
     if (activeSetup === "threeCatches" && wasCorrect) {
+      if (!tutorial.sceneAttemptCaught) {
+        tutorial.sceneCatchCount = Math.min(3, tutorial.sceneCatchCount + 1);
+      }
       tutorial.sceneAttemptCaught = true;
       tutorial.promptHidden = true;
     }

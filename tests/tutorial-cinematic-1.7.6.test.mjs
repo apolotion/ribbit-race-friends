@@ -18,8 +18,8 @@ function block(start, end) {
 
 test("1.7.10 polished tutorial build and first-boot marker are installed", () => {
   assert.equal(JSON.parse(read("package.json")).version, "1.7.10");
-  assert.match(read("src/common.js"), /2026\.10\.12-friends-tutorial-polish-6/);
-  assert.match(engine, /const TUTORIAL_BUILD = "2026\.10\.12-friends-tutorial-polish-6"/);
+  assert.match(read("src/common.js"), /2026\.10\.12-friends-tutorial-polish-7/);
+  assert.match(engine, /const TUTORIAL_BUILD = "2026\.10\.12-friends-tutorial-polish-7"/);
   assert.match(engine, /rrFriendsEngineTutorialSoloSeenV8/);
 });
 
@@ -49,16 +49,19 @@ test("dialogue uses large left-aligned two-line RPG typography, hold-to-speed, a
   assert.doesNotMatch(engine, /SPACE (?:FOR NEXT|TO PLAY)|TAP (?:FOR NEXT|TO PLAY)/);
 });
 
-test("dialogue matches the dark cyan-and-white baseline with a taller Ember card and compact nameplate", () => {
+test("dialogue matches the layered cyan-and-white reference with a full square Ember portrait", () => {
   const dialogue = block("function drawTutorialDialogue", "function drawTutorialStatus");
-  assert.match(dialogue, /const textPanel = \{ x: 92, y: 7, w: 246, h: 46 \}/);
-  assert.match(dialogue, /const portraitPanel = \{ x: 340, y: 7, w: 50, h: 52 \}/);
-  assert.match(dialogue, /function|const drawBaselinePanel/);
-  assert.match(dialogue, /drawBaselinePanel\(textPanel, "#07364e"\)/);
-  assert.match(dialogue, /drawBaselinePanel\(portraitPanel, "#168fce"\)/);
-  assert.match(dialogue, /const nameH = 8/);
-  assert.match(dialogue, /ctx\.drawImage\(portraitImage, imageX, imageY, imageW, imageH\)/);
-  assert.match(dialogue, /drawBitmapText\("EMBER"[\s\S]{0,100}\.61, "center"/);
+  assert.match(dialogue, /const textPanel = \{ x: 90, y: 6, w: 250, h: 50 \}/);
+  assert.match(dialogue, /const portraitPanel = \{ x: 338, y: 6, w: 54, h: 64 \}/);
+  assert.match(dialogue, /const drawReferencePanel/);
+  assert.match(dialogue, /Five-layer pixel frame: black -> cyan -> white -> cyan -> black/);
+  assert.match(dialogue, /drawReferencePanel\(textPanel, "#0b4462", "#052b43"\)/);
+  assert.match(dialogue, /drawReferencePanel\(portraitPanel, "#159ee4", "#087cc5"\)/);
+  assert.match(dialogue, /const imageSize = portraitPanel\.w - 12/);
+  assert.match(dialogue, /const fit = Math\.min\(imageSize \/ sourceW, imageSize \/ sourceH\)/);
+  assert.match(dialogue, /ctx\.drawImage\(portraitImage, 0, 0, sourceW, sourceH, drawX, drawY, drawW, drawH\)/);
+  assert.match(dialogue, /const nameY = imageY \+ imageSize \+ 1/);
+  assert.match(dialogue, /const nameH = 9/);
   assert.doesNotMatch(dialogue, /indigo|rightRail|portraitRail/i);
 });
 
@@ -199,7 +202,9 @@ test("Current Goal uses the normal stats footprint and the clue shadow stops at 
 
 test("terms stay blank until controls return while the three-catch goal remains live", () => {
   assert.match(engine, /if \(!tutorialPlayerHasControl\(\) && step\.setup !== "threeCatches" && step\.setup !== "wrongFly"\) return \[\]/);
-  assert.match(engine, /Math\.min\(3, tutorial\.sceneCatchCount \+ \(tutorial\.sceneAttemptCaught \? 1 : 0\)\)/);
+  assert.match(engine, /Math\.min\(3, tutorial\.sceneCatchCount\)/);
+  assert.match(engine, /if \(!tutorial\.sceneAttemptCaught\)[\s\S]{0,160}sceneCatchCount = Math\.min\(3, tutorial\.sceneCatchCount \+ 1\)/);
+  assert.doesNotMatch(engine, /sceneLandingDelayUntil = 0;\s*tutorial\.sceneCatchCount \+= 1/);
   assert.match(engine, /drawBlankTutorialVocabularyPrompt\(\)/);
   assert.match(engine, /const finalPractice = tutorialStep\(\)\?\.setup === "normalRound"/);
   assert.match(engine, /if \(!finalPractice\) drawCurrentGoalHud\(\)/);
@@ -220,8 +225,15 @@ test("trajectory preview is suppressed through dialogue and poofs", () => {
   assert.match(engine, /tutorialMovementLocked\(\) \|\| tutorial\.frogHidden \|\| tutorial\.resetPending/);
 });
 
-test("tutorial completion reuses the normal victory screen and only awards Ribbit Ready", () => {
-  assert.match(engine, /chooseVictoryMessage\("park"\)/);
+test("tutorial completion waits for Ember, then shows a dancing-frog completion sign with one Home button", () => {
+  assert.match(engine, /FINAL_TUTORIAL_DIALOGUE/);
+  assert.match(engine, /beginFinalTutorialMessage\(\)/);
+  assert.match(engine, /const originalCompleteWinForTutorial = completeWin/);
+  assert.match(engine, /game\.victoryMessage = "TUTORIAL COMPLETE!"/);
+  assert.match(engine, /drawBitmapText\(title[\s\S]{0,220}"TUTORIAL COMPLETE!"|const title = "TUTORIAL COMPLETE!"/);
+  assert.match(engine, /replayButton: \{ x: -300, y: -300, w: 1, h: 1 \}/);
+  assert.match(engine, /homeButton: \{ x: Math\.round\(W \/ 2 - 60\), y: 232, w: 120, h: 22 \}/);
+  assert.match(engine, /frog\.x = Math\.round\(W \/ 2 - frog\.w \/ 2\)/);
   assert.match(engine, /playWinSound\(\)/);
   assert.match(engine, /id !== TUTORIAL_ACHIEVEMENT_ID/);
   assert.match(engine, /markAchievementEarned\(TUTORIAL_ACHIEVEMENT_ID, false\)/);

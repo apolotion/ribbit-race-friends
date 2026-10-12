@@ -15,19 +15,21 @@ function block(start, end) {
   return engine.slice(from, to);
 }
 
-test("polish-6 cache marker forces the rebuilt tutorial UI to load", () => {
-  assert.match(engine, /2026\.10\.12-friends-tutorial-polish-6/);
-  assert.match(index, /game\.bundle\.js\?v=2026\.10\.12-tutorial-polish-6/);
+test("polish-7 cache marker forces the rebuilt tutorial UI to load", () => {
+  assert.match(engine, /2026\.10\.12-friends-tutorial-polish-7/);
+  assert.match(index, /game\.bundle\.js\?v=2026\.10\.12-tutorial-polish-7/);
 });
 
-test("dialogue uses the requested baseline framing and compact Ember nameplate", () => {
+test("dialogue uses the new reference framing and keeps Ember's full square above the nameplate", () => {
   const dialogue = block("function drawTutorialDialogue", "function drawTutorialStatus");
-  assert.match(dialogue, /const textPanel = \{ x: 92, y: 7, w: 246, h: 46 \}/);
-  assert.match(dialogue, /const portraitPanel = \{ x: 340, y: 7, w: 50, h: 52 \}/);
-  assert.match(dialogue, /drawBaselinePanel\(textPanel, "#07364e"\)/);
-  assert.match(dialogue, /drawBaselinePanel\(portraitPanel, "#168fce"\)/);
-  assert.match(dialogue, /const nameH = 8/);
-  assert.match(dialogue, /drawBitmapText\("EMBER"[\s\S]{0,100}\.61, "center"/);
+  assert.match(dialogue, /const textPanel = \{ x: 90, y: 6, w: 250, h: 50 \}/);
+  assert.match(dialogue, /const portraitPanel = \{ x: 338, y: 6, w: 54, h: 64 \}/);
+  assert.match(dialogue, /drawReferencePanel\(textPanel, "#0b4462", "#052b43"\)/);
+  assert.match(dialogue, /drawReferencePanel\(portraitPanel, "#159ee4", "#087cc5"\)/);
+  assert.match(dialogue, /const imageSize = portraitPanel\.w - 12/);
+  assert.match(dialogue, /const fit = Math\.min\(imageSize \/ sourceW, imageSize \/ sourceH\)/);
+  assert.match(dialogue, /const nameY = imageY \+ imageSize \+ 1/);
+  assert.match(dialogue, /const nameH = 9/);
 });
 
 test("pause panel renders above an active Ember dialogue", () => {
@@ -44,11 +46,14 @@ test("tongue tutorial moves both frog and fly down from the old platform setup",
   assert.match(range, /makeFly\(324, 38 \+ deltaY, 0, 4\)/);
 });
 
-test("wrong-fly lesson begins with both targets already present", () => {
+test("wrong-fly pair stays hidden through Ember's explanation and appears with the closing poof", () => {
   const wrong = engine.slice(engine.indexOf('case "wrongFly"'), engine.indexOf('case "comboMixed"'));
   assert.match(wrong, /makeFly\(315, 108, tutorial\.wrongFlyOriginalVocabIndex, 0\)/);
   assert.match(wrong, /makeFly\(390, 150, tutorial\.wrongFlyPromptIndex, 1\)/);
-  assert.match(engine, /armTutorialFlies\(\{ revealPrompt: false \}\)/);
+  const configure = block("function configureStep", "function addTutorialPoof");
+  assert.doesNotMatch(configure, /armTutorialFlies\(\{ revealPrompt: false \}\)/);
+  const arm = block("function armScenarioAfterDialogue", "function closeDialogue");
+  assert.match(arm, /beginScenarioEntryTransition\(\)/);
   assert.doesNotMatch(engine, /"This time, catch a fly that doesn't match\."/);
 });
 
@@ -76,11 +81,30 @@ test("Solo tutorial book mirrors the clock across the 480-pixel screen", () => {
 test("English clue is ready during its explanation and match count is capped", () => {
   assert.match(engine, /function tutorialPromptVisibleDuringDialogue/);
   assert.match(engine, /tutorial\.dialogueLineIndex >= 3/);
-  assert.match(engine, /Math\.min\(3, tutorial\.sceneCatchCount \+ \(tutorial\.sceneAttemptCaught \? 1 : 0\)\)/);
+  assert.match(engine, /Math\.min\(3, tutorial\.sceneCatchCount\)/);
+  assert.match(engine, /sceneCatchCount = Math\.min\(3, tutorial\.sceneCatchCount \+ 1\)/);
 });
 
 test("Current Goal trophy is centered from the header to the lower border", () => {
   assert.match(engine, /const contentTop = y \+ 16/);
   assert.match(engine, /const contentBottom = y \+ h - 3/);
   assert.match(engine, /const trophyTop = Math\.round\(contentTop \+ \(contentBottom - contentTop - trophyHeight\) \/ 2\)/);
+});
+
+
+test("polish-7 centers the drop frog, moves buffer-drop start to ground, and changes the second smooth line", () => {
+  assert.match(engine, /case "quickDrop":[\s\S]{0,140}positionCenteredOnPlatform\(platforms\[2\], 1\)/);
+  assert.match(engine, /case "bufferDrop":[\s\S]{0,260}platforms\[2\]\.x \+ Math\.round\(\(platforms\[2\]\.w - frog\.w\) \/ 2\)[\s\S]{0,100}CONFIG\.groundY - frog\.h/);
+  assert.match(engine, /"Dropping it like it's hot!"/);
+  assert.match(engine, /"You don't have to land right on top of a fly to catch it\."/);
+});
+
+test("final practice opens one Ember closing line before the custom one-button completion screen", () => {
+  assert.match(engine, /FINAL_TUTORIAL_DIALOGUE = Object\.freeze/);
+  assert.match(engine, /"You did it, tadpole! You're officially Ribbit Ready!"/);
+  assert.match(engine, /completeWin = function[\s\S]{0,260}beginFinalTutorialMessage\(\)/);
+  assert.match(engine, /if \(tutorial\.finalDialogueActive\)[\s\S]{0,160}beginCompletionScreen\(\)/);
+  assert.match(engine, /const title = "TUTORIAL COMPLETE!"/);
+  assert.match(engine, /replayButton: \{ x: -300/);
+  assert.match(engine, /homeButton: \{ x: Math\.round\(W \/ 2 - 60\)/);
 });
