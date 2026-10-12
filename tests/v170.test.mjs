@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import {readFileSync,existsSync} from "node:fs";
 const read=p=>readFileSync(new URL(`../${p}`,import.meta.url),"utf8");
 
-test("v1.7.9 engine tutorial project additions exist",()=>{
+test("v1.7.10 engine tutorial project additions exist",()=>{
   for(const p of [
     "client/game/99-v170-hooks.js",
     "client/game/120-engine-tutorial.js",
@@ -16,7 +16,7 @@ test("v1.7.9 engine tutorial project additions exist",()=>{
     "public/tutorial/ember-laughing.png",
     "public/tutorial/ember-thinking.png"
   ])assert.ok(existsSync(new URL(`../${p}`,import.meta.url)),p);
-  assert.equal(JSON.parse(read("package.json")).version,"1.7.9");
+  assert.equal(JSON.parse(read("package.json")).version,"1.7.10");
 });
 
 test("tutorial uses the real Park engine instead of a popup practice canvas",()=>{
@@ -67,7 +67,7 @@ test("tutorial hides legacy floating controls and preserves cloud progress",()=>
   assert.match(css,/display:\s*none\s*!important/);
 });
 
-test("1.7.9 tutorial uses Ember dialogue, checked engine scenes, and a working pause menu",()=>{
+test("1.7.10 tutorial uses Ember dialogue, checked engine scenes, and a working pause menu",()=>{
   const engine=read("client/game/120-engine-tutorial.js");
   for(const word of [
     'FROG_SKINS.ember',
@@ -87,7 +87,7 @@ test("tutorial scenarios use Park layouts and reachable authored fly placement",
   assert.match(engine,/oneAttempt:\s*true/);
   assert.match(engine,/platforms = cloneParkPlatforms\(\)/);
   assert.match(engine,/positionCenteredOnPlatform\(platforms\[1\], 1\)/);
-  assert.match(engine,/makeFly\(310, 98, 0, 4\)/);
+  assert.match(engine,/makeFly\(310, 46, 0, 4\)/);
   assert.match(engine,/makeFly\(240, 108, 1, 1\)/);
   assert.match(engine,/bufferEventCount >= 2/);
   assert.match(engine,/catch all three matching flies before you land!/i);
@@ -101,7 +101,7 @@ test("tutorial completion achievement is registered in the shared gallery",()=>{
   assert.match(core,/"level-garden","tutorial-graduate"/);
 });
 
-test("Ember dialogue is right-sided, modal, centered, and uses a down triangle instead of text prompts",()=>{
+test("Ember dialogue is modal, left-aligned, and uses a down triangle instead of text prompts",()=>{
   const engine=read("client/game/120-engine-tutorial.js");
   for(const word of [
     "EMBER_PORTRAIT_SOURCES",
@@ -114,6 +114,7 @@ test("Ember dialogue is right-sided, modal, centered, and uses a down triangle i
     "Hey there, tadpole! Welcome to Ribbit Race!"
   ]) assert.match(engine,new RegExp(word.replace(/[.*+?^${}()|[\]\\]/g,"\\$&")));
   assert.match(engine,/const portraitPanel = \{ x: 338/);
+  assert.match(engine,/visibleOnLine,[\s\S]{0,80}textArea\.x,[\s\S]{0,120}"left"/);
   assert.match(engine,/if \(tutorial\.active && tutorial\.dialogueOpen && game\.state !== "paused"/);
   assert.match(engine,/armScenarioAfterDialogue\(\)/);
   assert.doesNotMatch(engine,/SPACE TO PLAY|TAP TO PLAY|SPACE FOR NEXT|TAP FOR NEXT/);

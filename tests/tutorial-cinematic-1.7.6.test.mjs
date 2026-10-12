@@ -16,10 +16,10 @@ function block(start, end) {
   return engine.slice(from, to);
 }
 
-test("1.7.9 polished tutorial build and first-boot marker are installed", () => {
-  assert.equal(JSON.parse(read("package.json")).version, "1.7.9");
-  assert.match(read("src/common.js"), /2026\.10\.11-friends-tutorial-polish-3/);
-  assert.match(engine, /const TUTORIAL_BUILD = "2026\.10\.11-friends-tutorial-polish-3"/);
+test("1.7.10 polished tutorial build and first-boot marker are installed", () => {
+  assert.equal(JSON.parse(read("package.json")).version, "1.7.10");
+  assert.match(read("src/common.js"), /2026\.10\.12-friends-tutorial-polish-4/);
+  assert.match(engine, /const TUTORIAL_BUILD = "2026\.10\.12-friends-tutorial-polish-4"/);
   assert.match(engine, /rrFriendsEngineTutorialSoloSeenV7/);
 });
 
@@ -33,10 +33,14 @@ test("Ember portraits preload and rotate within every dialogue scene", () => {
   assert.match(engine, /No second frog is rendered in the playable tutorial arena/);
 });
 
-test("dialogue uses large two-line RPG typography, hold-to-speed, and a half-speed two-frame arrow", () => {
+test("dialogue uses large left-aligned two-line RPG typography, hold-to-speed, and a half-speed two-frame arrow", () => {
   assert.match(engine, /TYPEWRITER_MS_PER_CHARACTER = 28/);
   assert.match(engine, /DIALOGUE_TEXT_SCALE = 0\.86/);
-  assert.match(engine, /wrapBitmapTextAtScale\(fullLine, textArea\.w, DIALOGUE_TEXT_SCALE\)\.slice\(0, 2\)/);
+  assert.match(engine, /layoutBitmapText\(fullLine, textArea\.w, \{/);
+  assert.match(engine, /maxScale: DIALOGUE_TEXT_SCALE/);
+  assert.match(engine, /minScale: 0\.68/);
+  assert.match(engine, /drawBitmapText\([\s\S]{0,180}textArea\.x,[\s\S]{0,180}"left"/);
+  assert.doesNotMatch(engine, /textArea\.x \+ textArea\.w \/ 2 - fullLineWidth \/ 2/);
   assert.match(engine, /Adding held time once more makes holding\s+\/\/ Space exactly twice as fast/);
   assert.match(engine, /DIALOGUE_SPACE_HOLD_THRESHOLD_MS = 180/);
   assert.match(engine, /DIALOGUE_TRIANGLE_FRAME_MS = 520/);
@@ -45,15 +49,16 @@ test("dialogue uses large two-line RPG typography, hold-to-speed, and a half-spe
   assert.doesNotMatch(engine, /SPACE (?:FOR NEXT|TO PLAY)|TAP (?:FOR NEXT|TO PLAY)/);
 });
 
-test("dialogue and Ember portrait use equal-height, equal-width borders with no right-side rail", () => {
+test("dialogue keeps the approved dark box while Ember uses an equal-height border with no right-side rail", () => {
   const dialogue = block("function drawTutorialDialogue", "function drawTutorialStatus");
-  assert.match(dialogue, /const textPanel = \{ x: 88, y: 5, w: 248, h: 48 \}/);
-  assert.match(dialogue, /const portraitPanel = \{ x: 338, y: 5, w: 48, h: 48 \}/);
+  assert.match(dialogue, /const textPanel = \{ x: 92, y: 7, w: 244, h: 42 \}/);
+  assert.match(dialogue, /const portraitPanel = \{ x: 338, y: 7, w: 42, h: 42 \}/);
   assert.match(dialogue, /const border = 2/);
-  assert.match(dialogue, /drawDialoguePanel\(textPanel, "#f7fdff"\)/);
+  assert.match(dialogue, /drawDialoguePanel\(textPanel, "#052f45"\)/);
+  assert.match(dialogue, /ctx\.fillStyle = "#073b55"/);
   assert.match(dialogue, /drawDialoguePanel\(portraitPanel, "#2a6d8e"\)/);
   assert.match(dialogue, /const imageSize = portraitPanel\.w - border \* 2/);
-  assert.match(dialogue, /drawBitmapText\("EMBER"[\s\S]{0,100}\.78, "center"/);
+  assert.match(dialogue, /drawBitmapText\("EMBER"[\s\S]{0,100}\.68, "center"/);
   assert.doesNotMatch(dialogue, /strokeRect\(|indigo|rightRail|portraitRail/i);
 });
 
@@ -73,7 +78,9 @@ test("background and armed flies keep animating while dialogue locks only the fr
   assert.match(engine, /game\.visualTime \+= safeDt/);
   assert.match(engine, /game\.worldTime \+= safeDt/);
   assert.match(engine, /animateFlies\(safeDt\)/);
-  assert.match(engine, /!\["threeCatches", "rangeCatch", "comboMixed"\]\.includes\(setup\)/);
+  const open = block("function openDialogue", "function tutorialFlyKey");
+  assert.doesNotMatch(open, /armTutorialFlies\(\)/);
+  assert.match(open, /Authored tutorial flies stay hidden until the frog's matching poof-in/);
   assert.match(engine, /function tutorialBlocksLiveInput/);
   assert.match(engine, /tutorialMovementLocked\(\) \|\| tutorial\.passPending \|\| tutorial\.blockJumpUntilRelease/);
 });
@@ -81,22 +88,25 @@ test("background and armed flies keep animating while dialogue locks only the fr
 test("the dinner fly finishes its poof, then waits half a second before the line", () => {
   const prep = block("function prepareDialogueLine", "function armScenarioAfterDialogue");
   assert.match(prep, /setup === "threeCatches" && nextIndex === 1/);
-  assert.match(prep, /armTutorialFlies\(\)/);
-  assert.match(prep, /const flyRevealMs = Math\.round\(Math\.max\(CONFIG\.flySpawnEffectDuration, CONFIG\.flyGrowDuration\) \* 1000\)/);
-  assert.match(prep, /delayMs: flyRevealMs \+ FLY_DIALOGUE_REVEAL_HOLD_MS/);
+  assert.match(prep, /beginDialogueScenarioPlacement\(nextIndex, \{/);
+  assert.match(prep, /postPoofDelayMs: FLY_DIALOGUE_REVEAL_HOLD_MS/);
   assert.match(engine, /FLY_DIALOGUE_REVEAL_HOLD_MS = 500/);
+  assert.match(engine, /dialogueHeldLineText/);
+  assert.match(engine, /tutorial\.dialogueHeldUntil > now/);
   assert.match(engine, /tutorial\.dialogueLineIndex === 2/);
   assert.match(engine, /tutorial\.dialogueLineIndex === 3/);
   assert.match(engine, /drawFlashingReferenceFrame\(\{ x:154, y:234, w:172, h:33 \}\)/);
 });
 
-test("range and match-spit actors poof into place on their scripted dialogue lines", () => {
+test("range, match-spit, and wall-turn actors poof into place on their scripted dialogue lines", () => {
   const prep = block("function prepareDialogueLine", "function armScenarioAfterDialogue");
   assert.match(prep, /setup === "rangeCatch" && nextIndex === 4/);
   assert.match(prep, /setup === "comboMixed" && nextIndex === 2/);
+  assert.match(prep, /setup === "wallTurn" && nextIndex === 5/);
   assert.match(prep, /beginDialogueScenarioPlacement\(nextIndex\)/);
   const placement = block("function beginDialogueScenarioPlacement", "function prepareDialogueLine");
-  assert.match(placement, /delayMs: POOF_TRANSITION_MS \+ DIALOGUE_SCENE_SETTLE_MS/);
+  assert.match(placement, /delayMs: POOF_TRANSITION_MS \+ postPoofDelayMs/);
+  assert.match(placement, /holdPreviousText: true/);
   assert.match(placement, /tutorial\.scenePositionedDuringDialogue = true/);
 });
 
@@ -135,7 +145,7 @@ test("each proper long-jump landing gets the normal catch sparkle and success so
 test("tongue lesson poofs to the centered lower-left platform and invokes the stock final-catch cinematic", () => {
   const range = engine.slice(engine.indexOf('case "rangeCatch"'), engine.indexOf('case "wrongFly"'));
   assert.match(range, /positionCenteredOnPlatform\(platforms\[1\], 1\)/);
-  assert.match(range, /makeFly\(310, 98, 0, 4\)/);
+  assert.match(range, /makeFly\(310, 46, 0, 4\)/);
   assert.match(engine, /activeSetup === "rangeCatch" && wasCorrect && source !== "tongue"/);
   assert.match(engine, /const originalShouldStartSoloCriticalCatchForTutorial = shouldStartSoloCriticalCatch/);
   assert.match(engine, /const isRangeMatch = activeSetup === "rangeCatch"/);
@@ -176,7 +186,7 @@ test("successful wall techniques continue physics to landing before freezing", (
 });
 
 test("Current Goal uses the normal stats footprint and the clue shadow stops at its boundary", () => {
-  assert.match(engine, /return \{ x:326, y:CONFIG\.playBottom, w:W - 326, h:H - CONFIG\.playBottom \}/);
+  assert.match(engine, /return \{ x:328, y:234, w:150, h:33 \}/);
   assert.match(engine, /const goalCenterX = x \+ w \/ 2/);
   assert.match(render, /ctx\.fillRect\(left \+ 2, top \+ 2, width - 2, height\)/);
   assert.match(engine, /function currentGoalHowToLines/);

@@ -1,18 +1,18 @@
 {
   "product": "Ribbit Race Friends Edition",
-  "version": "1.7.9",
-  "displayVersion": "VERSION 1.7.9",
-  "build": "2026.10.11-friends-tutorial-polish-3",
-  "generatedUtc": "2026-10-11T23:29:52Z",
+  "version": "1.7.10",
+  "displayVersion": "VERSION 1.7.10",
+  "build": "2026.10.12-friends-tutorial-polish-4",
+  "generatedUtc": "2026-10-12T00:32:35Z",
   "notes": [
     "Hashes cover the deployable project payload and release evidence files.",
-    "SOURCE_MANIFEST.json and Ribbit_Race_Friends_1.7.9_Source_Copier.html are generated delivery indexes and are intentionally excluded from their own manifest."
+    "SOURCE_MANIFEST.json and Ribbit_Race_Friends_1.7.10_Source_Copier.html are generated delivery indexes and are intentionally excluded from their own manifest."
   ],
   "summary": {
-    "files": 108,
-    "textFiles": 90,
-    "binaryFiles": 18,
-    "bytes": 3716499
+    "files": 106,
+    "textFiles": 89,
+    "binaryFiles": 17,
+    "bytes": 3653432
   },
   "files": [
     {
@@ -25,22 +25,22 @@
     {
       "path": "ARCHITECTURE.md",
       "kind": "text",
-      "bytes": 4383,
-      "sha256": "e624b49fa51e4db3494f19fbbecdf7e284b393c6e22a7b29b0971cdccfcc1129",
+      "bytes": 4459,
+      "sha256": "23ad6880e130eb5c62047b2bb84fcc25db181868359d607ed591c85153faf745",
       "mime": "text/markdown"
     },
     {
       "path": "BROWSER_SMOKE_TEST.json",
       "kind": "text",
-      "bytes": 752,
-      "sha256": "e5a199ee7631459d62f7d65fa16b6025b6199d751bc3da91fa3e532b7643c261",
+      "bytes": 1462,
+      "sha256": "39a666e2a17b37ff050a916e816b70afeca919debe7b0a1f87c1025c7f8f26cc",
       "mime": "application/json"
     },
     {
-      "path": "BROWSER_SMOKE_TEST_1.7.9.json",
+      "path": "BROWSER_SMOKE_TEST_1.7.10.json",
       "kind": "text",
-      "bytes": 751,
-      "sha256": "096c68ea66e48d79a996d54246bb459fdd12d847ca9b9c53fd98116d0a3fb74a",
+      "bytes": 1462,
+      "sha256": "39a666e2a17b37ff050a916e816b70afeca919debe7b0a1f87c1025c7f8f26cc",
       "mime": "application/json"
     },
     {
@@ -60,218 +60,15 @@
     {
       "path": "BUILD_STATUS.json",
       "kind": "text",
-      "bytes": 250,
-      "sha256": "28825db4f1a2c0e586e1d477a9f2bb365c7ad4ff27db0d0cfec183875f2ed1e4",
+      "bytes": 454,
+      "sha256": "c61511b2ac0276528575cf9d54d05490866784a36ac5cee3fca8a11279e87843",
       "mime": "application/json"
-    },
-    {
-      "path": "EMBER_DIALOGUE_SCRIPT.md",
-      "kind": "text",
-      "bytes": 7313,
-      "sha256": "9a40ef4db91871b24bf8cb70b4d3f51118ea3c4b149eb3517f20a28783a1b5e9",
-      "mime": "text/markdown"
-    },
-    {
-      "path": "ENGINE_TUTORIAL.md",
-      "kind": "text",
-      "bytes": 3840,
-      "sha256": "14a7ad565a77716b27aee0ecd188e8b0a023cdf94d970bb848dac9d771e5322b",
-      "mime": "text/markdown"
-    },
-    {
-      "path": "HAT_REQUIREMENTS.md",
-      "kind": "text",
-      "bytes": 1611,
-      "sha256": "76b5c663327f9ce537f73ce8f3f40085b7d1bcb9b0a5a9255210c74f8816a221",
-      "mime": "text/markdown"
-    },
-    {
-      "path": "INSTALL.txt",
-      "kind": "text",
-      "bytes": 1972,
-      "sha256": "f0a109a4d91e9f656582a6008cd92efdc7e727b32ea4a15135046ed5e7448059",
-      "mime": "text/plain"
-    },
-    {
-      "path": "NETCODE.md",
-      "kind": "text",
-      "bytes": 972,
-      "sha256": "c98c85631a3017ab23d649dffdf6afe8880c779facf84f1de1f5c085d4a1adaa",
-      "mime": "text/markdown"
-    },
-    {
-      "path": "NICK_DELETE_REPAIR.md",
-      "kind": "text",
-      "bytes": 661,
-      "sha256": "e662ac76e75d688302b11ee316a892dcc794d63749a62af15307882db28be748",
-      "mime": "text/markdown"
-    },
-    {
-      "path": "PACKAGED_TESTS_PASSED.txt",
-      "kind": "text",
-      "bytes": 189,
-      "sha256": "c0a174af76ace6873faf7260a1d207caa915e020d6518d49470307b387ab2e8f",
-      "mime": "text/plain"
-    },
-    {
-      "path": "PIPELINE_OUTPUT.txt",
-      "kind": "text",
-      "bytes": 31657,
-      "sha256": "8f8b1550a13e3756fea2f17d31b751a26ca0fe652a45fa9ff98606622068b8e4",
-      "mime": "text/plain"
-    },
-    {
-      "path": "PREVIEWS/Ember_Dialogue_Welcome.png",
-      "kind": "binary",
-      "bytes": 61846,
-      "sha256": "8f61d31e9100eafbb16a5c00d124b3bd1b3173ebea2bcaef42bf2a311747874e",
-      "mime": "image/png"
-    },
-    {
-      "path": "PREVIEWS/Tutorial_Current_Goal_Hover.png",
-      "kind": "binary",
-      "bytes": 50962,
-      "sha256": "1fd395df38ead8f32569c558c3365e2b8515f39c046f1e7fd2fa0945c94e0e70",
-      "mime": "image/png"
-    },
-    {
-      "path": "PREVIEWS/Tutorial_Login_Gate.png",
-      "kind": "binary",
-      "bytes": 66385,
-      "sha256": "346e8411d0b582d78bffd2342f1b1881521784dbfd2553df32f77df166a21a33",
-      "mime": "image/png"
-    },
-    {
-      "path": "PREVIEWS/Tutorial_Pause_Menu.png",
-      "kind": "binary",
-      "bytes": 42313,
-      "sha256": "6a707403b23e7eb192fa458bc52387440faa9cf17056b9a8f5f8c2a49eda5f6c",
-      "mime": "image/png"
-    },
-    {
-      "path": "PREVIEWS/runtime-dialogue-1.7.9.png",
-      "kind": "binary",
-      "bytes": 93083,
-      "sha256": "3cbffb456001bb406e8280763da9becab18ed916b6a56d77c9910549e588f182",
-      "mime": "image/png"
-    },
-    {
-      "path": "PREVIEWS/runtime-pause-1.7.9.png",
-      "kind": "binary",
-      "bytes": 50889,
-      "sha256": "361d54ec31f8a5c44fb8670911d4e04e8bc403673cae692f781c90e7d89ce4a2",
-      "mime": "image/png"
-    },
-    {
-      "path": "PREVIEWS/runtime-resumed-1.7.9.png",
-      "kind": "binary",
-      "bytes": 92806,
-      "sha256": "859bd42a77fb7eeda67cac6b6fcaba02617ec8fcc2542cc2a35dcf437ba25b6e",
-      "mime": "image/png"
-    },
-    {
-      "path": "README.md",
-      "kind": "text",
-      "bytes": 1419,
-      "sha256": "79b2d88e507b43e300f6930efc8e98252a88a0278ecf677332b29e8c3a7019a9",
-      "mime": "text/markdown"
-    },
-    {
-      "path": "README_PIN_UPDATE.md",
-      "kind": "text",
-      "bytes": 571,
-      "sha256": "756ad6bc40f55da046bfa7dd491eef90ec694c31b4f134bb753db5ec16922fc8",
-      "mime": "text/markdown"
-    },
-    {
-      "path": "RECOVER_NICK.md",
-      "kind": "text",
-      "bytes": 2134,
-      "sha256": "6d63a0e3a2d63729105f3f59f933861f9ffa1f04cd6d03fcf8f0a2bddbbcd393",
-      "mime": "text/markdown"
-    },
-    {
-      "path": "REPOSITORY_REPAIR_README.md",
-      "kind": "text",
-      "bytes": 589,
-      "sha256": "b783f9d35dd3b68cda5548449e894bb6ed75d3fdc298bc06577a0e8204f7ba3c",
-      "mime": "text/markdown"
-    },
-    {
-      "path": "TEST_OUTPUT.txt",
-      "kind": "text",
-      "bytes": 31355,
-      "sha256": "f6388a31eff9764b1d71876f1beae13d148b4b622af096ff4b1a0baee7271d62",
-      "mime": "text/plain"
-    },
-    {
-      "path": "TEST_REPORT.md",
-      "kind": "text",
-      "bytes": 2504,
-      "sha256": "d122f427fab538db1ab9f48be644b95d51ea634e2dc81603db5b383c25ae209a",
-      "mime": "text/markdown"
-    },
-    {
-      "path": "TEST_REPORT.txt",
-      "kind": "text",
-      "bytes": 2504,
-      "sha256": "d122f427fab538db1ab9f48be644b95d51ea634e2dc81603db5b383c25ae209a",
-      "mime": "text/plain"
-    },
-    {
-      "path": "TEST_REPORT_NICK_DELETE.md",
-      "kind": "text",
-      "bytes": 1039,
-      "sha256": "811e074d8eaf999125a0f7180f37ea1e3298a88d2e8ab8931879bde3f56915c8",
-      "mime": "text/markdown"
-    },
-    {
-      "path": "TEST_REPORT_V160.md",
-      "kind": "text",
-      "bytes": 1064,
-      "sha256": "19b1955a8a4a93cd109ca39ca26762c184f8b2adf19b2f45d5097fc409b48204",
-      "mime": "text/markdown"
-    },
-    {
-      "path": "TUTORIALS.md",
-      "kind": "text",
-      "bytes": 2212,
-      "sha256": "1b2fa5458366a6de24bbfb933fa1b6f4812bed51c5025bdcc097678f3901c12b",
-      "mime": "text/markdown"
-    },
-    {
-      "path": "UPDATE_INSTRUCTIONS.md",
-      "kind": "text",
-      "bytes": 3570,
-      "sha256": "7af85238979bddcafca663e1a51ff9d0de2fc2381b534f16df46909f191a84c0",
-      "mime": "text/markdown"
-    },
-    {
-      "path": "UPDATE_NOTE.txt",
-      "kind": "text",
-      "bytes": 2785,
-      "sha256": "7a3abab4ef3773a6ffa576c3df47364ded2bcca1c7955a1766bdc29deb25a87c",
-      "mime": "text/plain"
-    },
-    {
-      "path": "UPDATE_PIN_INSTRUCTIONS.txt",
-      "kind": "text",
-      "bytes": 560,
-      "sha256": "36bb073c2cf13b4a58f1a2b2afffe15e3256041adc7e0a7058981a568e49d97b",
-      "mime": "text/plain"
-    },
-    {
-      "path": "V160_FEATURES.md",
-      "kind": "text",
-      "bytes": 630,
-      "sha256": "5485aae0096c26e0fa6ba6b63485beeb096ed89ae6c1763263fba08071dac7f8",
-      "mime": "text/markdown"
     },
     {
       "path": "client/game/10-core-config.js",
       "kind": "text",
-      "bytes": 85851,
-      "sha256": "f87274a1a133eac0122d11fcf3e6e7d389a560c03cacc6a5e13ce5c6c73d9869",
+      "bytes": 85852,
+      "sha256": "e41507100d22d2143ac3fd5fe8681d1785c148cbe7f10dae206416894cb16915",
       "mime": "text/javascript"
     },
     {
@@ -284,15 +81,15 @@
     {
       "path": "client/game/110-online-mobile-polish.js",
       "kind": "text",
-      "bytes": 32874,
-      "sha256": "163b12b5134bd8050e2282a50ab0a7ab27443a4ab2167fcb4e49f6c435d2faac",
+      "bytes": 32875,
+      "sha256": "4bbf8450b7a2ba7ab9027f0b73a8e80eed02c51b4f23f34354eb5735cf7506e8",
       "mime": "text/javascript"
     },
     {
       "path": "client/game/120-engine-tutorial.js",
       "kind": "text",
-      "bytes": 100423,
-      "sha256": "3780a214147c1049b49e20e26a60cf28a83f4e41f2c20ca6f3f05903d47a9398",
+      "bytes": 107240,
+      "sha256": "ba7d31a321c624045ab1290c924971561c1f51b0220d3902eec206dfa6dbbfef",
       "mime": "text/javascript"
     },
     {
@@ -347,15 +144,15 @@
     {
       "path": "client/game/90-extended-features.js",
       "kind": "text",
-      "bytes": 11674,
-      "sha256": "e74b562c7b161f734d345ccbb059ce73bc47674f960f2a85ecc083240d39e09b",
+      "bytes": 11675,
+      "sha256": "f77c2576aae8208845fe13216f22ae7ae6ac6fd4407250eb1f3b188ce2aaf3d7",
       "mime": "text/javascript"
     },
     {
       "path": "client/game/99-v170-hooks.js",
       "kind": "text",
-      "bytes": 19888,
-      "sha256": "b42fbb70c6b82c2842294745def4aef48f91263e08b6382620571138fa3a6809",
+      "bytes": 19889,
+      "sha256": "42b3b280bc5ef71c5019b208d54162180b551dad1af15438e3350b3943e7cd84",
       "mime": "text/javascript"
     },
     {
@@ -366,11 +163,102 @@
       "mime": "text/markdown"
     },
     {
+      "path": "EMBER_DIALOGUE_SCRIPT.md",
+      "kind": "text",
+      "bytes": 8925,
+      "sha256": "62d4ed3a73d9e24f6d83388aa6a8afde41040ae52b8817aba51ffded47501046",
+      "mime": "text/markdown"
+    },
+    {
+      "path": "ENGINE_TUTORIAL.md",
+      "kind": "text",
+      "bytes": 5745,
+      "sha256": "d6fd3dca2dbe3ee08e0c5685fab125e4aafefbec6d69655049db0ab29c4a0d6e",
+      "mime": "text/markdown"
+    },
+    {
+      "path": "HAT_REQUIREMENTS.md",
+      "kind": "text",
+      "bytes": 1611,
+      "sha256": "76b5c663327f9ce537f73ce8f3f40085b7d1bcb9b0a5a9255210c74f8816a221",
+      "mime": "text/markdown"
+    },
+    {
+      "path": "INSTALL.txt",
+      "kind": "text",
+      "bytes": 2492,
+      "sha256": "2f3f301832abea7286259a64642165d3c9e7d3550d7a8350092d596c8d7e8734",
+      "mime": "text/plain"
+    },
+    {
+      "path": "NETCODE.md",
+      "kind": "text",
+      "bytes": 972,
+      "sha256": "c98c85631a3017ab23d649dffdf6afe8880c779facf84f1de1f5c085d4a1adaa",
+      "mime": "text/markdown"
+    },
+    {
+      "path": "NICK_DELETE_REPAIR.md",
+      "kind": "text",
+      "bytes": 661,
+      "sha256": "e662ac76e75d688302b11ee316a892dcc794d63749a62af15307882db28be748",
+      "mime": "text/markdown"
+    },
+    {
       "path": "package.json",
       "kind": "text",
-      "bytes": 456,
-      "sha256": "05afd968e559004f023beea8c1477c955e146773d6d257eff205fd9109a9af41",
+      "bytes": 457,
+      "sha256": "eec4131e23ddfa54517efe1f00d3bb524056f2f4322ea63beef2850a60b13474",
       "mime": "application/json"
+    },
+    {
+      "path": "PACKAGED_TESTS_PASSED.txt",
+      "kind": "text",
+      "bytes": 246,
+      "sha256": "bf530398b4bbe13169be34a3b705e9ce19e4636f75e9c984655528b78c79d072",
+      "mime": "text/plain"
+    },
+    {
+      "path": "PIPELINE_OUTPUT.txt",
+      "kind": "text",
+      "bytes": 32223,
+      "sha256": "fe18c254627c32647b4aa6aff00bdaf83203140966647dce6bc64a7abf194135",
+      "mime": "text/plain"
+    },
+    {
+      "path": "PREVIEWS/runtime-dialogue-1.7.10.png",
+      "kind": "binary",
+      "bytes": 85241,
+      "sha256": "862273966c83acf7329b4c380af9b404f8a4e0774838b5cdb362edd7008385af",
+      "mime": "image/png"
+    },
+    {
+      "path": "PREVIEWS/runtime-dialogue-wrapped-1.7.10.png",
+      "kind": "binary",
+      "bytes": 86799,
+      "sha256": "b8a9de91807490b7d9d989797819f50b3d92142dc2eb810e345381907b7f40ff",
+      "mime": "image/png"
+    },
+    {
+      "path": "PREVIEWS/runtime-goal-alignment-1.7.10.png",
+      "kind": "binary",
+      "bytes": 65309,
+      "sha256": "1a240c3997077588fe3ae796489c748177ab4c5a73a65e8dac11a73d56ae93b3",
+      "mime": "image/png"
+    },
+    {
+      "path": "PREVIEWS/runtime-login-1.7.10.png",
+      "kind": "binary",
+      "bytes": 79547,
+      "sha256": "ddc385b58a1ee5dce22dc2a75c4b015e549e33c07e2ad9756bbaaf3a21f40eb9",
+      "mime": "image/png"
+    },
+    {
+      "path": "PREVIEWS/runtime-pause-1.7.10.png",
+      "kind": "binary",
+      "bytes": 50943,
+      "sha256": "9621bc7f6b0177a20c91d0fb9728108263acaa6963a386529bb4398f180d2663",
+      "mime": "image/png"
     },
     {
       "path": "public/_headers",
@@ -453,12 +341,12 @@
       "path": "public/index.html",
       "kind": "text",
       "bytes": 11825,
-      "sha256": "7601e942f717f9e963d97680b68298609316f1d6192038d80cde29b2c1199c19",
+      "sha256": "b27645bf7d9d5a60f286d3bc68e2f9116ac548919b181b42c43aa7351b073a54",
       "mime": "text/html"
     },
     {
       "path": "public/manifest.webmanifest",
-      "kind": "text",
+      "kind": "binary",
       "bytes": 729,
       "sha256": "b20471a2bdd5cdfc67c841e8e48f374f427b431e8f7c8aa1565343866246b99d",
       "mime": "application/manifest+json"
@@ -481,7 +369,7 @@
       "path": "public/scripts/cloud-client.js",
       "kind": "text",
       "bytes": 58464,
-      "sha256": "e2960125923a39f9e210e66c2b5a062ac60e9425db4033674798ac343b217c7a",
+      "sha256": "a43876b5b67e8f37f655a4c0bbe88e8f2f6db9998f659434254f16b44b2322ff",
       "mime": "text/javascript"
     },
     {
@@ -501,8 +389,8 @@
     {
       "path": "public/scripts/game.bundle.js",
       "kind": "text",
-      "bytes": 1203789,
-      "sha256": "6bea9e4c4560fa9719d0136f7c32cdd1be14f00e9466e8e001dca2ba16f726ef",
+      "bytes": 1210610,
+      "sha256": "f14851366ce3a1000c1d1ef78d2bfe83c8e62c3d4666671ea4999dd0b1b1e1f6",
       "mime": "text/javascript"
     },
     {
@@ -578,8 +466,8 @@
     {
       "path": "public/styles/rr-170.css",
       "kind": "text",
-      "bytes": 5909,
-      "sha256": "8ac9504cd334dcc0ce12ba12714ae7ff115caabe9c614253191e522450438ed5",
+      "bytes": 5910,
+      "sha256": "a5971674fc75f6928ce5e9c23a14c6b2b1f82d54dcd27c89249a0f850facaac9",
       "mime": "text/css"
     },
     {
@@ -618,6 +506,34 @@
       "mime": "image/png"
     },
     {
+      "path": "README.md",
+      "kind": "text",
+      "bytes": 1997,
+      "sha256": "f0ede2e685b4c652f372fa12bf8f171c069321e25573b117f56543870314f17a",
+      "mime": "text/markdown"
+    },
+    {
+      "path": "README_PIN_UPDATE.md",
+      "kind": "text",
+      "bytes": 571,
+      "sha256": "756ad6bc40f55da046bfa7dd491eef90ec694c31b4f134bb753db5ec16922fc8",
+      "mime": "text/markdown"
+    },
+    {
+      "path": "RECOVER_NICK.md",
+      "kind": "text",
+      "bytes": 2134,
+      "sha256": "6d63a0e3a2d63729105f3f59f933861f9ffa1f04cd6d03fcf8f0a2bddbbcd393",
+      "mime": "text/markdown"
+    },
+    {
+      "path": "REPOSITORY_REPAIR_README.md",
+      "kind": "text",
+      "bytes": 589,
+      "sha256": "b783f9d35dd3b68cda5548449e894bb6ed75d3fdc298bc06577a0e8204f7ba3c",
+      "mime": "text/markdown"
+    },
+    {
       "path": "scripts/build-game.mjs",
       "kind": "text",
       "bytes": 1929,
@@ -642,7 +558,7 @@
       "path": "src/common.js",
       "kind": "text",
       "bytes": 2266,
-      "sha256": "01e3b4fc0121098a0ecc65822dcacebf1e59dee54bdf84eedc00fb9c483e178f",
+      "sha256": "1ffc23b5798437eadec98befd6999b7a00d55b34736d2557e5f1b2e4836a6404",
       "mime": "text/javascript"
     },
     {
@@ -688,6 +604,41 @@
       "mime": "application/json"
     },
     {
+      "path": "TEST_OUTPUT.txt",
+      "kind": "text",
+      "bytes": 31919,
+      "sha256": "192156f0048fd852989c7c412a632d7d5d838c042b1f26ffd8f77a90199f9e1c",
+      "mime": "text/plain"
+    },
+    {
+      "path": "TEST_REPORT.md",
+      "kind": "text",
+      "bytes": 3831,
+      "sha256": "1234abe1178375b6280778e858c8718511b2ebd8b6b94d57b6be3c59166aafed",
+      "mime": "text/markdown"
+    },
+    {
+      "path": "TEST_REPORT.txt",
+      "kind": "text",
+      "bytes": 3831,
+      "sha256": "1234abe1178375b6280778e858c8718511b2ebd8b6b94d57b6be3c59166aafed",
+      "mime": "text/plain"
+    },
+    {
+      "path": "TEST_REPORT_NICK_DELETE.md",
+      "kind": "text",
+      "bytes": 1039,
+      "sha256": "811e074d8eaf999125a0f7180f37ea1e3298a88d2e8ab8931879bde3f56915c8",
+      "mime": "text/markdown"
+    },
+    {
+      "path": "TEST_REPORT_V160.md",
+      "kind": "text",
+      "bytes": 1064,
+      "sha256": "19b1955a8a4a93cd109ca39ca26762c184f8b2adf19b2f45d5097fc409b48204",
+      "mime": "text/markdown"
+    },
+    {
       "path": "tests/core.test.mjs",
       "kind": "text",
       "bytes": 10880,
@@ -697,15 +648,15 @@
     {
       "path": "tests/friends-1.4.0.test.mjs",
       "kind": "text",
-      "bytes": 5294,
-      "sha256": "87045b16f10030ab8f06c0231c23d5d88773d000339a8bfde215d7dd4255936e",
+      "bytes": 5296,
+      "sha256": "dee59af538dd04433701826114aacc377dc9389e914d568d53ae0101f911dd29",
       "mime": "text/javascript"
     },
     {
       "path": "tests/friends-1.4.1.test.mjs",
       "kind": "text",
-      "bytes": 2768,
-      "sha256": "acdd06ac2daa4f315fc57dd3e0d67509fa5a5225fa936d1f2f6e079e229a7b63",
+      "bytes": 2769,
+      "sha256": "c2639862343f2b6e12758ffd96eb3ed86375526ca4768a69cff679797450296a",
       "mime": "text/javascript"
     },
     {
@@ -718,22 +669,22 @@
     {
       "path": "tests/friends-patch.test.mjs",
       "kind": "text",
-      "bytes": 24960,
-      "sha256": "ac1824e18358a1e78d6a6dfb20618c9438ded40714ce41987640c7a194d54267",
+      "bytes": 24962,
+      "sha256": "4ae9e24baa74637af31b93017ae326eacf4f87387c77ce24292a892869484b1f",
       "mime": "text/javascript"
     },
     {
       "path": "tests/tutorial-cinematic-1.7.6.test.mjs",
       "kind": "text",
-      "bytes": 12509,
-      "sha256": "448e3e7579d9c6cf9a7760bec0bd8d099c907e1b03e1db076e20cb324baa470b",
+      "bytes": 13027,
+      "sha256": "e82b8b10def1982d97ddc89d7c025fff6517b83f80fe64df52a0348d5cd0f88f",
       "mime": "text/javascript"
     },
     {
       "path": "tests/tutorial-refinement.test.mjs",
       "kind": "text",
-      "bytes": 6423,
-      "sha256": "d3c9efe14ecbedfcaa11ab190526050ae2cf0800adadade281c4497ecd7497df",
+      "bytes": 8305,
+      "sha256": "e65aeb58ae5bc317c6bed9ffd0cc65d30e87bc8ff736fd1960d5770370c6678e",
       "mime": "text/javascript"
     },
     {
@@ -746,8 +697,8 @@
     {
       "path": "tests/v160-polish.test.mjs",
       "kind": "text",
-      "bytes": 2397,
-      "sha256": "76e6276a5d1d25a5962a20aeeb5bed3e53903e57cee60650de9fbb4d3ae38212",
+      "bytes": 2399,
+      "sha256": "59a06af75cb50ddb81fa97d1a67d13290e077dd04716853f1882acd20343e96d",
       "mime": "text/javascript"
     },
     {
@@ -760,9 +711,44 @@
     {
       "path": "tests/v170.test.mjs",
       "kind": "text",
-      "bytes": 5061,
-      "sha256": "2816b9e0d748fee0536c8fb025578bd438c522bc7c30e34daae3e57e8c7d6638",
+      "bytes": 5139,
+      "sha256": "c213c0766a4f197def82ec3e2d80cbd72875cc514f935ef0e8c0df41f47019e7",
       "mime": "text/javascript"
+    },
+    {
+      "path": "TUTORIALS.md",
+      "kind": "text",
+      "bytes": 2735,
+      "sha256": "9a188824755ded464e2978454137716efff678ad8fd71c17b9227e2cdb5c78f3",
+      "mime": "text/markdown"
+    },
+    {
+      "path": "UPDATE_INSTRUCTIONS.md",
+      "kind": "text",
+      "bytes": 4395,
+      "sha256": "efbb4efaa06ea4e1280f9523245c68c9fe816a08f359a48a8ff379137ef9c1b2",
+      "mime": "text/markdown"
+    },
+    {
+      "path": "UPDATE_NOTE.txt",
+      "kind": "text",
+      "bytes": 2529,
+      "sha256": "520d6f5508eae7010fdc0a521335b647147b0b90f5507196172d1867cc292cbd",
+      "mime": "text/plain"
+    },
+    {
+      "path": "UPDATE_PIN_INSTRUCTIONS.txt",
+      "kind": "text",
+      "bytes": 560,
+      "sha256": "36bb073c2cf13b4a58f1a2b2afffe15e3256041adc7e0a7058981a568e49d97b",
+      "mime": "text/plain"
+    },
+    {
+      "path": "V160_FEATURES.md",
+      "kind": "text",
+      "bytes": 630,
+      "sha256": "5485aae0096c26e0fa6ba6b63485beeb096ed89ae6c1763263fba08071dac7f8",
+      "mime": "text/markdown"
     },
     {
       "path": "wrangler.jsonc",

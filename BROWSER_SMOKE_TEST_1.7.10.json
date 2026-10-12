@@ -1,0 +1,47 @@
+{
+  "harness": "inline static assets with in-memory Friends API stub",
+  "console_errors": [],
+  "page_errors": [],
+  "checks": {
+    "initial_body_classes": "ribbit-auth-locked rr-tutorial-pending",
+    "pending_before_guest": true,
+    "gate_visible_before_guest": true,
+    "game_start_type": "function",
+    "tutorial_active": true,
+    "tutorial_kind": "solo",
+    "tutorial_step": 0,
+    "dialogue_open": true,
+    "body_classes_after_start": "rr-guest-active rr-tutorial-active",
+    "canvas_visibility_after_start": "visible",
+    "canvas_width": 1920,
+    "canvas_height": 1080,
+    "pause_state": "paused",
+    "pause_menu_visible_by_state": true,
+    "resume_state": "playing",
+    "resume_countdown_number": 0,
+    "resume_countdown_timer": 0,
+    "dialogue_open_after_resume": true,
+    "wrapped_dialogue_step": 1,
+    "wrapped_dialogue_line": 1,
+    "first_control_frog_before": {
+      "x": 61,
+      "y": 200
+    },
+    "first_control_frog_after": {
+      "x": 61,
+      "y": 200
+    },
+    "first_control_no_reposition": true,
+    "first_control_game_state": "playing"
+  },
+  "version": "1.7.10",
+  "build": "2026.10.12-friends-tutorial-polish-4",
+  "generatedUtc": "2026-10-12T00:29:44Z",
+  "visualEvidence": [
+    "PREVIEWS/runtime-login-1.7.10.png",
+    "PREVIEWS/runtime-dialogue-1.7.10.png",
+    "PREVIEWS/runtime-dialogue-wrapped-1.7.10.png",
+    "PREVIEWS/runtime-pause-1.7.10.png",
+    "PREVIEWS/runtime-goal-alignment-1.7.10.png"
+  ]
+}

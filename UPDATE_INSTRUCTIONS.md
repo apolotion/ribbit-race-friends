@@ -1,9 +1,9 @@
-# Ribbit Race Friends 1.7.9 — Tutorial Polish Update
+# Ribbit Race Friends 1.7.10 — Tutorial Polish Update
 
 ## Build
 
-- Displayed version: `VERSION 1.7.9`
-- Server build: `2026.10.11-friends-tutorial-polish-3`
+- Displayed version: `VERSION 1.7.10`
+- Server build: `2026.10.12-friends-tutorial-polish-4`
 - Platform: Cloudflare Worker + Durable Objects + static assets
 - Apps Script: **not used**
 
@@ -58,7 +58,7 @@
    ```
 
 9. Do not recreate or delete either Durable Object.
-10. Verify `/api/health` reports `2026.10.11-friends-tutorial-polish-3`.
+10. Verify `/api/health` reports `2026.10.12-friends-tutorial-polish-4`.
 11. Hard-refresh desktop browsers; fully close and reopen an installed iPhone Home Screen app.
 
 No Apps Script or `code.gs` replacement is needed.
@@ -84,31 +84,42 @@ Open the hidden Park PvP tutorial test route:
 - The authentication gate remains visible until sign-in, account creation, or **Play Without Saving**.
 - On first use, the canvas stays hidden between authentication and tutorial activation, so the main menu does not flash.
 - The Space press that closes the final line is consumed; a second Space press begins a jump.
-- Resuming the tutorial skips the ordinary 3-2-1 countdown.
+- The first long-jump exercise starts at the normal Park position without an extra poof.
+- Resuming the tutorial returns directly to play with no 3-2-1 countdown.
 
 ### Ember dialogue
 
-- Text uses a bright Pokémon-style panel, one consistent larger scale, centered one- or two-line wrapping, and a slow two-frame triangle.
+- The box uses the compact dark-blue style and thin cyan outline from the approved earlier version.
+- Dialogue text is larger and left-aligned. A wrapped second line begins at the same left edge.
+- Ember's portrait is a same-height square with the same border width as the text panel.
+- The orange name strip contains a larger centered **EMBER** label and no indigo rail appears to its right.
 - Ember changes expression between lines.
-- The portrait is square, matches the text-panel height and border width, has a centered larger **EMBER** label, and has no extra indigo rail.
 - Holding Space doubles typewriter speed.
+- The two-frame triangle changes every 520 ms and appears only when another line remains.
+- During a delayed fly reveal, the prior sentence remains visible until the new line begins typing.
 
-### Timing and lesson behavior
+### Fly and prompt timing
 
-- The dinner fly finishes its spawn poof and waits another 500 ms before its announcement.
-- The range frog and fly enter during the intended dialogue line; the frog is centered on the lower-left platform.
-- Correct three-catch landings hold for 500 ms before poofing.
-- Terms and goals stay blank until control returns, including after Retry Scene.
-- Multi-fly setups enter at their scripted lines rather than at scene start.
-- Match-and-spit changes the second clue so the remaining fly is intentionally wrong.
-- The two-match exercise is mirrored and the three-match route follows the supplied diagram.
+- Every authored tutorial fly reveals with the frog's corresponding poof-in rather than appearing at scene load.
+- The dinner fly finishes its spawn poof, waits another 500 ms, and then line 2 begins.
+- The range target appears with the frog during the distant-fly line and sits high above the platforms.
+- The three-fly route appears with the frog's scene poof.
+- The wall-turn target appears with the frog on “Then jump back...”
+- During the three-catch exercise, the term goes blank immediately after a catch and stays blank until the next fly poofs in.
+
+### Wrong-fly sequence
+
+- The first nonmatching fly does not score and remains on the field after its spit-back.
+- A new matching fly appears only after the first fly has been touched, and it enters with the frog's follow-up poof.
+- Catching the new matching fly updates the English clue to the skipped fly's term.
+- The scene does not complete until the player returns and catches the original fly after it becomes correct.
 
 ### Park, physics, HUD, and achievements
 
 - Park is a true horizontal mirror in all Park modes; only the two center platforms align vertically.
 - Quick drops and buffered drops do not increment jump attempts.
-- Wall-turn and rebound scenes wait for landing before freezing/completing.
+- Wall-turn and rebound scenes wait for landing before freezing or completing.
 - The tongue-range catch uses the stock Single Player final-catch slow-motion camera and zoom.
-- Current Goal occupies the exact normal statistics footprint and cannot overlap the English clue.
+- Current Goal is level with the jump meter and term card, has a two-pixel gutter beside the term card, and does not clip its second line.
 - The final practice round shows normal TIME/JUMPS/BEST metrics.
 - All ordinary achievements are suppressed during training; only **RIBBIT READY** can be awarded.

@@ -1,7 +1,7 @@
 # Ribbit Race Friends Edition architecture
 
-Build: `2026.10.11-friends-tutorial-polish-3`  
-Displayed game version: `VERSION 1.7.9`
+Build: `2026.10.12-friends-tutorial-polish-4`  
+Displayed game version: `VERSION 1.7.10`
 
 ## Browser responsibilities
 
@@ -14,7 +14,7 @@ Displayed game version: `VERSION 1.7.9`
 - `public/scripts/mobile-experience.js` — Mobile/Computer confirmation, iPhone installation help, account-panel bridge, standalone detection, and native-gesture suppression.
 - `public/scripts/extended-features.js` — replay capture/viewing, palette tools, hat progression, and world-record notices.
 - `client/game/100-mobile-experience.js` — canvas-native avatar/device buttons, gradient jump meters, upper-right Versus pause, independent pointer ownership, and touch diagnostics.
-- `client/game/120-engine-tutorial.js` — authentication-gated real-engine Park/PvP tutorial, Pokémon-style Ember dialogue, scripted fly/poof timing, checked scenarios, stock final-catch zoom bridge, HUD footprint, achievement isolation, and pause overrides.
+- `client/game/120-engine-tutorial.js` — authentication-gated real-engine Park/PvP tutorial, approved dark-blue Ember dialogue with left-aligned wrapping, authored fly/poof timing, checked scenarios, stock final-catch zoom bridge, compact HUD footprint, wrong-fly clue-conversion sequence, achievement isolation, and pause overrides.
 - `public/scripts/tutorial-preboot.js` — synchronous first-paint suppression of the menu while a first tutorial is pending.
 - `public/scripts/rr-170-polish.js` — post-auth tutorial startup and Friends Edition interface polish.
 - `public/scripts/game.bundle.js` — generated closure-preserving browser runtime.
