@@ -352,5 +352,5 @@ body.rr-guest-active #guest-convert-account { display:block; }
 
 #rr-v160-tag-games button,#rr-v160-replay-modal button{border:3px solid #26363d;background:#f7fdff;color:#26363d;padding:9px 12px;margin:5px;font:700 13px "Courier New",monospace;cursor:pointer;box-shadow:3px 3px #aebbc0}#rr-v160-tag-games button:disabled{opacity:.35;cursor:not-allowed}.rrv-close,.rrv-tag-close{position:absolute;right:8px;top:8px}.rrv-tag-list{display:grid;gap:6px}
 
-/* polish-8-hide-fullscreen */
+/* polish-9-hide-fullscreen */
 #fullscreen-button,#rr-fullscreen-button,.fullscreen-button{display:none!important;}

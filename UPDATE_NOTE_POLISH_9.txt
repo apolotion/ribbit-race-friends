@@ -1,0 +1,57 @@
+RIBBIT RACE FRIENDS — SOLO TUTORIAL POLISH + VERSUS TUTORIAL 9
+Build: 2026.10.12-friends-polish-9
+Displayed version: VERSION 1.7.10
+
+SOLO TUTORIAL
+1. Ember's square portrait now completely fills its framed image area. Her orange nameplate overlays the bottom of the art, eliminating the gap between the portrait and name.
+2. A normal platform drop during the three-long-jump lesson immediately fails and poofs the frog back. Normal platform drops remain real jump attempts; true landing-buffer drops remain excluded because they do not launch a new jump.
+3. Airborne jump-button fidget taps do not create extra jump attempts in the wall-turn lesson.
+4. The Find the Match body remains blank during the long-jump lesson.
+5. Current Goal remains visible while paused and throughout every tutorial lesson, including the final normal five-fly round.
+6. Flies continue animating during frog poof transitions.
+7. The tongue target is centered above the right-middle Park platform and positioned two-fifths of the vertical distance toward the top platform.
+8. Wrong-fly dialogue removes the two unwanted lines. Touching the wrong fly no longer blanks the clue.
+9. The two-match and multi-fly dialogue uses the revised wording.
+10. The third fly in the three-fly jump triggers the stock final-catch slow-motion zoom.
+11. The one-jump wall-turn target is slightly lower.
+12. The buffered-jump lesson now requires one jump followed by one correctly buffered charge and release after landing.
+13. The Current Goal card is retained through the triple-buffer lesson and final practice round.
+14. The tutorial-complete presentation uses the normal level-complete visual language, keeps the frog centered and dancing, and provides one centered Home button.
+15. The tutorial first-boot marker and browser cache marker are synchronized to the new build.
+
+VERSUS TUTORIAL
+1. The Versus book button now opens a real tutorial rather than a Coming Soon message.
+2. Ember remains the opposing frog, wears the Ember skin, and uses Level 5 CPU behavior in the final match.
+3. Implemented sixteen scenes based on the supplied tutorial script:
+   - Welcome and normal-match rules
+   - Three basic bonks
+   - Bonk then catch before recovery
+   - Low and high drop-bonk comparisons
+   - Buffered platform-drop bonk
+   - Sky bonks and maximum-stun buffered sky bonks
+   - Knocking a frog from high ground
+   - Waiting for stun recovery before a second bonk
+   - Boosted bounce from a charging opponent
+   - Under bonks and avoiding under bonks
+   - Three side-to-side rebounds
+   - Rebound-to-catch, interception, and dinner-steal exercises
+   - One final 30-second, best-of-one match against Ember
+4. Demonstrations show WATCH EMBER, script both frogs, and lock player input while leaving Pause available.
+5. Practice segments show YOUR TURN, clear held input, and preserve completed repetitions on retry.
+6. Scripted fly lessons use the requested one-second post-poof reveal, except the timed interception exercise, which reveals immediately.
+7. Final win and loss dialogue completes training either way; ties continue through the game's normal sudden-death handling.
+8. Ordinary achievements and hat progress remain disabled during both Solo and Versus training. Only Ribbit Ready can be awarded.
+
+VERIFICATION
+- npm run check: passed
+- Generated gameplay modules: 13
+- Required external assets: 23 present
+- npm test: 189 passed, 0 failed
+
+DEPLOYMENT
+No code.gs update is needed. Preserve the existing Cloudflare HUB, ROOMS, and ASSETS bindings. Replace the repository root with this package, then run:
+
+npm install
+npm run check
+npm test
+npx wrangler deploy
