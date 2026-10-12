@@ -1,0 +1,49 @@
+RIBBIT RACE FRIENDS — POLISH 18
+Displayed version: VERSION 1.7.10
+Build: 2026.10.12-friends-polish-18
+
+VERSUS TUTORIAL
+1. Moved the tutorial chapter strip directly above Find the Match so it does not clash with Ember dialogue or Watch Ember.
+2. Scene 2 now begins from the existing under-platform pose. Ember starts on the right and makes a real right-to-left charged jump without an unnecessary opening poof.
+3. After Ember's opening bonk, the completed physics pose is held until both frogs poof into the first player-practice setup before “Now you try.”
+4. The first practice bonk mirrors Ember's demonstration distance, while the next two attempts use separate reachable positions.
+5. Ember's portrait dialogue panel extends farther left so her crown cannot peek out beside it.
+6. Bonk-and-catch lessons place the matching fly above the first platform; Ember and the player must use a real charged follow-up jump.
+7. Static-Ember practice scenes can poof only the player and required fly instead of unnecessarily moving Ember.
+8. Rebound and impact effects must finish before a poof transition can begin, preventing frozen rebound animations.
+9. Added authored poofs before the requested platform/drop-bonk dialogue transitions.
+10. Lower and highest drop-bonk arrangements use mirrored, more forgiving positions and facing directions.
+11. Added the hidden testing code “tutorialskip” to move to the next tutorial scene.
+12. The complete 16-scene Versus tutorial, Level 5 Ember, Watch Ember demonstrations, Your Turn handoffs, and final 30-second match remain included.
+
+REPLAY AND LEADERBOARD
+13. Rebuilt PB replay playback as a centered Google-Drive-style video window with loading, playback, replay-from-start, close, and readable error states.
+14. Leaderboard player names now request videos by immutable account ID first, with login/display-name fallback for older records.
+15. The Worker leaderboard payload now includes the account ID, login username, selected frog skin, and custom appearance palette.
+16. Replay videos remain stored in the existing FriendsHub Durable Object SQLite table; no separate video server is required.
+17. Added clear replay-health and error guidance for missing routes, signed-out sessions, old records, and PBs without a recording.
+18. The canvas-native leaderboard uses the rounded achievement-menu frame, rendered frog sprites, dropdown filters, clickable player names, replay controls, and wrapping pages.
+19. Moved the leaderboard medal button to the opposite lower corner of Achievements while keeping the achievement arrows and page number together.
+
+MAIN MENU AND NAVIGATION
+20. Added canvas-native Account & Language and Computer / Mobile Mode windows instead of external-looking popups.
+21. Account, device, Achievements, and Stats are reachable through consistent keyboard/controller navigation.
+22. Achievement cards and utility buttons can be traversed with A/D and the arrow keys.
+23. Leaderboard, achievements, stats, hats, victory notices, Frog Tags, and other paged arrows wrap from first to last and last to first.
+24. Swapped the Single Player utility positions so Settings is left of the Tutorial book and the Tutorial book occupies the former cog position.
+25. Loaded account frog appearance is reapplied to the gameplay frog and Player 1 preview after authentication.
+
+HATS, SANDBOX, AND CUSTOM COLOR
+26. Hat progress continues accumulating before the hat selector is unlocked, but all progress, unlock messages, and notifications remain hidden until the feature is available.
+27. Deferred hidden hat notifications are released only after the selector is legitimately unlocked.
+28. Tutorial and Sandbox actions remain excluded from ordinary hats, stats, and achievements.
+29. Sandbox victory/loss animation Shift shortcuts work only while grounded.
+30. Sandbox fly replacements now use the normal Single Player respawn interval.
+31. Custom-color lock sizing was aligned with the hat lock while preserving the paint-slosh backdrop.
+32. Loaded custom/base frog appearance data continues to feed leaderboard and gameplay rendering.
+
+VERIFICATION
+- npm run check: passed
+- npm test: 274 passed, 0 failed
+- Generated gameplay modules: 13
+- Required external assets: 23 present

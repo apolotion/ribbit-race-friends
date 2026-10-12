@@ -11,8 +11,8 @@ const rendering = read("client/game/70-rendering.js");
 const online = read("client/game/30-online-versus.js");
 
 test("Polish 13 aligns profile/device hit geometry and removes the legacy blank tooltip", () => {
-  assert.match(tutorial, /MAIN_PROFILE_BUTTON = Object\.freeze\(\{ x: 47, y: 211, w: 24, h: 24 \}\)/);
-  assert.match(tutorial, /MAIN_DEVICE_BUTTON = Object\.freeze\(\{ x: 74, y: 211, w: 24, h: 24 \}\)/);
+  assert.match(tutorial, /MAIN_PROFILE_BUTTON = MAIN_UI\.profileButton/);
+  assert.match(tutorial, /MAIN_DEVICE_BUTTON = MAIN_UI\.deviceButton/);
   assert.match(tutorial, /profile:\[MAIN_PROFILE_BUTTON, "ACCOUNT & LANGUAGE"\]/);
   assert.match(tutorial, /device:\[MAIN_DEVICE_BUTTON, "COMPUTER \/ MOBILE MODE"\]/);
   assert.match(tutorial, /drawBitmapText\(message[\s\S]{0,120}"#111a1e"\)/);
@@ -20,8 +20,8 @@ test("Polish 13 aligns profile/device hit geometry and removes the legacy blank 
 });
 
 test("Achievements medal aligns to the achievement grid", () => {
-  assert.match(tutorial, /LEADERBOARD_BUTTON = Object\.freeze\(\{ x: 34, y: 229, w: 28, h: 28 \}\)/);
-  assert.match(ui, /startX: 34/);
+  assert.match(tutorial, /LEADERBOARD_BUTTON = Object\.freeze\(\{ x: 416, y: 229, w: 28, h: 28 \}\)/);
+  assert.match(ui, /pageNextButton: Object\.freeze\(\{ x: 370, y: 232, w: 20, h: 20 \}\)/);
 });
 
 test("Leaderboard renders player frogs with visibly striped rows and dropdown choices", () => {

@@ -381,7 +381,7 @@
       let options=presets.filter(p=>!occupiedKeys.has(`${p.x}:${p.y}`));
       if(!options.length) options=presets.slice();
       const choice=options[Math.floor(Math.random()*options.length)]||presets[0];
-      if(sourceSlot){sourceSlot.x=choice.x;sourceSlot.y=choice.y;sourceSlot.due=game.elapsed+1.1;}
+      if(sourceSlot){sourceSlot.x=choice.x;sourceSlot.y=choice.y;sourceSlot.due=game.elapsed+Number(CONFIG.flyRespawnDelay || 2.0);}
       frog.catchSparkleTimer=CONFIG.catchSparkleDuration;
       playCorrectFlySound();
     }
@@ -429,7 +429,11 @@
         event.preventDefault();event.stopImmediatePropagation();return;
       }
       if(!game.sandboxMode||!["ShiftLeft","ShiftRight"].includes(event.code))return;
-      event.preventDefault();event.stopImmediatePropagation();if(!event.repeat)cycleSandboxAnimation();
+      event.preventDefault();event.stopImmediatePropagation();
+      // Shift previews are a grounded Sandbox tool. Airborne presses remain
+      // ordinary player fidgets and cannot interrupt the active jump.
+      if(!frog.grounded || frog.vy !== 0) return;
+      if(!event.repeat)cycleSandboxAnimation();
     },{capture:true,passive:false});
     document.addEventListener("keyup",event=>{
       if(friendsGameInputLocked()) return;

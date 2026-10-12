@@ -16,13 +16,13 @@ function block(start, end) {
 }
 
 test("polish-9 cache marker forces the rebuilt tutorial and Versus lesson UI to load", () => {
-  assert.match(engine, /2026\.10\.12-friends-polish-17/);
-  assert.match(index, /game\.bundle\.js\?v=2026\.10\.12-friends-polish-17/);
+  assert.match(engine, /2026\.10\.12-friends-polish-18/);
+  assert.match(index, /game\.bundle\.js\?v=2026\.10\.12-friends-polish-18/);
 });
 
 test("dialogue uses the new reference framing and keeps Ember's full square unobstructed", () => {
   const dialogue = block("function drawTutorialDialogue", "function drawTutorialStatus");
-  assert.match(dialogue, /const textPanel = \{ x: 90, y: 6, w: 242, h: 54 \}/);
+  assert.match(dialogue, /const textPanel = \{ x: 85, y: 6, w: 247, h: 54 \}/);
   assert.match(dialogue, /const portraitPanel = \{ x: 338, y: 6, w: 54, h: 54 \}/);
   assert.match(dialogue, /drawReferencePanel\(textPanel, "#0b4462", "#052b43"\)/);
   assert.match(dialogue, /drawReferencePanel\(portraitPanel, "#159ee4", "#087cc5"\)/);
@@ -73,10 +73,10 @@ test("buffered-drop placement is five pixels left and triple-buffer starts botto
   assert.match(engine, /setup === "doubleBuffer"[\s\S]{0,100}failAttempt\("START WITH A CHARGED JUMP"\)/);
 });
 
-test("Solo tutorial book mirrors the clock across the 480-pixel screen", () => {
-  assert.match(ui, /tutorialButton: Object\.freeze\(\{ id: "tutorial", x: 47, y: 211, w: 24, h: 24 \}\)/);
+test("Solo tutorial book occupies the former settings slot with settings immediately to its left", () => {
+  assert.match(ui, /settingsButton: Object\.freeze\(\{ id: "settings", x: 355, y: 211, w: 24, h: 24 \}\)/);
+  assert.match(ui, /tutorialButton: Object\.freeze\(\{ id: "tutorial", x: 382, y: 211, w: 24, h: 24 \}\)/);
   assert.match(ui, /timeButton: Object\.freeze\(\{ x: 409, y: 211, w: 24, h: 24 \}\)/);
-  assert.equal(47, 480 - 409 - 24);
 });
 
 test("English clue is ready during its explanation and match count is capped", () => {

@@ -19,7 +19,7 @@ function block(source, start, end) {
 
 test("Polish 16 is wired and restores the prior packaged app icons", () => {
   for (const source of [tutorial, read("src/common.js"), index, read("public/scripts/cloud-client.js")]) {
-    assert.match(source, /2026\.10\.12-friends-polish-17/);
+    assert.match(source, /2026\.10\.12-friends-polish-18/);
   }
   assert.match(index, /\/icons\/favicon-32\.png/);
   assert.match(index, /\/icons\/ribbit-race-180\.png/);
@@ -37,6 +37,7 @@ test("record replays are same-origin Worker routes backed by FriendsHub SQLite",
   assert.match(hub, /\/api\/replays\/get/);
   assert.match(replay, /credentials:"same-origin"/);
   assert.match(replay, /Replay PB upload skipped/);
+  assert.match(hub, /SELECT id,username,name FROM users WHERE id=\?/);
   assert.match(replay, /A separate video server is not required/);
 });
 
@@ -69,7 +70,7 @@ test("tutorial pause is topmost and includes chapter navigation", () => {
 
 test("opening bonk is a real right-to-left charged jump from the authored clear lane", () => {
   assert.match(tutorial, /case "pvpDemoBonk":[\s\S]{0,260}middleLeft\.x \+ 18[\s\S]{0,180}middleLeft\.x \+ 86/);
-  assert.match(tutorial, /case "pvpDemoBonk":[\s\S]{0,120}scriptPvpChargedJump\(1, \.38, -1, 0\)/);
+  assert.match(tutorial, /case "pvpDemoBonk":[\s\S]{0,120}scriptPvpChargedJump\(1, \.44, -1, 0\)/);
   assert.match(tutorial, /tutorial\.pvpDemoStartedAt = performance\.now\(\) \+ 1000/);
 });
 
@@ -101,7 +102,7 @@ test("PvP lesson prompts and authored flies are isolated", () => {
 test("frog poofs retract both PvP tongues and lesson timer chrome stays hidden", () => {
   assert.match(tutorial, /function resetPvpTutorialTongues/);
   assert.match(tutorial, /playerTongue\.active = false/);
-  assert.match(tutorial, /beginPoofTransition[\s\S]{0,1000}resetPvpTutorialTongues\(\)/);
+  assert.match(tutorial, /function beginPoofTransition[\s\S]{0,1800}resetPvpTutorialTongues\(\)/);
   assert.match(versus, /const tutorialPvp = Boolean/);
   assert.match(versus, /if \(!tutorialPvp \|\| tutorialFinalMatch\)/);
 });
@@ -109,8 +110,8 @@ test("frog poofs retract both PvP tongues and lesson timer chrome stays hidden",
 test("drop-bonk layouts are authored for clear lower and high routes", () => {
   assert.match(tutorial, /case "pvpDemoDropLow"[\s\S]{0,280}lowerMiddle/);
   assert.match(tutorial, /case "pvpDropLow"[\s\S]{0,280}lowerMiddle/);
-  assert.match(tutorial, /case "pvpDemoDropHigh"[\s\S]{0,320}top\.w - ember\.w - 3/);
-  assert.match(tutorial, /case "pvpDropHigh"[\s\S]{0,260}positionPvpOnPlatform\(p1, top, -1, 3\)/);
+  assert.match(tutorial, /case "pvpDemoDropHigh"[\s\S]{0,360}positionPvpOnPlatform\(ember, top, 1, offset\)/);
+  assert.match(tutorial, /case "pvpDropHigh"[\s\S]{0,320}positionPvpOnPlatform\(p1, top, -1, offset\)/);
   assert.match(tutorial, /RibbitRaceTutorialShouldIgnorePvpPlatform/);
   assert.match(versus, /RibbitRaceTutorialShouldIgnorePvpPlatform/);
 });

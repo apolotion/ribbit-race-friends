@@ -16,15 +16,16 @@ test("polish 8 ships canvas-native leaderboard and replay controls", () => {
   assert.match(tutorial, /playReplayById/);
   assert.match(tutorial, /RibbitRacePlayStoredReplay/);
   assert.match(tutorial, /repairReplayModal/);
-  assert.match(tutorial, /PLAY REPLAY IN GAME/);
+  assert.match(read("public/scripts/extended-features.js"), /rr-replay-window/);
+  assert.doesNotMatch(tutorial, /PLAY REPLAY IN GAME/);
   const allClient = ["client/game/90-extended-features.js","client/game/110-online-mobile-polish.js"].map(read).join("\n");
   assert.match(allClient, /rrReplaySource|RibbitRacePlayStoredReplay/);
 });
 
 test("achievements uses a small bottom-left leaderboard button", () => {
-  assert.match(tutorial, /LEADERBOARD_BUTTON = Object\.freeze\(\{ x: 34, y: 229, w: 28, h: 28 \}\)/);
+  assert.match(tutorial, /LEADERBOARD_BUTTON = Object\.freeze\(\{ x: 416, y: 229, w: 28, h: 28 \}\)/);
   assert.match(tutorial, /drawMiniMedalButton/);
-  assert.match(tutorial, /LEADERBOARD & REPLAYS/);
+  assert.match(tutorial, /"LEADERBOARD"/);
 });
 
 test("online menu follows requested order and contextual speech bubbles", () => {

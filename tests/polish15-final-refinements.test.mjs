@@ -20,7 +20,7 @@ function block(source, start, end) {
 
 test("Polish 16 cache marker is wired", () => {
   for (const source of [tutorial, read("src/common.js"), read("public/index.html"), read("public/scripts/cloud-client.js")]) {
-    assert.match(source, /2026\.10\.12-friends-polish-17/);
+    assert.match(source, /2026\.10\.12-friends-polish-18/);
   }
 });
 
@@ -78,7 +78,7 @@ test("Set Base header spans the picker and close sits at the extreme inner corne
 
 test("Ember nameplate is top-left while equal-height panels retain a visible gap", () => {
   const dialogue = block(tutorial, "function drawTutorialDialogue", "function drawTutorialStatus");
-  assert.match(dialogue, /const textPanel = \{ x: 90, y: 6, w: 242, h: 54 \}/);
+  assert.match(dialogue, /const textPanel = \{ x: 85, y: 6, w: 247, h: 54 \}/);
   assert.match(dialogue, /const portraitPanel = \{ x: 338, y: 6, w: 54, h: 54 \}/);
   assert.match(dialogue, /const namePlate = \{ x:textPanel\.x \+ 7, y:textPanel\.y \+ 7, w:48, h:10 \}/);
   assert.match(dialogue, /const textTop = Math\.round\(textArea\.y\)/);

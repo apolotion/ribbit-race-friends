@@ -5,13 +5,6 @@
   const setJson=(k,v)=>localStorage.setItem(k,JSON.stringify(v));
   const bridge=()=>window.RibbitRaceRuntimeBridge;
   function toast(title,detail="",duration=4500){
-      const rrReplaySource = arguments[0];
-      const rrReplayId = rrReplaySource?.replayId || rrReplaySource?.replay_id || rrReplaySource?.id || rrReplaySource;
-      if (rrReplayId && typeof playStoredReplay === "function") {
-        playStoredReplay(rrReplayId, "WORLD RECORD REPLAY");
-        return;
-      }
-
     let el=q("#rr14-toast"); if(!el){el=document.createElement("div");el.id="rr14-toast";document.body.append(el)}
     el.innerHTML=`<strong>${title}</strong>${detail?`<span>${detail}</span>`:""}`; el.classList.add("show");
     clearTimeout(el._timer);el._timer=setTimeout(()=>el.classList.remove("show"),duration);
@@ -86,34 +79,69 @@
       new MutationObserver(decorate).observe(document.body,{subtree:true,childList:true});document.addEventListener("change",decorate);setTimeout(decorate,0);
       const style=document.createElement("style");style.textContent="#leaderboard-body tr{cursor:pointer}#leaderboard-body tr:hover{outline:3px solid #5ce5e8;outline-offset:-3px}";document.head.append(style);
     }
-    async play(username,level,metric){
+    ensureReplayOverlay(){
+      let overlay=q("#rr-replay-overlay");
+      if(overlay)return overlay;
+      overlay=document.createElement("section");
+      overlay.id="rr-replay-overlay";
+      overlay.hidden=true;
+      overlay.setAttribute("role","dialog");
+      overlay.setAttribute("aria-modal","true");
+      overlay.innerHTML=`<div class="rr-replay-window">
+        <header><span class="rr-replay-title">PERSONAL BEST REPLAY</span><button class="rr-replay-close" type="button" aria-label="Close replay">×</button></header>
+        <div class="rr-replay-stage"><video controls playsinline preload="metadata"></video><div class="rr-replay-message" hidden></div></div>
+        <footer><span class="rr-replay-caption"></span><button class="rr-replay-again" type="button">PLAY FROM START</button></footer>
+      </div>`;
+      document.body.append(overlay);
+      const video=q("video",overlay);
+      const close=()=>{try{video.pause()}catch(_){}if(overlay._objectUrl){URL.revokeObjectURL(overlay._objectUrl);overlay._objectUrl="";}overlay.hidden=true;};
+      q(".rr-replay-close",overlay).onclick=close;
+      q(".rr-replay-again",overlay).onclick=()=>{video.currentTime=0;video.play().catch(()=>{});};
+      overlay.addEventListener("pointerdown",event=>{if(event.target===overlay)close();});
+      document.addEventListener("keydown",event=>{if(event.key==="Escape"&&!overlay.hidden){event.preventDefault();close();}});
+      return overlay;
+    }
+    showReplayMessage(title,detail){
+      const overlay=this.ensureReplayOverlay(),video=q("video",overlay),message=q(".rr-replay-message",overlay);
+      try{video.pause()}catch(_){}video.removeAttribute("src");video.load();
+      message.hidden=false;message.innerHTML=`<strong>${title}</strong><span>${detail}</span>`;
+      q(".rr-replay-caption",overlay).textContent="";q(".rr-replay-again",overlay).hidden=true;overlay.hidden=false;
+    }
+    async play(username,level,metric,uid=""){
+      const overlay=this.ensureReplayOverlay(),video=q("video",overlay),message=q(".rr-replay-message",overlay);
+      message.hidden=false;message.innerHTML='<strong>LOADING REPLAY…</strong><span>Fetching the saved personal-best video.</span>';
+      q(".rr-replay-caption",overlay).textContent=`${username} • ${level.toUpperCase()} • ${metric==="time"?"FASTEST TIME":"FEWEST JUMPS"}`;
+      q(".rr-replay-again",overlay).hidden=true;overlay.hidden=false;
       try{
-        const r=await fetch(`/api/replays/get?username=${encodeURIComponent(username)}&level=${encodeURIComponent(level)}&metric=${encodeURIComponent(metric)}`,{credentials:"same-origin"});
-        let j={};try{j=await r.json()}catch(_){}
+        const params=new URLSearchParams({username:String(username||""),level:String(level||""),metric:String(metric||"")});
+        if(uid)params.set("uid",String(uid));
+        const r=await fetch(`/api/replays/get?${params.toString()}`,{credentials:"same-origin",cache:"no-store"});
+        let j={};try{j=await r.json()}catch(_){ }
         if(!r.ok||!j.ok||!j.data){
-          if(r.status===401)toast("SIGN IN TO WATCH REPLAYS","Replay videos use your Friends account session.");
-          else if(r.status===404)toast("REPLAY NOT AVAILABLE","This personal best was set before replay capture, or no recording was uploaded.");
-          else toast("REPLAY SERVICE ERROR",j.message||`Worker returned ${r.status}. Deploy the current project before testing replays.`);
-          return false;
+          const detail=r.status===401?"Sign in to the same Friends account used by the game.":r.status===404?"This record predates replay capture, or its PB video was never uploaded.":j.message||`The Worker returned HTTP ${r.status}.`;
+          this.showReplayMessage(r.status===404?"NO VIDEO FOR THIS PB":"REPLAY SERVICE ERROR",detail);return false;
         }
-        let overlay=q("#rr-replay-overlay");
-        if(!overlay){overlay=document.createElement("div");overlay.id="rr-replay-overlay";overlay.innerHTML='<div><button aria-label="Close">×</button><h2>WORLD RECORD REPLAY</h2><video controls autoplay playsinline></video><p></p></div>';document.body.append(overlay);q("button",overlay).onclick=()=>{q("video",overlay).pause();overlay.hidden=true}}
-        q("p",overlay).textContent=`${username} • ${level.toUpperCase()} • ${metric==="time"?"FASTEST TIME":"FEWEST JUMPS"}`;
-        q("video",overlay).src=`data:${j.mime||"video/webm"};base64,${j.data}`;
-        overlay.hidden=false;
-        return true;
+        const binary=atob(String(j.data||"")),bytes=new Uint8Array(binary.length);for(let i=0;i<binary.length;i++)bytes[i]=binary.charCodeAt(i);
+        const blob=new Blob([bytes],{type:j.mime||"video/webm"});
+        if(overlay._objectUrl)URL.revokeObjectURL(overlay._objectUrl);
+        overlay._objectUrl=URL.createObjectURL(blob);video.src=overlay._objectUrl;video.load();message.hidden=true;q(".rr-replay-again",overlay).hidden=false;
+        await video.play().catch(()=>{});return true;
       }catch(error){
-        console.warn("Replay fetch failed",error);
-        toast("REPLAY SERVER UNREACHABLE","Deploy this Worker build on the same game domain. A separate video server is not required.");
-        return false;
+        let health=null;try{const response=await fetch("/api/replays/health",{credentials:"same-origin",cache:"no-store"});health=await response.json();}catch(_){ }
+        // A separate video server is not required. Replays live in the same
+        // FriendsHub Durable Object as accounts and saves, on the game domain.
+        const detail=health?.ok
+          ? "The replay service is online, but this video could not be downloaded. The player may need to set a new PB after this build is deployed."
+          : "Deploy the complete Worker project—not only the public folder—on this same game domain. A separate video server is not required.";
+        this.showReplayMessage("REPLAY SERVER UNREACHABLE",detail);console.warn("Replay fetch failed",error);return false;
       }
     }
   }
   const replayController = new ReplayController();
   // Canvas-native leaderboard rows call this bridge directly. The server keeps
   // the current PB recording for each player, level, and ranked metric.
-  window.RibbitRacePlayRecordReplay = (username, level, metric) =>
-    replayController.play(String(username || ""), String(level || "").toLowerCase(), String(metric || "time").toLowerCase());
+  window.RibbitRacePlayRecordReplay = (username, level, metric, uid = "") =>
+    replayController.play(String(username || ""), String(level || "").toLowerCase(), String(metric || "time").toLowerCase(), String(uid || ""));
 
   class PaletteController {
     constructor(){this.clip=json("rrFrogPaletteClipboardV1",null);this.panel=null;this.make();this.bind();setTimeout(()=>this.tick(),250)}

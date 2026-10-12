@@ -87,12 +87,22 @@ export class FriendsHub extends DurableObject {
  }
  async replayGet(request,url){
   const auth=this.readAuth(request);if(!auth)return json(error('SESSION_EXPIRED','Sign in or use guest play to view replays.'),401);
-  const username=String(url.searchParams.get('username')||'').normalize('NFKC').trim().toLowerCase();
+  const replayUid=String(url.searchParams.get('uid')||'').trim();
+  const requestedName=String(url.searchParams.get('username')||'').normalize('NFKC').trim().toLowerCase();
   const level=this.replayLevel(url.searchParams.get('level')),metric=this.replayMetric(url.searchParams.get('metric'));
-  if(!username||!level||!metric)return json(error('INVALID_REPLAY','Choose a player, level and record category.'),400);
-  const row=this.one('SELECT mime,data,value,updated FROM record_replays WHERE username=? AND level=? AND metric=?',username,level,metric);
-  if(!row)return json(error('REPLAY_NOT_FOUND','This record was made before replay capture was enabled.'),404);
-  return json({ok:true,username,level,metric,value:Number(row.value),mime:row.mime,data:row.data,updated:Number(row.updated)});
+  if((!replayUid&&!requestedName)||!level||!metric)return json(error('INVALID_REPLAY','Choose a player, level and record category.'),400);
+
+  // New leaderboard rows include the immutable account id and login username.
+  // The display-name fallback keeps older leaderboard payloads usable, but the
+  // uid path avoids ambiguity when two players share the same display name.
+  let owner=null;
+  if(replayUid) owner=this.one('SELECT id,username,name FROM users WHERE id=?',replayUid);
+  if(!owner&&requestedName) owner=this.one('SELECT id,username,name FROM users WHERE lower(username)=? OR lower(name)=? ORDER BY updated DESC LIMIT 1',requestedName,requestedName);
+  if(!owner)return json(error('REPLAY_NOT_FOUND','This player no longer has a replay account.'),404);
+
+  const row=this.one('SELECT mime,data,value,updated FROM record_replays WHERE uid=? AND level=? AND metric=?',owner.id,level,metric);
+  if(!row)return json(error('REPLAY_NOT_FOUND','This record was made before replay capture was enabled, or the player has not improved this personal best since replay capture was deployed.'),404);
+  return json({ok:true,uid:owner.id,username:owner.username,displayName:owner.name,level,metric,value:Number(row.value),mime:row.mime,data:row.data,updated:Number(row.updated)});
  }
  async replaySubmit(request){
   const auth=this.readAuth(request);if(!auth||auth.guest)return json(error('SESSION_EXPIRED','Sign in to save a record replay.'),401);
@@ -221,8 +231,15 @@ export class FriendsHub extends DurableObject {
      return this.writeSave(u,mergePersistentSaveData_(saved,sanitizeSaveData_(payload.saveData),sanitizeDeletedKeys_(payload.deletedKeys)));
     }
     if(method==='apiGetLeaderboard'){
-     const rows=this.sql.exec('SELECT id,name,summary,updated FROM users ORDER BY updated DESC LIMIT 500').toArray();
-     return {ok:true,currentClassPeriod:'friends',entries:rows.map(u=>{const s=JSON.parse(u.summary);return {name:u.name,classPeriod:'friends',isCurrent:u.id===auth.uid,totalFlies:s.totalFlies,pvpMatchWins:s.pvpMatchWins,records:s.levelRecords,lastUpdated:new Date(u.updated).toISOString()};})};
+     const rows=this.sql.exec('SELECT id,username,name,savedata,summary,updated FROM users ORDER BY updated DESC LIMIT 500').toArray();
+     return {ok:true,currentClassPeriod:'friends',entries:rows.map(u=>{
+      const summary=JSON.parse(u.summary),saved=parseSaveJson_(u.savedata);
+      const skinId=String(saved.ribbitRaceFrogSkin||'azure').toLowerCase();
+      let appearance=null;
+      const customMatch=/^custom([1-3])$/.exec(skinId);
+      if(customMatch){try{const slots=JSON.parse(saved.ribbitRaceCustomFrogSlots||'[]');appearance=Array.isArray(slots)?slots[Number(customMatch[1])-1]||null:null;}catch(_){}}
+      return {uid:u.id,username:u.username,name:u.name,classPeriod:'friends',isCurrent:u.id===auth.uid,totalFlies:summary.totalFlies,pvpMatchWins:summary.pvpMatchWins,records:summary.levelRecords,lastUpdated:new Date(u.updated).toISOString(),skinId,appearance};
+     })};
     }
     if(['apiOnlineCreateRoom','apiOnlineJoinRoom','apiQuickplayEnter'].includes(method)&&!this.limit('rooms:'+auth.uid,20,60))return error('RATE_LIMIT','Too many room requests. Wait a minute.');
     if(method==='apiUpdateProfile')return this.authResponse(auth); // Login usernames are immutable; online display name is separate.

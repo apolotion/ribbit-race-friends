@@ -32,7 +32,8 @@ test("leaderboard uses a pixel refresh icon and clickable PB replay names", () =
   assert.match(tutorial, /function playLeaderboardRecord/);
   assert.match(tutorial, /RibbitRacePlayRecordReplay/);
   assert.match(replay, /\/api\/replays\/submit/);
-  assert.match(replay, /\/api\/replays\/get\?username=/);
+  assert.match(replay, /\/api\/replays\/get/);
+  assert.match(replay, /URLSearchParams/);
 });
 
 test("PvP tutorial preserves player skin, locks Ember, and supports Space", () => {
@@ -47,7 +48,7 @@ test("PvP tutorial preserves player skin, locks Ember, and supports Space", () =
 test("PvP demonstrations use real charged jumps after a one-second viewing delay", () => {
   assert.match(tutorial, /function scriptPvpChargedJump/);
   assert.match(tutorial, /tutorial\.pvpDemoStartedAt = performance\.now\(\) \+ 1000/);
-  assert.match(tutorial, /case "pvpDemoBonk":[\s\S]{0,120}scriptPvpChargedJump\(1, \.38, -1, 0\)/);
+  assert.match(tutorial, /case "pvpDemoBonk":[\s\S]{0,120}scriptPvpChargedJump\(1, \.44, -1, 0\)/);
   assert.match(tutorial, /case "pvpDemoSkyBonk":[\s\S]{0,180}scriptPvpChargedJump\(1, \.92, 1, 0\)/);
   assert.match(tutorial, /WATCH EMBER!/);
 });

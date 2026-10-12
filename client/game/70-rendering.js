@@ -3189,7 +3189,7 @@
       if (!unlocked) ctx.globalAlpha = 0.30;
       drawMiniPainterPaletteIcon(button.x + button.w / 2, button.y + button.h / 2 + (focused && unlocked ? getTwoFrameMenuBob(0.35) : 0), 0.48, skin);
       ctx.restore();
-      if (!unlocked) drawMiniLockIcon(button.x + button.w / 2, button.y + 13, 0.55);
+      if (!unlocked) drawMiniLockIcon(button.x + button.w / 2, button.y + 6, 0.72);
       if (focused) {
         ctx.fillStyle = COLORS.white;
         ctx.fillRect(button.x + 3, button.y + 3, 2, 2);
@@ -4875,8 +4875,8 @@
 
       if (statsPageCount > 1) {
         const pageButtons = [
-          { area: "pagePrev", rect: STATS_UI.pagePrevButton, direction: -1, enabled: game.statsPage > 0 },
-          { area: "pageNext", rect: STATS_UI.pageNextButton, direction: 1, enabled: game.statsPage < statsPageCount - 1 }
+          { area: "pagePrev", rect: STATS_UI.pagePrevButton, direction: -1, enabled: statsPageCount > 1 },
+          { area: "pageNext", rect: STATS_UI.pageNextButton, direction: 1, enabled: statsPageCount > 1 }
         ];
         pageButtons.forEach((entry) => {
           const focused = game.statsFocusArea === entry.area;
@@ -5312,6 +5312,27 @@
           );
         }
       };
+
+      drawSmallMainIconButton(MAIN_UI.profileButton, "profile", (rect, active) => {
+        const color = active ? skin.dark : "#48555a";
+        const cx = Math.round(rect.x + rect.w / 2);
+        ctx.fillStyle = color;
+        ctx.fillRect(cx - 3, rect.y + 5, 6, 6);
+        ctx.fillRect(cx - 6, rect.y + 12, 12, 7);
+        ctx.fillStyle = active ? skin.belly : "#f7fdff";
+        ctx.fillRect(cx - 1, rect.y + 7, 2, 2);
+        ctx.fillRect(cx - 4, rect.y + 14, 8, 2);
+      });
+      drawSmallMainIconButton(MAIN_UI.deviceButton, "device", (rect, active) => {
+        const color = active ? skin.dark : "#48555a";
+        ctx.fillStyle = color;
+        ctx.fillRect(rect.x + 5, rect.y + 5, 14, 10);
+        ctx.fillStyle = active ? skin.belly : "#f7fdff";
+        ctx.fillRect(rect.x + 7, rect.y + 7, 10, 6);
+        ctx.fillStyle = color;
+        ctx.fillRect(rect.x + 10, rect.y + 15, 4, 3);
+        ctx.fillRect(rect.x + 7, rect.y + 18, 10, 2);
+      });
 
       drawSmallMainIconButton(MAIN_UI.achievementsButton, "achievements", (rect) => {
         ctx.save();

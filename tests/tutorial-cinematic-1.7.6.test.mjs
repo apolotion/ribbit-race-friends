@@ -18,8 +18,8 @@ function block(start, end) {
 
 test("1.7.10 polished tutorial build and first-boot marker are installed", () => {
   assert.equal(JSON.parse(read("package.json")).version, "1.7.10");
-  assert.match(read("src/common.js"), /2026\.10\.12-friends-polish-17/);
-  assert.match(engine, /const TUTORIAL_BUILD = "2026\.10\.12-friends-polish-17"/);
+  assert.match(read("src/common.js"), /2026\.10\.12-friends-polish-18/);
+  assert.match(engine, /const TUTORIAL_BUILD = "2026\.10\.12-friends-polish-18"/);
   assert.match(engine, /rrFriendsEngineTutorialSoloSeenV8/);
 });
 
@@ -51,7 +51,7 @@ test("dialogue uses large left-aligned two-line RPG typography, hold-to-speed, a
 
 test("dialogue matches the layered cyan-and-white reference with a full square Ember portrait", () => {
   const dialogue = block("function drawTutorialDialogue", "function drawTutorialStatus");
-  assert.match(dialogue, /const textPanel = \{ x: 90, y: 6, w: 242, h: 54 \}/);
+  assert.match(dialogue, /const textPanel = \{ x: 85, y: 6, w: 247, h: 54 \}/);
   assert.match(dialogue, /const portraitPanel = \{ x: 338, y: 6, w: 54, h: 54 \}/);
   assert.match(dialogue, /const drawReferencePanel/);
   assert.match(dialogue, /Five-layer pixel frame: black -> cyan -> white -> cyan -> black/);

@@ -29,6 +29,8 @@
       soloButton: Object.freeze({ id: "solo", x: 140, y: 80, w: 200, h: 30 }),
       pvpButton: Object.freeze({ id: "pvp", x: 140, y: 115, w: 200, h: 30 }),
       frogButton: Object.freeze({ id: "frog", x: 140, y: 150, w: 200, h: 30 }),
+      profileButton: Object.freeze({ id: "profile", x: 47, y: 211, w: 24, h: 24 }),
+      deviceButton: Object.freeze({ id: "device", x: 74, y: 211, w: 24, h: 24 }),
       achievementsButton: Object.freeze({ id: "achievements", x: 382, y: 211, w: 24, h: 24 }),
       statsButton: Object.freeze({ id: "stats", x: 409, y: 211, w: 24, h: 24 })
     });
@@ -37,7 +39,7 @@
       Object.freeze(["solo"]),
       Object.freeze(["pvp"]),
       Object.freeze(["frog"]),
-      Object.freeze(["achievements", "stats"])
+      Object.freeze(["profile", "device", "achievements", "stats"])
     ]);
 
     const HOME_UI = Object.freeze({
@@ -46,8 +48,8 @@
       customizeButton: Object.freeze({ x: 72, y: 176, w: 120, h: 27 }), // legacy geometry
       randomButton: Object.freeze({ id: "random", x: 188, y: 154, w: 104, h: 17 }),
       backButton: Object.freeze({ id: "back", x: 180, y: 181, w: 120, h: 24 }),
-      tutorialButton: Object.freeze({ id: "tutorial", x: 47, y: 211, w: 24, h: 24 }),
-      settingsButton: Object.freeze({ id: "settings", x: 382, y: 211, w: 24, h: 24 }),
+      settingsButton: Object.freeze({ id: "settings", x: 355, y: 211, w: 24, h: 24 }),
+      tutorialButton: Object.freeze({ id: "tutorial", x: 382, y: 211, w: 24, h: 24 }),
       levelButtons: Object.freeze([
         Object.freeze({ id: "park",   x: 72,  y: 101, w: 104, h: 21 }),
         Object.freeze({ id: "swamp",  x: 188, y: 101, w: 104, h: 21 }),
@@ -70,7 +72,7 @@
       Object.freeze(["park", "swamp", "jungle"]),
       Object.freeze(["pond", "lake", "garden"]),
       Object.freeze(["random"]),
-      Object.freeze(["tutorial", "back", "settings", "time"])
+      Object.freeze(["back", "settings", "tutorial", "time"])
     ]);
 
     const SETUP_UI = Object.freeze({
@@ -186,8 +188,8 @@
 
     const ACHIEVEMENTS_UI = Object.freeze({
       backButton: Object.freeze({ x: 180, y: 238, w: 120, h: 20 }),
-      pagePrevButton: Object.freeze({ x: 401, y: 232, w: 20, h: 20 }),
-      pageNextButton: Object.freeze({ x: 427, y: 232, w: 20, h: 20 }),
+      pagePrevButton: Object.freeze({ x: 344, y: 232, w: 20, h: 20 }),
+      pageNextButton: Object.freeze({ x: 370, y: 232, w: 20, h: 20 }),
       columns: 3,
       startX: 34,
       startY: 101,
@@ -216,7 +218,8 @@
     }
 
     function setStatsPage(page, playFeedback = true) {
-      const next = clamp(Math.floor(Number(page) || 0), 0, getStatsPageCount() - 1);
+      const count = getStatsPageCount();
+      const next = ((Math.floor(Number(page) || 0) % count) + count) % count;
       if (next === game.statsPage) return false;
       game.statsPage = next;
       if (playFeedback) tone(next > 0 ? 505 : 390, 0.035, 0.008, next > 0 ? 25 : -25);
@@ -229,8 +232,7 @@
 
     function getAvailableStatsFocusAreas() {
       const areas = ["back"];
-      if (game.statsPage > 0) areas.push("pagePrev");
-      if (game.statsPage < getStatsPageCount() - 1) areas.push("pageNext");
+      if (getStatsPageCount() > 1) areas.push("pagePrev", "pageNext");
       return areas;
     }
 
@@ -1548,6 +1550,8 @@
         solo: MAIN_UI.soloButton,
         frog: MAIN_UI.frogButton,
         pvp: MAIN_UI.pvpButton,
+        profile: MAIN_UI.profileButton,
+        device: MAIN_UI.deviceButton,
         achievements: MAIN_UI.achievementsButton,
         stats: MAIN_UI.statsButton
       };
@@ -1563,7 +1567,7 @@
     }
 
     function focusMainSelection(selection, playFeedback = true) {
-      if (!['solo','frog','pvp','achievements','stats'].includes(selection)) return false;
+      if (!['solo','frog','pvp','profile','device','achievements','stats'].includes(selection)) return false;
       const changed = game.mainSelection !== selection;
       game.mainSelection = selection;
       game.mainFocusVisible = true;
@@ -1573,7 +1577,7 @@
       game.customizeButtonHovered = false;
       game.pvpButtonHovered = false;
       if (changed && playFeedback) {
-        const frequencies = { solo: 520, frog: 410, pvp: 455, achievements: 560, stats: 515 };
+        const frequencies = { solo: 520, frog: 410, pvp: 455, profile: 505, device: 475, achievements: 560, stats: 515 };
         tone(frequencies[selection] || 430, 0.045, 0.010, 35);
       }
       return true;
@@ -1608,6 +1612,8 @@
       if (selection === 'solo') { openSoloMenu(); return; }
       if (selection === 'frog') { openSetupMenu(); return; }
       if (selection === 'pvp') { openPvpSetupMenu(); return; }
+      if (selection === 'profile') { window.RibbitRaceOpenProfileMenu?.(); return; }
+      if (selection === 'device') { window.RibbitRaceOpenDeviceMenu?.(); return; }
       if (selection === 'achievements') { openAchievementsMenu(); return; }
       if (selection === 'stats') { openStatsMenu(); }
     }
@@ -1708,6 +1714,7 @@
       const selection = game.homeSelection || game.selectedLevelId;
       if (selection === "back") { openMainMenu(); return; }
       if (selection === "settings") { openSoloSettingsMenu(); return; }
+      if (selection === "tutorial") { window.RibbitRaceTutorialEngine?.start?.("solo"); return; }
       if (selection === "time") { cycleTimeOfDayMode(); return; }
       if (selection === "random") {
         game.soloRandomLevelMode = true;
@@ -2442,75 +2449,68 @@
     function moveAchievementFocus(horizontal = 0, vertical = 0) {
       const pageIndices = getAchievementIndicesOnPage();
       if (!pageIndices.length) return;
+      const controls = ["back"];
+      if (getAchievementPageCount() > 1) controls.push("pagePrev", "pageNext");
+      controls.push("leaderboard");
 
-      if (game.achievementFocusArea === "pagePrev" || game.achievementFocusArea === "pageNext") {
-        const wasPrev = game.achievementFocusArea === "pagePrev";
-        if (horizontal) game.achievementFocusArea = wasPrev ? "pageNext" : "pagePrev";
-        if (vertical) {
-          game.achievementFocusArea = "item";
-          if (vertical < 0) {
-            game.achievementFocusIndex = wasPrev
-              ? pageIndices[Math.max(0, pageIndices.length - 3)]
-              : pageIndices[pageIndices.length - 1];
-          } else {
-            game.achievementFocusIndex = wasPrev
-              ? pageIndices[0]
-              : pageIndices[Math.min(2, pageIndices.length - 1)];
-          }
-        }
-        return;
-      }
-      if (game.achievementFocusArea === "back") {
-        if (horizontal && getAchievementPageCount() > 1) {
-          game.achievementFocusArea = horizontal > 0 ? "pageNext" : "pagePrev";
-          tone(470, 0.035, 0.008, 25);
-          return;
-        }
-        if (vertical) {
-          game.achievementFocusArea = "item";
-          game.achievementFocusIndex = vertical < 0
-            ? pageIndices[Math.max(0, pageIndices.length - 2)]
-            : pageIndices[Math.min(1, pageIndices.length - 1)];
-        }
-        return;
-      }
-
-      let local = pageIndices.indexOf(game.achievementFocusIndex);
-      if (local < 0) local = 0;
-      let row = Math.floor(local / ACHIEVEMENTS_UI.columns);
-      let column = local % ACHIEVEMENTS_UI.columns;
       if (horizontal) {
-        const rowStart = row * ACHIEVEMENTS_UI.columns;
-        const rowLength = Math.min(ACHIEVEMENTS_UI.columns, pageIndices.length - rowStart);
-        column = (column + horizontal + rowLength) % rowLength;
-      }
-      const maxRow = Math.floor((pageIndices.length - 1) / ACHIEVEMENTS_UI.columns);
-      if (vertical < 0 && row === 0) {
-        game.achievementFocusArea = getAchievementPageCount() > 1
-          ? (column === 2 ? "pageNext" : column === 0 ? "pagePrev" : "back")
-          : "back";
+        const sequence = [
+          ...pageIndices.map((index) => ({ area:"item", index })),
+          ...controls.map((area) => ({ area, index:null }))
+        ];
+        let at = sequence.findIndex((entry) => entry.area === game.achievementFocusArea &&
+          (entry.area !== "item" || entry.index === game.achievementFocusIndex));
+        if (at < 0) at = 0;
+        const next = sequence[(at + horizontal + sequence.length) % sequence.length];
+        game.achievementFocusArea = next.area;
+        if (next.area === "item") {
+          game.achievementFocusIndex = next.index;
+          game.achievementHoveredIndex = next.index;
+        } else game.achievementHoveredIndex = null;
+        tone(next.area === "back" ? 340 : 470, 0.035, 0.008, horizontal > 0 ? 25 : -20);
         return;
       }
+
+      if (game.achievementFocusArea !== "item") {
+        game.achievementFocusArea = "item";
+        game.achievementFocusIndex = vertical < 0 ? pageIndices[pageIndices.length - 1] : pageIndices[0];
+        game.achievementHoveredIndex = game.achievementFocusIndex;
+        tone(470, 0.035, 0.008, vertical > 0 ? 25 : -20);
+        return;
+      }
+
+      let local = Math.max(0, pageIndices.indexOf(game.achievementFocusIndex));
+      const columns = ACHIEVEMENTS_UI.columns;
+      const row = Math.floor(local / columns);
+      const column = local % columns;
+      const maxRow = Math.floor((pageIndices.length - 1) / columns);
       if (vertical > 0 && row === maxRow) {
-        game.achievementFocusArea = getAchievementPageCount() > 1
-          ? (column === 2 ? "pageNext" : column === 0 ? "pagePrev" : "back")
-          : "back";
+        const bottom = column === 0 ? "pagePrev" : column === 1 ? "back" : "pageNext";
+        game.achievementFocusArea = getAchievementPageCount() > 1 ? bottom : (column === 2 ? "leaderboard" : "back");
+        game.achievementHoveredIndex = null;
         return;
       }
-      row = (row + vertical + maxRow + 1) % (maxRow + 1);
-      let nextLocal = row * ACHIEVEMENTS_UI.columns + column;
+      if (vertical < 0 && row === 0) {
+        game.achievementFocusArea = column === 0 ? "leaderboard" : "back";
+        game.achievementHoveredIndex = null;
+        return;
+      }
+      const nextRow = (row + vertical + maxRow + 1) % (maxRow + 1);
+      let nextLocal = nextRow * columns + column;
       if (nextLocal >= pageIndices.length) nextLocal = pageIndices.length - 1;
-      const nextIndex = pageIndices[nextLocal];
-      if (nextIndex !== game.achievementFocusIndex) tone(470, 0.035, 0.008, 25);
-      game.achievementFocusIndex = nextIndex;
-      game.achievementHoveredIndex = null;
+      game.achievementFocusIndex = pageIndices[nextLocal];
+      game.achievementHoveredIndex = game.achievementFocusIndex;
+      tone(470, 0.035, 0.008, vertical > 0 ? 25 : -20);
     }
+
 
     function activateAchievementSelection() {
       if (game.achievementFocusArea === "pagePrev") {
         setAchievementPage(game.achievementPage - 1);
       } else if (game.achievementFocusArea === "pageNext") {
         setAchievementPage(game.achievementPage + 1);
+      } else if (game.achievementFocusArea === "leaderboard") {
+        window.RibbitRaceOpenLeaderboard?.();
       } else if (game.achievementFocusArea === "back") {
         closeAchievementsMenu();
       }

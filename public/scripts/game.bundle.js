@@ -2287,7 +2287,7 @@ function startRibbitRaceGame() {
       let options=presets.filter(p=>!occupiedKeys.has(`${p.x}:${p.y}`));
       if(!options.length) options=presets.slice();
       const choice=options[Math.floor(Math.random()*options.length)]||presets[0];
-      if(sourceSlot){sourceSlot.x=choice.x;sourceSlot.y=choice.y;sourceSlot.due=game.elapsed+1.1;}
+      if(sourceSlot){sourceSlot.x=choice.x;sourceSlot.y=choice.y;sourceSlot.due=game.elapsed+Number(CONFIG.flyRespawnDelay || 2.0);}
       frog.catchSparkleTimer=CONFIG.catchSparkleDuration;
       playCorrectFlySound();
     }
@@ -2335,7 +2335,11 @@ function startRibbitRaceGame() {
         event.preventDefault();event.stopImmediatePropagation();return;
       }
       if(!game.sandboxMode||!["ShiftLeft","ShiftRight"].includes(event.code))return;
-      event.preventDefault();event.stopImmediatePropagation();if(!event.repeat)cycleSandboxAnimation();
+      event.preventDefault();event.stopImmediatePropagation();
+      // Shift previews are a grounded Sandbox tool. Airborne presses remain
+      // ordinary player fidgets and cannot interrupt the active jump.
+      if(!frog.grounded || frog.vy !== 0) return;
+      if(!event.repeat)cycleSandboxAnimation();
     },{capture:true,passive:false});
     document.addEventListener("keyup",event=>{
       if(friendsGameInputLocked()) return;
@@ -4764,6 +4768,8 @@ function startRibbitRaceGame() {
       soloButton: Object.freeze({ id: "solo", x: 140, y: 80, w: 200, h: 30 }),
       pvpButton: Object.freeze({ id: "pvp", x: 140, y: 115, w: 200, h: 30 }),
       frogButton: Object.freeze({ id: "frog", x: 140, y: 150, w: 200, h: 30 }),
+      profileButton: Object.freeze({ id: "profile", x: 47, y: 211, w: 24, h: 24 }),
+      deviceButton: Object.freeze({ id: "device", x: 74, y: 211, w: 24, h: 24 }),
       achievementsButton: Object.freeze({ id: "achievements", x: 382, y: 211, w: 24, h: 24 }),
       statsButton: Object.freeze({ id: "stats", x: 409, y: 211, w: 24, h: 24 })
     });
@@ -4772,7 +4778,7 @@ function startRibbitRaceGame() {
       Object.freeze(["solo"]),
       Object.freeze(["pvp"]),
       Object.freeze(["frog"]),
-      Object.freeze(["achievements", "stats"])
+      Object.freeze(["profile", "device", "achievements", "stats"])
     ]);
 
     const HOME_UI = Object.freeze({
@@ -4781,8 +4787,8 @@ function startRibbitRaceGame() {
       customizeButton: Object.freeze({ x: 72, y: 176, w: 120, h: 27 }), // legacy geometry
       randomButton: Object.freeze({ id: "random", x: 188, y: 154, w: 104, h: 17 }),
       backButton: Object.freeze({ id: "back", x: 180, y: 181, w: 120, h: 24 }),
-      tutorialButton: Object.freeze({ id: "tutorial", x: 47, y: 211, w: 24, h: 24 }),
-      settingsButton: Object.freeze({ id: "settings", x: 382, y: 211, w: 24, h: 24 }),
+      settingsButton: Object.freeze({ id: "settings", x: 355, y: 211, w: 24, h: 24 }),
+      tutorialButton: Object.freeze({ id: "tutorial", x: 382, y: 211, w: 24, h: 24 }),
       levelButtons: Object.freeze([
         Object.freeze({ id: "park",   x: 72,  y: 101, w: 104, h: 21 }),
         Object.freeze({ id: "swamp",  x: 188, y: 101, w: 104, h: 21 }),
@@ -4805,7 +4811,7 @@ function startRibbitRaceGame() {
       Object.freeze(["park", "swamp", "jungle"]),
       Object.freeze(["pond", "lake", "garden"]),
       Object.freeze(["random"]),
-      Object.freeze(["tutorial", "back", "settings", "time"])
+      Object.freeze(["back", "settings", "tutorial", "time"])
     ]);
 
     const SETUP_UI = Object.freeze({
@@ -4921,8 +4927,8 @@ function startRibbitRaceGame() {
 
     const ACHIEVEMENTS_UI = Object.freeze({
       backButton: Object.freeze({ x: 180, y: 238, w: 120, h: 20 }),
-      pagePrevButton: Object.freeze({ x: 401, y: 232, w: 20, h: 20 }),
-      pageNextButton: Object.freeze({ x: 427, y: 232, w: 20, h: 20 }),
+      pagePrevButton: Object.freeze({ x: 344, y: 232, w: 20, h: 20 }),
+      pageNextButton: Object.freeze({ x: 370, y: 232, w: 20, h: 20 }),
       columns: 3,
       startX: 34,
       startY: 101,
@@ -4951,7 +4957,8 @@ function startRibbitRaceGame() {
     }
 
     function setStatsPage(page, playFeedback = true) {
-      const next = clamp(Math.floor(Number(page) || 0), 0, getStatsPageCount() - 1);
+      const count = getStatsPageCount();
+      const next = ((Math.floor(Number(page) || 0) % count) + count) % count;
       if (next === game.statsPage) return false;
       game.statsPage = next;
       if (playFeedback) tone(next > 0 ? 505 : 390, 0.035, 0.008, next > 0 ? 25 : -25);
@@ -4964,8 +4971,7 @@ function startRibbitRaceGame() {
 
     function getAvailableStatsFocusAreas() {
       const areas = ["back"];
-      if (game.statsPage > 0) areas.push("pagePrev");
-      if (game.statsPage < getStatsPageCount() - 1) areas.push("pageNext");
+      if (getStatsPageCount() > 1) areas.push("pagePrev", "pageNext");
       return areas;
     }
 
@@ -6283,6 +6289,8 @@ function startRibbitRaceGame() {
         solo: MAIN_UI.soloButton,
         frog: MAIN_UI.frogButton,
         pvp: MAIN_UI.pvpButton,
+        profile: MAIN_UI.profileButton,
+        device: MAIN_UI.deviceButton,
         achievements: MAIN_UI.achievementsButton,
         stats: MAIN_UI.statsButton
       };
@@ -6298,7 +6306,7 @@ function startRibbitRaceGame() {
     }
 
     function focusMainSelection(selection, playFeedback = true) {
-      if (!['solo','frog','pvp','achievements','stats'].includes(selection)) return false;
+      if (!['solo','frog','pvp','profile','device','achievements','stats'].includes(selection)) return false;
       const changed = game.mainSelection !== selection;
       game.mainSelection = selection;
       game.mainFocusVisible = true;
@@ -6308,7 +6316,7 @@ function startRibbitRaceGame() {
       game.customizeButtonHovered = false;
       game.pvpButtonHovered = false;
       if (changed && playFeedback) {
-        const frequencies = { solo: 520, frog: 410, pvp: 455, achievements: 560, stats: 515 };
+        const frequencies = { solo: 520, frog: 410, pvp: 455, profile: 505, device: 475, achievements: 560, stats: 515 };
         tone(frequencies[selection] || 430, 0.045, 0.010, 35);
       }
       return true;
@@ -6343,6 +6351,8 @@ function startRibbitRaceGame() {
       if (selection === 'solo') { openSoloMenu(); return; }
       if (selection === 'frog') { openSetupMenu(); return; }
       if (selection === 'pvp') { openPvpSetupMenu(); return; }
+      if (selection === 'profile') { window.RibbitRaceOpenProfileMenu?.(); return; }
+      if (selection === 'device') { window.RibbitRaceOpenDeviceMenu?.(); return; }
       if (selection === 'achievements') { openAchievementsMenu(); return; }
       if (selection === 'stats') { openStatsMenu(); }
     }
@@ -6443,6 +6453,7 @@ function startRibbitRaceGame() {
       const selection = game.homeSelection || game.selectedLevelId;
       if (selection === "back") { openMainMenu(); return; }
       if (selection === "settings") { openSoloSettingsMenu(); return; }
+      if (selection === "tutorial") { window.RibbitRaceTutorialEngine?.start?.("solo"); return; }
       if (selection === "time") { cycleTimeOfDayMode(); return; }
       if (selection === "random") {
         game.soloRandomLevelMode = true;
@@ -7177,75 +7188,68 @@ function startRibbitRaceGame() {
     function moveAchievementFocus(horizontal = 0, vertical = 0) {
       const pageIndices = getAchievementIndicesOnPage();
       if (!pageIndices.length) return;
+      const controls = ["back"];
+      if (getAchievementPageCount() > 1) controls.push("pagePrev", "pageNext");
+      controls.push("leaderboard");
 
-      if (game.achievementFocusArea === "pagePrev" || game.achievementFocusArea === "pageNext") {
-        const wasPrev = game.achievementFocusArea === "pagePrev";
-        if (horizontal) game.achievementFocusArea = wasPrev ? "pageNext" : "pagePrev";
-        if (vertical) {
-          game.achievementFocusArea = "item";
-          if (vertical < 0) {
-            game.achievementFocusIndex = wasPrev
-              ? pageIndices[Math.max(0, pageIndices.length - 3)]
-              : pageIndices[pageIndices.length - 1];
-          } else {
-            game.achievementFocusIndex = wasPrev
-              ? pageIndices[0]
-              : pageIndices[Math.min(2, pageIndices.length - 1)];
-          }
-        }
-        return;
-      }
-      if (game.achievementFocusArea === "back") {
-        if (horizontal && getAchievementPageCount() > 1) {
-          game.achievementFocusArea = horizontal > 0 ? "pageNext" : "pagePrev";
-          tone(470, 0.035, 0.008, 25);
-          return;
-        }
-        if (vertical) {
-          game.achievementFocusArea = "item";
-          game.achievementFocusIndex = vertical < 0
-            ? pageIndices[Math.max(0, pageIndices.length - 2)]
-            : pageIndices[Math.min(1, pageIndices.length - 1)];
-        }
-        return;
-      }
-
-      let local = pageIndices.indexOf(game.achievementFocusIndex);
-      if (local < 0) local = 0;
-      let row = Math.floor(local / ACHIEVEMENTS_UI.columns);
-      let column = local % ACHIEVEMENTS_UI.columns;
       if (horizontal) {
-        const rowStart = row * ACHIEVEMENTS_UI.columns;
-        const rowLength = Math.min(ACHIEVEMENTS_UI.columns, pageIndices.length - rowStart);
-        column = (column + horizontal + rowLength) % rowLength;
-      }
-      const maxRow = Math.floor((pageIndices.length - 1) / ACHIEVEMENTS_UI.columns);
-      if (vertical < 0 && row === 0) {
-        game.achievementFocusArea = getAchievementPageCount() > 1
-          ? (column === 2 ? "pageNext" : column === 0 ? "pagePrev" : "back")
-          : "back";
+        const sequence = [
+          ...pageIndices.map((index) => ({ area:"item", index })),
+          ...controls.map((area) => ({ area, index:null }))
+        ];
+        let at = sequence.findIndex((entry) => entry.area === game.achievementFocusArea &&
+          (entry.area !== "item" || entry.index === game.achievementFocusIndex));
+        if (at < 0) at = 0;
+        const next = sequence[(at + horizontal + sequence.length) % sequence.length];
+        game.achievementFocusArea = next.area;
+        if (next.area === "item") {
+          game.achievementFocusIndex = next.index;
+          game.achievementHoveredIndex = next.index;
+        } else game.achievementHoveredIndex = null;
+        tone(next.area === "back" ? 340 : 470, 0.035, 0.008, horizontal > 0 ? 25 : -20);
         return;
       }
+
+      if (game.achievementFocusArea !== "item") {
+        game.achievementFocusArea = "item";
+        game.achievementFocusIndex = vertical < 0 ? pageIndices[pageIndices.length - 1] : pageIndices[0];
+        game.achievementHoveredIndex = game.achievementFocusIndex;
+        tone(470, 0.035, 0.008, vertical > 0 ? 25 : -20);
+        return;
+      }
+
+      let local = Math.max(0, pageIndices.indexOf(game.achievementFocusIndex));
+      const columns = ACHIEVEMENTS_UI.columns;
+      const row = Math.floor(local / columns);
+      const column = local % columns;
+      const maxRow = Math.floor((pageIndices.length - 1) / columns);
       if (vertical > 0 && row === maxRow) {
-        game.achievementFocusArea = getAchievementPageCount() > 1
-          ? (column === 2 ? "pageNext" : column === 0 ? "pagePrev" : "back")
-          : "back";
+        const bottom = column === 0 ? "pagePrev" : column === 1 ? "back" : "pageNext";
+        game.achievementFocusArea = getAchievementPageCount() > 1 ? bottom : (column === 2 ? "leaderboard" : "back");
+        game.achievementHoveredIndex = null;
         return;
       }
-      row = (row + vertical + maxRow + 1) % (maxRow + 1);
-      let nextLocal = row * ACHIEVEMENTS_UI.columns + column;
+      if (vertical < 0 && row === 0) {
+        game.achievementFocusArea = column === 0 ? "leaderboard" : "back";
+        game.achievementHoveredIndex = null;
+        return;
+      }
+      const nextRow = (row + vertical + maxRow + 1) % (maxRow + 1);
+      let nextLocal = nextRow * columns + column;
       if (nextLocal >= pageIndices.length) nextLocal = pageIndices.length - 1;
-      const nextIndex = pageIndices[nextLocal];
-      if (nextIndex !== game.achievementFocusIndex) tone(470, 0.035, 0.008, 25);
-      game.achievementFocusIndex = nextIndex;
-      game.achievementHoveredIndex = null;
+      game.achievementFocusIndex = pageIndices[nextLocal];
+      game.achievementHoveredIndex = game.achievementFocusIndex;
+      tone(470, 0.035, 0.008, vertical > 0 ? 25 : -20);
     }
+
 
     function activateAchievementSelection() {
       if (game.achievementFocusArea === "pagePrev") {
         setAchievementPage(game.achievementPage - 1);
       } else if (game.achievementFocusArea === "pageNext") {
         setAchievementPage(game.achievementPage + 1);
+      } else if (game.achievementFocusArea === "leaderboard") {
+        window.RibbitRaceOpenLeaderboard?.();
       } else if (game.achievementFocusArea === "back") {
         closeAchievementsMenu();
       }
@@ -16163,7 +16167,7 @@ function startRibbitRaceGame() {
       if (!unlocked) ctx.globalAlpha = 0.30;
       drawMiniPainterPaletteIcon(button.x + button.w / 2, button.y + button.h / 2 + (focused && unlocked ? getTwoFrameMenuBob(0.35) : 0), 0.48, skin);
       ctx.restore();
-      if (!unlocked) drawMiniLockIcon(button.x + button.w / 2, button.y + 13, 0.55);
+      if (!unlocked) drawMiniLockIcon(button.x + button.w / 2, button.y + 6, 0.72);
       if (focused) {
         ctx.fillStyle = COLORS.white;
         ctx.fillRect(button.x + 3, button.y + 3, 2, 2);
@@ -17849,8 +17853,8 @@ function startRibbitRaceGame() {
 
       if (statsPageCount > 1) {
         const pageButtons = [
-          { area: "pagePrev", rect: STATS_UI.pagePrevButton, direction: -1, enabled: game.statsPage > 0 },
-          { area: "pageNext", rect: STATS_UI.pageNextButton, direction: 1, enabled: game.statsPage < statsPageCount - 1 }
+          { area: "pagePrev", rect: STATS_UI.pagePrevButton, direction: -1, enabled: statsPageCount > 1 },
+          { area: "pageNext", rect: STATS_UI.pageNextButton, direction: 1, enabled: statsPageCount > 1 }
         ];
         pageButtons.forEach((entry) => {
           const focused = game.statsFocusArea === entry.area;
@@ -18286,6 +18290,27 @@ function startRibbitRaceGame() {
           );
         }
       };
+
+      drawSmallMainIconButton(MAIN_UI.profileButton, "profile", (rect, active) => {
+        const color = active ? skin.dark : "#48555a";
+        const cx = Math.round(rect.x + rect.w / 2);
+        ctx.fillStyle = color;
+        ctx.fillRect(cx - 3, rect.y + 5, 6, 6);
+        ctx.fillRect(cx - 6, rect.y + 12, 12, 7);
+        ctx.fillStyle = active ? skin.belly : "#f7fdff";
+        ctx.fillRect(cx - 1, rect.y + 7, 2, 2);
+        ctx.fillRect(cx - 4, rect.y + 14, 8, 2);
+      });
+      drawSmallMainIconButton(MAIN_UI.deviceButton, "device", (rect, active) => {
+        const color = active ? skin.dark : "#48555a";
+        ctx.fillStyle = color;
+        ctx.fillRect(rect.x + 5, rect.y + 5, 14, 10);
+        ctx.fillStyle = active ? skin.belly : "#f7fdff";
+        ctx.fillRect(rect.x + 7, rect.y + 7, 10, 6);
+        ctx.fillStyle = color;
+        ctx.fillRect(rect.x + 10, rect.y + 15, 4, 3);
+        ctx.fillRect(rect.x + 7, rect.y + 18, 10, 2);
+      });
 
       drawSmallMainIconButton(MAIN_UI.achievementsButton, "achievements", (rect) => {
         ctx.save();
@@ -20304,7 +20329,7 @@ function startRibbitRaceGame() {
         if (event.code === "PageUp") {
           event.preventDefault();
           if (game.mode !== "pvp") {
-            game.victoryNoticePage = Math.max(0, game.victoryNoticePage - 1);
+            game.victoryNoticePage = (game.victoryNoticePage - 1 + Math.max(1, getVictoryUnlockNoticeLayout()?.pageCount || 1)) % Math.max(1, getVictoryUnlockNoticeLayout()?.pageCount || 1);
             game.victoryAchievementHoverId = null;
       game.victoryNoticeHoverKey = null;
           }
@@ -20314,7 +20339,7 @@ function startRibbitRaceGame() {
           event.preventDefault();
           if (game.mode !== "pvp") {
             const layout = getVictoryUnlockNoticeLayout();
-            game.victoryNoticePage = Math.min((layout?.pageCount || 1) - 1, game.victoryNoticePage + 1);
+            game.victoryNoticePage = (game.victoryNoticePage + 1) % Math.max(1, layout?.pageCount || 1);
             game.victoryAchievementHoverId = null;
       game.victoryNoticeHoverKey = null;
           }
@@ -20403,6 +20428,7 @@ function startRibbitRaceGame() {
         ensureAudio();
         const entries = [
           ["solo", MAIN_UI.soloButton], ["frog", MAIN_UI.frogButton], ["pvp", MAIN_UI.pvpButton],
+          ["profile", MAIN_UI.profileButton], ["device", MAIN_UI.deviceButton],
           ["achievements", MAIN_UI.achievementsButton], ["stats", MAIN_UI.statsButton]
         ];
         const hit = entries.find(([, rect]) => pointInsideRect(point, rect));
@@ -20738,14 +20764,14 @@ function startRibbitRaceGame() {
         const unlockNotice = getVictoryUnlockNoticeLayout();
         const buttonRects = getVictoryButtonRects(unlockNotice);
         if (unlockNotice?.pageCount > 1 && pointInsideRect(point, unlockNotice.pagePrevButton)) {
-          game.victoryNoticePage = Math.max(0, game.victoryNoticePage - 1);
+          game.victoryNoticePage = (game.victoryNoticePage - 1 + Math.max(1, getVictoryUnlockNoticeLayout()?.pageCount || 1)) % Math.max(1, getVictoryUnlockNoticeLayout()?.pageCount || 1);
           game.victoryAchievementHoverId = null;
       game.victoryNoticeHoverKey = null;
           tone(420, 0.045, 0.010, -25);
           return;
         }
         if (unlockNotice?.pageCount > 1 && pointInsideRect(point, unlockNotice.pageNextButton)) {
-          game.victoryNoticePage = Math.min(unlockNotice.pageCount - 1, game.victoryNoticePage + 1);
+          game.victoryNoticePage = (game.victoryNoticePage + 1) % Math.max(1, unlockNotice.pageCount);
           game.victoryAchievementHoverId = null;
       game.victoryNoticeHoverKey = null;
           tone(610, 0.045, 0.010, 35);
@@ -20816,6 +20842,7 @@ function startRibbitRaceGame() {
       if (game.state === "main") {
         const entries = [
           ["solo", MAIN_UI.soloButton], ["frog", MAIN_UI.frogButton], ["pvp", MAIN_UI.pvpButton],
+          ["profile", MAIN_UI.profileButton], ["device", MAIN_UI.deviceButton],
           ["achievements", MAIN_UI.achievementsButton], ["stats", MAIN_UI.statsButton]
         ];
         const hit = entries.find(([, rect]) => pointInsideRect(point, rect));
@@ -20910,9 +20937,9 @@ function startRibbitRaceGame() {
       }
 
       if (game.state === "stats") {
-        if (pointInsideRect(point, getStatsPageButtonHitRect(STATS_UI.pagePrevButton)) && game.statsPage > 0) {
+        if (pointInsideRect(point, getStatsPageButtonHitRect(STATS_UI.pagePrevButton)) && getStatsPageCount() > 1) {
           game.statsFocusArea = "pagePrev";
-        } else if (pointInsideRect(point, getStatsPageButtonHitRect(STATS_UI.pageNextButton)) && game.statsPage < getStatsPageCount() - 1) {
+        } else if (pointInsideRect(point, getStatsPageButtonHitRect(STATS_UI.pageNextButton)) && getStatsPageCount() > 1) {
           game.statsFocusArea = "pageNext";
         } else if (pointInsideRect(point, STATS_UI.backButton)) {
           game.statsFocusArea = "back";
@@ -21231,7 +21258,7 @@ function startRibbitRaceGame() {
 // input support hooks, palette operations, post-hat progression, and replay state.
 
 const RIBBIT_FRIENDS_DISPLAY_VERSION = "1.7.10";
-const RIBBIT_FRIENDS_BUILD = "2026.10.12-friends-polish-17";
+const RIBBIT_FRIENDS_BUILD = "2026.10.12-friends-polish-18";
 
 function rr14Number(value, fallback = 0) {
   const parsed = Number(value);
@@ -21753,7 +21780,7 @@ window.RibbitRaceMobileDiagnostics = () => ({
  */
 (() => {
   "use strict";
-  const BUILD = "2026.10.12-friends-polish-17";
+  const BUILD = "2026.10.12-friends-polish-18";
   const RR_V160_CANDIDATES = {"catchFly":["attemptFlyCatch","attemptPvpFlyCatch","catchSandboxFly","getPvpImminentCatchFly","recordFlyEaten","scheduleFlyReplacementFromCatch"],"jumpSound":["playJumpSound"],"beep":["playCountdownGoSound","playCountdownSound"],"replayUpload":["saveRecordDate"],"restart":["resetGame","resetPvpGame","resetPvpPlayer","resetRoundLifecycle","resetRoundNetwork","restartCurrentLevel"],"drop":[],"render":["drawPvpScene","drawScene"],"worldRecord":[],"fullscreen":["getFullscreenElement","hideFullscreenFallback","showFullscreenFallback","syncFullscreenButton","toggleRibbitFullscreen"],"onlineSubmit":[],"leaderboard":["isSoloEndlessLeaderboardEligible","savePvpMatchWinsForLeaderboard"]};
   const RR_V160_VARS = {"onlineSelect":[],"achievementSelect":["activeAchievementIndex","hoveredAchievementCard"],"backRect":[]};
 
@@ -22736,7 +22763,7 @@ window.RibbitRaceMobileDiagnostics = () => ({
 
   const SOLO_SEEN_KEY = "rrFriendsEngineTutorialSoloSeenV8";
   const PVP_SEEN_KEY = "rrFriendsEngineTutorialPvpSeenV8";
-  const TUTORIAL_BUILD = "2026.10.12-friends-polish-17";
+  const TUTORIAL_BUILD = "2026.10.12-friends-polish-18";
   const TUTORIAL_ACHIEVEMENT_ID = "tutorial-graduate";
   const TYPEWRITER_MS_PER_CHARACTER = 28;
   const DIALOGUE_TEXT_SCALE = 0.86;
@@ -22908,6 +22935,10 @@ window.RibbitRaceMobileDiagnostics = () => ({
     pvpDemoDuration: 0,
     pvpFrogsHidden: false,
     pvpHiddenPlayerIndex: null,
+    pvpHiddenPlayerIndices: [],
+    resetPvpPoofPlayers: [0, 1],
+    deferredPoofOptions: null,
+    debugSkipBuffer: "",
     pendingPvpVisualPoses: null,
     pendingPvpTargetPoses: null,
     pauseChapterHover: "",
@@ -24394,11 +24425,27 @@ window.RibbitRaceMobileDiagnostics = () => ({
     const setup = step?.setup;
     if (tutorial.kind === "pvp") {
       if (step?.demonstration) {
-        startPvpDemonstration({ skipPoof:tutorial.scenePositionedDuringDialogue });
+        // Scene 2 begins from the same side-by-side pose established by the
+        // welcome scene; Ember simply charges from that position.
+        const keepOpeningPose = setup === "pvpDemoBonk";
+        startPvpDemonstration({ skipPoof:keepOpeningPose || tutorial.scenePositionedDuringDialogue });
         return;
       }
       if (step?.finalMatch) {
         startPvpFinalMatch();
+        return;
+      }
+      if (tutorial.scenePositionedDuringDialogue) {
+        tutorial.scenePositionedDuringDialogue = false;
+        tutorial.pendingPvpTargetPoses = null;
+        tutorial.pendingPvpVisualPoses = null;
+        tutorial.pvpCaption = "YOUR TURN!";
+        tutorial.pvpCaptionUntil = performance.now() + 1600;
+        schedulePvpFlyReveal(setup, pvpFlyRevealDelayMs(setup));
+        tutorial.enteredAt = performance.now();
+        game.state = "playing";
+        game.pauseHelpOpen = false;
+        clearHeldInput();
         return;
       }
       beginScenarioEntryTransition();
@@ -25041,8 +25088,10 @@ window.RibbitRaceMobileDiagnostics = () => ({
 
     switch (step.setup) {
       case "pvpWelcome":
-        positionPvp(p1, 145, CONFIG.groundY - p1.h, 1);
-        positionPvp(ember, 305, CONFIG.groundY - ember.h, -1);
+        // Establish the exact opening bonk lane beneath the second platform so
+        // Scene 2 can begin without an unnecessary poof.
+        positionPvp(p1, middleLeft.x + 18, CONFIG.groundY - p1.h, 1);
+        positionPvp(ember, middleLeft.x + 86, CONFIG.groundY - ember.h, -1);
         break;
       case "pvpDemoBonk":
         // Both frogs begin beneath the second platform. Ember starts on the
@@ -25056,41 +25105,47 @@ window.RibbitRaceMobileDiagnostics = () => ({
       case "pvpDemoBonkCatch":
         positionPvp(p1, middleLeft.x + 18, CONFIG.groundY - p1.h, 1);
         positionPvp(ember, middleLeft.x + 86, CONFIG.groundY - ember.h, -1);
-        // The fly is behind the player so Ember can bonk from the right and
-        // reach dinner with one ordinary follow-up jump.
-        addPvpTutorialFly(middleLeft.x - 36, 150, 0, 0);
+        // Center dinner above the first platform. Ember bonks right-to-left,
+        // keeps facing left, lands, then needs a real charged follow-up jump.
+        addPvpTutorialFly(lowerLeft.x + lowerLeft.w / 2, lowerLeft.y - 35, 0, 0);
         break;
       case "pvpBonkCatch":
-        positionPvp(p1, middleLeft.x + 18, CONFIG.groundY - p1.h, 1);
-        positionPvp(ember, middleLeft.x + 86, CONFIG.groundY - ember.h, -1);
-        addPvpTutorialFly(middleLeft.x + middleLeft.w + 116, 150, 0, 0);
+        // Mirror the demonstration: the player starts on the right, bonks Ember
+        // to the left, and continues toward the same elevated dinner route.
+        positionPvp(p1, middleLeft.x + 86, CONFIG.groundY - p1.h, -1);
+        positionPvp(ember, middleLeft.x + 18, CONFIG.groundY - ember.h, 1);
+        addPvpTutorialFly(lowerLeft.x + lowerLeft.w / 2, lowerLeft.y - 35, 0, 0);
         break;
       case "pvpDemoDropLow": {
         const lowerMiddle = PARK_PLATFORMS[3];
-        positionPvp(p1, lowerMiddle.x + Math.round((lowerMiddle.w - p1.w) / 2) + 5, CONFIG.groundY - p1.h, -1);
-        positionPvpOnPlatform(ember, lowerMiddle, 1, Math.round((lowerMiddle.w - ember.w) / 2));
+        // Ember begins on the right half of the lower-middle platform; the
+        // player is diagonally down-left, giving the drop a forgiving 45° line.
+        positionPvp(p1, lowerMiddle.x + 7, CONFIG.groundY - p1.h, 1);
+        positionPvpOnPlatform(ember, lowerMiddle, -1, lowerMiddle.w - ember.w - 7);
         break;
       }
       case "pvpDropLow": {
         const lowerMiddle = PARK_PLATFORMS[3];
-        positionPvpOnPlatform(p1, lowerMiddle, 1, Math.round((lowerMiddle.w - p1.w) / 2));
-        positionPvp(ember, lowerMiddle.x + Math.round((lowerMiddle.w - ember.w) / 2) + 5, CONFIG.groundY - ember.h, -1);
+        // Mirror the demonstration for player practice.
+        positionPvpOnPlatform(p1, lowerMiddle, 1, 7);
+        positionPvp(ember, lowerMiddle.x + lowerMiddle.w - ember.w - 7, CONFIG.groundY - ember.h, -1);
         break;
       }
       case "pvpDemoDropHigh": {
-        // Ember stands near the back-right edge of the highest platform. The
-        // tutorial ignores only the directly aligned lower-middle platform so
-        // her authored straight drop reaches the player's head on the ground.
-        const dropX = top.x + top.w - ember.w - 3;
-        positionPvp(p1, dropX + 2, CONFIG.groundY - p1.h, -1);
-        positionPvpOnPlatform(ember, top, 1, top.w - ember.w - 3);
+        // Flip the original route: Ember uses the left/back half and faces right;
+        // the player waits below the matching edge.
+        const offset = 5;
+        const dropX = top.x + offset;
+        positionPvp(p1, dropX + 3, CONFIG.groundY - p1.h, 1);
+        positionPvpOnPlatform(ember, top, 1, offset);
         break;
       }
       case "pvpDropHigh": {
-        // Player practice mirrors the demonstration on the left edge.
-        const dropX = top.x + 3;
-        positionPvpOnPlatform(p1, top, -1, 3);
-        positionPvp(ember, dropX - 2, CONFIG.groundY - ember.h, 1);
+        // Mirror Ember's route on the opposite edge for the player's attempt.
+        const offset = top.w - p1.w - 5;
+        const dropX = top.x + offset;
+        positionPvpOnPlatform(p1, top, -1, offset);
+        positionPvp(ember, dropX - 3, CONFIG.groundY - ember.h, -1);
         break;
       }
       case "pvpDemoBufferedBonk":
@@ -25202,6 +25257,9 @@ window.RibbitRaceMobileDiagnostics = () => ({
     ember.skinId = "ember";
     game.pvpSetupSkinIds[1] = "ember";
     clearScenarioState();
+    // Tutorial lessons without an authored fly keep the vocabulary body blank.
+    // Fly scenes reveal the clue only when their fly is actually armed.
+    tutorial.promptHidden = !step.finalMatch;
   }
 
   function clearPvpScriptActions() {
@@ -25334,10 +25392,10 @@ window.RibbitRaceMobileDiagnostics = () => ({
 
     switch (setup) {
       case "pvpDemoBonk":
-        scriptPvpChargedJump(1, .38, -1, 0);
+        scriptPvpChargedJump(1, .44, -1, 0);
         break;
       case "pvpDemoBonkCatch":
-        scriptPvpChargedJump(1, .38, -1, 0);
+        scriptPvpChargedJump(1, .44, -1, 0);
         break;
       case "pvpDemoDropLow":
       case "pvpDemoDropHigh":
@@ -25459,8 +25517,11 @@ window.RibbitRaceMobileDiagnostics = () => ({
       tutorial.pvpDemoFollowupStarted = true;
       const targetFly = flies.find((fly) => fly?.tutorialAuthored && fly.state === "active");
       const followDirection = targetFly && targetFly.x < ember.x ? -1 : 1;
+      // Keep the direction established by the bonk; do not perform a visible
+      // turn-around before the follow-up dinner jump.
       ember.dir = followDirection;
-      scriptPvpChargedJump(1, .64, followDirection, 0);
+      ember.chargeFacingDir = followDirection;
+      scriptPvpChargedJump(1, .72, followDirection, 0);
     }
 
     // The recovery lesson intentionally makes one early return while the player
@@ -25499,25 +25560,16 @@ window.RibbitRaceMobileDiagnostics = () => ({
       if (target) attemptPvpFlyCatch(ember, target, "body");
     }
 
-    // One second after Ember's introductory bonk, poof both frogs into a
-    // neutral side-by-side pose and begin her explanation. Do not wait for the
-    // player's entire stun countdown to finish.
+    // After Ember's introductory bonk, hold both frogs exactly where the real
+    // physics left them. The next scene performs its authored poof immediately
+    // before “Now you try.”
     if (setup === "pvpDemoBonk" && tutorial.pvpDemoBonkAt > 0 &&
         now - tutorial.pvpDemoBonkAt >= 1000 && !tutorial.pvpDemoBonkHandled) {
       tutorial.pvpDemoBonkHandled = true;
       tutorial.pvpDemoActive = false;
       clearPvpScriptActions();
-      beginPoofTransition({
-        reason:"pvp-demo-bonk-finished",
-        showFailure:false,
-        preserveExistingFlies:false,
-        armFlies:false,
-        action:() => {
-          positionPvp(p1, 145, CONFIG.groundY - p1.h, 1);
-          positionPvp(ember, 305, CONFIG.groundY - ember.h, -1);
-          passStep();
-        }
-      });
+      freezeControlledEntity();
+      passStep();
       return;
     }
 
@@ -25608,7 +25660,7 @@ window.RibbitRaceMobileDiagnostics = () => ({
     // new height/perch. The text begins one second after both frogs reappear.
     const prePoofBeforeDialogue = Boolean(
       showDialogue && tutorial.kind === "pvp" &&
-      ["pvpDemoDropHigh", "pvpDemoHighGround"].includes(tutorialStep()?.setup)
+      ["pvpBonkThree", "pvpBonkCatch", "pvpDemoDropLow", "pvpDemoDropHigh", "pvpDemoHighGround"].includes(tutorialStep()?.setup)
     );
     if (prePoofBeforeDialogue && preservedPvpVisualPoses) {
       tutorial.dialogueOpen = true;
@@ -25662,28 +25714,47 @@ window.RibbitRaceMobileDiagnostics = () => ({
 
   function beginPoofTransition(options = {}) {
     if (!tutorial.active || tutorial.resetPending) return false;
+    if (tutorial.kind === "pvp" && tutorial.deferredPoofOptions && !options.force) return true;
+    const activeImpact = tutorial.kind === "pvp" && Array.isArray(game.pvpImpactEffects) &&
+      game.pvpImpactEffects.some((effect) => Number(effect?.elapsed || 0) < Number(effect?.duration || .4));
+    // Let the full rebound/bonk impact play before smoke covers or freezes it.
+    if (activeImpact && options.waitForEffects !== false && !options.force) {
+      tutorial.deferredPoofOptions = { ...options, force:true };
+      clearHeldInput();
+      return true;
+    }
+
+    const pvpPoofPlayers = tutorial.kind === "pvp"
+      ? (Array.isArray(options.pvpPoofPlayers) ? [...new Set(options.pvpPoofPlayers.map(Number).filter((index) => index === 0 || index === 1))] : [0, 1])
+      : [];
+    tutorial.resetPvpPoofPlayers = pvpPoofPlayers;
+    tutorial.pvpHiddenPlayerIndices = pvpPoofPlayers.slice();
+    tutorial.pvpFrogsHidden = tutorial.kind === "pvp" && pvpPoofPlayers.length >= 2;
+
     const entity = controlledTutorialEntity();
-    const oldX = Number(entity?.x || 0);
-    const oldY = Number(entity?.y || 0);
-    addTutorialPoof(
-      oldX + Number(entity?.w || frog.w) / 2,
-      oldY + Number(entity?.h || frog.h) / 2,
-      "out"
-    );
-    if (tutorial.kind === "pvp" && pvpPlayers[1]) {
+    if (tutorial.kind !== "pvp" || pvpPoofPlayers.includes(0)) {
+      const oldX = Number(entity?.x || 0);
+      const oldY = Number(entity?.y || 0);
+      addTutorialPoof(
+        oldX + Number(entity?.w || frog.w) / 2,
+        oldY + Number(entity?.h || frog.h) / 2,
+        "out"
+      );
+    }
+    if (tutorial.kind === "pvp" && pvpPlayers[1] && pvpPoofPlayers.includes(1)) {
       addTutorialPoof(
         Number(pvpPlayers[1].x || 0) + Number(pvpPlayers[1].w || frog.w) / 2,
         Number(pvpPlayers[1].y || 0) + Number(pvpPlayers[1].h || frog.h) / 2,
         "out"
       );
-      tutorial.pvpFrogsHidden = true;
     }
     playTutorialPoofSound("out");
     resetTutorialTongue();
     if (tutorial.kind === "pvp") resetPvpTutorialTongues();
     try { clearFrogAfterimages(entity); } catch (_) {}
     if (tutorial.kind === "pvp") {
-      for (const player of pvpPlayers) {
+      for (const [index, player] of pvpPlayers.entries()) {
+        if (!pvpPoofPlayers.includes(index)) continue;
         try { clearFrogAfterimages(player); } catch (_) {}
       }
     }
@@ -25699,7 +25770,7 @@ window.RibbitRaceMobileDiagnostics = () => ({
       : null;
     tutorial.resetReason = String(options.reason || "reset");
     tutorial.preservePromptDuringReset = options.preservePrompt === true;
-    tutorial.frogHidden = true;
+    tutorial.frogHidden = tutorial.kind !== "pvp" || pvpPoofPlayers.includes(0);
     tutorial.goalHovered = false;
     clearHeldInput();
     freezeControlledEntity();
@@ -25812,22 +25883,27 @@ window.RibbitRaceMobileDiagnostics = () => ({
       }
     }
     if (preservePrompt) tutorial.promptHidden = false;
+    const resetPoofPlayers = Array.isArray(tutorial.resetPvpPoofPlayers) ? tutorial.resetPvpPoofPlayers : [0, 1];
     tutorial.frogHidden = false;
     tutorial.pvpFrogsHidden = false;
+    tutorial.pvpHiddenPlayerIndices = [];
     freezeControlledEntity();
     const entity = controlledTutorialEntity();
-    addTutorialPoof(
-      Number(entity?.x || 0) + Number(entity?.w || frog.w) / 2,
-      Number(entity?.y || 0) + Number(entity?.h || frog.h) / 2,
-      "in"
-    );
-    if (tutorial.kind === "pvp" && pvpPlayers[1]) {
+    if (tutorial.kind !== "pvp" || resetPoofPlayers.includes(0)) {
+      addTutorialPoof(
+        Number(entity?.x || 0) + Number(entity?.w || frog.w) / 2,
+        Number(entity?.y || 0) + Number(entity?.h || frog.h) / 2,
+        "in"
+      );
+    }
+    if (tutorial.kind === "pvp" && pvpPlayers[1] && resetPoofPlayers.includes(1)) {
       addTutorialPoof(
         Number(pvpPlayers[1].x || 0) + Number(pvpPlayers[1].w || frog.w) / 2,
         Number(pvpPlayers[1].y || 0) + Number(pvpPlayers[1].h || frog.h) / 2,
         "in"
       );
     }
+    tutorial.resetPvpPoofPlayers = [0, 1];
     playTutorialPoofSound("in");
 
     if (showFailure) {
@@ -25844,12 +25920,22 @@ window.RibbitRaceMobileDiagnostics = () => ({
 
   function failAttempt(message) {
     if (!tutorial.active || tutorial.passed || tutorial.resetPending) return;
+    const setup = tutorialStep()?.setup || "";
+    const emberStaysPut = tutorial.kind === "pvp" && new Set([
+      "pvpBonkCatch", "pvpUnderBonkTwo", "pvpAvoidUnder", "pvpReboundCatch"
+    ]).has(setup);
+    const emberPose = emberStaysPut ? capturePvpTutorialPoses()?.[1] : null;
     beginPoofTransition({
       reason: "failed-attempt",
       message: message || "TRY AGAIN",
       showFailure: true,
       preserveExistingFlies: true,
-      action: rebuildCurrentScenarioForRetry
+      preservePrompt: true,
+      pvpPoofPlayers: emberStaysPut ? [0] : [0, 1],
+      action: () => {
+        rebuildCurrentScenarioForRetry();
+        if (emberPose && pvpPlayers[1]) applyControlledPose(emberPose, pvpPlayers[1]);
+      }
     });
   }
 
@@ -26100,6 +26186,29 @@ window.RibbitRaceMobileDiagnostics = () => ({
     tutorial.step += 1;
     configureStep(true, { preserveVisualPose: visualPose, preservePvpVisualPoses: pvpVisualPoses });
     if (carryoverFlies.length) installTutorialCarryoverFlies(carryoverFlies);
+  }
+
+  function skipToNextTutorialScene() {
+    if (!tutorial.active) return false;
+    const steps = tutorial.kind === "pvp" ? PVP_STEPS : SOLO_STEPS;
+    const currentScene = Number(tutorialStep()?.scene || 1);
+    const targetIndex = steps.findIndex((step, index) => index > tutorial.step && Number(step?.scene || index + 1) > currentScene);
+    clearPvpScriptActions();
+    tutorial.pvpDemoActive = false;
+    tutorial.pvpDemoBegun = false;
+    tutorial.deferredPoofOptions = null;
+    if (targetIndex < 0) {
+      finish(true);
+      return true;
+    }
+    const visualPose = captureControlledPose();
+    const pvpVisualPoses = tutorial.kind === "pvp" ? capturePvpTutorialPoses() : null;
+    tutorial.step = targetIndex;
+    configureStep(true, { preserveVisualPose:visualPose, preservePvpVisualPoses:pvpVisualPoses });
+    game.cheatToastText = `TUTORIAL SCENE ${Number(tutorialStep()?.scene || 1)}`;
+    game.cheatToastTimer = CONFIG.achievementToastDuration;
+    tone(620, .06, .012, 90);
+    return true;
   }
 
   function start(kind = "solo") {
@@ -26768,6 +26877,15 @@ window.RibbitRaceMobileDiagnostics = () => ({
 
   function updateTutorial() {
     if (!tutorial.active) return;
+    if (tutorial.deferredPoofOptions) {
+      const activeImpact = Array.isArray(game.pvpImpactEffects) &&
+        game.pvpImpactEffects.some((effect) => Number(effect?.elapsed || 0) < Number(effect?.duration || .4));
+      if (!activeImpact) {
+        const deferred = tutorial.deferredPoofOptions;
+        tutorial.deferredPoofOptions = null;
+        beginPoofTransition(deferred);
+      }
+    }
     if (game.state === "paused" || game.state === "countdown") return;
 
     if (tutorial.resetPending) {
@@ -26912,7 +27030,7 @@ window.RibbitRaceMobileDiagnostics = () => ({
     // cyan, and white pixel framing. Ember's complete square portrait sits in
     // its own attached card, with the nameplate beneath the picture instead of
     // covering any part of it.
-    const textPanel = { x: 90, y: 6, w: 242, h: 54 };
+    const textPanel = { x: 85, y: 6, w: 247, h: 54 };
     const portraitPanel = { x: 338, y: 6, w: 54, h: 54 };
     const namePlate = { x:textPanel.x + 7, y:textPanel.y + 7, w:48, h:10 };
     const textArea = {
@@ -27118,16 +27236,22 @@ window.RibbitRaceMobileDiagnostics = () => ({
     const total = tutorial.kind === "pvp"
       ? PVP_STEPS.reduce((max, step) => Math.max(max, Number(step?.scene || 0)), 0)
       : SOLO_STEPS.reduce((max, step) => Math.max(max, Number(step?.scene || 0)), 0);
-    const label = `${tutorial.kind === "pvp" ? "VERSUS" : "PARK"} TUTORIAL ${scene}/${total}`;
-    const w = 126, x = W / 2 - w / 2, y = 4;
+    const title = String(tutorialStep()?.title || "TUTORIAL").toUpperCase();
+    const sceneLabel = `${scene}/${total}`;
+    // Keep chapter context directly above the Find the Match HUD so it never
+    // collides with Ember dialogue or the WATCH EMBER timer-area caption.
+    const w = 172, x = Math.round(W / 2 - w / 2), y = 219;
     ctx.save();
-    ctx.globalAlpha = .82;
+    ctx.globalAlpha = .94;
+    ctx.fillStyle = "rgba(7,24,34,.30)";
+    ctx.fillRect(x + 2, y + 2, w, 13);
     ctx.fillStyle = COLORS.ink;
-    ctx.fillRect(x, y, w, 12);
+    ctx.fillRect(x, y, w, 13);
     ctx.fillStyle = tutorial.kind === "pvp" ? "#bd2d45" : "#0f9fbb";
-    ctx.fillRect(x + 2, y + 2, w - 4, 8);
-    ctx.globalAlpha = 1;
-    drawBitmapText(label, W / 2, y + 3, .42, "center", COLORS.white);
+    ctx.fillRect(x + 2, y + 2, w - 4, 9);
+    const titleScale = Math.min(.39, 134 / Math.max(1, measureBitmapText(title, 1)));
+    drawBitmapText(title, x + 6, y + 4, titleScale, "left", COLORS.white);
+    drawBitmapText(sceneLabel, x + w - 7, y + 4, .38, "right", COLORS.white);
     ctx.restore();
   }
 
@@ -27386,7 +27510,7 @@ window.RibbitRaceMobileDiagnostics = () => ({
     drawTutorialSmoke();
     drawPvpTutorialCaption();
     drawTutorialReferenceHighlights();
-    if (!tutorial.dialogueOpen) drawTutorialProgress();
+    drawTutorialProgress();
     if (!tutorial.dialogueOpen && tutorialStep()?.setup !== "normalRound") drawGoalHowToTooltip();
     if (tutorial.dialogueOpen) drawTutorialDialogue();
   }
@@ -28013,7 +28137,10 @@ window.RibbitRaceMobileDiagnostics = () => ({
 
   const originalDrawPvpPlayerForTutorial = drawPvpPlayer;
   drawPvpPlayer = function(player, ...rest) {
-    if (tutorial.active && tutorial.kind === "pvp" && tutorial.pvpFrogsHidden) return;
+    if (tutorial.active && tutorial.kind === "pvp") {
+      const index = pvpPlayers.indexOf(player);
+      if (tutorial.pvpFrogsHidden || tutorial.pvpHiddenPlayerIndices.includes(index)) return;
+    }
     return originalDrawPvpPlayerForTutorial.call(this, player, ...rest);
   };
 
@@ -28056,6 +28183,16 @@ window.RibbitRaceMobileDiagnostics = () => ({
   };
 
   window.addEventListener("keydown", (event) => {
+    if (tutorial.active && !event.metaKey && !event.ctrlKey && !event.altKey && /^[a-z]$/i.test(String(event.key || ""))) {
+      tutorial.debugSkipBuffer = `${tutorial.debugSkipBuffer}${String(event.key).toLowerCase()}`.slice(-24);
+      if (tutorial.debugSkipBuffer.endsWith("tutorialskip")) {
+        tutorial.debugSkipBuffer = "";
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        skipToNextTutorialScene();
+        return;
+      }
+    }
     if (tutorial.active && tutorial.kind === "pvp" && event.code === "ShiftRight") {
       // Ember is always the scripted Level 5 coach. Right Shift never hands her
       // to the player during training.
@@ -28281,23 +28418,140 @@ window.RibbitRaceMobileDiagnostics = () => ({
     baseSkinIndex: 0,
     customBaseOpen: false,
     customToolHover: "",
-    quickplayLeaving: false
+    quickplayLeaving: false,
+    profileSelection: 0,
+    deviceSelection: 0,
+    priorMenuState: "main",
+    replayStatus: "",
+    replayDetail: ""
   };
 
   const LANGUAGE_KEY = "ribbitRaceLanguageModeV1";
   const HAT_PROGRESS_KEY = "ribbitRaceHatProgressV2";
   const ONLINE_HISTORY_KEY = "ribbitRaceOnlineHistoryV2";
   const countedHatFlyObjects = new WeakSet();
-  const LEADERBOARD_BUTTON = Object.freeze({ x: 34, y: 229, w: 28, h: 28 });
+  const LEADERBOARD_BUTTON = Object.freeze({ x: 416, y: 229, w: 28, h: 28 });
   const CUSTOM_RANDOM_BUTTON = Object.freeze({ x: 51, y: 67, w: 25, h: 22 });
   const CUSTOM_BASE_BUTTON = Object.freeze({ x: 159, y: 67, w: 25, h: 22 });
   const PAUSE_FULLSCREEN_BUTTON = Object.freeze({ x: 379, y: 198, w: 20, h: 20 });
-  const MAIN_PROFILE_BUTTON = Object.freeze({ x: 47, y: 211, w: 24, h: 24 });
-  const MAIN_DEVICE_BUTTON = Object.freeze({ x: 74, y: 211, w: 24, h: 24 });
+  const MAIN_PROFILE_BUTTON = MAIN_UI.profileButton;
+  const MAIN_DEVICE_BUTTON = MAIN_UI.deviceButton;
 
   function safeCall(candidate, ...args) {
     try { return typeof candidate === "function" ? candidate(...args) : undefined; }
     catch (error) { console.warn("Ribbit polish helper recovered", error); return undefined; }
+  }
+
+  const PROFILE_MENU_ROWS = Object.freeze([
+    Object.freeze({ id:"language", label:"LANGUAGE MODE" }),
+    Object.freeze({ id:"save", label:"SAVE NOW" }),
+    Object.freeze({ id:"words", label:"REFRESH WORDS" }),
+    Object.freeze({ id:"leaderboard", label:"LEADERBOARD" }),
+    Object.freeze({ id:"manage", label:"BACK UP / MANAGE SAVE" }),
+    Object.freeze({ id:"signout", label:"SIGN OUT" }),
+    Object.freeze({ id:"back", label:"BACK" })
+  ]);
+  const PROFILE_MENU_RECTS = Object.freeze(PROFILE_MENU_ROWS.map((row, index) => Object.freeze({
+    ...row, x:104, y:72 + index * 25, w:272, h:21
+  })));
+  const DEVICE_MENU_RECTS = Object.freeze({
+    computer:Object.freeze({ x:75, y:91, w:150, h:86 }),
+    mobile:Object.freeze({ x:255, y:91, w:150, h:86 }),
+    back:Object.freeze({ x:180, y:214, w:120, h:23 })
+  });
+
+  function accountDisplayName() {
+    try {
+      const cloud = typeof RibbitCloud !== "undefined" ? RibbitCloud : window.RibbitCloud;
+      const profile = cloud?.getProfile?.() || cloud?.profile?.();
+      return String(profile?.displayName || profile?.name || document.getElementById("cloud-account-name")?.textContent || "GUEST").trim() || "GUEST";
+    } catch (_) { return "GUEST"; }
+  }
+
+  function drawUtilityWindowFrame(title) {
+    const skin = getSelectedSkin();
+    ctx.fillStyle = "#edf5f7"; ctx.fillRect(0,0,W,H);
+    ctx.fillStyle = skin.dark; ctx.fillRect(0,0,W,6);
+    ctx.fillStyle = "rgba(12,26,33,.28)"; ctx.fillRect(27,13,430,248);
+    ctx.fillStyle = COLORS.ink; ctx.fillRect(20,7,440,248);
+    ctx.fillStyle = "#f7fdff"; ctx.fillRect(24,11,432,240);
+    ctx.fillStyle = skin.dark; ctx.fillRect(34,20,412,38);
+    ctx.fillStyle = skin.mid; ctx.fillRect(37,23,406,32);
+    ctx.fillStyle = skin.light; ctx.fillRect(42,26,396,3);
+    drawBitmapText(title,W/2,31,1.40,"center",COLORS.white,skin.dark);
+  }
+
+  function drawUtilityRow(rect, label, selected, value = "") {
+    const skin = getSelectedSkin();
+    ctx.fillStyle = "rgba(25,43,52,.20)"; ctx.fillRect(rect.x+2,rect.y+2,rect.w,rect.h);
+    ctx.fillStyle = selected ? COLORS.ink : "#9aa9ae"; ctx.fillRect(rect.x,rect.y,rect.w,rect.h);
+    ctx.fillStyle = selected ? mixHexColors(skin.belly,"#ffffff",.12) : "#f7fdff"; ctx.fillRect(rect.x+2,rect.y+2,rect.w-4,rect.h-4);
+    ctx.fillStyle = selected ? skin.light : "#ffffff"; ctx.fillRect(rect.x+6,rect.y+4,rect.w-12,2);
+    drawBitmapText(label,rect.x+12,rect.y+7,.58,"left",selected?skin.dark:"#34484f");
+    if(value) drawBitmapText(value,rect.x+rect.w-10,rect.y+7,.52,"right",selected?skin.dark:"#59666b");
+  }
+
+  function drawProfileMenu() {
+    drawUtilityWindowFrame("ACCOUNT & LANGUAGE");
+    const skin = getSelectedSkin();
+    drawBitmapText(`PLAYER: ${accountDisplayName().toUpperCase()}`,W/2,62,.55,"center","#48555a");
+    PROFILE_MENU_RECTS.forEach((rect,index) => {
+      let value="";
+      if(rect.id==="language") value=getLanguageMode()==="es-en"?"ESPAÑOL → ENGLISH":"ENGLISH → ESPAÑOL";
+      drawUtilityRow(rect,rect.label,index===polish.profileSelection,value);
+    });
+    drawBitmapText("ARROWS TO BROWSE • ENTER TO SELECT",W/2,247,.48,"center","#617177");
+  }
+
+  function drawDeviceModeIcon(rect, mobile, selected) {
+    const skin=getSelectedSkin();
+    ctx.fillStyle="rgba(25,43,52,.22)";ctx.fillRect(rect.x+3,rect.y+3,rect.w,rect.h);
+    ctx.fillStyle=selected?COLORS.ink:"#9aa9ae";ctx.fillRect(rect.x,rect.y,rect.w,rect.h);
+    ctx.fillStyle=selected?mixHexColors(skin.belly,"#ffffff",.12):"#f7fdff";ctx.fillRect(rect.x+3,rect.y+3,rect.w-6,rect.h-6);
+    ctx.fillStyle=selected?skin.light:"#ffffff";ctx.fillRect(rect.x+8,rect.y+7,rect.w-16,4);
+    const cx=rect.x+rect.w/2,cy=rect.y+38;
+    ctx.fillStyle=selected?skin.dark:"#48555a";
+    if(mobile){ctx.fillRect(cx-13,cy-22,26,43);ctx.fillStyle=selected?skin.belly:"#f7fdff";ctx.fillRect(cx-9,cy-17,18,30);ctx.fillStyle=selected?skin.dark:"#48555a";ctx.fillRect(cx-3,cy+16,6,2);}
+    else{ctx.fillRect(cx-28,cy-19,56,35);ctx.fillStyle=selected?skin.belly:"#f7fdff";ctx.fillRect(cx-23,cy-14,46,25);ctx.fillStyle=selected?skin.dark:"#48555a";ctx.fillRect(cx-5,cy+16,10,7);ctx.fillRect(cx-16,cy+23,32,4);}
+    drawBitmapText(mobile?"MOBILE MODE":"COMPUTER MODE",cx,rect.y+67,.62,"center",selected?skin.dark:"#48555a");
+  }
+
+  function drawDeviceMenu() {
+    drawUtilityWindowFrame("COMPUTER / MOBILE MODE");
+    const selectedMode=isRibbitMobileMode()?1:0;
+    drawDeviceModeIcon(DEVICE_MENU_RECTS.computer,false,polish.deviceSelection===0);
+    drawDeviceModeIcon(DEVICE_MENU_RECTS.mobile,true,polish.deviceSelection===1);
+    drawUtilityRow(DEVICE_MENU_RECTS.back,"BACK",polish.deviceSelection===2,"");
+    drawBitmapText(`CURRENT: ${selectedMode?"MOBILE":"COMPUTER"}`,W/2,190,.58,"center","#48555a");
+  }
+
+  function openProfileMenu() { polish.priorMenuState=game.state; polish.profileSelection=0; game.state="rrProfileMenu"; clearHeldInput(); tone(520,.04,.009,25); }
+  function openDeviceMenu() { polish.priorMenuState=game.state; polish.deviceSelection=isRibbitMobileMode()?1:0; game.state="rrDeviceMenu"; clearHeldInput(); tone(480,.04,.009,20); }
+  function closeUtilityMenu() { game.state="main"; game.mainFocusVisible=true; tone(330,.04,.009,-30); }
+  window.RibbitRaceOpenProfileMenu=openProfileMenu;
+  window.RibbitRaceOpenDeviceMenu=openDeviceMenu;
+
+  function activateProfileRow(index=polish.profileSelection) {
+    const row=PROFILE_MENU_ROWS[index] || PROFILE_MENU_ROWS[0];
+    if(row.id==="language") setLanguageMode(getLanguageMode()==="es-en"?"en-es":"es-en");
+    else if(row.id==="leaderboard") { game.state="achievements"; openLeaderboard(); }
+    else if(row.id==="back") closeUtilityMenu();
+    else {
+      const id={save:"cloud-save-now",words:"cloud-refresh-vocab",manage:"friends-manage",signout:"cloud-sign-out"}[row.id];
+      const button=id?document.getElementById(id):null;
+      if(button){button.click(); if(row.id!=="manage") game.state="main";}
+      else {game.cheatToastText="ACCOUNT ACTION UNAVAILABLE";game.cheatToastTimer=CONFIG.achievementToastDuration;}
+    }
+  }
+
+  function setCanvasMobileMode(enabled) {
+    try { localStorage.setItem("ribbitRaceMobileModeV1",enabled?"true":"false"); } catch (_) {}
+    try {
+      if(typeof window.RibbitRaceSetMobileMode==="function") window.RibbitRaceSetMobileMode(Boolean(enabled));
+      else window.dispatchEvent(new CustomEvent("ribbit:mobile-mode",{detail:{enabled:Boolean(enabled)}}));
+    } catch (_) {}
+    document.body.classList.toggle("rr-mobile-mode",Boolean(enabled));
+    tone(enabled?620:420,.05,.010,enabled?35:-25);
   }
 
   function getLanguageMode() {
@@ -28573,6 +28827,8 @@ window.RibbitRaceMobileDiagnostics = () => ({
       rows.push({
         rank:0,
         name:String(entry.name || entry.displayName || entry.username || entry.player || "FROG"),
+        replayUid:String(entry.uid || entry.userId || entry.accountId || ""),
+        replayUsername:String(entry.username || entry.loginName || entry.name || entry.displayName || ""),
         classPeriod:String(entry.classPeriod || entry.period || ""),
         value:Number(record.score),
         metric,
@@ -28740,8 +28996,16 @@ window.RibbitRaceMobileDiagnostics = () => ({
     polish.leaderboardNameRects = [];
 
     ctx.fillStyle = "#edf5f7"; ctx.fillRect(0, 0, W, H);
+    // Achievement-menu-style pixel-rounded frame.
+    ctx.fillStyle = "rgba(25,43,52,.26)"; ctx.fillRect(13, 10, W - 24, H - 14);
     ctx.fillStyle = COLORS.ink; ctx.fillRect(8, 6, W - 16, H - 12);
+    ctx.fillStyle = "#edf5f7";
+    ctx.fillRect(8, 6, 6, 6); ctx.fillRect(W - 14, 6, 6, 6);
+    ctx.fillRect(8, H - 12, 6, 6); ctx.fillRect(W - 14, H - 12, 6, 6);
     ctx.fillStyle = "#f7fdff"; ctx.fillRect(12, 10, W - 24, H - 20);
+    ctx.fillStyle = "#edf5f7";
+    ctx.fillRect(12, 10, 4, 4); ctx.fillRect(W - 16, 10, 4, 4);
+    ctx.fillRect(12, H - 14, 4, 4); ctx.fillRect(W - 16, H - 14, 4, 4);
 
     const header = { x:20, y:14, w:440, h:38 };
     ctx.fillStyle = skin.dark; ctx.fillRect(header.x, header.y, header.w, header.h);
@@ -28822,10 +29086,10 @@ window.RibbitRaceMobileDiagnostics = () => ({
     const prev = { x:164, y:228, w:64, h:24 };
     const next = { x:252, y:228, w:64, h:24 };
     for (const [key, rect, label] of [["prev", prev, "PREVIOUS"], ["next", next, "NEXT"]]) {
-      const disabled = key === "prev" ? polish.leaderboardPage <= 0 : polish.leaderboardPage >= pageCount - 1;
-      ctx.fillStyle = disabled ? "#aab5b8" : COLORS.ink; ctx.fillRect(rect.x, rect.y, rect.w, rect.h);
-      ctx.fillStyle = "#f7fdff"; ctx.fillRect(rect.x + 2, rect.y + 2, rect.w - 4, rect.h - 4);
-      drawBitmapText(label, rect.x + rect.w / 2, rect.y + 8, .42, "center", disabled ? "#98a3a6" : "#48555a");
+      const active = polish.leaderboardHoverKey === key;
+      ctx.fillStyle = active ? skin.dark : COLORS.ink; ctx.fillRect(rect.x, rect.y, rect.w, rect.h);
+      ctx.fillStyle = active ? skin.belly : "#f7fdff"; ctx.fillRect(rect.x + 2, rect.y + 2, rect.w - 4, rect.h - 4);
+      drawBitmapText(label, rect.x + rect.w / 2, rect.y + 8, .42, "center", active ? skin.dark : "#48555a");
       polish.leaderboardHitRects[key] = rect;
     }
     drawBitmapText(`${polish.leaderboardPage + 1} / ${pageCount}`, W / 2, 236, .55, "center", "#26363d");
@@ -28863,10 +29127,16 @@ window.RibbitRaceMobileDiagnostics = () => ({
     }
     try {
       if (typeof window.RibbitRacePlayRecordReplay === "function") {
-        await window.RibbitRacePlayRecordReplay(row.name, level, metric);
+        await window.RibbitRacePlayRecordReplay(row.replayUsername || row.name, level, metric, row.replayUid || "");
         return true;
       }
-      const response = await fetch(`/api/replays/get?username=${encodeURIComponent(row.name)}&level=${encodeURIComponent(level)}&metric=${encodeURIComponent(metric)}`, { credentials:"same-origin" });
+      const replayQuery = new URLSearchParams({
+        username:String(row.replayUsername || row.name || ""),
+        level,
+        metric
+      });
+      if (row.replayUid) replayQuery.set("uid", String(row.replayUid));
+      const response = await fetch(`/api/replays/get?${replayQuery.toString()}`, { credentials:"same-origin", cache:"no-store" });
       let payload = {};
       try { payload = await response.json(); } catch (_) {}
       if (!response.ok || !payload?.ok || !payload?.data) {
@@ -28913,42 +29183,11 @@ window.RibbitRaceMobileDiagnostics = () => ({
   window.RibbitRacePlayReplay = playReplayById;
 
   function repairReplayModal(root = document) {
-      const rrReplaySource = arguments[0];
-      const rrReplayId = rrReplaySource?.replayId || rrReplaySource?.replay_id || rrReplaySource?.id || rrReplaySource;
-      if (rrReplayId && typeof playStoredReplay === "function") {
-        playStoredReplay(rrReplayId, "WORLD RECORD REPLAY");
-        return;
-      }
-
-    const candidates = [...root.querySelectorAll?.("video") || []];
-    for (const video of candidates) {
-      const modal = video.closest("[role='dialog'], .modal, [class*='replay'], [id*='replay']") || video.parentElement;
-      if (!modal || modal.dataset.rrReplayRepaired === "1") continue;
-      const text = String(modal.textContent || "");
-      if (!/REPLAY|WORLD RECORD/i.test(text)) continue;
-      modal.dataset.rrReplayRepaired = "1";
-      const src = video.currentSrc || video.src || "";
-      const replayId = modal.dataset.replayId || video.dataset.replayId || src.split(/[/?#]/).filter(Boolean).pop();
-      const button = document.createElement("button");
-      button.type = "button";
-      button.textContent = "PLAY REPLAY IN GAME";
-      button.className = "rr-replay-play-button";
-      button.addEventListener("click", (event) => {
-        event.preventDefault(); event.stopPropagation();
-        modal.hidden = true; modal.style.display = "none";
-        playReplayById(replayId, /WORLD RECORD/i.test(text) ? "WORLD RECORD REPLAY" : "ONLINE REPLAY");
-      });
-      video.replaceWith(button);
-    }
+    // Replays now use the dedicated video window owned by extended-features.js.
+    // Never replace its <video> element with the legacy giant text button.
+    return root;
   }
 
-  const modalObserver = new MutationObserver((records) => {
-    repairReplayModal(document);
-    for (const record of records) for (const node of record.addedNodes) {
-      if (node instanceof HTMLElement) repairReplayModal(node);
-    }
-  });
-  try { modalObserver.observe(document.documentElement, { childList:true, subtree:true }); repairReplayModal(document); } catch (_) {}
 
   function readHatProgress() {
     try { return JSON.parse(localStorage.getItem(HAT_PROGRESS_KEY) || "{}") || {}; }
@@ -28963,6 +29202,40 @@ window.RibbitRaceMobileDiagnostics = () => ({
     } catch (_) {}
   }
 
+  const PENDING_HAT_NOTICES_KEY = "ribbitRacePendingHatNoticesV1";
+
+  function hatSelectorIsVisibleToPlayer() {
+    try { return Boolean(isCustomHatSelectorUnlocked?.()); }
+    catch (_) { return false; }
+  }
+
+  function readPendingHatNotices() {
+    try {
+      const value = JSON.parse(localStorage.getItem(PENDING_HAT_NOTICES_KEY) || "[]");
+      return Array.isArray(value) ? value.map(String).filter(Boolean) : [];
+    } catch (_) { return []; }
+  }
+
+  function queueHiddenHatNotice(hatId) {
+    const pending = readPendingHatNotices();
+    const id = String(hatId || "");
+    if (id && !pending.includes(id)) pending.push(id);
+    try { localStorage.setItem(PENDING_HAT_NOTICES_KEY, JSON.stringify(pending)); } catch (_) {}
+  }
+
+  function flushPendingHatNotices() {
+    if (!hatSelectorIsVisibleToPlayer()) return false;
+    const pending = readPendingHatNotices();
+    if (!pending.length) return false;
+    try { localStorage.removeItem(PENDING_HAT_NOTICES_KEY); } catch (_) {}
+    for (const hatId of pending) {
+      registerRoundHatUnlock(hatId);
+      try { window.dispatchEvent(new CustomEvent("ribbit-hat-unlocked", { detail:{ id:hatId, at:Date.now(), deferred:true } })); } catch (_) {}
+      try { queueAchievementToast?.({ type:"hat", hatId }); } catch (_) {}
+    }
+    return true;
+  }
+
   function registerRoundHatUnlock(hatId) {
     const id = String(hatId || "").trim();
     if (!id || id === "none") return false;
@@ -28975,7 +29248,10 @@ window.RibbitRaceMobileDiagnostics = () => ({
   }
 
   window.addEventListener("ribbit-hat-unlocked", (event) => {
-    registerRoundHatUnlock(event?.detail?.id);
+    const id = String(event?.detail?.id || "");
+    if (!id) return;
+    if (!hatSelectorIsVisibleToPlayer()) { queueHiddenHatNotice(id); return; }
+    registerRoundHatUnlock(id);
   });
 
   function unlockHatFromLiveProgress(hatId, displayName) {
@@ -28991,6 +29267,12 @@ window.RibbitRaceMobileDiagnostics = () => ({
       const cloud = typeof RibbitCloud !== "undefined" ? RibbitCloud : window.RibbitCloud;
       cloud?.queueSave?.({ ribbitRaceUnlockedHatsV2: unlocked });
     } catch (_) {}
+    if (!hatSelectorIsVisibleToPlayer()) {
+      // Progress and the unlock itself are saved immediately, but the player is
+      // not told about hats before the Hat selector has actually been earned.
+      queueHiddenHatNotice(hatId);
+      return true;
+    }
     registerRoundHatUnlock(hatId);
     try { window.dispatchEvent(new CustomEvent("ribbit-hat-unlocked", { detail:{ id:hatId, at:Date.now() } })); } catch (_) {}
     try { queueAchievementToast?.({ type:"hat", hatId }); } catch (_) {}
@@ -29331,7 +29613,7 @@ window.RibbitRaceMobileDiagnostics = () => ({
   function drawAchievementLeaderboardButton() {
     if (game.state !== "achievements") return;
     drawMiniMedalButton(LEADERBOARD_BUTTON, polish.mainHoverKey === "leaderboard");
-    if (polish.mainHoverKey === "leaderboard") drawSpeechBubble(LEADERBOARD_BUTTON, "LEADERBOARD & REPLAYS", { maxWidth:150, scale:.48 });
+    if (polish.mainHoverKey === "leaderboard") drawSpeechBubble(LEADERBOARD_BUTTON, "LEADERBOARD", { maxWidth:116, scale:.50 });
   }
 
   function drawWorldRecordNotice() {
@@ -29499,6 +29781,7 @@ window.RibbitRaceMobileDiagnostics = () => ({
   const originalUpdatePolish8 = update;
   update = function(dt, ...rest) {
     const result = originalUpdatePolish8.call(this, dt, ...rest);
+    flushPendingHatNotices();
     const criticalCatchActive = Boolean(game.soloCriticalCatchActive || game.pvpCriticalCatchActive);
     if (polish.priorCriticalCatch && !criticalCatchActive) {
       polish.labelFadeStartedAt = performance.now();
@@ -29514,6 +29797,8 @@ window.RibbitRaceMobileDiagnostics = () => ({
 
   const originalDrawScenePolish8 = drawScene;
   drawScene = function(...args) {
+    if (game.state === "rrProfileMenu") { drawProfileMenu(); return; }
+    if (game.state === "rrDeviceMenu") { drawDeviceMenu(); return; }
     if (game.state === "rrLeaderboard") {
       drawLeaderboardScreen();
       return;
@@ -29552,6 +29837,8 @@ window.RibbitRaceMobileDiagnostics = () => ({
         CUSTOM_RANDOM_BUTTON, CUSTOM_BASE_BUTTON, polish.customBaseOpen ? CUSTOM_BASE_CLOSE : null,
         ...(polish.customBaseOpen ? getCustomBaseOptionRects() : [])]);
     }
+    if (game.state === "rrProfileMenu") return insideAny(PROFILE_MENU_RECTS);
+    if (game.state === "rrDeviceMenu") return insideAny(Object.values(DEVICE_MENU_RECTS));
     if (game.state === "achievements") {
       return insideAny([LEADERBOARD_BUTTON, ACHIEVEMENTS_UI.backButton, ACHIEVEMENTS_UI.pagePrevButton, ACHIEVEMENTS_UI.pageNextButton]);
     }
@@ -29587,7 +29874,14 @@ window.RibbitRaceMobileDiagnostics = () => ({
       if (OnlineVersus?.isMenuVisible?.() && !OnlineVersus?.isActive?.()) return;
     } catch (_) {}
     polish.mainHoverKey = "";
-    if (game.state === "main") {
+    if (game.state === "rrProfileMenu") {
+      const index = PROFILE_MENU_RECTS.findIndex((rect) => pointIn(point, rect));
+      if (index >= 0) polish.profileSelection = index;
+    } else if (game.state === "rrDeviceMenu") {
+      if (pointIn(point, DEVICE_MENU_RECTS.computer)) polish.deviceSelection = 0;
+      else if (pointIn(point, DEVICE_MENU_RECTS.mobile)) polish.deviceSelection = 1;
+      else if (pointIn(point, DEVICE_MENU_RECTS.back)) polish.deviceSelection = 2;
+    } else if (game.state === "main") {
       if (pointIn(point, MAIN_PROFILE_BUTTON)) polish.mainHoverKey = "profile";
       else if (pointIn(point, MAIN_DEVICE_BUTTON)) polish.mainHoverKey = "device";
       else if (pointIn(point, MAIN_UI.achievementsButton)) polish.mainHoverKey = "achievements";
@@ -29624,6 +29918,17 @@ window.RibbitRaceMobileDiagnostics = () => ({
 
   canvas.addEventListener("pointerdown", (event) => {
     const point = getCanvasPoint(event);
+    if (game.state === "rrProfileMenu") {
+      const index = PROFILE_MENU_RECTS.findIndex((rect) => pointIn(point, rect));
+      if (index >= 0) { event.preventDefault(); event.stopImmediatePropagation(); polish.profileSelection=index; activateProfileRow(index); }
+      return;
+    }
+    if (game.state === "rrDeviceMenu") {
+      if (pointIn(point, DEVICE_MENU_RECTS.computer)) { event.preventDefault(); event.stopImmediatePropagation(); polish.deviceSelection=0; setCanvasMobileMode(false); }
+      else if (pointIn(point, DEVICE_MENU_RECTS.mobile)) { event.preventDefault(); event.stopImmediatePropagation(); polish.deviceSelection=1; setCanvasMobileMode(true); }
+      else if (pointIn(point, DEVICE_MENU_RECTS.back)) { event.preventDefault(); event.stopImmediatePropagation(); closeUtilityMenu(); }
+      return;
+    }
     if (game.state === "achievements" && pointIn(point, LEADERBOARD_BUTTON)) {
       event.preventDefault(); event.stopImmediatePropagation(); openLeaderboard(); return;
     }
@@ -29660,8 +29965,8 @@ window.RibbitRaceMobileDiagnostics = () => ({
         }
       }
       const pageCount = Math.max(1, Math.ceil(polish.leaderboardEntries.length / 5));
-      if (pointIn(point, hits.prev) && polish.leaderboardPage > 0) { polish.leaderboardPage -= 1; polish.leaderboardDropdown = ""; return; }
-      if (pointIn(point, hits.next) && polish.leaderboardPage < pageCount - 1) { polish.leaderboardPage += 1; polish.leaderboardDropdown = ""; return; }
+      if (pointIn(point, hits.prev)) { polish.leaderboardPage = (polish.leaderboardPage - 1 + pageCount) % pageCount; polish.leaderboardDropdown = ""; return; }
+      if (pointIn(point, hits.next)) { polish.leaderboardPage = (polish.leaderboardPage + 1) % pageCount; polish.leaderboardDropdown = ""; return; }
       const name = polish.leaderboardNameRects.find((item) => pointIn(point, item));
       if (name) { playLeaderboardRecord(name.row); return; }
       const replay = polish.leaderboardReplayRects.find((item) => pointIn(point, item));
@@ -29709,9 +30014,36 @@ window.RibbitRaceMobileDiagnostics = () => ({
   }, { capture:true, passive:false });
 
   window.addEventListener("keydown", (event) => {
+    if (game.state === "rrProfileMenu") {
+      if (["ArrowUp","ArrowDown","KeyW","KeyS","Enter","NumpadEnter","Space","Escape","Backspace"].includes(event.code)) {
+        event.preventDefault(); event.stopImmediatePropagation();
+        if (event.repeat && !["ArrowUp","ArrowDown","KeyW","KeyS"].includes(event.code)) return;
+        if (["Escape","Backspace"].includes(event.code)) closeUtilityMenu();
+        else if (["ArrowUp","KeyW"].includes(event.code)) polish.profileSelection=(polish.profileSelection-1+PROFILE_MENU_ROWS.length)%PROFILE_MENU_ROWS.length;
+        else if (["ArrowDown","KeyS"].includes(event.code)) polish.profileSelection=(polish.profileSelection+1)%PROFILE_MENU_ROWS.length;
+        else activateProfileRow();
+      }
+      return;
+    }
+    if (game.state === "rrDeviceMenu") {
+      if (["ArrowLeft","ArrowRight","ArrowUp","ArrowDown","KeyA","KeyD","Enter","NumpadEnter","Space","Escape","Backspace"].includes(event.code)) {
+        event.preventDefault(); event.stopImmediatePropagation();
+        if (["Escape","Backspace"].includes(event.code)) closeUtilityMenu();
+        else if (["ArrowLeft","KeyA"].includes(event.code)) polish.deviceSelection=(polish.deviceSelection-1+3)%3;
+        else if (["ArrowRight","KeyD","ArrowDown","ArrowUp"].includes(event.code)) polish.deviceSelection=(polish.deviceSelection+1)%3;
+        else if(polish.deviceSelection===0)setCanvasMobileMode(false);
+        else if(polish.deviceSelection===1)setCanvasMobileMode(true);
+        else closeUtilityMenu();
+      }
+      return;
+    }
     if (game.state === "rrLeaderboard") {
-      if (event.code === "Escape" || event.code === "Backspace") {
-        event.preventDefault(); event.stopImmediatePropagation(); closeLeaderboard();
+      const pageCount=Math.max(1,Math.ceil(polish.leaderboardEntries.length/5));
+      if (["Escape","Backspace","ArrowLeft","ArrowRight","KeyA","KeyD"].includes(event.code)) {
+        event.preventDefault(); event.stopImmediatePropagation();
+        if (event.code === "Escape" || event.code === "Backspace") closeLeaderboard();
+        else if (["ArrowLeft","KeyA"].includes(event.code)) polish.leaderboardPage=(polish.leaderboardPage-1+pageCount)%pageCount;
+        else polish.leaderboardPage=(polish.leaderboardPage+1)%pageCount;
       }
       return;
     }
@@ -29727,7 +30059,8 @@ window.RibbitRaceMobileDiagnostics = () => ({
     const style = document.createElement("style");
     style.textContent = `
       #fullscreen-button, #rr-fullscreen-button, .fullscreen-button, [data-action="fullscreen"] { display:none !important; }
-      #cloud-leaderboard, #leaderboard-overlay, #rr-palette-tools, #rr-custom-top-hat { display:none !important; }
+      #cloud-leaderboard, #leaderboard-overlay, #rr-palette-tools, #rr-custom-top-hat,
+      #rr170-account-icon, #rr170-device-icon, #cloud-account-panel { display:none !important; }
       #game, canvas { cursor:default; }
       button:not(:disabled), select:not(:disabled), [role="button"]:not([aria-disabled="true"]), a[href] { cursor:pointer !important; }
       .rr-replay-play-button { width:min(520px,90%); min-height:82px; margin:42px auto; display:block; border:6px solid #26363d; background:#f7fdff; color:#26363d; font:700 22px/1.2 monospace; cursor:pointer; }
@@ -29739,6 +30072,24 @@ window.RibbitRaceMobileDiagnostics = () => ({
     document.head.appendChild(style);
   } catch (_) {}
 
+  function syncLoadedFrogAppearance() {
+    try {
+      const stored = String(localStorage.getItem("ribbitRaceFrogSkin") || game.skinId || "azure").toLowerCase();
+      const skinId = FROG_SKINS[stored] || /^custom[1-3]$/.test(stored) ? stored : "azure";
+      game.skinId = skinId;
+      game.setupSkinFocusId = skinId;
+      if (frog) frog.skinId = skinId;
+      if (Array.isArray(game.pvpSetupSkinIds)) game.pvpSetupSkinIds[0] = skinId;
+      if (Array.isArray(pvpPlayers) && pvpPlayers[0] && game.mode !== "pvp") pvpPlayers[0].skinId = skinId;
+    } catch (_) {}
+  }
+  window.addEventListener("rr-authenticated", () => {
+    [0, 120, 420, 900].forEach((delay) => setTimeout(syncLoadedFrogAppearance, delay));
+  });
+  window.addEventListener("storage", (event) => { if (event.key === "ribbitRaceFrogSkin") syncLoadedFrogAppearance(); });
+  setTimeout(syncLoadedFrogAppearance, 0);
+
+  window.RibbitRaceOpenLeaderboard = openLeaderboard;
   window.RibbitRacePolish8 = Object.freeze({
     openLeaderboard,
     playReplay: playReplayById,

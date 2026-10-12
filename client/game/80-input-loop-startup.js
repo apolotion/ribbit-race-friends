@@ -1315,7 +1315,7 @@
         if (event.code === "PageUp") {
           event.preventDefault();
           if (game.mode !== "pvp") {
-            game.victoryNoticePage = Math.max(0, game.victoryNoticePage - 1);
+            game.victoryNoticePage = (game.victoryNoticePage - 1 + Math.max(1, getVictoryUnlockNoticeLayout()?.pageCount || 1)) % Math.max(1, getVictoryUnlockNoticeLayout()?.pageCount || 1);
             game.victoryAchievementHoverId = null;
       game.victoryNoticeHoverKey = null;
           }
@@ -1325,7 +1325,7 @@
           event.preventDefault();
           if (game.mode !== "pvp") {
             const layout = getVictoryUnlockNoticeLayout();
-            game.victoryNoticePage = Math.min((layout?.pageCount || 1) - 1, game.victoryNoticePage + 1);
+            game.victoryNoticePage = (game.victoryNoticePage + 1) % Math.max(1, layout?.pageCount || 1);
             game.victoryAchievementHoverId = null;
       game.victoryNoticeHoverKey = null;
           }
@@ -1414,6 +1414,7 @@
         ensureAudio();
         const entries = [
           ["solo", MAIN_UI.soloButton], ["frog", MAIN_UI.frogButton], ["pvp", MAIN_UI.pvpButton],
+          ["profile", MAIN_UI.profileButton], ["device", MAIN_UI.deviceButton],
           ["achievements", MAIN_UI.achievementsButton], ["stats", MAIN_UI.statsButton]
         ];
         const hit = entries.find(([, rect]) => pointInsideRect(point, rect));
@@ -1749,14 +1750,14 @@
         const unlockNotice = getVictoryUnlockNoticeLayout();
         const buttonRects = getVictoryButtonRects(unlockNotice);
         if (unlockNotice?.pageCount > 1 && pointInsideRect(point, unlockNotice.pagePrevButton)) {
-          game.victoryNoticePage = Math.max(0, game.victoryNoticePage - 1);
+          game.victoryNoticePage = (game.victoryNoticePage - 1 + Math.max(1, getVictoryUnlockNoticeLayout()?.pageCount || 1)) % Math.max(1, getVictoryUnlockNoticeLayout()?.pageCount || 1);
           game.victoryAchievementHoverId = null;
       game.victoryNoticeHoverKey = null;
           tone(420, 0.045, 0.010, -25);
           return;
         }
         if (unlockNotice?.pageCount > 1 && pointInsideRect(point, unlockNotice.pageNextButton)) {
-          game.victoryNoticePage = Math.min(unlockNotice.pageCount - 1, game.victoryNoticePage + 1);
+          game.victoryNoticePage = (game.victoryNoticePage + 1) % Math.max(1, unlockNotice.pageCount);
           game.victoryAchievementHoverId = null;
       game.victoryNoticeHoverKey = null;
           tone(610, 0.045, 0.010, 35);
@@ -1827,6 +1828,7 @@
       if (game.state === "main") {
         const entries = [
           ["solo", MAIN_UI.soloButton], ["frog", MAIN_UI.frogButton], ["pvp", MAIN_UI.pvpButton],
+          ["profile", MAIN_UI.profileButton], ["device", MAIN_UI.deviceButton],
           ["achievements", MAIN_UI.achievementsButton], ["stats", MAIN_UI.statsButton]
         ];
         const hit = entries.find(([, rect]) => pointInsideRect(point, rect));
@@ -1921,9 +1923,9 @@
       }
 
       if (game.state === "stats") {
-        if (pointInsideRect(point, getStatsPageButtonHitRect(STATS_UI.pagePrevButton)) && game.statsPage > 0) {
+        if (pointInsideRect(point, getStatsPageButtonHitRect(STATS_UI.pagePrevButton)) && getStatsPageCount() > 1) {
           game.statsFocusArea = "pagePrev";
-        } else if (pointInsideRect(point, getStatsPageButtonHitRect(STATS_UI.pageNextButton)) && game.statsPage < getStatsPageCount() - 1) {
+        } else if (pointInsideRect(point, getStatsPageButtonHitRect(STATS_UI.pageNextButton)) && getStatsPageCount() > 1) {
           game.statsFocusArea = "pageNext";
         } else if (pointInsideRect(point, STATS_UI.backButton)) {
           game.statsFocusArea = "back";
