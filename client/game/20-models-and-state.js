@@ -151,6 +151,7 @@
       lastStartedTimeOfDay: null,
       hoveredLevelId: null,
       timeButtonHovered: false,
+      homeTutorialButtonHovered: false,
       homeSettingsButtonHovered: false,
       achievementButtonHovered: false,
       statsButtonHovered: false,
@@ -319,6 +320,7 @@
       pvpTimeButtonHovered: false,
       pvpSettingsButtonHovered: false,
       pvpWifiButtonHovered: false,
+      pvpTutorialButtonHovered: false,
       pvpVictoryHoveredSelection: null,
       pvpVictoryPressedSelection: null,
       pvpVictoryPointerId: null,
@@ -350,9 +352,9 @@
     };
 
 
-    const sandboxPreview = {mode:"play",next:"win",flySlots:[],savedPose:null};
+    const sandboxPreview = {mode:"play",next:"win",flySlots:[],savedPose:null,spawnCycle:0};
     function resetSandboxTestFlies() {
-      sandboxPreview.mode="play";sandboxPreview.next="win";sandboxPreview.savedPose=null;
+      sandboxPreview.mode="play";sandboxPreview.next="win";sandboxPreview.savedPose=null;sandboxPreview.spawnCycle=0;
       sandboxPreview.flySlots=[{x:112,y:194},{x:168,y:104},{x:318,y:106},{x:393,y:147}].map(p=>({...p,due:0}));
       refillSandboxTestFlies();
     }
@@ -366,7 +368,15 @@
     }
     function catchSandboxFly(f) {
       const index=flies.indexOf(f);if(index<0)return;
-      flies.splice(index,1);sandboxPreview.flySlots[f.sandboxSlot].due=game.elapsed+1.6;
+      flies.splice(index,1);
+      const sourceSlot=sandboxPreview.flySlots[f.sandboxSlot];
+      if(sourceSlot) sourceSlot.due=game.elapsed+99;
+      const presets=[{x:112,y:194},{x:168,y:104},{x:318,y:106},{x:393,y:147},{x:240,y:66},{x:88,y:143},{x:390,y:106},{x:240,y:157}];
+      const occupiedKeys=new Set(flies.map(v=>`${Math.round(v.baseX)}:${Math.round(v.baseY)}`));
+      let options=presets.filter(p=>!occupiedKeys.has(`${p.x}:${p.y}`));
+      if(!options.length) options=presets.slice();
+      const choice=options[Math.floor(Math.random()*options.length)]||presets[0];
+      if(sourceSlot){sourceSlot.x=choice.x;sourceSlot.y=choice.y;sourceSlot.due=game.elapsed+1.1;}
       frog.catchSparkleTimer=CONFIG.catchSparkleDuration;
       playCorrectFlySound();
     }

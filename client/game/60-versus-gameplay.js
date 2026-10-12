@@ -3452,6 +3452,26 @@
       }
     }
 
+
+    function drawPvpSetupTutorialButton() {
+      const rect = PVP_SETUP_UI.tutorialButton;
+      const focused = (game.pvpSetupFocusArea === "bottom" && game.pvpSetupBottomSelection === "tutorial") || game.pvpTutorialButtonHovered;
+      const palette = { dark: "#5d5114", mid: "#d3b64f", light: "#f4e08e", belly: "#fff6d7" };
+      ctx.fillStyle = "rgba(25,43,52,0.28)";
+      ctx.fillRect(rect.x + 2, rect.y + 2, rect.w, rect.h);
+      ctx.fillStyle = focused ? palette.dark : COLORS.ink;
+      ctx.fillRect(rect.x, rect.y, rect.w, rect.h);
+      ctx.fillStyle = focused ? palette.belly : "#f7fdff";
+      ctx.fillRect(rect.x + 2, rect.y + 2, rect.w - 4, rect.h - 4);
+      ctx.fillStyle = focused ? palette.light : "#ffffff";
+      ctx.fillRect(rect.x + 5, rect.y + 4, rect.w - 10, 2);
+      drawMiniBookIcon(rect.x + rect.w / 2, rect.y + rect.h / 2, focused ? palette.mid : "#48555a");
+      if (focused) {
+        ctx.fillStyle = COLORS.white;
+        [[3,3],[rect.w-5,3],[3,rect.h-5],[rect.w-5,rect.h-5]].forEach(([dx,dy]) => ctx.fillRect(rect.x + dx, rect.y + dy, 2, 2));
+      }
+    }
+
     function drawPvpSetupSettingsButton() {
       const rect = PVP_SETUP_UI.settingsButton;
       const focused = game.pvpSetupFocusArea === "bottom" && game.pvpSetupBottomSelection === "settings";
@@ -3578,6 +3598,7 @@
         () => drawMiniHouseIcon(PVP_SETUP_UI.backButton.x + 7, PVP_SETUP_UI.backButton.y + 4)
       );
       drawPvpSetupWifiButton();
+      drawPvpSetupTutorialButton();
       if (!online || OnlineVersus.isHost()) { drawPvpSetupSettingsButton();drawPvpSetupTimeButton(); }
     }
 

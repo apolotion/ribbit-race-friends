@@ -4656,6 +4656,44 @@
       }
     }
 
+
+    function drawMiniBookIcon(cx, cy, color = "#48555a") {
+      ctx.fillStyle = COLORS.ink;
+      ctx.fillRect(cx - 7, cy - 6, 14, 12);
+      ctx.fillStyle = "#f7fdff";
+      ctx.fillRect(cx - 5, cy - 4, 10, 8);
+      ctx.fillStyle = color;
+      ctx.fillRect(cx - 1, cy - 4, 2, 8);
+      ctx.fillRect(cx - 4, cy - 2, 3, 1);
+      ctx.fillRect(cx - 4, cy, 3, 1);
+      ctx.fillRect(cx + 1, cy - 2, 3, 1);
+      ctx.fillRect(cx + 1, cy, 3, 1);
+      ctx.fillRect(cx - 5, cy + 4, 10, 1);
+    }
+
+    function drawHomeTutorialButton() {
+      const button = HOME_UI.tutorialButton;
+      const focused = game.homeFocusVisible && game.homeSelection === "tutorial";
+      const hovered = game.homeTutorialButtonHovered;
+      const active = focused || hovered;
+      ctx.fillStyle = "rgba(25,43,52,0.30)";
+      ctx.fillRect(button.x + 2, button.y + 2, button.w, button.h);
+      ctx.fillStyle = active ? getSelectedSkin().dark : COLORS.ink;
+      ctx.fillRect(button.x, button.y, button.w, button.h);
+      ctx.fillStyle = active
+        ? mixHexColors(getSelectedSkin().belly, "#ffffff", 0.18)
+        : "#f7fdff";
+      ctx.fillRect(button.x + 2, button.y + 2, button.w - 4, button.h - 4);
+      drawMiniBookIcon(button.x + button.w / 2, button.y + button.h / 2, active ? getSelectedSkin().mid : "#48555a");
+      if (focused) {
+        ctx.fillStyle = getSelectedSkin().dark;
+        ctx.fillRect(button.x + 3, button.y + 3, 2, 2);
+        ctx.fillRect(button.x + button.w - 5, button.y + 3, 2, 2);
+        ctx.fillRect(button.x + 3, button.y + button.h - 5, 2, 2);
+        ctx.fillRect(button.x + button.w - 5, button.y + button.h - 5, 2, 2);
+      }
+    }
+
     function drawSoloSettingsScreen() {
       const skin = getSelectedSkin();
       const previewLevelId = getHomePreviewLevelId();
@@ -5368,6 +5406,7 @@
       for (const button of HOME_UI.levelButtons) drawHomeLevelButton(button);
       drawHomeRandomButton();
       drawStageBackButton();
+      drawHomeTutorialButton();
       drawHomeSettingsButton();
       drawHomeTimeControls();
 

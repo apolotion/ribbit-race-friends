@@ -1460,6 +1460,12 @@
           game.pvpSetupFocusArea = "bottom";
           game.pvpSetupBottomSelection = "wifi";
           OnlineVersus.open();
+        } else if (pointInsideRect(point, PVP_SETUP_UI.tutorialButton)) {
+          game.pvpSetupFocusArea = "bottom";
+          game.pvpSetupBottomSelection = "tutorial";
+          game.cheatToastText = "VERSUS TUTORIAL COMING SOON";
+          game.cheatToastTimer = CONFIG.achievementToastDuration;
+          tone(515, 0.05, 0.010, 25);
         } else if (pointInsideRect(point, PVP_SETUP_UI.startButton)) {
           game.pvpSetupFocusArea = "bottom";
           game.pvpSetupBottomSelection = "start";
@@ -1627,6 +1633,10 @@
         } else if (pointInsideRect(point, HOME_UI.backButton)) {
           game.homeSelection = "back";
           openMainMenu();
+        } else if (pointInsideRect(point, HOME_UI.tutorialButton)) {
+          ensureAudio();
+          game.homeSelection = "tutorial";
+          window.RibbitRaceTutorialEngine?.start?.("solo");
         } else if (pointInsideRect(point, HOME_UI.settingsButton)) {
           game.homeSelection = "settings";
           openSoloSettingsMenu();
@@ -1827,6 +1837,7 @@
         game.pvpTimeButtonHovered=pointInsideRect(point,PVP_SETUP_UI.timeButton);
         game.pvpSettingsButtonHovered=pointInsideRect(point,PVP_SETUP_UI.settingsButton);
         game.pvpWifiButtonHovered=pointInsideRect(point,PVP_SETUP_UI.wifiButton);
+        game.pvpTutorialButtonHovered=pointInsideRect(point,PVP_SETUP_UI.tutorialButton);
         let hoverKey="";
         if(levelIndex>=0){game.pvpSetupFocusArea="level";game.pvpSetupLevelIndex=levelIndex;hoverKey=`level:${levelIndex}`;}
         else if(pointInsideRect(point,PVP_SETUP_UI.vsButton)){game.pvpSetupFocusArea="vs";hoverKey="vs";}
@@ -1834,6 +1845,7 @@
         else if(pointInsideRect(point,PVP_SETUP_UI.p1Selector)){game.pvpSetupFocusArea="skin";game.pvpSetupPlayerIndex=0;hoverKey="p1";}
         else if(pointInsideRect(point,PVP_SETUP_UI.p2Selector)){game.pvpSetupFocusArea="skin";game.pvpSetupPlayerIndex=1;hoverKey="p2";}
         else if(pointInsideRect(point,PVP_SETUP_UI.wifiButton)){game.pvpSetupFocusArea="bottom";game.pvpSetupBottomSelection="wifi";hoverKey="wifi";}
+        else if(pointInsideRect(point,PVP_SETUP_UI.tutorialButton)){game.pvpSetupFocusArea="bottom";game.pvpSetupBottomSelection="tutorial";hoverKey="tutorial";}
         else if(pointInsideRect(point,PVP_SETUP_UI.startButton)){game.pvpSetupFocusArea="bottom";game.pvpSetupBottomSelection="start";hoverKey="start";}
         else if(pointInsideRect(point,PVP_SETUP_UI.backButton)){game.pvpSetupFocusArea="bottom";game.pvpSetupBottomSelection="back";hoverKey="back";}
         else if(pointInsideRect(point,PVP_SETUP_UI.settingsButton)){game.pvpSetupFocusArea="bottom";game.pvpSetupBottomSelection="settings";hoverKey="settings";}
@@ -1901,11 +1913,12 @@
         game.hoveredLevelId = hoveredButton?.id || null;
         game.randomButtonHovered = pointInsideRect(point, HOME_UI.randomButton);
         if (game.randomButtonHovered) ensureSoloRandomPreview();
+        game.homeTutorialButtonHovered = pointInsideRect(point, HOME_UI.tutorialButton);
         game.homeSettingsButtonHovered = pointInsideRect(point, HOME_UI.settingsButton);
         game.timeButtonHovered = pointInsideRect(point, HOME_UI.timeButton);
         const backHovered = pointInsideRect(point, HOME_UI.backButton);
         game.homeHoverSelection = backHovered ? "back" : null;
-        const hoverKey = hoveredButton?.id || (game.randomButtonHovered ? "random" : game.homeSettingsButtonHovered ? "settings" : game.timeButtonHovered ? "time" : backHovered ? "back" : "");
+        const hoverKey = hoveredButton?.id || (game.randomButtonHovered ? "random" : game.homeTutorialButtonHovered ? "tutorial" : game.homeSettingsButtonHovered ? "settings" : game.timeButtonHovered ? "time" : backHovered ? "back" : "");
         if (hoverKey !== (game.titleHoveredKey || "")) {
           game.titleHoveredKey = hoverKey;
           if (hoverKey) {
@@ -1913,7 +1926,7 @@
             tone(505, 0.03, 0.008, 30);
           }
         }
-        if (hoveredButton || game.randomButtonHovered || game.homeSettingsButtonHovered || game.timeButtonHovered || backHovered) {
+        if (hoveredButton || game.randomButtonHovered || game.homeTutorialButtonHovered || game.homeSettingsButtonHovered || game.timeButtonHovered || backHovered) {
           game.homeFocusVisible = false;
         }
         return;

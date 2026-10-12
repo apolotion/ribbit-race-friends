@@ -46,6 +46,7 @@
       customizeButton: Object.freeze({ x: 72, y: 176, w: 120, h: 27 }), // legacy geometry
       randomButton: Object.freeze({ id: "random", x: 188, y: 154, w: 104, h: 17 }),
       backButton: Object.freeze({ id: "back", x: 180, y: 181, w: 120, h: 24 }),
+      tutorialButton: Object.freeze({ id: "tutorial", x: 355, y: 211, w: 24, h: 24 }),
       settingsButton: Object.freeze({ id: "settings", x: 382, y: 211, w: 24, h: 24 }),
       levelButtons: Object.freeze([
         Object.freeze({ id: "park",   x: 72,  y: 101, w: 104, h: 21 }),
@@ -69,7 +70,7 @@
       Object.freeze(["park", "swamp", "jungle"]),
       Object.freeze(["pond", "lake", "garden"]),
       Object.freeze(["random"]),
-      Object.freeze(["back", "settings", "time"])
+      Object.freeze(["back", "tutorial", "settings", "time"])
     ]);
 
     const SETUP_UI = Object.freeze({
@@ -166,6 +167,7 @@
       vsButton: Object.freeze({ x: 223, y: 174, w: 34, h: 21 }),
       cpuDifficultyButton: Object.freeze({ x: 284, y: 210, w: 84, h: 15 }),
       wifiButton: Object.freeze({ x: 34, y: 225, w: 24, h: 24 }),
+      tutorialButton: Object.freeze({ x: 62, y: 225, w: 24, h: 24 }),
       startButton: Object.freeze({ x: 132, y: 228, w: 100, h: 23 }),
       backButton: Object.freeze({ x: 248, y: 228, w: 100, h: 23 }),
       settingsButton: Object.freeze({ x: 394, y: 225, w: 24, h: 24 }),
@@ -704,6 +706,7 @@
       game.setupSkinFocusId = game.skinId;
       game.hoveredLevelId = null;
       game.timeButtonHovered = false;
+      game.homeTutorialButtonHovered = false;
       game.homeSettingsButtonHovered = false;
       game.achievementButtonHovered = false;
       game.statsButtonHovered = false;
@@ -1606,6 +1609,7 @@
       const map = {
         random: HOME_UI.randomButton,
         back: HOME_UI.backButton,
+        tutorial: HOME_UI.tutorialButton,
         settings: HOME_UI.settingsButton,
         time: HOME_UI.timeButton
       };
@@ -1623,7 +1627,7 @@
     }
 
     function focusHomeSelection(selection, playFeedback = true) {
-      const valid = LEVELS[selection] || ["random", "back", "settings", "time"].includes(selection);
+      const valid = LEVELS[selection] || ["random", "back", "tutorial", "settings", "time"].includes(selection);
       if (!valid) return false;
 
       const changed = game.homeSelection !== selection;
@@ -1655,6 +1659,7 @@
       } else if (changed && playFeedback) {
         const frequency = selection === "back" ? 330
           : selection === "random" ? 535
+          : selection === "tutorial" ? 490
           : 355;
         tone(frequency, 0.045, 0.010, 35);
       }
@@ -2192,7 +2197,7 @@
         return;
       }
       if (area === "bottom") {
-        const options = ["wifi", "start", "back", "settings", "time"];
+        const options = ["wifi", "tutorial", "start", "back", "settings", "time"];
         if (horizontal) {
           const current = Math.max(0, options.indexOf(game.pvpSetupBottomSelection));
           game.pvpSetupBottomSelection = options[(current + horizontal + options.length) % options.length];

@@ -1,3 +1,0 @@
-# Ribbit Race Friends 1.6.0
-
-This release adds release-based mobile menu activation, countdown precharge, iOS audio unlocking, mobile cleanup, final-catch label suppression and tongue assist hooks, a new app/favicon set, compact Quickplay controls, dynamic opponent names, a three-second CPU takeover interruption, Frog Tags naming/history hooks, guest-to-account save conversion, separate online appearance storage, replay capture lifecycle corrections, WORLD RECORD details, fullscreen shortcut, touch achievement selection, responsive login sizing, consistent online back/tooltip hooks, and buffered platform-drop bookkeeping.
