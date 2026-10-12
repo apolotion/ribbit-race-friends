@@ -18,8 +18,8 @@ function block(start, end) {
 
 test("1.7.10 polished tutorial build and first-boot marker are installed", () => {
   assert.equal(JSON.parse(read("package.json")).version, "1.7.10");
-  assert.match(read("src/common.js"), /2026\.10\.12-friends-polish-9/);
-  assert.match(engine, /const TUTORIAL_BUILD = "2026\.10\.12-friends-polish-9"/);
+  assert.match(read("src/common.js"), /2026\.10\.12-friends-friends-polish-8/);
+  assert.match(engine, /const TUTORIAL_BUILD = "2026\.10\.12-friends-friends-polish-8"/);
   assert.match(engine, /rrFriendsEngineTutorialSoloSeenV8/);
 });
 
@@ -52,16 +52,16 @@ test("dialogue uses large left-aligned two-line RPG typography, hold-to-speed, a
 test("dialogue matches the layered cyan-and-white reference with a full square Ember portrait", () => {
   const dialogue = block("function drawTutorialDialogue", "function drawTutorialStatus");
   assert.match(dialogue, /const textPanel = \{ x: 90, y: 6, w: 250, h: 50 \}/);
-  assert.match(dialogue, /const portraitPanel = \{ x: 338, y: 6, w: 54, h: 54 \}/);
+  assert.match(dialogue, /const portraitPanel = \{ x: 338, y: 6, w: 54, h: 64 \}/);
   assert.match(dialogue, /const drawReferencePanel/);
   assert.match(dialogue, /Five-layer pixel frame: black -> cyan -> white -> cyan -> black/);
   assert.match(dialogue, /drawReferencePanel\(textPanel, "#0b4462", "#052b43"\)/);
   assert.match(dialogue, /drawReferencePanel\(portraitPanel, "#159ee4", "#087cc5"\)/);
-  assert.match(dialogue, /const imageSize = portraitPanel\.w - 10/);
+  assert.match(dialogue, /const imageSize = portraitPanel\.w - 12/);
   assert.match(dialogue, /const fit = Math\.min\(imageSize \/ sourceW, imageSize \/ sourceH\)/);
   assert.match(dialogue, /ctx\.drawImage\(portraitImage, 0, 0, sourceW, sourceH, drawX, drawY, drawW, drawH\)/);
-  assert.match(dialogue, /const nameH = 10/);
-  assert.match(dialogue, /const nameY = imageY \+ imageSize - nameH/);
+  assert.match(dialogue, /const nameY = imageY \+ imageSize \+ 1/);
+  assert.match(dialogue, /const nameH = 9/);
   assert.doesNotMatch(dialogue, /indigo|rightRail|portraitRail/i);
 });
 
@@ -85,7 +85,7 @@ test("background and armed flies keep animating while dialogue locks only the fr
   assert.doesNotMatch(open, /armTutorialFlies\(\)/);
   assert.match(open, /Authored tutorial flies stay hidden until the frog's matching poof-in/);
   assert.match(engine, /function tutorialBlocksLiveInput/);
-  assert.match(engine, /tutorialMovementLocked\(\) \|\| tutorial\.pvpDemoActive \|\| tutorial\.passPending \|\| tutorial\.blockJumpUntilRelease/);
+  assert.match(engine, /tutorialMovementLocked\(\) \|\| tutorial\.passPending \|\| tutorial\.blockJumpUntilRelease/);
 });
 
 test("the dinner fly finishes its poof, then waits half a second before the line", () => {
@@ -122,7 +122,7 @@ test("poof transitions are exactly half a second and preserve already-visible fl
   assert.match(engine, /collectVisibleTutorialFlyKeys/);
   assert.match(engine, /preserveExistingFlies/);
   assert.match(engine, /armTutorialFlies\(\{ preserveKeys: preserveFlyKeys \}\)/);
-  assert.match(engine, /updateTutorialAmbient\(dt, \{ animateFlies: true \}\)/);
+  assert.match(engine, /animateFlies: !tutorial\.resetPending/);
   assert.match(engine, /playTutorialPoofSound\("out"\)/);
   assert.match(engine, /playTutorialPoofSound\("in"\)/);
 });
@@ -151,10 +151,8 @@ test("each proper long-jump landing gets the normal catch sparkle and success so
 test("tongue lesson starts at the normal ground position, lowers the fly by the same offset, and invokes the stock cinematic", () => {
   const range = engine.slice(engine.indexOf('case "rangeCatch"'), engine.indexOf('case "wrongFly"'));
   assert.match(range, /positionSoloFrog\(getNormalParkStartX\(\), CONFIG\.groundY - frog\.h, 1\)/);
-  assert.match(range, /const targetPlatform = platforms\[5\]/);
-  assert.match(range, /const targetX = Math\.round\(targetPlatform\.x \+ targetPlatform\.w \/ 2\)/);
-  assert.match(range, /const targetY = Math\.round\(platforms\[5\]\.y - \(platforms\[5\]\.y - platforms\[4\]\.y\) \* 0\.40\)/);
-  assert.match(range, /makeFly\(targetX, targetY, 0, 4\)/);
+  assert.match(range, /const deltaY = newY - oldY/);
+  assert.match(range, /makeFly\(324, 38 \+ deltaY, 0, 4\)/);
   assert.match(engine, /activeSetup === "rangeCatch" && wasCorrect && source !== "tongue"/);
   assert.match(engine, /const originalShouldStartSoloCriticalCatchForTutorial = shouldStartSoloCriticalCatch/);
   assert.match(engine, /const isRangeMatch = activeSetup === "rangeCatch"/);
@@ -181,11 +179,9 @@ test("correct three-catch landings hold for half a second before the next poof",
 test("buffer and quick drops do not consume tutorial jump attempts", () => {
   const launch = block("launchJump = function", "// Hide the normal first-jump keyboard bubble");
   assert.match(launch, /const quick = Boolean\(active && standing && !standing\.ground/);
-  assert.match(launch, /const actualLaunch = Number\(game\.jumps \|\| 0\) > jumpsBefore/);
-  assert.match(launch, /if \(active && actualLaunch\)/);
-  assert.match(launch, /A normal platform drop is a real jump attempt/);
-  assert.match(launch, /if \(quick\) \{/);
-  assert.match(launch, /if \(setup === "longJumps"\)[\s\S]{0,100}failAttempt\("PLATFORM DROPS DO NOT COUNT AS LONG JUMPS"\)/);
+  assert.match(launch, /game\.jumps = jumpsBefore/);
+  assert.match(launch, /game\.totalJumps = totalJumpsBefore/);
+  assert.match(launch, /return result/);
   assert.match(engine, /case "wallTurn":[\s\S]{0,170}makeParkFly\(7, 0, 0\)/);
 });
 
@@ -193,7 +189,7 @@ test("successful wall techniques continue physics to landing before freezing", (
   assert.match(engine, /function passStep\(\)[\s\S]{0,420}!frog\.grounded \|\| tongue\.active \|\| game\.soloCriticalCatchActive/);
   assert.match(engine, /tutorial\.passPending = true/);
   assert.match(engine, /if \(frog\.grounded && !tongue\.active && !game\.soloCriticalCatchActive\) finalizePassedStep\(\)/);
-  assert.match(engine, /function finalizePassedStep\(\)[\s\S]{0,900}freezeControlledEntity\(\)/);
+  assert.match(engine, /function finalizePassedStep\(\)[\s\S]{0,220}freezeControlledEntity\(\)/);
 });
 
 test("Current Goal uses the normal stats footprint and the clue shadow stops at its boundary", () => {
@@ -205,14 +201,13 @@ test("Current Goal uses the normal stats footprint and the clue shadow stops at 
 });
 
 test("terms stay blank until controls return while the three-catch goal remains live", () => {
-  assert.match(engine, /const pausedGoal = game\.state === "paused"/);
-  assert.match(engine, /if \(!tutorialPlayerHasControl\(\) && !pausedGoal/);
+  assert.match(engine, /if \(!tutorialPlayerHasControl\(\) && step\.setup !== "threeCatches" && step\.setup !== "wrongFly"\) return \[\]/);
   assert.match(engine, /Math\.min\(3, tutorial\.sceneCatchCount\)/);
   assert.match(engine, /if \(!tutorial\.sceneAttemptCaught\)[\s\S]{0,160}sceneCatchCount = Math\.min\(3, tutorial\.sceneCatchCount \+ 1\)/);
   assert.doesNotMatch(engine, /sceneLandingDelayUntil = 0;\s*tutorial\.sceneCatchCount \+= 1/);
   assert.match(engine, /drawBlankTutorialVocabularyPrompt\(\)/);
-  assert.match(engine, /function drawTutorialOverlay\(\)[\s\S]{0,300}drawCurrentGoalHud\(\)/);
-  assert.match(engine, /if \(game\.state === "paused"\) \{[\s\S]{0,100}drawCurrentGoalHud\(\)/);
+  assert.match(engine, /const finalPractice = tutorialStep\(\)\?\.setup === "normalRound"/);
+  assert.match(engine, /if \(!finalPractice\) drawCurrentGoalHud\(\)/);
 });
 
 test("pause provides retry and skip, and resuming tutorial bypasses the countdown", () => {

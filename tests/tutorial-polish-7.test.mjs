@@ -15,35 +15,35 @@ function block(start, end) {
   return engine.slice(from, to);
 }
 
-test("polish-9 cache marker forces the rebuilt tutorial and Versus lesson UI to load", () => {
-  assert.match(engine, /2026\.10\.12-friends-polish-9/);
-  assert.match(index, /game\.bundle\.js\?v=2026\.10\.12-friends-polish-9/);
+test("polish-8 cache marker forces the rebuilt tutorial UI to load", () => {
+  assert.match(engine, /2026\.10\.12-friends-friends-polish-8/);
+  assert.match(index, /game\.bundle\.js\?v=2026\.10\.12-friends-polish-8/);
 });
 
 test("dialogue uses the new reference framing and keeps Ember's full square above the nameplate", () => {
   const dialogue = block("function drawTutorialDialogue", "function drawTutorialStatus");
   assert.match(dialogue, /const textPanel = \{ x: 90, y: 6, w: 250, h: 50 \}/);
-  assert.match(dialogue, /const portraitPanel = \{ x: 338, y: 6, w: 54, h: 54 \}/);
+  assert.match(dialogue, /const portraitPanel = \{ x: 338, y: 6, w: 54, h: 64 \}/);
   assert.match(dialogue, /drawReferencePanel\(textPanel, "#0b4462", "#052b43"\)/);
   assert.match(dialogue, /drawReferencePanel\(portraitPanel, "#159ee4", "#087cc5"\)/);
-  assert.match(dialogue, /const imageSize = portraitPanel\.w - 10/);
+  assert.match(dialogue, /const imageSize = portraitPanel\.w - 12/);
   assert.match(dialogue, /const fit = Math\.min\(imageSize \/ sourceW, imageSize \/ sourceH\)/);
-  assert.match(dialogue, /const nameY = imageY \+ imageSize - nameH/);
-  assert.match(dialogue, /const nameH = 10/);
+  assert.match(dialogue, /const nameY = imageY \+ imageSize \+ 1/);
+  assert.match(dialogue, /const nameH = 9/);
 });
 
 test("pause panel renders above an active Ember dialogue", () => {
-  assert.match(engine, /drawSoloPauseOverlay = function[\s\S]{0,180}drawTutorialDialogue\(\)[\s\S]{0,160}originalDrawSoloPauseOverlayForTutorial/);
-  assert.match(engine, /if \(game\.state === "paused"\) \{[\s\S]{0,100}drawCurrentGoalHud\(\)/);
+  assert.match(engine, /drawSoloPauseOverlay = function[\s\S]{0,180}drawTutorialDialogue\(\)[\s\S]{0,120}originalDrawSoloPauseOverlayForTutorial/);
+  assert.match(engine, /if \(!tutorial\.active \|\| game\.state === "paused" \|\| game\.state === "countdown"\) return/);
 });
 
 test("tongue tutorial moves both frog and fly down from the old platform setup", () => {
   const range = engine.slice(engine.indexOf('case "rangeCatch"'), engine.indexOf('case "wrongFly"'));
+  assert.match(range, /const oldY = platforms\[1\]\.y - frog\.h/);
+  assert.match(range, /const newY = CONFIG\.groundY - frog\.h/);
+  assert.match(range, /const deltaY = newY - oldY/);
   assert.match(range, /positionSoloFrog\(getNormalParkStartX\(\), CONFIG\.groundY - frog\.h, 1\)/);
-  assert.match(range, /const targetPlatform = platforms\[5\]/);
-  assert.match(range, /const targetX = Math\.round\(targetPlatform\.x \+ targetPlatform\.w \/ 2\)/);
-  assert.match(range, /const targetY = Math\.round\(platforms\[5\]\.y - \(platforms\[5\]\.y - platforms\[4\]\.y\) \* 0\.40\)/);
-  assert.match(range, /makeFly\(targetX, targetY, 0, 4\)/);
+  assert.match(range, /makeFly\(324, 38 \+ deltaY, 0, 4\)/);
 });
 
 test("wrong-fly pair stays hidden through Ember's explanation and appears with the closing poof", () => {
@@ -60,9 +60,8 @@ test("wrong-fly pair stays hidden through Ember's explanation and appears with t
 test("buffered jump charge lesson precedes platform-drop buffering", () => {
   assert.match(engine, /title: "BUFFER A JUMP"[\s\S]{0,500}touch the ground/);
   assert.match(engine, /setup: "bufferJumpCharge"/);
-  assert.match(engine, /landedThisFrame[\s\S]{0,240}bufferedJumpChainCount = game\.buttonHeld \? 1 : 0/);
-  assert.match(engine, /bufferedJumpChainCount >= 1 && tutorial\.bufferedJumpReleased/);
-  assert.match(engine, /BUFFERED JUMP/);
+  assert.match(engine, /landedThisFrame[\s\S]{0,240}game\.buttonHeld[\s\S]{0,120}bufferedJumpChainCount \+ 1/);
+  assert.match(engine, /BUFFERED JUMPS/);
   assert.match(engine, /All you have to do is TAP jump just before landing\./);
   assert.match(engine, /All you have to do is TAP jump just before each landing\./);
 });
@@ -93,7 +92,7 @@ test("Current Goal trophy is centered from the header to the lower border", () =
 });
 
 
-test("polish-9 centers the drop frog, moves buffer-drop start to ground, and changes the second smooth line", () => {
+test("polish-8 centers the drop frog, moves buffer-drop start to ground, and changes the second smooth line", () => {
   assert.match(engine, /case "quickDrop":[\s\S]{0,140}positionCenteredOnPlatform\(platforms\[2\], 1\)/);
   assert.match(engine, /case "bufferDrop":[\s\S]{0,260}platforms\[2\]\.x \+ Math\.round\(\(platforms\[2\]\.w - frog\.w\) \/ 2\)[\s\S]{0,100}CONFIG\.groundY - frog\.h/);
   assert.match(engine, /"Dropping it like it's hot!"/);

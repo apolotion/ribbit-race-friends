@@ -20,5 +20,5 @@ body.rr-mobile-enabled canvas,body.rr-mobile-enabled #game-frame{-webkit-touch-c
 body.rr-mobile-enabled #rr-mobile-toggle,body.rr-mobile-enabled .rr-mobile-pad{display:none!important}
 body.rr-mobile-enabled #game{ -webkit-user-drag:none; -webkit-touch-callout:none; user-select:none; -webkit-user-select:none; }
 
-/* polish-9-hide-fullscreen */
+/* polish-8-hide-fullscreen */
 #fullscreen-button,#rr-fullscreen-button,.fullscreen-button{display:none!important;}

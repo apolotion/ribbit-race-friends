@@ -1463,8 +1463,9 @@
         } else if (pointInsideRect(point, PVP_SETUP_UI.tutorialButton)) {
           game.pvpSetupFocusArea = "bottom";
           game.pvpSetupBottomSelection = "tutorial";
-          ensureAudio();
-          window.RibbitRaceTutorialEngine?.start?.("pvp");
+          game.cheatToastText = "VERSUS TUTORIAL COMING SOON";
+          game.cheatToastTimer = CONFIG.achievementToastDuration;
+          tone(515, 0.05, 0.010, 25);
         } else if (pointInsideRect(point, PVP_SETUP_UI.startButton)) {
           game.pvpSetupFocusArea = "bottom";
           game.pvpSetupBottomSelection = "start";

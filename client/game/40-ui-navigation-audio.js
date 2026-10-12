@@ -2227,7 +2227,6 @@
     function activatePvpSetupSelection() {
       if (game.pvpSetupFocusArea === "bottom") {
         if (game.pvpSetupBottomSelection === "wifi") OnlineVersus.open();
-        else if (game.pvpSetupBottomSelection === "tutorial") window.RibbitRaceTutorialEngine?.start?.("pvp");
         else if (game.pvpSetupBottomSelection === "back") closePvpSetupMenu();
         else if (game.pvpSetupBottomSelection === "time") {
           if (isTimeSelectUnlocked()) cycleTimeOfDayMode(); else playLockedSkinSound();

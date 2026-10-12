@@ -18,10 +18,10 @@ function block(start, end) {
 
 test("1.7.10 tutorial-polish build is wired everywhere", () => {
   assert.equal(JSON.parse(read("package.json")).version, "1.7.10");
-  assert.match(read("src/common.js"), /2026\.10\.12-friends-polish-9/);
-  assert.match(read("client/game/110-online-mobile-polish.js"), /2026\.10\.12-friends-polish-9/);
-  assert.match(read("public/scripts/cloud-client.js"), /2026\.10\.12-friends-polish-9/);
-  assert.match(index, /2026\.10\.12-friends-polish-9/);
+  assert.match(read("src/common.js"), /2026\.10\.12-friends-friends-polish-8/);
+  assert.match(read("client/game/110-online-mobile-polish.js"), /2026\.10\.12-friends-friends-polish-8/);
+  assert.match(read("public/scripts/cloud-client.js"), /2026\.10\.12-friends-friends-polish-8/);
+  assert.match(index, /2026\.10\.12-friends-polish-8/);
   assert.doesNotMatch(index, /tutorial-scripted-1/);
 });
 
@@ -36,8 +36,8 @@ test("first-boot tutorial waits for auth and suppresses the menu before first pa
     "rr-authenticated"
   ]) assert.ok(polish.includes(phrase), phrase);
   assert.match(index, /<body class="ribbit-auth-locked rr-tutorial-pending">/);
-  assert.match(index, /tutorial-preboot\.js\?v=2026\.10\.12-friends-polish-9/);
-  assert.match(read("public/scripts/tutorial-preboot.js"), /rrFriendsEngineTutorialSoloSeenV8/);
+  assert.match(index, /tutorial-preboot\.js\?v=2026\.10\.12-friends-polish-8/);
+  assert.match(read("public/scripts/tutorial-preboot.js"), /rrFriendsEngineTutorialSoloSeenV7/);
   assert.match(css, /body\.rr-tutorial-pending:not\(\.ribbit-auth-locked\) #game\s*\{[\s\S]{0,120}visibility:\s*hidden\s*!important/);
   assert.doesNotMatch(polish, /requestAnimationFrame\(\(\) => requestAnimationFrame/);
 });
@@ -46,14 +46,14 @@ test("Ember dialogue uses the supplied layered reference, left-aligned text, and
   const dialogue = block("function drawTutorialDialogue", "function drawTutorialStatus");
   assert.match(engine, /DIALOGUE_TEXT_SCALE = 0\.86/);
   assert.match(dialogue, /const textPanel = \{ x: 90, y: 6, w: 250, h: 50 \}/);
-  assert.match(dialogue, /const portraitPanel = \{ x: 338, y: 6, w: 54, h: 54 \}/);
+  assert.match(dialogue, /const portraitPanel = \{ x: 338, y: 6, w: 54, h: 64 \}/);
   assert.match(dialogue, /Five-layer pixel frame/);
   assert.match(dialogue, /drawReferencePanel\(textPanel, "#0b4462", "#052b43"\)/);
-  assert.match(dialogue, /const imageSize = portraitPanel\.w - 10/);
+  assert.match(dialogue, /const imageSize = portraitPanel\.w - 12/);
   assert.match(dialogue, /const fit = Math\.min\(imageSize \/ sourceW, imageSize \/ sourceH\)/);
   assert.match(dialogue, /ctx\.drawImage\(portraitImage, 0, 0, sourceW, sourceH, drawX, drawY, drawW, drawH\)/);
-  assert.match(dialogue, /const nameY = imageY \+ imageSize - nameH/);
-  assert.match(dialogue, /const nameH = 10/);
+  assert.match(dialogue, /const nameY = imageY \+ imageSize \+ 1/);
+  assert.match(dialogue, /const nameH = 9/);
   assert.match(dialogue, /const textTop = Math\.round\(textArea\.y \+ Math\.max\(0, \(textArea\.h - totalTextHeight\) \/ 2\)\)/);
   assert.match(dialogue, /visibleOnLine,[\s\S]{0,80}textArea\.x,[\s\S]{0,120}"left"/);
   assert.doesNotMatch(dialogue, /fullLineWidth|textArea\.x \+ textArea\.w \/ 2/);
@@ -65,7 +65,7 @@ test("authored tutorial flies retain normal movement and normal spawn sparkles",
   assert.match(engine, /phase:Math\.max\(0, spawnIndex\) \* 1\.37/);
   assert.match(engine, /currentFly\.spawnAge = 0/);
   assert.match(engine, /playFlySpawnSound/);
-  assert.match(engine, /updateTutorialAmbient\(dt, \{ animateFlies: true \}\)/);
+  assert.match(engine, /updateTutorialAmbient\(dt, \{ animateFlies: !tutorial\.resetPending \}\)/);
 });
 
 test("poof reset clears tongue, hides only the frog, and never moves it offscreen", () => {
@@ -113,8 +113,7 @@ test("closing the final dialogue with Space consumes that physical key press", (
 
 test("tutorial restart keeps terms blank while preserving live goals for catch sequencing", () => {
   assert.match(engine, /function tutorialPlayerHasControl/);
-  assert.match(engine, /const pausedGoal = game\.state === "paused"/);
-  assert.match(engine, /if \(!tutorialPlayerHasControl\(\) && !pausedGoal/);
+  assert.match(engine, /if \(!tutorialPlayerHasControl\(\) && step\.setup !== "threeCatches" && step\.setup !== "wrongFly"\) return \[\]/);
   assert.match(engine, /const visibleDuringExplanation = tutorialPromptVisibleDuringDialogue\(\)/);
   assert.match(engine, /\(\(!tutorialPlayerHasControl\(\) && !visibleDuringExplanation\) \|\| tutorial\.promptHidden\)/);
   assert.match(engine, /tutorial\.resetPending/);
@@ -127,9 +126,9 @@ test("three-catch prompt stays blank from the catch until the next fly poofs in"
 });
 
 test("wrong-fly lesson begins with both targets visible and converts the skipped fly after the right catch", () => {
-  assert.doesNotMatch(engine, /That wrong fly does not count\./);
-  assert.doesNotMatch(engine, /You can come back to it later\./);
   for (const phrase of [
+    "That wrong fly does not count.",
+    "You can come back to it later.",
     "Catch the right fly, and your English clue can update.",
     "That can turn the fly you skipped into the new correct match!"
   ]) assert.ok(engine.includes(phrase), phrase);
@@ -142,8 +141,7 @@ test("wrong-fly lesson begins with both targets visible and converts the skipped
   assert.match(arm, /beginScenarioEntryTransition\(\)/);
   assert.match(engine, /setPrompt\(tutorial\.wrongFlyOriginalVocabIndex\)/);
   assert.match(engine, /tutorial\.wrongFlyRightCaught = true/);
-  assert.match(engine, /wrongFlyCaughtAt = performance\.now\(\);\s*tutorial\.promptHidden = false/);
-  assert.match(engine, /wrongFlyRightCaught = true[\s\S]{0,220}tutorial\.promptHidden = true/);
+  assert.match(engine, /tutorial\.promptHidden = true/);
   assert.match(engine, /resetAttemptForNextJump\(\);\s*tutorial\.promptHidden = false/);
   assert.match(engine, /jumpAttempts > 4/);
   assert.doesNotMatch(engine, /"This time, catch a fly that doesn't match\."/);
