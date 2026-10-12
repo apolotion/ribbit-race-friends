@@ -47,7 +47,7 @@ test("PvP tutorial preserves player skin, locks Ember, and supports Space", () =
 test("PvP demonstrations use real charged jumps after a one-second viewing delay", () => {
   assert.match(tutorial, /function scriptPvpChargedJump/);
   assert.match(tutorial, /tutorial\.pvpDemoStartedAt = performance\.now\(\) \+ 1000/);
-  assert.match(tutorial, /case "pvpDemoBonk":[\s\S]{0,120}scriptPvpChargedJump\(1, \.72, 1, 0\)/);
+  assert.match(tutorial, /case "pvpDemoBonk":[\s\S]{0,120}scriptPvpChargedJump\(1, \.38, -1, 0\)/);
   assert.match(tutorial, /case "pvpDemoSkyBonk":[\s\S]{0,180}scriptPvpChargedJump\(1, \.92, 1, 0\)/);
   assert.match(tutorial, /WATCH EMBER!/);
 });
@@ -55,10 +55,11 @@ test("PvP demonstrations use real charged jumps after a one-second viewing delay
 test("PvP practice retries, three bonk layouts, crown Ember, and max-charge boost are wired", () => {
   assert.match(tutorial, /function positionPvpBonkPracticeLayout/);
   assert.match(tutorial, /next-pvp-bonk/);
-  assert.match(tutorial, /LAND ON EMBER'S HEAD IN ONE JUMP/);
+  assert.match(tutorial, /Let's see three bonks!/);
   assert.match(tutorial, /hat:"crown"/);
   assert.match(tutorial, /pvpEmberJumpScheduledAt[\s\S]{0,700}scriptPvpChargedJump\(1, \.98, -1, 0\)/);
-  assert.match(tutorial, /\["Escape", "KeyR"\]/);
+  assert.doesNotMatch(tutorial, /\["Escape", "KeyR"\]/);
+  assert.match(tutorial, /event\.code === "KeyR"/);
   assert.match(tutorial, /retryScene\(\)/);
 });
 
@@ -69,9 +70,9 @@ test("lesson scenes suppress stray flies and keep score counters tutorial-safe",
   assert.match(tutorial, /pvpPracticeCatchCount/);
 });
 
-test("transparent frog favicon assets are linked and packaged", () => {
+test("previous Ribbit Race favicon assets are restored and packaged", () => {
   assert.match(index, /\/icons\/favicon-32\.png/);
   assert.match(index, /\/icons\/favicon-64\.png/);
-  assert.ok(existsSync("public/icons/ribbit-race-transparent-source.png"));
+  assert.equal(existsSync("public/icons/ribbit-race-transparent-source.png"), false);
   assert.ok(readFileSync("public/icons/favicon-64.png").length > 100);
 });

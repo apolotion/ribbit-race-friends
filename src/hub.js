@@ -81,6 +81,10 @@ export class FriendsHub extends DurableObject {
  writeSave(u,s){const clean=sanitizeSaveData_(s),rev=u.revision+1;this.sql.exec('UPDATE users SET savedata=?,revision=?,updated=?,summary=? WHERE id=?',JSON.stringify(clean),rev,Date.now(),JSON.stringify(summarizeSave_(clean)),u.id);return {ok:true,revision:rev,saveSchemaVersion:2};}
  replayLevel(value){const level=String(value||'').toLowerCase();return ['park','swamp','jungle','pond','lake','garden'].includes(level)?level:'';}
  replayMetric(value){const metric=String(value||'').toLowerCase();return ['time','jumps'].includes(metric)?metric:'';}
+ replayHealth(request){
+  const auth=this.readAuth(request);
+  return json({ok:true,service:'record-replays',storage:'durable-object-sqlite',signedIn:!!auth&&!auth.guest,guest:!!auth?.guest,maxReplayBytes:3900000});
+ }
  async replayGet(request,url){
   const auth=this.readAuth(request);if(!auth)return json(error('SESSION_EXPIRED','Sign in or use guest play to view replays.'),401);
   const username=String(url.searchParams.get('username')||'').normalize('NFKC').trim().toLowerCase();
@@ -118,6 +122,7 @@ export class FriendsHub extends DurableObject {
  async fetch(request){
   this.runOwnerLegacyCleanup();
   const requestUrl=new URL(request.url);
+  if(requestUrl.pathname==='/api/replays/health')return this.replayHealth(request);
   if(requestUrl.pathname==='/api/replays/get')return this.replayGet(request,requestUrl);
   if(requestUrl.pathname==='/api/replays/submit')return this.replaySubmit(request);
   const method=requestUrl.pathname.split('/').pop();let payload;

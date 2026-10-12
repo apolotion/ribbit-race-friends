@@ -541,6 +541,7 @@
         let landing = null;
         for (const platform of platforms) {
           if (platform === player.departurePlatform || platform === player.dropThroughPlatform) continue;
+          if (window.RibbitRaceTutorialShouldIgnorePvpPlatform?.(player, platform)) continue;
           if (previousBottom <= platform.y + 1.5 && bottom >= platform.y && horizontalOverlap(player.x, player.w, platform)) {
             if (!landing || platform.y < landing.y) landing = platform;
           }
@@ -3226,22 +3227,24 @@
       });
 
       const urgentClock = !game.pvpSuddenDeath && game.pvpTimeLimitSeconds > 0 && game.pvpTimeRemaining > 0 && game.pvpTimeRemaining <= 5;
-      if (urgentClock) {
-        const pulse = 0.68 + 0.22 * Math.sin(game.visualTime * 13);
-        ctx.fillStyle = `rgba(155,27,38,${pulse})`;
-        ctx.fillRect(W / 2 - 50, 5, 100, 17);
-        ctx.fillStyle = "#ff6875";
-        ctx.fillRect(W / 2 - 48, 7, 96, 2);
-      } else {
-        ctx.fillStyle = "rgba(38,54,61,0.68)";
-        ctx.fillRect(W / 2 - 48, 7, 96, 13);
-      }
       const clock = game.pvpSuddenDeath
         ? "SUDDEN DEATH"
         : game.pvpTimeLimitSeconds > 0
           ? `${Math.ceil(game.pvpTimeRemaining)} SEC`
           : formatTime(game.pvpElapsed);
+      // Tutorial lessons replace the timer with WATCH EMBER / YOUR TURN. Leave
+      // the entire timer footprint transparent until the final 30-second match.
       if (!tutorialPvp || tutorialFinalMatch) {
+        if (urgentClock) {
+          const pulse = 0.68 + 0.22 * Math.sin(game.visualTime * 13);
+          ctx.fillStyle = `rgba(155,27,38,${pulse})`;
+          ctx.fillRect(W / 2 - 50, 5, 100, 17);
+          ctx.fillStyle = "#ff6875";
+          ctx.fillRect(W / 2 - 48, 7, 96, 2);
+        } else {
+          ctx.fillStyle = "rgba(38,54,61,0.68)";
+          ctx.fillRect(W / 2 - 48, 7, 96, 13);
+        }
         drawBitmapText(`ROUND ${game.pvpRoundNumber}  ${clock}`, W / 2, 10, 0.68, "center", urgentClock ? "#ffffff" : "#d9edf2", urgentClock ? "#65111b" : null);
       }
     }

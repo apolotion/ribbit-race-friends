@@ -4,7 +4,7 @@
 
   const SOLO_SEEN_KEY = "rrFriendsEngineTutorialSoloSeenV8";
   const PVP_SEEN_KEY = "rrFriendsEngineTutorialPvpSeenV8";
-  const TUTORIAL_BUILD = "2026.10.12-friends-polish-15";
+  const TUTORIAL_BUILD = "2026.10.12-friends-polish-16";
   const TUTORIAL_ACHIEVEMENT_ID = "tutorial-graduate";
   const TYPEWRITER_MS_PER_CHARACTER = 28;
   const DIALOGUE_TEXT_SCALE = 0.86;
@@ -16,7 +16,6 @@
   const CORRECT_CATCH_LANDING_HOLD_MS = 500;
   const FLY_DIALOGUE_REVEAL_HOLD_MS = 500;
   const PVP_ONE_SECOND_FLY_SETUPS = new Set([
-    "pvpDemoBonkCatch", "pvpBonkCatch",
     "pvpDemoReboundCatch", "pvpReboundCatch",
     "pvpDemoIntercept",
     "pvpDemoDinnerSteal", "pvpDinnerSteal"
@@ -176,6 +175,10 @@
     pvpDemoBegun: false,
     pvpDemoDuration: 0,
     pvpFrogsHidden: false,
+    pvpHiddenPlayerIndex: null,
+    pendingPvpVisualPoses: null,
+    pendingPvpTargetPoses: null,
+    pauseChapterHover: "",
     pvpCaption: "",
     pvpCaptionUntil: 0,
     pvpPracticeCount: 0,
@@ -532,7 +535,7 @@
       "dialogue": [
         "Now you try.",
         "Jump above me and land on my head.",
-        "Let's see three bonks, each in a single jump!"
+        "Let's see three bonks!"
       ],
       "successDialogue": [
         "Three for three!",
@@ -575,7 +578,7 @@
       ],
       "successDialogue": [
         "Bonked and beaten to dinner.",
-        "You're catching on. Unfortunately for me."
+        "You're really catching on!"
       ]
     },
     {
@@ -632,7 +635,7 @@
       "demonstration": true,
       "dialogue": [
         "How's the weather down there?",
-        "Never mind—I'll drop in and check for myself!"
+        "On second thought... I'll drop in and check for myself!"
       ],
       "successDialogue": [
         "Took a little longer to shake that one off, didn't it?",
@@ -1349,6 +1352,28 @@
     if (pose.highestY !== undefined && "highestY" in entity) entity.highestY = pose.highestY;
   }
 
+  function capturePvpTutorialPoses() {
+    return pvpPlayers.map((player) => captureControlledPose(player));
+  }
+
+  function applyPvpTutorialPoses(poses) {
+    if (!Array.isArray(poses)) return;
+    poses.forEach((pose, index) => applyControlledPose(pose, pvpPlayers[index]));
+  }
+
+  function resetPvpTutorialTongues() {
+    for (const player of pvpPlayers) {
+      const playerTongue = player?.tongue;
+      if (!playerTongue) continue;
+      playerTongue.active = false;
+      playerTongue.elapsed = 0;
+      playerTongue.targetFlyId = null;
+      playerTongue.targetX = 0;
+      playerTongue.targetY = 0;
+      playerTongue.captured = false;
+    }
+  }
+
   function freezeControlledEntity() {
     const entities = tutorial.kind === "pvp" ? pvpPlayers : [controlledTutorialEntity()];
     for (const entity of entities) {
@@ -1642,6 +1667,8 @@
         startPvpFinalMatch();
         return;
       }
+      beginScenarioEntryTransition();
+      return;
     }
     if (tutorial.scenePositionedDuringDialogue) {
       tutorial.scenePositionedDuringDialogue = false;
@@ -1821,6 +1848,8 @@
     tutorial.pvpDemoBegun = false;
     tutorial.pvpDemoDuration = 0;
     tutorial.pvpFrogsHidden = false;
+    tutorial.pvpHiddenPlayerIndex = null;
+    tutorial.pauseChapterHover = "";
     tutorial.pvpCaption = "";
     tutorial.pvpCaptionUntil = 0;
     tutorial.pvpPracticeCount = 0;
@@ -2239,11 +2268,15 @@
     const p1 = pvpPlayers[0];
     const ember = pvpPlayers[1];
     const lowerLeft = PARK_PLATFORMS[1];
-    const lowerRight = PARK_PLATFORMS[6];
+    const middleLeft = PARK_PLATFORMS[2];
+    const middleRight = PARK_PLATFORMS[5];
     const layouts = [
-      () => { positionPvp(p1, 94, CONFIG.groundY - p1.h, 1); positionPvp(ember, 205, CONFIG.groundY - ember.h, -1); },
-      () => { positionPvpOnPlatform(p1, lowerLeft, 1, 7); positionPvp(ember, 156, CONFIG.groundY - ember.h, -1); },
-      () => { positionPvp(p1, 284, CONFIG.groundY - p1.h, 1); positionPvpOnPlatform(ember, lowerRight, -1, 9); }
+      // Attempt one mirrors Ember's demonstration beneath the second platform.
+      () => { positionPvp(p1, middleLeft.x + 18, CONFIG.groundY - p1.h, 1); positionPvp(ember, middleLeft.x + 86, CONFIG.groundY - ember.h, -1); },
+      // Attempt two uses the matching opening beneath the right-middle platform.
+      () => { positionPvp(p1, middleRight.x - 6, CONFIG.groundY - p1.h, 1); positionPvp(ember, middleRight.x + 60, CONFIG.groundY - ember.h, -1); },
+      // Attempt three begins from the lower-left platform and remains one-jump reachable.
+      () => { positionPvpOnPlatform(p1, lowerLeft, 1, 14); positionPvp(ember, lowerLeft.x + lowerLeft.w + 13, CONFIG.groundY - ember.h, -1); }
     ];
     tutorial.pvpPracticeLayoutIndex = clamp(Math.floor(index), 0, layouts.length - 1);
     layouts[tutorial.pvpPracticeLayoutIndex]();
@@ -2267,42 +2300,54 @@
         positionPvp(ember, 305, CONFIG.groundY - ember.h, -1);
         break;
       case "pvpDemoBonk":
-        // Ember begins from a normal grounded launch point and performs a real
-        // charged jump instead of being dropped from above.
-        positionPvp(p1, 226, CONFIG.groundY - p1.h, -1);
-        positionPvp(ember, 82, CONFIG.groundY - ember.h, 1);
+        // Both frogs begin beneath the second platform. Ember starts on the
+        // right and makes a real right-to-left charged jump onto the player.
+        positionPvp(p1, middleLeft.x + 18, CONFIG.groundY - p1.h, 1);
+        positionPvp(ember, middleLeft.x + 86, CONFIG.groundY - ember.h, -1);
         break;
       case "pvpBonkThree":
         positionPvpBonkPracticeLayout(tutorial.pvpPracticeLayoutIndex || 0);
         break;
       case "pvpDemoBonkCatch":
-        positionPvp(p1, 210, CONFIG.groundY - p1.h, -1);
-        positionPvp(ember, 96, CONFIG.groundY - ember.h, 1);
-        // The fly is beyond the player so Ember can bonk, land, then reach it
-        // with one follow-up jump.
-        addPvpTutorialFly(338, 150, 0, 0);
+        positionPvp(p1, middleLeft.x + 18, CONFIG.groundY - p1.h, 1);
+        positionPvp(ember, middleLeft.x + 86, CONFIG.groundY - ember.h, -1);
+        // The fly is behind the player so Ember can bonk from the right and
+        // reach dinner with one ordinary follow-up jump.
+        addPvpTutorialFly(middleLeft.x - 36, 150, 0, 0);
         break;
       case "pvpBonkCatch":
-        positionPvp(p1, 96, CONFIG.groundY - p1.h, 1);
-        positionPvp(ember, 205, CONFIG.groundY - ember.h, -1);
-        addPvpTutorialFly(338, 150, 0, 0);
+        positionPvp(p1, middleLeft.x + 18, CONFIG.groundY - p1.h, 1);
+        positionPvp(ember, middleLeft.x + 86, CONFIG.groundY - ember.h, -1);
+        addPvpTutorialFly(middleLeft.x + middleLeft.w + 116, 150, 0, 0);
         break;
-      case "pvpDemoDropLow":
-        positionPvp(p1, lowerLeft.x + 39, CONFIG.groundY - p1.h, -1);
-        positionPvpOnPlatform(ember, lowerLeft, 1, 27);
+      case "pvpDemoDropLow": {
+        const lowerMiddle = PARK_PLATFORMS[3];
+        positionPvp(p1, lowerMiddle.x + Math.round((lowerMiddle.w - p1.w) / 2) + 5, CONFIG.groundY - p1.h, -1);
+        positionPvpOnPlatform(ember, lowerMiddle, 1, Math.round((lowerMiddle.w - ember.w) / 2));
         break;
-      case "pvpDropLow":
-        positionPvpOnPlatform(p1, lowerLeft, 1, 27);
-        positionPvp(ember, lowerLeft.x + 39, CONFIG.groundY - ember.h, -1);
+      }
+      case "pvpDropLow": {
+        const lowerMiddle = PARK_PLATFORMS[3];
+        positionPvpOnPlatform(p1, lowerMiddle, 1, Math.round((lowerMiddle.w - p1.w) / 2));
+        positionPvp(ember, lowerMiddle.x + Math.round((lowerMiddle.w - ember.w) / 2) + 5, CONFIG.groundY - ember.h, -1);
         break;
-      case "pvpDemoDropHigh":
-        positionPvp(p1, top.x - 18, CONFIG.groundY - p1.h, 1);
-        positionPvpOnPlatform(ember, top, 1, 4);
+      }
+      case "pvpDemoDropHigh": {
+        // Ember stands near the back-right edge of the highest platform. The
+        // tutorial ignores only the directly aligned lower-middle platform so
+        // her authored straight drop reaches the player's head on the ground.
+        const dropX = top.x + top.w - ember.w - 3;
+        positionPvp(p1, dropX + 2, CONFIG.groundY - p1.h, -1);
+        positionPvpOnPlatform(ember, top, 1, top.w - ember.w - 3);
         break;
-      case "pvpDropHigh":
-        positionPvpOnPlatform(p1, top, 1, 4);
-        positionPvp(ember, top.x - 18, CONFIG.groundY - ember.h, -1);
+      }
+      case "pvpDropHigh": {
+        // Player practice mirrors the demonstration on the left edge.
+        const dropX = top.x + 3;
+        positionPvpOnPlatform(p1, top, -1, 3);
+        positionPvp(ember, dropX - 2, CONFIG.groundY - ember.h, 1);
         break;
+      }
       case "pvpDemoBufferedBonk":
         positionPvp(p1, middleRight.x + 31, CONFIG.groundY - p1.h, -1);
         positionPvp(ember, 188, CONFIG.groundY - ember.h, 1);
@@ -2544,10 +2589,10 @@
 
     switch (setup) {
       case "pvpDemoBonk":
-        scriptPvpChargedJump(1, .72, 1, 0);
+        scriptPvpChargedJump(1, .38, -1, 0);
         break;
       case "pvpDemoBonkCatch":
-        scriptPvpChargedJump(1, .72, 1, 0);
+        scriptPvpChargedJump(1, .38, -1, 0);
         break;
       case "pvpDemoDropLow":
       case "pvpDemoDropHigh":
@@ -2604,6 +2649,7 @@
   function startPvpDemonstration(options = {}) {
     const setup = tutorialStep()?.setup || "";
     const skipPoof = Boolean(options.skipPoof);
+    const intendedPvpPoses = tutorial.pendingPvpTargetPoses;
     const prepare = () => {
       tutorial.pvpDemoActive = true;
       tutorial.pvpDemoKind = setup;
@@ -2611,12 +2657,17 @@
       tutorial.pvpDemoDuration = /Boost|Recovery|BufferedSky/.test(setup) ? 8.0 : /BonkCatch|ReboundCatch|DinnerSteal/.test(setup) ? 6.5 : 5.0;
       tutorial.pvpCaption = "WATCH EMBER!";
       tutorial.pvpCaptionUntil = performance.now() + 3000;
+      // Every demonstration waits a full second after the final dialogue line
+      // and the poof-in before scripted movement begins.
       tutorial.pvpDemoStartedAt = performance.now() + 1000;
       schedulePvpFlyReveal(setup, pvpFlyRevealDelayMs(setup));
+      clearHeldInput();
+      freezeControlledEntity();
     };
     if (skipPoof) {
       tutorial.scenePositionedDuringDialogue = false;
       tutorial.pendingStartPose = null;
+      tutorial.pendingPvpTargetPoses = null;
       prepare();
       return;
     }
@@ -2631,7 +2682,10 @@
       preserveExistingFlies: false,
       armFlies: false,
       action: () => {
-        configurePvpStep(tutorial.step);
+        if (Array.isArray(intendedPvpPoses)) applyPvpTutorialPoses(intendedPvpPoses);
+        else configurePvpStep(tutorial.step);
+        tutorial.pendingPvpTargetPoses = null;
+        tutorial.pendingPvpVisualPoses = null;
         prepare();
       }
     });
@@ -2658,8 +2712,10 @@
     if (setup === "pvpDemoBonkCatch" && tutorial.pvpDemoBonkAt > 0 && !tutorial.pvpDemoFollowupStarted &&
         ember.grounded && now - tutorial.pvpDemoBonkAt >= 280) {
       tutorial.pvpDemoFollowupStarted = true;
-      ember.dir = 1;
-      scriptPvpChargedJump(1, .64, 1, 0);
+      const targetFly = flies.find((fly) => fly?.tutorialAuthored && fly.state === "active");
+      const followDirection = targetFly && targetFly.x < ember.x ? -1 : 1;
+      ember.dir = followDirection;
+      scriptPvpChargedJump(1, .64, followDirection, 0);
     }
 
     // The recovery lesson intentionally makes one early return while the player
@@ -2725,7 +2781,9 @@
       completed = tutorial.pvpDemoBonkAt > 0 && now - tutorial.pvpDemoBonkAt >= 1000;
     } else if (setup === "pvpDemoBonkCatch" || setup === "pvpDemoReboundCatch" || setup === "pvpDemoDinnerSteal") {
       completed = tutorial.pvpPracticeCatchCount >= 1 && now - tutorial.pvpLastPracticeEventAt >= 650;
-    } else if (setup === "pvpDemoRebound" || setup === "pvpDemoIntercept") {
+    } else if (setup === "pvpDemoRebound") {
+      completed = tutorial.pvpReboundCount >= 1 && now - tutorial.pvpLastPracticeEventAt >= 750 && pvpTutorialSettled();
+    } else if (setup === "pvpDemoIntercept") {
       completed = tutorial.pvpReboundCount >= 1 && now - tutorial.pvpLastPracticeEventAt >= 750;
     } else if (setup === "pvpDemoRecoveryBonk") {
       completed = tutorial.pvpDemoStage >= 2 && tutorial.pvpDemoBonkAt > 0 && now - tutorial.pvpDemoBonkAt >= 1000;
@@ -2775,35 +2833,53 @@
 
   function configureStep(showDialogue = true, options = {}) {
     const preservedVisualPose = options.preserveVisualPose || null;
+    const preservedPvpVisualPoses = Array.isArray(options.preservePvpVisualPoses)
+      ? options.preservePvpVisualPoses
+      : null;
     try { window.RibbitRaceResetFinalCatchLabels?.(); } catch (_) {}
     if (tutorial.kind === "pvp") configurePvpStep(tutorial.step);
     else configureSoloStep(tutorial.step);
+
     tutorial.pendingStartPose = captureControlledPose();
-    if (preservedVisualPose) {
+    tutorial.pendingPvpTargetPoses = tutorial.kind === "pvp" ? capturePvpTutorialPoses() : null;
+
+    // PvP scene dialogue is delivered over the completed prior pose. The next
+    // authored setup does not move either frog until the final dialogue line has
+    // closed and the scripted poof begins.
+    if (tutorial.kind === "pvp" && preservedPvpVisualPoses) {
+      applyPvpTutorialPoses(preservedPvpVisualPoses);
+      tutorial.pendingPvpVisualPoses = preservedPvpVisualPoses;
+      freezeControlledEntity();
+    } else if (preservedVisualPose) {
       applyControlledPose(preservedVisualPose);
       freezeControlledEntity();
     }
+
     tutorial.dialogueOpen = false;
     tutorial.dialoguePointerId = null;
     tutorial.blockJumpUntilRelease = false;
-    const prePoofHighGroundLine = Boolean(
-      showDialogue && tutorial.kind === "pvp" && tutorialStep()?.setup === "pvpDemoHighGround"
+
+    // These two authored transitions explicitly poof before Ember refers to the
+    // new height/perch. The text begins one second after both frogs reappear.
+    const prePoofBeforeDialogue = Boolean(
+      showDialogue && tutorial.kind === "pvp" &&
+      ["pvpDemoDropHigh", "pvpDemoHighGround"].includes(tutorialStep()?.setup)
     );
-    if (prePoofHighGroundLine) {
-      const intendedStartPose = tutorial.pendingStartPose || captureControlledPose();
+    if (prePoofBeforeDialogue && preservedPvpVisualPoses) {
       tutorial.dialogueOpen = true;
       tutorial.scenePositionedDuringDialogue = false;
       beginDialogueLine(0, { delayMs:POOF_TRANSITION_MS + 1000, holdPreviousText:false });
       game.state = "playing";
       game.pauseHelpOpen = false;
       beginPoofTransition({
-        reason:"pvp-high-ground-before-dialogue",
+        reason:"pvp-authored-poof-before-dialogue",
         showFailure:false,
         preserveExistingFlies:false,
         armFlies:false,
         action:() => {
-          applyControlledPose(intendedStartPose);
+          applyPvpTutorialPoses(tutorial.pendingPvpTargetPoses);
           tutorial.pendingStartPose = null;
+          tutorial.pendingPvpTargetPoses = null;
           tutorial.scenePositionedDuringDialogue = true;
           tutorial.enteredAt = performance.now();
         }
@@ -2859,7 +2935,13 @@
     }
     playTutorialPoofSound("out");
     resetTutorialTongue();
+    if (tutorial.kind === "pvp") resetPvpTutorialTongues();
     try { clearFrogAfterimages(entity); } catch (_) {}
+    if (tutorial.kind === "pvp") {
+      for (const player of pvpPlayers) {
+        try { clearFrogAfterimages(player); } catch (_) {}
+      }
+    }
 
     tutorial.resetPending = true;
     tutorial.resetAt = performance.now() + POOF_TRANSITION_MS;
@@ -2880,8 +2962,13 @@
   }
 
   function rebuildCurrentScenarioForRetry() {
-    if (tutorial.kind === "pvp") configurePvpStep(tutorial.step);
-    else configureSoloStep(tutorial.step);
+    if (tutorial.kind === "pvp") {
+      clearPvpScriptActions();
+      tutorial.pvpDemoActive = false;
+      tutorial.pvpDemoBegun = false;
+      configurePvpStep(tutorial.step);
+      tutorial.pendingPvpTargetPoses = capturePvpTutorialPoses();
+    } else configureSoloStep(tutorial.step);
     tutorial.pendingStartPose = captureControlledPose();
     tutorial.dialogueOpen = false;
     tutorial.dialoguePointerId = null;
@@ -2892,8 +2979,14 @@
   }
 
   function rebuildCurrentScenarioWithDialogue() {
-    if (tutorial.kind === "pvp") configurePvpStep(tutorial.step);
-    else configureSoloStep(tutorial.step);
+    if (tutorial.kind === "pvp") {
+      clearPvpScriptActions();
+      tutorial.pvpDemoActive = false;
+      tutorial.pvpDemoBegun = false;
+      tutorial.pvpCaption = "";
+      configurePvpStep(tutorial.step);
+      tutorial.pendingPvpTargetPoses = capturePvpTutorialPoses();
+    } else configureSoloStep(tutorial.step);
     tutorial.pendingStartPose = captureControlledPose();
     tutorial.dynamicDialogueLines = null;
     tutorial.dynamicPortraitKey = "";
@@ -2906,15 +2999,29 @@
 
   function beginScenarioEntryTransition() {
     const intendedStartPose = tutorial.pendingStartPose || captureControlledPose();
+    const intendedPvpPoses = tutorial.pendingPvpTargetPoses;
+    const setup = tutorialStep()?.setup || "";
     beginPoofTransition({
       reason: "scene-entry",
       showFailure: false,
       preserveExistingFlies: false,
+      armFlies: tutorial.kind !== "pvp",
       action: () => {
-        applyControlledPose(intendedStartPose);
+        if (tutorial.kind === "pvp") {
+          if (Array.isArray(intendedPvpPoses)) applyPvpTutorialPoses(intendedPvpPoses);
+          else configurePvpStep(tutorial.step);
+          tutorial.pendingPvpTargetPoses = null;
+          tutorial.pendingPvpVisualPoses = null;
+          restoreStepSequence();
+          tutorial.pvpCaption = "YOUR TURN!";
+          tutorial.pvpCaptionUntil = performance.now() + 1600;
+          schedulePvpFlyReveal(setup, pvpFlyRevealDelayMs(setup));
+        } else {
+          applyControlledPose(intendedStartPose);
+          restoreStepSequence();
+          if (setup === "wrongFly") tutorial.promptHidden = false;
+        }
         tutorial.pendingStartPose = null;
-        restoreStepSequence();
-        if (tutorialStep()?.setup === "wrongFly") tutorial.promptHidden = false;
         tutorial.enteredAt = performance.now();
       }
     });
@@ -2949,6 +3056,7 @@
     }
 
     resetTutorialTongue();
+    if (tutorial.kind === "pvp") resetPvpTutorialTongues();
     clearTutorialCarryoverFlies();
     if (armFlies) {
       const setup = tutorialStep()?.setup || "";
@@ -3241,9 +3349,10 @@
       ? captureTutorialCarryoverFlies()
       : [];
     const visualPose = captureControlledPose();
+    const pvpVisualPoses = tutorial.kind === "pvp" ? capturePvpTutorialPoses() : null;
     freezeControlledEntity();
     tutorial.step += 1;
-    configureStep(true, { preserveVisualPose: visualPose });
+    configureStep(true, { preserveVisualPose: visualPose, preservePvpVisualPoses: pvpVisualPoses });
     if (carryoverFlies.length) installTutorialCarryoverFlies(carryoverFlies);
   }
 
@@ -3571,11 +3680,14 @@
   function pvpTutorialSettled() {
     const p1 = pvpPlayers[0];
     const ember = pvpPlayers[1];
+    const impactActive = Array.isArray(game.pvpImpactEffects) &&
+      game.pvpImpactEffects.some((effect) => Number(effect?.elapsed || 0) < Number(effect?.duration || 0));
     return Boolean(
       p1?.grounded && ember?.grounded &&
       !p1?.bonked && !ember?.bonked &&
       Number(p1?.stunTimer || 0) <= 0 && Number(ember?.stunTimer || 0) <= 0 &&
-      !p1?.tongue?.active && !ember?.tongue?.active
+      !p1?.tongue?.active && !ember?.tongue?.active &&
+      !impactActive
     );
   }
 
@@ -3698,7 +3810,26 @@
         return;
       }
       if (playerLanded && now - tutorial.enteredAt > 450 && !tutorial.resetPending) {
-        failAttempt("LAND ON EMBER'S HEAD IN ONE JUMP");
+        const completedBonks = tutorial.pvpBonks;
+        const completedSetups = tutorial.pvpPracticeCount;
+        const layoutIndex = tutorial.pvpPracticeLayoutIndex;
+        beginPoofTransition({
+          reason:"retry-pvp-bonk-position",
+          message:"TRY THE BONK AGAIN",
+          showFailure:true,
+          preserveExistingFlies:true,
+          armFlies:false,
+          action:() => {
+            positionPvpBonkPracticeLayout(layoutIndex);
+            tutorial.pvpBonks = completedBonks;
+            tutorial.pvpPracticeCount = completedSetups;
+            tutorial.pvpPracticeStartedAt = performance.now();
+            tutorial.pvpPlayerAttemptWasAirborne = false;
+            tutorial.pvpCaption = "YOUR TURN!";
+            tutorial.pvpCaptionUntil = performance.now() + 1200;
+            clearHeldInput();
+          }
+        });
       }
       return;
     }
@@ -4386,6 +4517,90 @@
     ctx.restore();
   }
 
+  function tutorialSceneCatalog() {
+    const steps = tutorial.kind === "pvp" ? PVP_STEPS : SOLO_STEPS;
+    const seen = new Set();
+    return steps.reduce((list, step, index) => {
+      const scene = Number(step?.scene || index + 1);
+      if (seen.has(scene)) return list;
+      seen.add(scene);
+      list.push({ scene, index, title:String(step?.title || `SCENE ${scene}`) });
+      return list;
+    }, []);
+  }
+
+  function getTutorialPauseChapterRects() {
+    return {
+      previous:{ x:126, y:75, w:24, h:20 },
+      next:{ x:330, y:75, w:24, h:20 }
+    };
+  }
+
+  function selectTutorialChapter(delta) {
+    if (!tutorial.active || game.state !== "paused") return false;
+    const catalog = tutorialSceneCatalog();
+    const currentScene = Number(tutorialStep()?.scene || 1);
+    const currentIndex = Math.max(0, catalog.findIndex((entry) => entry.scene === currentScene));
+    const target = catalog[clamp(currentIndex + Math.sign(delta || 0), 0, catalog.length - 1)];
+    if (!target || target.index === tutorial.step) return false;
+    const visualPose = captureControlledPose();
+    const pvpVisualPoses = tutorial.kind === "pvp" ? capturePvpTutorialPoses() : null;
+    clearPvpScriptActions();
+    tutorial.pvpDemoActive = false;
+    tutorial.step = target.index;
+    game.state = "playing";
+    game.pauseHelpOpen = false;
+    game.pauseChargeSnapshot = null;
+    configureStep(true, { preserveVisualPose:visualPose, preservePvpVisualPoses:pvpVisualPoses });
+    tone(440, .04, .010, delta < 0 ? -30 : 30);
+    return true;
+  }
+
+  function drawTutorialPauseArrow(rect, direction, disabled = false) {
+    const active = tutorial.pauseChapterHover === direction;
+    const skin = getSelectedSkin();
+    ctx.fillStyle = "rgba(25,43,52,.28)";
+    ctx.fillRect(rect.x + 2, rect.y + 2, rect.w, rect.h);
+    ctx.fillStyle = disabled ? "#9aa9ae" : active ? skin.dark : COLORS.ink;
+    ctx.fillRect(rect.x, rect.y, rect.w, rect.h);
+    ctx.fillStyle = disabled ? "#e4eaec" : active ? skin.belly : "#f7fdff";
+    ctx.fillRect(rect.x + 2, rect.y + 2, rect.w - 4, rect.h - 4);
+    ctx.fillStyle = disabled ? "#96a2a6" : active ? skin.dark : "#48555a";
+    const cx = rect.x + rect.w / 2;
+    const cy = rect.y + rect.h / 2;
+    if (direction === "previous") {
+      ctx.fillRect(cx - 5, cy - 1, 9, 3);
+      ctx.fillRect(cx - 7, cy - 3, 3, 7);
+    } else {
+      ctx.fillRect(cx - 4, cy - 1, 9, 3);
+      ctx.fillRect(cx + 4, cy - 3, 3, 7);
+    }
+  }
+
+  function drawTutorialPauseOverlay() {
+    if (!tutorial.active || game.state !== "paused") return;
+    drawOverlayPanel(
+      "PAUSED",
+      [],
+      "",
+      true,
+      { x:75, y:28, w:330, h:204, titleOffset:17, lineStartOffset:58, lineGap:15, footerOffset:169 }
+    );
+    const catalog = tutorialSceneCatalog();
+    const currentScene = Number(tutorialStep()?.scene || 1);
+    const currentIndex = Math.max(0, catalog.findIndex((entry) => entry.scene === currentScene));
+    const entry = catalog[currentIndex] || { title:"TUTORIAL", scene:1 };
+    const rects = getTutorialPauseChapterRects();
+    drawTutorialPauseArrow(rects.previous, "previous", currentIndex <= 0);
+    drawTutorialPauseArrow(rects.next, "next", currentIndex >= catalog.length - 1);
+    drawBitmapText("TUTORIAL", W / 2, 80, 1.05, "center", "#34484f");
+    const titleScale = Math.min(.58, 214 / Math.max(1, measureBitmapText(entry.title, 1)));
+    drawBitmapText(entry.title.toUpperCase(), W / 2, 105, titleScale, "center", "#48555a");
+    drawBitmapText(`CHAPTER ${currentIndex + 1} / ${catalog.length}`, W / 2, 118, .42, "center", "#68787e");
+    drawPauseControls();
+    drawBitmapText(RIBBIT_CREDIT_TEXT, W / 2, 216, 1, "center", "#48555a");
+  }
+
   function drawTutorialOverlay() {
     if (!tutorial.active || game.state === "countdown") return;
     // The Current Goal card remains visible while paused. It sits below the
@@ -4507,9 +4722,14 @@
     ctx.fillRect(left, top, width, height);
     ctx.fillStyle = COLORS.white;
     ctx.fillRect(left + 2, top + 2, width - 4, height - 4);
-    // The long-jump warmup has no vocabulary objective, so the entire prompt
-    // card stays blank instead of advertising Find the Match.
-    if (tutorialStep()?.setup !== "longJumps") {
+    // The card stays completely blank whenever the current tutorial lesson has
+    // no visible authored fly. Bonk, rebound and movement chapters never show a
+    // stale vocabulary header.
+    const hasRelevantFly = flies.some((currentFly) =>
+      currentFly && currentFly.state === "active" &&
+      (!currentFly.tutorialAuthored || currentFly.tutorialArmed !== false)
+    );
+    if (tutorialStep()?.setup !== "longJumps" && hasRelevantFly) {
       ctx.fillStyle = getSelectedSkin().mid;
       ctx.fillRect(left + 4, top + 4, width - 8, 8);
       drawBitmapText(
@@ -4579,6 +4799,10 @@
       tutorial.pvpMaximumBonkSeen = tutorial.pvpMaximumBonkSeen || isMaximumPvpBonkDuration(victim.bonkStunDuration);
       tutorial.pvpBoostedBonkSeen = tutorial.pvpBoostedBonkSeen || boosted;
       tutorial.pvpHighGroundBonkSeen = tutorial.pvpHighGroundBonkSeen || startedOnPlatform;
+      if (tutorialStep()?.setup === "pvpBonkThree") {
+        stomper.catchSparkleTimer = Math.max(Number(stomper.catchSparkleTimer) || 0, CONFIG.catchSparkleDuration);
+        try { playCorrectFlySound(); } catch (_) { tone(720, .055, .014, 90); }
+      }
       if (tutorialStep()?.setup === "pvpBonkCatch") tutorial.pvpBonkCatchArmed = true;
     }
     return result;
@@ -4620,6 +4844,7 @@
     if (setup && setup !== "pvpFinalMatch" && scored) {
       tutorial.pvpPracticeCatchCount += 1;
       tutorial.pvpLastPracticeEventAt = performance.now();
+      tutorial.promptHidden = true;
       // Lesson catches prove the technique but never alter the visible PvP score.
       player.score = scoreBefore;
       game.spawnQueue.length = 0;
@@ -4999,8 +5224,12 @@
   const originalDrawScene = drawScene;
   drawScene = function(...args) {
     const result = originalDrawScene.apply(this, args);
-    if (tutorial.active) drawTutorialOverlay();
-    if (tutorial.active && game.state === "paused") drawPauseControls();
+    if (tutorial.active) {
+      drawTutorialOverlay();
+      // Dialogue and the goal are painted first; the complete tutorial pause
+      // panel is then drawn over them as the topmost layer.
+      if (game.state === "paused") drawTutorialPauseOverlay();
+    }
     if (tutorial.completeScreen) drawCompletionScreen();
     return result;
   };
@@ -5041,11 +5270,21 @@
       return;
     }
 
-    if (tutorial.active && ["Escape", "KeyR"].includes(event.code) &&
+    if (tutorial.active && event.code === "KeyR" &&
         game.state !== "paused" && !tutorial.completeScreen) {
       event.preventDefault();
       event.stopImmediatePropagation();
       if (!event.repeat) window.RibbitRaceTutorialEngine?.retryScene?.();
+      return;
+    }
+
+    // Escape uses the game's ordinary pause flow, exactly like P. It must never
+    // reset a tutorial attempt or skip the current demonstration.
+    if (tutorial.active && game.state === "paused" && !event.repeat &&
+        ["ArrowLeft", "ArrowRight"].includes(event.code)) {
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      selectTutorialChapter(event.code === "ArrowLeft" ? -1 : 1);
       return;
     }
 
@@ -5116,6 +5355,16 @@
   }, { capture:true, passive:false });
 
   canvas.addEventListener("pointerdown", (event) => {
+    if (tutorial.active && game.state === "paused") {
+      const point = getCanvasPoint(event);
+      const chapterRects = getTutorialPauseChapterRects();
+      if (pointInsideRect(point, chapterRects.previous) || pointInsideRect(point, chapterRects.next)) {
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        selectTutorialChapter(pointInsideRect(point, chapterRects.previous) ? -1 : 1);
+        return;
+      }
+    }
     if (tutorial.active && tutorial.dialogueOpen && game.state !== "paused" && game.state !== "countdown") {
       event.preventDefault();
       event.stopImmediatePropagation();
@@ -5124,6 +5373,15 @@
   }, { capture:true, passive:false });
 
   canvas.addEventListener("pointermove", (event) => {
+    if (tutorial.active && game.state === "paused") {
+      const point = getCanvasPoint(event);
+      const chapterRects = getTutorialPauseChapterRects();
+      tutorial.pauseChapterHover = pointInsideRect(point, chapterRects.previous)
+        ? "previous"
+        : pointInsideRect(point, chapterRects.next) ? "next" : "";
+      return;
+    }
+    tutorial.pauseChapterHover = "";
     if (!tutorialPlayerHasControl() || tutorialStep()?.setup === "normalRound") {
       tutorial.goalHovered = false;
       return;
@@ -5155,6 +5413,14 @@
     if (tutorial.dialoguePointerId !== event.pointerId) return;
     tutorial.dialoguePointerId = null;
   }, { capture:true, passive:false });
+
+  window.RibbitRaceTutorialShouldIgnorePvpPlatform = (player, platform) => {
+    if (!tutorial.active || tutorial.kind !== "pvp" || !player || !platform) return false;
+    const setup = tutorialStep()?.setup || "";
+    const isHighDropper = (setup === "pvpDemoDropHigh" && player.index === 1) ||
+      (setup === "pvpDropHigh" && player.index === 0);
+    return Boolean(isHighDropper && platform === PARK_PLATFORMS[3]);
+  };
 
   window.RibbitRaceTutorialEngine = Object.freeze({
     start,
@@ -5802,16 +6068,25 @@
         await window.RibbitRacePlayRecordReplay(row.name, level, metric);
         return true;
       }
-      const response = await fetch(`/api/replays/get?username=${encodeURIComponent(row.name)}&level=${encodeURIComponent(level)}&metric=${encodeURIComponent(metric)}`);
-      const payload = await response.json();
-      if (!response.ok || !payload?.ok || !payload?.data) throw new Error(payload?.message || "Replay unavailable");
+      const response = await fetch(`/api/replays/get?username=${encodeURIComponent(row.name)}&level=${encodeURIComponent(level)}&metric=${encodeURIComponent(metric)}`, { credentials:"same-origin" });
+      let payload = {};
+      try { payload = await response.json(); } catch (_) {}
+      if (!response.ok || !payload?.ok || !payload?.data) {
+        const replayError = new Error(payload?.message || "Replay unavailable");
+        replayError.status = response.status;
+        throw replayError;
+      }
       const blob = await (await fetch(`data:${payload.mime || "video/webm"};base64,${payload.data}`)).blob();
       const id = `record-${row.name}-${level}-${metric}-${Date.now()}`;
       await window.RibbitReplayStore?.put?.({ id, blob, at:Date.now(), type:blob.type });
       await window.RibbitRacePlayStoredReplay?.(id, `${row.name} • ${level.toUpperCase()} • ${metric === "time" ? "FASTEST TIME" : "FEWEST JUMPS"}`);
       return true;
     } catch (error) {
-      game.cheatToastText = "REPLAY NOT AVAILABLE FOR THIS RECORD";
+      game.cheatToastText = error?.status === 401
+        ? "SIGN IN TO WATCH REPLAYS"
+        : error?.status === 404
+          ? "THIS RECORD HAS NO SAVED VIDEO"
+          : "REPLAY WORKER ROUTE UNAVAILABLE";
       game.cheatToastTimer = CONFIG.achievementToastDuration;
       return false;
     }

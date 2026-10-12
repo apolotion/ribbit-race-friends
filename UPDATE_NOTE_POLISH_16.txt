@@ -1,0 +1,29 @@
+RIBBIT RACE FRIENDS — POLISH 16
+Version: 1.7.10
+Build: 2026.10.12-friends-polish-16
+
+1. Restored the previous Ribbit Race browser-tab and installed-app artwork, replacing the newer transparent pixel-frog icon set.
+2. Added a first-party replay health endpoint at /api/replays/health and routed all replay requests through the existing FriendsHub Durable Object.
+3. Confirmed replay storage uses the existing Durable Object SQLite record_replays table; no separate replay server, database binding, or code.gs file is required.
+4. Made replay upload and playback requests use the signed-in same-origin Friends session and provide distinct sign-in, old-record, Worker-route, and network errors.
+5. Updated the production smoke test so it verifies the authenticated replay service after creating its temporary account.
+6. Kept PvP actors in the completed prior pose during setup dialogue; authored movement begins only after the final instruction and scripted poof/handoff.
+7. Restored Escape as ordinary Pause/Resume in both tutorials. R remains the explicit in-scene retry hotkey.
+8. Kept the tutorial pause panel above Ember dialogue and retained Fullscreen, the instruction book, Retry Scene, Skip Tutorial, and chapter navigation.
+9. Added previous/next tutorial chapter arrows around TUTORIAL with chapter titles and progress.
+10. Reworked Ember’s first bonk demonstration as a real charged right-to-left jump from the clear lane beneath the middle-left platform.
+11. Made the three-bonk lesson count three total bonks rather than requiring an uninterrupted streak; a miss poofs the player back while retaining completed bonks.
+12. Added the normal correct-catch sparkle and success sound to each successful first-bonk practice hit.
+13. Made rebound impact animation finish before the next authored poof.
+14. Kept Find the Match completely blank in PvP lessons without a relevant authored fly.
+15. Spawned bonk-and-catch flies with the frogs’ poof-in, blanked the clue after the catch, and kept ordinary fly replacement disabled outside relevant scenes.
+16. Retracted both PvP tongues during every scripted poof so an extended tongue cannot remain visible after teleportation.
+17. Changed the response line to “You’re really catching on!”
+18. Poofed the high-drop setup before “How’s the weather down there?” and changed the next line to “On second thought... I’ll drop in and check for myself!”
+19. Locked both frogs during setup dialogue and Watch Ember demonstrations, including after Retry Scene.
+20. Removed the timer and its gray backing rectangle from tutorial lessons; the timer returns only for the final 30-second match.
+21. Moved lower drop-bonk practice to the lower-middle platform and adjusted the ground target.
+22. Mirrored the highest-platform drop-bonk practice and added a tutorial-only lower-platform pass-through safeguard so the authored straight drop reaches the ground target.
+23. Preserved the selected player frog, Ember’s Ember skin and crown, Level 5 final-match behavior, scripted demonstrations, and final 30-second best-of-one match.
+24. Advanced all cache-busting asset markers to friends-polish-16.
+25. Added Polish 16 replay/PvP/pause regression tests and updated all existing build-marker tests.

@@ -10,6 +10,8 @@ try{
  const health=await (await fetch(origin+'/api/health')).json();check(health.friendsVersion===1,'Friends API reachable');
  const wrong=await request('apiBootstrap',{}, {origin:'https://different-site.invalid'});check(wrong.r.status===403,'cross-origin request rejected');
  const r=await request('apiCreatePlayer',{username,pin});check(r.data.ok===true,'temporary test account created');created=true;marker=r.data.sessionToken;check(r.r.headers.get('set-cookie')?.includes('HttpOnly'),'PIN account created and HttpOnly cookie set');
+ const replayHealthResponse=await fetch(origin+'/api/replays/health',{headers:{'Cookie':cookie,'Origin':origin},signal:AbortSignal.timeout(20000)});
+ const replayHealth=await replayHealthResponse.json();check(replayHealthResponse.ok&&replayHealth.ok&&replayHealth.storage==='durable-object-sqlite'&&replayHealth.signedIn===true,'record replay service reachable and authenticated');
  const a=await request('apiLoad',{sessionToken:marker});check(a.data.ok&&a.data.pinReady===true,'PIN account loads without exposing PIN');
  const save=await request('apiSave',{sessionToken:marker,baseRevision:a.data.revision,saveData:{'ribbitRaceBestEndlessFlies:park':'10'}});check(save.data.ok,'cloud save accepted');
  const conflict=await request('apiSave',{sessionToken:marker,baseRevision:a.data.revision,saveData:{}});check(conflict.data.code==='REVISION_CONFLICT','stale save rejected with merge information');

@@ -72,9 +72,13 @@
       const stopped=new Promise(resolve=>rec.addEventListener("stop",resolve,{once:true}));try{rec.stop()}catch(_){return}await stopped;
       const blob=new Blob(this.parts,{type:rec.mimeType||"video/webm"});this.parts=[];if(!blob.size||blob.size>2_800_000)return;
       const data=await new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(String(reader.result).split(",")[1]||"");reader.onerror=reject;reader.readAsDataURL(blob)});
-      const username=(q("#cloud-account-name")?.textContent||q("#cloud-account-button")?.textContent||"").trim();if(!username||username==="GUEST")return;
-      const payload={username,level:snap.level||run.level,time:Number(snap.time)||((Date.now()-run.started)/1000),jumps:Number(snap.jumps)||0,mime:blob.type,data};
-      fetch("/api/replays/submit",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify(payload)}).catch(()=>{});
+      // The Worker binds a replay to the authenticated session. Do not depend
+      // on account-name text being present in the DOM; that prevented valid PBs
+      // from uploading on the canvas-native account UI.
+      const payload={level:snap.level||run.level,time:Number(snap.time)||((Date.now()-run.started)/1000),jumps:Number(snap.jumps)||0,mime:blob.type,data};
+      fetch("/api/replays/submit",{method:"POST",credentials:"same-origin",headers:{"content-type":"application/json"},body:JSON.stringify(payload)})
+        .then(async response=>{if(!response.ok){let detail={};try{detail=await response.json()}catch(_){}console.warn("Replay PB upload skipped:",detail.message||response.status)}})
+        .catch(error=>console.warn("Replay PB upload unavailable:",error));
     }
     installLeaderboard(){
       document.addEventListener("click",e=>{const frog=e.target.closest?.(".rr-replay-frog"),row=e.target.closest?.("#leaderboard-body tr");if(!row||(!frog&&!e.target.closest?.("td:nth-child(2)")))return;const metric=q("#leaderboard-metric")?.value;if(!["time","jumps"].includes(metric))return;const cells=row.querySelectorAll("td");const username=(cells[1]?.dataset.playerName||cells[1]?.textContent||"").replace("🐸","").trim(),level=(cells[3]?.textContent||q("#leaderboard-level")?.value||"").trim().toLowerCase();if(username)this.play(username,level,metric)});
@@ -83,7 +87,27 @@
       const style=document.createElement("style");style.textContent="#leaderboard-body tr{cursor:pointer}#leaderboard-body tr:hover{outline:3px solid #5ce5e8;outline-offset:-3px}";document.head.append(style);
     }
     async play(username,level,metric){
-      try{const r=await fetch(`/api/replays/get?username=${encodeURIComponent(username)}&level=${encodeURIComponent(level)}&metric=${encodeURIComponent(metric)}`);const j=await r.json();if(!r.ok||!j.ok||!j.data){toast("REPLAY NOT AVAILABLE","This record was made before replay capture was enabled.");return}let overlay=q("#rr-replay-overlay");if(!overlay){overlay=document.createElement("div");overlay.id="rr-replay-overlay";overlay.innerHTML='<div><button aria-label="Close">×</button><h2>WORLD RECORD REPLAY</h2><video controls autoplay playsinline></video><p></p></div>';document.body.append(overlay);q("button",overlay).onclick=()=>{q("video",overlay).pause();overlay.hidden=true}}q("p",overlay).textContent=`${username} • ${level.toUpperCase()} • ${metric==="time"?"FASTEST TIME":"FEWEST JUMPS"}`;q("video",overlay).src=`data:${j.mime||"video/webm"};base64,${j.data}`;overlay.hidden=false}catch(_){toast("REPLAY UNAVAILABLE","The replay server could not be reached.")}}
+      try{
+        const r=await fetch(`/api/replays/get?username=${encodeURIComponent(username)}&level=${encodeURIComponent(level)}&metric=${encodeURIComponent(metric)}`,{credentials:"same-origin"});
+        let j={};try{j=await r.json()}catch(_){}
+        if(!r.ok||!j.ok||!j.data){
+          if(r.status===401)toast("SIGN IN TO WATCH REPLAYS","Replay videos use your Friends account session.");
+          else if(r.status===404)toast("REPLAY NOT AVAILABLE","This personal best was set before replay capture, or no recording was uploaded.");
+          else toast("REPLAY SERVICE ERROR",j.message||`Worker returned ${r.status}. Deploy the current project before testing replays.`);
+          return false;
+        }
+        let overlay=q("#rr-replay-overlay");
+        if(!overlay){overlay=document.createElement("div");overlay.id="rr-replay-overlay";overlay.innerHTML='<div><button aria-label="Close">×</button><h2>WORLD RECORD REPLAY</h2><video controls autoplay playsinline></video><p></p></div>';document.body.append(overlay);q("button",overlay).onclick=()=>{q("video",overlay).pause();overlay.hidden=true}}
+        q("p",overlay).textContent=`${username} • ${level.toUpperCase()} • ${metric==="time"?"FASTEST TIME":"FEWEST JUMPS"}`;
+        q("video",overlay).src=`data:${j.mime||"video/webm"};base64,${j.data}`;
+        overlay.hidden=false;
+        return true;
+      }catch(error){
+        console.warn("Replay fetch failed",error);
+        toast("REPLAY SERVER UNREACHABLE","Deploy this Worker build on the same game domain. A separate video server is not required.");
+        return false;
+      }
+    }
   }
   const replayController = new ReplayController();
   // Canvas-native leaderboard rows call this bridge directly. The server keeps
