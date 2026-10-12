@@ -1793,7 +1793,7 @@
       const lineHeight = Math.max(7, Math.ceil(8 * layout.scale + 1));
       const textHeight = layout.lines.length * lineHeight - 1;
       const textTop = Math.round(5 + Math.max(0, (height - 7 - textHeight) / 2));
-      if (!window.RibbitRaceFinalCatchLabelsGone) { drawStableFlyLabelTextToSprite(spriteContext, layout, width, textTop, lineHeight); }
+      drawStableFlyLabelTextToSprite(spriteContext, layout, width, textTop, lineHeight);
 
       flyLabelSpriteCache.set(cacheKey, { signature, canvas: sprite });
       return sprite;
@@ -2493,7 +2493,7 @@
         ctx.restore();
         drawBitmapText("SANDBOX", 57, 15, 0.72, "center", skin.dark);
       } else {
-        if (!window.RibbitRaceFinalCatchLabelsGone) { drawFlyAt(22, 17, 0.75); }
+        drawFlyAt(22, 17, 0.75);
         const target = getSoloTargetScore();
         const scoreLabel = isSoloEndlessMode() ? `${game.score}` : `${game.score} / ${target}`;
         drawBitmapText(scoreLabel, 55, 15, 1, "center", skin.dark);
@@ -3692,6 +3692,7 @@
       game.customHatPage = getCustomHatPageForIndex(game.customHatFocusIndex);
       game.customHatHoveredIndex = null;
       game.customHatPageHovered = null;
+      game.customHatSuppressedRequirementIndex = null;
       if (playFeedback) tone(610, 0.05, 0.012, 50);
       return true;
     }
@@ -3714,7 +3715,16 @@
 
     function applyHatSelectorChoice(hatId, close = true) {
       const normalizedHat = normalizeFrogHatId(hatId);
-      if (!isHatUnlocked(normalizedHat)) { playLockedSkinSound(); return false; }
+      if (!isHatUnlocked(normalizedHat)) {
+        game.customHatSuppressedRequirementIndex = CUSTOM_HAT_OPTIONS.findIndex((hat) => hat.id === normalizedHat);
+        game.customHatDismissedRequirementId = normalizedHat;
+        // Leave focus where it is, play the dud, and suppress the requirement
+        // until the player intentionally hovers/focuses a different hat.
+        playLockedSkinSound();
+        return false;
+      }
+      game.customHatSuppressedRequirementIndex = null;
+      game.customHatDismissedRequirementId = null;
       const target = normalizeHatTargetSkinId(game.hatTargetSkinId || getCurrentHatTargetSkinId(), "azure");
       game.customHatId = setHatForFrogSkinId(target, normalizedHat, true);
       if (target.startsWith("custom")) {
@@ -3996,7 +4006,7 @@
         const selected=(game.customHatId||"none")===option.id;
         const focused=game.customHatFocusIndex===option.index||game.customHatHoveredIndex===option.index;
         const unlocked=isHatUnlocked(option.id);
-        if (focused && !unlocked) lockedFocusedOption=option;
+        if (focused && !unlocked && option.index !== game.customHatSuppressedRequirementIndex && option.id !== game.customHatDismissedRequirementId) lockedFocusedOption=option;
         ctx.fillStyle=focused||selected?COLORS.ink:"#9aa9ae";ctx.fillRect(option.x,option.y,option.w,option.h);
         ctx.fillStyle=!unlocked?"#d5dde0":selected?skin.belly:focused?"#e7f8fb":"#f7fdff";ctx.fillRect(option.x+2,option.y+2,option.w-4,option.h-4);
         ctx.fillStyle=!unlocked?"#eef3f5":selected?skin.light:"#ffffff";ctx.fillRect(option.x+5,option.y+4,option.w-10,3);
@@ -4492,10 +4502,10 @@
       } else if (type === "clock") {
         rect(3,0,6,2); rect(0,3,12,10); rect(2,5,8,6,light); rect(6,6,1,4,dark); rect(6,9,3,1,dark);
       } else if (type === "double-fly") {
-        if (!window.RibbitRaceFinalCatchLabelsGone) { drawThemedFly(5, 6, 0.90); }
-        if (!window.RibbitRaceFinalCatchLabelsGone) { drawThemedFly(13, 11, 0.90); }
+        drawThemedFly(5, 6, 0.90);
+        drawThemedFly(13, 11, 0.90);
       } else if (type === "spark-fly") {
-        if (!window.RibbitRaceFinalCatchLabelsGone) { drawThemedFly(9, 9, 1.10); }
+        drawThemedFly(9, 9, 1.10);
         rect(0,1,4,1,light); rect(1,0,1,4,light);
         rect(15,12,4,1,light); rect(16,11,1,4,light);
       } else if (type === "footprints") {
@@ -4513,13 +4523,13 @@
         rect(1,1,8,8,dark); rect(3,3,4,4,light); rect(5,4,1,3,dark);
         rect(11,1,5,7,main); rect(9,7,5,3,main); rect(12,9,3,6,main);
       } else if (type === "sky-fly") {
-        if (!window.RibbitRaceFinalCatchLabelsGone) { rect(7,1,2,10); rect(4,3,8,2); drawThemedFly(14, 11, 0.92); }
+        rect(7,1,2,10); rect(4,3,8,2); drawThemedFly(14, 11, 0.92);
       } else if (type === "flies-100") {
-        if (!window.RibbitRaceFinalCatchLabelsGone) { drawThemedFly(5, 5, 0.82); }
-        if (!window.RibbitRaceFinalCatchLabelsGone) { drawThemedFly(13, 10, 0.82); }
+        drawThemedFly(5, 5, 0.82);
+        drawThemedFly(13, 10, 0.82);
         drawBitmapText("100", x + 8*s, y + 13*s, 0.42*s, "center", dark);
       } else if (type === "score-six" || type === "score-seven") {
-        if (!window.RibbitRaceFinalCatchLabelsGone) { drawThemedFly(5, 7, 0.82); }
+        drawThemedFly(5, 7, 0.82);
         drawBitmapText(type === "score-six" ? "6/5" : "7/5", x + 12*s, y + 11*s, 0.52*s, "center", dark);
       } else if (type === "sky-bonk") {
         // A frog dropping from above the stage into an impact burst.
@@ -4541,7 +4551,7 @@
         rect(9, 0, 2, 4, light); rect(6, 1, 8, 1, light);
       } else if (type === "bounce-fly") {
         drawTrampolineIcon(x + 7*s, y + 10*s, { dark, mid: main, light }, 0.55*s, !unlocked);
-        if (!window.RibbitRaceFinalCatchLabelsGone) { drawThemedFly(15, 5, 0.78); }
+        drawThemedFly(15, 5, 0.78);
       } else if (type === "pvp-shutout") {
         rect(0, 1, 5, 4, main); rect(1, 5, 3, 2, dark);
         drawBitmapText("5-0", x + 11*s, y + 7*s, 0.60*s, "center", dark);
@@ -4746,7 +4756,7 @@
       ctx.fillStyle = backFocused ? "#7d8a90" : "#f7fdff"; ctx.fillRect(back.x + 2, back.y + 2, back.w - 4, back.h - 4);
       ctx.fillStyle = backFocused ? "#d8e1e4" : COLORS.white; ctx.fillRect(back.x + 5, back.y + 4, back.w - 10, 3);
       drawBitmapText("BACK", back.x + back.w / 2, back.y + 8, 1, "center", backFocused ? COLORS.white : "#48555a", backFocused ? COLORS.ink : null);
-      if (!window.RibbitRaceFinalCatchLabelsGone) { drawVersionLabel(panel.x + panel.w - 12, panel.y + panel.h - 10, "right"); }
+      drawVersionLabel(panel.x + panel.w - 12, panel.y + panel.h - 10, "right");
     }
 
     function drawStatsMetricIcon(type, centerX, centerY, skin) {
@@ -5118,7 +5128,7 @@
 
       const recordY = layout.top + 24;
       if (game.soloEndlessMode) {
-        if (!window.RibbitRaceFinalCatchLabelsGone) { drawMiniFlyIcon(centerX - 33, recordY + 2, 0.64); }
+        drawMiniFlyIcon(centerX - 33, recordY + 2, 0.64);
         const endlessText = `${bestEndless === null ? "--" : bestEndless} FLIES • 60 SEC`;
         drawBitmapText(endlessText, centerX + 10, recordY - 3, 0.58, "center", "#48555a");
       } else {
@@ -5256,7 +5266,7 @@
       const soloBob = soloActive ? getTwoFrameMenuBob(0) : 0;
       const soloFlyBob = soloActive ? getTwoFrameMenuBob(0.55) : 0;
       drawMiniFrogSwatch(solo.x + 18, solo.y + 9 + soloBob, skin, 0.82);
-      if (!window.RibbitRaceFinalCatchLabelsGone) { drawFlyAt(solo.x + solo.w - 20, solo.y + 16 + soloFlyBob, 0.62); }
+      drawFlyAt(solo.x + solo.w - 20, solo.y + 16 + soloFlyBob, 0.62);
       drawBitmapText("SINGLE PLAYER", solo.x + solo.w / 2 + 2, solo.y + 10, 1, "center", "#34484f");
 
       const frogButton = MAIN_UI.frogButton;
@@ -5731,7 +5741,7 @@
       lines.forEach((line, index) => drawBitmapText(line, panel.x + panel.w / 2, panel.y + 38 + index * 16, 0.68, "center", bookSkin.dark));
       ctx.fillStyle = mixHexColors(bookSkin.dark, bookSkin.mid, 0.56);
       ctx.fillRect(panel.x + 18, panel.y + panel.h - 21, panel.w - 36, 1);
-      if (!window.RibbitRaceFinalCatchLabelsGone) { drawVersionLabel(panel.x + panel.w / 2, panel.y + panel.h - 14, "center", bookSkin.dark); }
+      drawVersionLabel(panel.x + panel.w / 2, panel.y + panel.h - 14, "center", bookSkin.dark);
       const close = PAUSE_UI.helpCloseButton;
       const closeActive = game.pauseHoveredSelection === "help-close" || game.pausePressedSelection === "help-close";
       ctx.fillStyle = "rgba(25,43,52,0.28)";
@@ -5799,6 +5809,10 @@
         ? getAchievementDefinition(game.achievementToastAchievementId)
         : null;
       const genericText = game.achievementToastText || "";
+      const worldRecordToast = /WORLD RECORD|FRIENDS LEADER|FIRST PLACE|#1/.test(genericText);
+      const toastSkin = worldRecordToast
+        ? { dark:"#805316", mid:"#e5a72d", light:"#ffe27a", belly:"#fff3a8" }
+        : skin;
       const width = definition ? 208 : genericText ? Math.max(178, measureBitmapText(genericText, 1) + 42) : 178;
       const height = 29;
       const left = Math.round((W - width) / 2);
@@ -5814,11 +5828,11 @@
       ctx.globalAlpha = clamp(fade, 0, opacityCap);
       ctx.fillStyle = "rgba(18,31,38,0.38)";
       ctx.fillRect(left + 3, top + 3, width, height);
-      ctx.fillStyle = skin.dark;
+      ctx.fillStyle = toastSkin.dark;
       ctx.fillRect(left, top, width, height);
-      ctx.fillStyle = mixHexColors(skin.belly, skin.mid, 0.22);
+      ctx.fillStyle = mixHexColors(toastSkin.belly, toastSkin.mid, 0.22);
       ctx.fillRect(left + 3, top + 3, width - 6, height - 6);
-      ctx.fillStyle = skin.mid;
+      ctx.fillStyle = toastSkin.mid;
       ctx.fillRect(left + 7, top + 7, 30, height - 14);
 
       if (game.achievementToastSkinId) {
@@ -5830,9 +5844,9 @@
         drawBitmapText("ACHIEVEMENT!", left + 124, top + 5, 1, "center", skin.dark);
         drawBitmapText(definition.name, left + 124, top + 16, 1, "center", skin.dark);
       } else {
-        if (/FRIENDS LEADER|FIRST PLACE|#1/.test(genericText)) drawPixelTrophy(left + 18, top + 8, false);
+        if (worldRecordToast) drawPixelTrophy(left + 18, top + 7, false, .92);
         else drawMiniSun(left + 18, top + 15, false);
-        drawBitmapText(genericText, left + width / 2 + 10, top + 10, 1, "center", skin.dark);
+        drawBitmapText(genericText, left + width / 2 + 10, top + 10, 1, "center", toastSkin.dark);
       }
       ctx.restore();
     }

@@ -36,8 +36,8 @@ test("PIN hashing stays within Cloudflare PBKDF2 limit and matches 100000 rounds
 });
 
 test("Friends release exposes the new build marker",()=>{
-  assert.equal(BUILD,"2026.10.12-friends-polish-8");
-  assert.match(browserSource,/2026\.10\.12\-friends\-polish\-8/);
+  assert.equal(BUILD,"2026.10.12-friends-polish-11");
+  assert.match(browserSource,/2026\.10\.12\-friends\-polish\-11/);
 });
 
 test("server vocabulary is exactly the requested 15 entries",()=>{
@@ -237,11 +237,11 @@ test("failed connection Local Play opens the single-player level menu without au
   assert.doesNotMatch(html,/if\(id==='directLocal'\)\{cleanup\(true\);return;\}/);
 });
 
-test("local Versus VS hover explains how to enable local PvP",()=>{
+test("local Versus VS hover uses one contextual speech bubble",()=>{
   assert.match(html,/function drawPvpVsHoverTooltip\(\)/);
   assert.match(html,/game\.pvpSetupHoveredKey !== "vs"/);
-  assert.match(html,/CLICK TO ENABLE LOCAL PVP/);
-  assert.match(html,/LOCAL PVP ENABLED/);
+  assert.match(html,/CLICK TO ENABLE LOCAL VERSUS/);
+  assert.match(html,/CLICK TO PLAY AGAINST CPU/);
   assert.match(html,/drawPvpCpuDifficultyControl\(\); drawPvpVsHoverTooltip\(\);/);
 });
 

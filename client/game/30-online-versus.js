@@ -1093,7 +1093,11 @@
         else{
           ctx.save();if(game.pvpCriticalCatchActive)applyPvpCriticalCatchCamera();
           drawBackground();for(const q of platforms)drawPlatform(q);drawTimeOfDayWorldTint();
-          if (!window.RibbitRaceFinalCatchLabelsGone) { for(const f of flies){drawFlySpawnSparks(f);drawFlyAt(f.x,f.y,getFlySpawnScale(f));drawFlyNameTag(f);} }
+          for(const f of flies){
+            drawFlySpawnSparks(f);
+            drawFlyAt(f.x,f.y,getFlySpawnScale(f));
+            if (!window.RibbitRaceFinalCatchLabelsGone) drawFlyNameTag(f);
+          }
           pvpPlayers.forEach(drawPvpTongue);pvpPlayers.forEach(drawPvpPlayer);drawPvpImpactEffects();ctx.restore();drawPvpHud();
           if(game.state==='countdown')drawResumeCountdown();
           if(game.state==='won'||game.state==='pvpCelebration'){
@@ -1135,6 +1139,8 @@
 
       const onlineIdentity={sessionGeneration:-1,name:'',loaded:false,loading:null,draft:'',message:'',error:false,saving:false,returnScreen:'entry',tag:''};
       const battleView={entries:[],page:0,loading:false,error:'',guest:false,tag:'',generation:0};
+      // Keep the original ONLINE card geometry while using the requested order:
+      // Quickplay/Spectate, Host/Join, Customizer/Frog Tags.
       const ONLINE_HUB=[
         {id:'quick',label:'QUICKPLAY',x:66,y:100,w:163,h:29,icon:'quick',stripe:'#7fe3ae',tip:'Choose a frog, then find a similarly skilled opponent.'},
         {id:'host',label:'HOST',x:251,y:100,w:163,h:29,icon:'host',stripe:'#5ce5e8',tip:'Create a private room and share its five-character ID.'},
@@ -1443,6 +1449,7 @@
           if(!editing||b.id==='name'||b.id==='code'||b.id==='watchCode')focusOnlineButton(b.id);
           state.hoverId=b.id;
         }else {state.hoverId='';if(!['name','code','watchCode'].includes(state.focus))state.focus='';}
+        try{canvas.style.setProperty('cursor',b?'pointer':'default','important');}catch(_){ }
         state.keyboardFocus=false;return true;
       }
       const ENTRY={host:{x:115,y:100,w:116,h:30},join:{x:249,y:100,w:116,h:30},
@@ -1629,15 +1636,29 @@
         window.RibbitOnlineAppearanceOverrides=a;
       }
       function open(){
-        if(quick.queued){showQueuedStatus();return;}
+        // Opening ONLINE always produces the real entry menu. A stale/background
+        // Quickplay ticket used to leave quickSelect active behind the entry art,
+        // so the buttons looked present but were routed to the wrong screen.
+        if(!state.connected&&!state.active&&(quick.queued||quick.token||state.quickplay||['quickSelect','quickQueue','quickConnecting'].includes(state.screen))){
+          cancelDirectPreflight();
+          const staleToken=quick.token;
+          quick.generation++;
+          quick.token='';quick.pendingAction='';quick.queued=false;quick.background=false;quick.peekActivity=null;
+          quick.error='';quick.message='';quick.rematch=false;quick.opponentRematch=false;quick.changingMatch=false;
+          clearTimeout(quick.queueTimer);quick.queueTimer=null;
+          if(staleToken)cancelQuickplayTicket(staleToken);
+          RibbitCloud.setOnlineRealtimeActive?.(false);
+        }
         if(state.connected){state.screen='room';game.state='onlineSetup';syncPreview();return;}
         if(!state.previousSetup){
           state.previousSetup={settings:ownSettings(),cpu:game.pvpCpuEnabled,skins:[...game.pvpSetupSkinIds],timeLock:game.timeOfDayLock};
         }
+        watch.generation++;watch.active=false;watch.frames=[];watch.inFlight=false;
+        state.exitMenu=false;state.hoverId='';state.keyboardFocus=false;
         state.localSkinId=normalizePvpSkinId(game.pvpSetupSkinIds?.[0],normalizePvpSkinId(game.skinId,'azure'));
         state.localAppearance=appearanceFor(state.localSkinId);state.settings=ownSettings();
         state.screen='entry';state.focus='quick';state.codeText='';state.codeFocused=false;state.busy=false;state.quickplay=false;
-        game.state='onlineConnect';game.mode='pvp';
+        game.state='onlineConnect';game.mode='pvp';game.onlineMode=false;
         setStatus(onlineAllowed()?'':'SIGN IN OR CHOOSE GUEST PLAY.',!onlineAllowed());
         quick.nextStatsAt=0;quick.error='';loadOnlineIdentity();
         canvas.focus({preventScroll:true});
@@ -2279,8 +2300,13 @@
       function pointerMove(e){if(friendsGameInputLocked())return false;return onlinePointerMove(e);}
       document.addEventListener('keydown',e=>{
         if(friendsGameInputLocked())return;
+        if(state.active&&e.code==='KeyP'){
+          e.preventDefault();e.stopImmediatePropagation();
+          if(!e.repeat)showExitMenu();
+          return;
+        }
         if(exitMenuKey(e))return;
-        if(state.active&&['Pause','KeyP','KeyR'].includes(e.code)){e.preventDefault();e.stopImmediatePropagation();}
+        if(state.active&&['Pause','KeyR'].includes(e.code)){e.preventDefault();e.stopImmediatePropagation();}
       },{capture:true,passive:false});
       document.addEventListener('keydown',menuKey,{capture:true,passive:false});
       document.addEventListener('keyup',e=>{if(friendsGameInputLocked())return;if(isMenuVisible()||watch.active){e.preventDefault();e.stopImmediatePropagation();}},{capture:true,passive:false});
@@ -2310,6 +2336,7 @@
         checkDirectHealth,
         predictionHolding:()=>net.predictionHold,
         open,closeOverlay,leaveRoom,returnToLobby,isActive,isGuestActive,isHostActive,hasRoom,isRoomMenu,isMenuVisible,
+        isQuickplayMenu:()=>['quickSelect','quickQueue','quickConnecting'].includes(state.screen),isQueueMenu:()=>state.screen==='quickQueue',menuMode:()=>state.screen,
         beginTongueAction,finishTongueAction,rememberWrongFly,wrongFlyBlocked,canStartCritical,synchronizedCountdown,drawSyncLabel,drawQueueBadge,
         isSpectating:()=>watch.active,updateSpectator,drawSpectator,
         isOverlayOpen:()=>false,handleControlDown,handleControlUp,isInputHeld,updateGuest,handleHostRoundCompletion,notifyNextRound,

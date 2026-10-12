@@ -277,7 +277,12 @@
     const FROG_UNLOCK_CHEAT = "";
     const PLAYTEST_TOGGLE_CODE = "playtest";
     const HATS_TEST_TOGGLE_CODE = "hatstest";
-    const HIDDEN_CODE_BUFFER_LENGTH = Math.max(PLAYTEST_TOGGLE_CODE.length, HATS_TEST_TOGGLE_CODE.length);
+    const WORLD_RECORD_TEST_CODE = "worldrecord";
+    const HIDDEN_CODE_BUFFER_LENGTH = Math.max(
+      PLAYTEST_TOGGLE_CODE.length,
+      HATS_TEST_TOGGLE_CODE.length,
+      WORLD_RECORD_TEST_CODE.length
+    );
     let playtestModeActive = false;
     let playtestSnapshot = null;
 
@@ -731,13 +736,24 @@
       } catch (_) { return new Set(); }
     }
 
+    function readLiveHatSkinCount(skinId) {
+      try {
+        const parsed = JSON.parse(localStorage.getItem("ribbitRaceHatProgressV2") || "{}");
+        return Math.max(0, Number(parsed?.bySkin?.[skinId]) || 0);
+      } catch (_) { return 0; }
+    }
+
     function isHatUnlocked(hatId) {
       if (hatId === "none") return true;
       if (isPlaytestModeActive() || isCheatUnlockAllActive()) return true;
+      if (hatId === "top-hat" && readLiveHatSkinCount("azure") >= 75) return true;
+      if (hatId === "party-hat" && readLiveHatSkinCount("plum") >= 50) return true;
       return readProgressionUnlockedHatIds().has(String(hatId));
     }
 
     function getHatRequirementLines(hatId) {
+      if (hatId === "top-hat") return ["CATCH 75 FLIES AS AZURE", `${readLiveHatSkinCount("azure")} / 75`];
+      if (hatId === "party-hat") return ["CATCH 50 FLIES AS PLUM", `${readLiveHatSkinCount("plum")} / 50`];
       const external = window.RibbitHatProgress?.requirementLines?.(hatId);
       if (Array.isArray(external) && external.length) return external.slice(0, 2);
       const requirement = HAT_UNLOCK_REQUIREMENTS[hatId];

@@ -18,9 +18,10 @@
   function mode() { return String(hooks()?.mode || "").toLowerCase(); }
   function mobile() { return Boolean(hooks()?.mobile); }
   function playing() {
-    const s = `${state()} ${mode()}`;
-    return /playing|countdown|versus|pvp|online|quickplay|spectat|round/.test(s) &&
-      !/menu|select|custom|achievement|leaderboard|tag/.test(s);
+    // Only real runtime states get pause/touch controls. Online menus and the
+    // Quickplay selector may contain the word "online" in their mode, but they
+    // are not active matches.
+    return /^(playing|countdown|paused|pvpcelebration)$/i.test(state());
   }
   function versus() {
     return Boolean(hooks()?.versus) || /versus|pvp|online|quickplay|spectat/.test(`${state()} ${mode()}`);
@@ -64,8 +65,8 @@
     const show = () => {
       const a = el.getBoundingClientRect();
       const b = gameFrame().getBoundingClientRect();
-      tip.style.left = `${((a.left+a.width/2-b.left)/b.width)*100}%`;
-      tip.style.top = `${Math.max(2, ((a.top-b.top)/b.height)*100 - 5)}%`;
+      tip.style.left = `${((a.left + a.width / 2 - b.left) / b.width) * 100}%`;
+      tip.style.top = `${Math.max(10, ((a.top - b.top) / b.height) * 100)}%`;
       tip.hidden = false;
     };
     const hide = () => { tip.hidden = true; };
@@ -179,11 +180,9 @@
     root.appendChild(pause);
     tooltipFor(pause, "PAUSE");
 
-/* Legacy Open Leaderboard button removed by polish 8. */
-    medal.hidden = true;
-    activateOnRelease(medal, () => qs("#cloud-leaderboard")?.click());
-    root.appendChild(medal);
-    tooltipFor(medal, "OPEN LEADERBOARD");
+    // The leaderboard now lives inside the canvas Achievements screen.
+    // Remove any stale DOM medal left by older cached builds.
+    qs("#rr170-achievement-leaderboard")?.remove();
 
     const hatHover = button("rr170-hat-hover-target", "", "STYLE LOCKED");
     hatHover.hidden = true;
@@ -261,7 +260,6 @@
       pause.hidden = !(isPlay && isVs);
       pause.classList.toggle("rr170-versus", isVs);
       const inTutorial = tutorialActive();
-      medal.hidden = inTutorial || !achievementMenu();
       hatHover.hidden = inTutorial || !hatMenu();
       const two = mobile() && isPlay && humanLocalVersus();
       left.hidden = !two; right.hidden = !two;
@@ -327,7 +325,8 @@
       }
     });
     root.appendChild(account);
-    tooltipFor(account, "ACCOUNT • SAVES • RECORDS");
+    const accountTip = tooltipFor(account, "ACCOUNT & LANGUAGE");
+    accountTip.classList.add("rr170-main-corner-tooltip");
 
     const device = button("rr170-device-icon", "", "SWITCH CONTROL MODE");
     device.innerHTML = `<span class="rr170-device-symbol">▣</span>`;
@@ -351,7 +350,8 @@
       setTimeout(() => location.reload(), 80);
     });
     root.appendChild(device);
-    const deviceTip = tooltipFor(device, "SWITCH TO MOBILE MODE");
+    const deviceTip = tooltipFor(device, "COMPUTER / MOBILE MODE");
+    deviceTip.classList.add("rr170-main-corner-tooltip");
 
     function update() {
       const show = mainMenuActive() && !tutorialActive();

@@ -5,7 +5,7 @@
  */
 (() => {
   "use strict";
-  const BUILD = "2026.10.12-friends-polish-8";
+  const BUILD = "2026.10.12-friends-polish-11";
   const RR_V160_CANDIDATES = {"catchFly":["attemptFlyCatch","attemptPvpFlyCatch","catchSandboxFly","getPvpImminentCatchFly","recordFlyEaten","scheduleFlyReplacementFromCatch"],"jumpSound":["playJumpSound"],"beep":["playCountdownGoSound","playCountdownSound"],"replayUpload":["saveRecordDate"],"restart":["resetGame","resetPvpGame","resetPvpPlayer","resetRoundLifecycle","resetRoundNetwork","restartCurrentLevel"],"drop":[],"render":["drawPvpScene","drawScene"],"worldRecord":[],"fullscreen":["getFullscreenElement","hideFullscreenFallback","showFullscreenFallback","syncFullscreenButton","toggleRibbitFullscreen"],"onlineSubmit":[],"leaderboard":["isSoloEndlessLeaderboardEligible","savePvpMatchWinsForLeaderboard"]};
   const RR_V160_VARS = {"onlineSelect":[],"achievementSelect":["activeAchievementIndex","hoveredAchievementCard"],"backRect":[]};
 
@@ -232,7 +232,8 @@
     const st=stateName();
     if(st!==V.lastState){
       if(/final/i.test(st)){V.finalCatchStarted=now;V.finalCatchLabelsGone=false;}
-      else if(/final/i.test(V.lastState)){V.finalCatchStarted=0;V.finalCatchLabelsGone=false;}
+      else if(/final/i.test(V.lastState)){V.finalCatchStarted=0;}
+      if(/main|title|setup|onlineConnect|countdown/i.test(st)){V.finalCatchStarted=0;V.finalCatchLabelsGone=false;}
       V.lastState=st;
     }
     detectTakeover(now);freezeTakeover(now);

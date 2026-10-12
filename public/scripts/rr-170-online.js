@@ -181,10 +181,18 @@
   function drawSpectatorOverlay(){
     if(!octx)return;
     octx.clearRect(0,0,480,270);
-    const h=hooks(),isOnline=/online|quickplay|spectat/.test(`${h?.state||""} ${h?.mode||""}`.toLowerCase());
-    if(!isOnline)return;
-    const players=(h.spectator?h.smoothedSpectatorPlayers:null)||h.players||[];
-    if(h.spectator){
+    const h=hooks();
+    const stateText=String(h?.state||"");
+    const spectator=Boolean(h?.spectator);
+    let onlineMenuVisible=/onlineconnect|onlinesetup|quickselect|quickqueue|quickconnecting|battletags|spectatelist|profile/i.test(stateText);
+    try{onlineMenuVisible=onlineMenuVisible||Boolean(window.OnlineVersus?.isMenuVisible?.()&&!window.OnlineVersus?.isActive?.());}catch(_){ }
+    const activeOnlineMatch=!onlineMenuVisible&&Boolean(h?.game?.onlineMode)&&/^(countdown|playing|paused|pvpCelebration|won)$/.test(stateText);
+    // Never paint the Player 2/opponent badge over ONLINE, Quickplay, room,
+    // Customizer, or Frog Tags menus. It belongs only to a running match or a
+    // spectator replay.
+    if(onlineMenuVisible||(!spectator&&!activeOnlineMatch))return;
+    const players=(spectator?h.smoothedSpectatorPlayers:null)||h.players||[];
+    if(spectator){
       drawArc(players[0],"#1dc5da");drawArc(players[1],"#ef688a");
       // Cover the obsolete replay/delayed-view footer and label charge boxes by names.
       octx.fillStyle="#26363d";octx.fillRect(0,237,480,12);

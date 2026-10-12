@@ -22,22 +22,24 @@ test("polish 8 ships canvas-native leaderboard and replay controls", () => {
 });
 
 test("achievements uses a small bottom-left leaderboard button", () => {
-  assert.match(tutorial, /LEADERBOARD_BUTTON = Object\.freeze\(\{ x: 17, y: 232, w: 24, h: 24 \}\)/);
+  assert.match(tutorial, /LEADERBOARD_BUTTON = Object\.freeze\(\{ x: 22, y: 229, w: 28, h: 28 \}\)/);
   assert.match(tutorial, /drawMiniMedalButton/);
   assert.match(tutorial, /LEADERBOARD & REPLAYS/);
 });
 
 test("online menu follows requested order and contextual speech bubbles", () => {
-  const order = ["quickplay","spectate","host","join","customizer","tags"];
-  let cursor = 0;
+  const versus = read("client/game/60-versus-gameplay.js");
+  const order = ["quick","host","join","spectate","profile","battle"];
+  let cursor = online.indexOf("const ONLINE_HUB");
   for (const key of order) {
-    const next = tutorial.indexOf(`ONLINE_RECTS.${key}`, cursor);
+    const next = online.indexOf(`id:'${key}'`, cursor);
     assert.ok(next >= cursor, `${key} appears in requested order`);
     cursor = next;
   }
-  assert.match(tutorial, /VIEW OPPONENTS AND REPLAYS/);
-  assert.match(tutorial, /RETURN TO ONLINE MODES/);
-  assert.match(tutorial, /CLICK TO PLAY AGAINST CPU/);
+  assert.match(online, /View completed Quickplay encounters and your head-to-head record/);
+  assert.match(online, /Return to Local Versus/);
+  assert.match(versus, /CLICK TO PLAY AGAINST CPU/);
+  assert.match(versus, /CLICK TO ENABLE LOCAL VERSUS/);
 });
 
 test("language preferences are collected at signup and localize each client", () => {
@@ -53,7 +55,9 @@ test("language preferences are collected at signup and localize each client", ()
 test("hat progress updates per skin outside training", () => {
   assert.match(tutorial, /ribbitRaceHatProgressV2/);
   assert.match(tutorial, /progress\.bySkin\[skinId\]/);
-  assert.match(tutorial, /!training/);
+  assert.match(tutorial, /originalCompleteCorrectCatchForHats/);
+  assert.match(tutorial, /countedHatFlyObjects/);
+  assert.match(tutorial, /game\.tutorialActive \|\| window\.RibbitRaceTutorialEngine\?\.active/);
   assert.match(tutorial, /evaluateHatUnlocks/);
   assert.match(tutorial, /clearPinnedHatRequirement/);
 });

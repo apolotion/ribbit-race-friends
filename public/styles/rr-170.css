@@ -59,6 +59,7 @@ body.rr-account-modal-open::before {
   touch-action: none;
   -webkit-touch-callout: none;
   user-select: none;
+  cursor: pointer;
 }
 .rr170-button:hover, .rr170-button.rr170-selected {
   background: #b8f5dc;
@@ -79,13 +80,7 @@ body.rr-mobile-mode #rr170-pause.rr170-versus {
   right: 1.8%;
   width: 6.2%;
 }
-#rr170-achievement-leaderboard {
-  left: 2.1%;
-  bottom: 5.2%;
-  width: 7.1%;
-  aspect-ratio: 1;
-  font-size: clamp(18px,3vw,40px);
-}
+#rr170-achievement-leaderboard { display:none !important; }
 .rr170-tooltip {
   pointer-events: none;
   position: absolute;
@@ -93,12 +88,34 @@ body.rr-mobile-mode #rr170-pause.rr170-versus {
   max-width: min(380px,80%);
   border: 3px solid #26363d;
   background: rgba(247,253,255,.97);
-  color: #174f65;
-  padding: 7px 10px;
+  color: #26363d;
+  padding: 10px 12px 8px;
   font: 700 clamp(8px,1.05vw,13px)/1.2 "Courier New", monospace;
   text-align: center;
-  transform: translateX(-50%);
+  transform: translate(-50%, calc(-100% - 8px));
   box-shadow: 3px 3px 0 rgba(38,54,61,.22);
+}
+.rr170-tooltip::before {
+  content: "";
+  position: absolute;
+  left: 8px;
+  right: 8px;
+  top: 4px;
+  height: 3px;
+  background: #fff0bf;
+}
+.rr170-tooltip::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 100%;
+  width: 14px;
+  height: 14px;
+  background: #f7fdff;
+  border-right: 3px solid #26363d;
+  border-bottom: 3px solid #26363d;
+  transform: translate(-50%, -8px) rotate(45deg);
+  box-sizing: border-box;
 }
 #rr170-touch-left, #rr170-touch-right {
   position: absolute;
@@ -162,22 +179,61 @@ body.rr-mobile-mode #rr170-pause.rr170-versus {
 }
 
 #rr170-account-icon, #rr170-device-icon {
-  bottom: 2.2%;
-  width: 6.5%;
-  aspect-ratio: 1;
+  top: auto !important;
+  bottom: 2.2% !important;
+  width: 6.5% !important;
+  height: auto !important;
+  aspect-ratio: 1 / 1 !important;
+  box-sizing: border-box !important;
+  padding: 0 !important;
+  margin: 0 !important;
   font-size: clamp(18px,3vw,38px);
+  display: grid !important;
+  place-items: center !important;
+  align-items: center !important;
+  justify-items: center !important;
+  transform: none !important;
 }
-#rr170-account-icon { left: 2.1%; }
-#rr170-device-icon { left: 9.4%; }
+#rr170-account-icon > span,
+#rr170-device-icon > span {
+  width: 100%;
+  height: 100%;
+  display: grid;
+  place-content: center;
+  align-items: center;
+  justify-items: center;
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+#rr170-account-icon { left: 2.1% !important; }
+#rr170-device-icon { left: 9.4% !important; }
 #rr170-account-icon .rr170-avatar-head {
-  width:24%;aspect-ratio:1;border-radius:50%;background:#26363d;margin:auto auto 3%;
+  width:24%;aspect-ratio:1;border-radius:50%;background:#26363d;margin:0 auto 3%;
 }
 #rr170-account-icon .rr170-avatar-body {
-  width:48%;height:30%;border-radius:50% 50% 18% 18%;background:#26363d;margin:auto;
+  width:48%;height:30%;border-radius:50% 50% 18% 18%;background:#26363d;margin:0 auto;
 }
 #rr170-device-icon .rr170-device-symbol {
-  font-size:clamp(18px,3vw,36px);line-height:1;
+  display:grid;
+  place-items:center;
+  width:100%;
+  height:100%;
+  font-size:clamp(18px,3vw,36px);
+  line-height:1;
+  transform:none;
 }
+.rr170-main-corner-tooltip {
+  min-width: min(250px, 42%);
+  min-height: 42px;
+  box-sizing: border-box;
+  display: grid;
+  place-items: center;
+  white-space: nowrap;
+  color: #26363d !important;
+  background: rgba(247,253,255,.98) !important;
+}
+.rr170-main-corner-tooltip[hidden] { display:none !important; }
 
 #rr170-hat-hover-target {
   position:absolute;
@@ -220,5 +276,30 @@ body.rr-tutorial-pending #game-frame {
   background: #052f45 !important;
 }
 
-/* polish-8-hide-fullscreen */
+/* polish-9-hide-fullscreen */
 #fullscreen-button,#rr-fullscreen-button,.fullscreen-button{display:none!important;}
+
+/* Polish 10: the oversized legacy Base Palette DOM panel is replaced by the
+   compact canvas-native Set Base Frog picker inside the custom preview. */
+#rr-palette-tools { display: none !important; }
+/* Leaderboard is canvas-native in Achievements; the old account-panel launcher
+   and DOM overlay stay hidden to avoid two competing interfaces. */
+#cloud-leaderboard,
+#leaderboard-overlay:not([hidden]) {
+  display: none !important;
+}
+
+/* Polish 11: the leaderboard lives inside the canvas and Set Base replaces the
+   old DOM palette-copy panel. */
+#cloud-leaderboard,
+#leaderboard-overlay,
+#rr-palette-tools,
+#rr-custom-top-hat {
+  display: none !important;
+}
+button:not(:disabled),
+select:not(:disabled),
+[role="button"]:not([aria-disabled="true"]),
+a[href] {
+  cursor: pointer !important;
+}

@@ -3372,17 +3372,29 @@
 
     function drawPvpVsHoverTooltip() {
       if (OnlineVersus.isRoomMenu() || game.pvpSetupHoveredKey !== "vs") return;
-      const message = game.pvpHuman2 ? "LOCAL PVP ENABLED" : "CLICK TO ENABLE LOCAL PVP";
-      const r = { x: 130, y: 208, w: 160, h: 17 };
-      window.RibbitTooltipBox?.(ctx, message, 240, 211, { size: 7 });
+      const message = game.pvpCpuEnabled
+        ? "CLICK TO ENABLE LOCAL VERSUS"
+        : "CLICK TO PLAY AGAINST CPU";
+      const anchor = PVP_SETUP_UI.vsButton;
+      const width = Math.max(142, Math.min(196, measureBitmapText(message, .50) + 18));
+      const height = 22;
+      const centerX = anchor.x + anchor.w / 2;
+      const x = Math.round(centerX - width / 2);
+      const y = anchor.y - height - 10;
       ctx.save();
       ctx.fillStyle = "rgba(25,43,52,0.30)";
-      ctx.fillRect(r.x + 2, r.y + 2, r.w, r.h);
+      ctx.fillRect(x + 2, y + 2, width, height);
       ctx.fillStyle = COLORS.ink;
-      ctx.fillRect(r.x, r.y, r.w, r.h);
+      ctx.fillRect(x, y, width, height);
       ctx.fillStyle = "#f7fdff";
-      ctx.fillRect(r.x + 2, r.y + 2, r.w - 4, r.h - 4);
-      drawBitmapText(message, r.x + r.w / 2, r.y + 5, 0.50, "center", "#07516a");
+      ctx.fillRect(x + 2, y + 2, width - 4, height - 4);
+      ctx.fillStyle = getSelectedSkin().light;
+      ctx.fillRect(x + 5, y + 4, width - 10, 2);
+      drawBitmapText(message, x + width / 2, y + 8, 0.50, "center", "#26363d");
+      ctx.fillStyle = COLORS.ink;
+      ctx.fillRect(Math.round(centerX) - 4, y + height, 9, 2);
+      ctx.fillRect(Math.round(centerX) - 3, y + height + 2, 7, 2);
+      ctx.fillRect(Math.round(centerX) - 2, y + height + 4, 5, 2);
       ctx.restore();
     }
 
@@ -3518,7 +3530,7 @@
         drawBitmapText(`ROUND ENDS AT ${game.pvpFirstTo} CATCHES`, W / 2, 204, 0.66, "center", "#59666b");
       }
       drawPvpSetupActionButton(PVP_SETTINGS_UI.backButton,"BACK",game.pvpSettingsFocusIndex===4,{dark:"#48555a",mid:"#7d8a90",light:"#d8e1e4"});
-      if (!window.RibbitRaceFinalCatchLabelsGone) { drawVersionLabel(panel.x + panel.w - 12, panel.y + panel.h - 10, "right"); }
+      drawVersionLabel(panel.x + panel.w - 12, panel.y + panel.h - 10, "right");
     }
 
     function drawPvpSetupTimeButton() {
@@ -3991,8 +4003,8 @@
       drawTimeOfDayWorldTint();
       pvpPlayers.forEach(p => drawEntity(p, drawPvpArcPreview));
       for (const fly of flies) {
-        if (!window.RibbitRaceFinalCatchLabelsGone) { drawFlySpawnSparks(fly); }
-        if (!window.RibbitRaceFinalCatchLabelsGone) { drawFlyAt(fly.x, fly.y, getFlySpawnScale(fly)); }
+        drawFlySpawnSparks(fly);
+        drawFlyAt(fly.x, fly.y, getFlySpawnScale(fly));
         if (!window.RibbitRaceFinalCatchLabelsGone) { drawFlyNameTag(fly); }
       }
       pvpPlayers.forEach(p => drawEntity(p, drawFrogAfterimages));

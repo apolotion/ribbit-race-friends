@@ -115,8 +115,8 @@
 
       if (frog.charging && game.state === "playing") drawArcPreview();
       for (const currentFly of flies) {
-        if (!window.RibbitRaceFinalCatchLabelsGone) { drawFlySpawnSparks(currentFly); }
-        if (!window.RibbitRaceFinalCatchLabelsGone) { drawFlyAt(currentFly.x, currentFly.y, getFlySpawnScale(currentFly)); }
+        drawFlySpawnSparks(currentFly);
+        drawFlyAt(currentFly.x, currentFly.y, getFlySpawnScale(currentFly));
         if (!window.RibbitRaceFinalCatchLabelsGone) { drawFlyNameTag(currentFly); }
       }
       drawFrogAfterimages(frog);
@@ -657,7 +657,7 @@
       }
       try {
         advanceOnlineSimulation(now);
-        if (!window.RibbitRaceFinalCatchLabelsGone) { drawScene();OnlineVersus.drawOnlineTooltip();OnlineVersus.drawQueueBadge();OnlineVersus.drawSyncLabel();OnlineVersus.drawExitMenu(); }
+        drawScene();OnlineVersus.drawOnlineTooltip();OnlineVersus.drawQueueBadge();OnlineVersus.drawSyncLabel();OnlineVersus.drawExitMenu();
         positionRgbValueEditor();
         runtimeRecoveryCount = 0;
       } catch (error) {
@@ -1024,6 +1024,12 @@
         }
       }
       if (document.activeElement === rgbValueEditor) return;
+      if (event.code === "KeyP" && ["playing", "countdown", "paused"].includes(game.state)) {
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        if (!event.repeat) handleGameEscapeAction(false);
+        return;
+      }
       if (!event.repeat) {
         handleHiddenFrogUnlockCheat(event.key);
       }
@@ -1463,9 +1469,8 @@
         } else if (pointInsideRect(point, PVP_SETUP_UI.tutorialButton)) {
           game.pvpSetupFocusArea = "bottom";
           game.pvpSetupBottomSelection = "tutorial";
-          game.cheatToastText = "VERSUS TUTORIAL COMING SOON";
-          game.cheatToastTimer = CONFIG.achievementToastDuration;
-          tone(515, 0.05, 0.010, 25);
+          ensureAudio();
+          window.RibbitRaceTutorialEngine?.start?.("pvp");
         } else if (pointInsideRect(point, PVP_SETUP_UI.startButton)) {
           game.pvpSetupFocusArea = "bottom";
           game.pvpSetupBottomSelection = "start";
@@ -1767,7 +1772,11 @@
         const point=getCanvasPoint(event);
         const option=getCustomHatOptionRects().find((item)=>pointInsideRect(point,item));
         const pageButtons=getCustomHatPageButtons();
-        game.customHatHoveredIndex=option?option.index:null;
+        const nextHatHover=option?option.index:null;
+        const nextHatId=option?option.id:null;
+        if(nextHatHover!==game.customHatSuppressedRequirementIndex)game.customHatSuppressedRequirementIndex=null;
+        if(nextHatId&&nextHatId!==game.customHatDismissedRequirementId)game.customHatDismissedRequirementId=null;
+        game.customHatHoveredIndex=nextHatHover;
         game.customHatRemoveAllHovered=pointInsideRect(point,pageButtons.removeAll);
         game.customHatPageHovered=pointInsideRect(point,pageButtons.search)?"search":pointInsideRect(point,game.customHatSearchInputRect||{x:0,y:0,w:0,h:0})?"searchInput":pointInsideRect(point,pageButtons.prev)?"prev":pointInsideRect(point,pageButtons.next)?"next":null;
         return;

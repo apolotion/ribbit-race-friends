@@ -112,7 +112,12 @@
       window.addEventListener("ribbit-solo-finished",e=>this.finished(e.detail));
       window.addEventListener("ribbit-pvp-match-finished",e=>this.matchFinished(e.detail));
       window.addEventListener("ribbit-hats-test-enabled",()=>{this.initialize();});
+      // The game engine emits an absolute per-skin count immediately after a
+      // valid catch. Consume it directly so the hat menu updates in the same
+      // frame instead of waiting for an unrelated aggregate localStorage stat.
+      window.addEventListener("rr-hat-progress",e=>this.externalCatch(e.detail||{}));
       window.RibbitHatProgress=this;
+      this.syncEngineCounts();
       setTimeout(()=>this.tick(),500);
     }
     featureUnlocked(){
@@ -127,6 +132,30 @@
     }
     stat(rx){for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if(!rx.test(k||""))continue;const n=Number(localStorage.getItem(k));if(Number.isFinite(n))return n;try{const o=JSON.parse(localStorage.getItem(k));for(const [a,v] of Object.entries(o||{}))if(rx.test(a)&&Number.isFinite(Number(v)))return Number(v)}catch(_){}}return 0}
     add(map,key,amount=1){map[key]=(Number(map[key])||0)+amount}
+    engineProgress(){try{return json("ribbitRaceHatProgressV2",{})||{};}catch(_){return {};}}
+    syncEngineCounts(){
+      if(!this.progress)return false;
+      const source=this.engineProgress(),bySkin=source.bySkin&&typeof source.bySkin==="object"?source.bySkin:{};
+      this.progress.skinFlies ||= {};
+      let changed=false;
+      for(const [skin,count] of Object.entries(bySkin)){
+        const next=Math.max(0,Number(count)||0);
+        if(next>Number(this.progress.skinFlies[skin]||0)){this.progress.skinFlies[skin]=next;changed=true;}
+      }
+      if(changed){setJson(this.key,this.progress);this.evaluate(bridge()?.snapshot?.()||{});}
+      return changed;
+    }
+    externalCatch(detail={}){
+      if(!this.progress&&this.featureUnlocked())this.initialize();
+      if(!this.progress)return;
+      const skin=String(detail.skinId||bridge()?.currentSkin?.()||"azure").toLowerCase();
+      const absolute=Math.max(0,Number(detail.count)||0);
+      this.progress.skinFlies ||= {};
+      this.progress.skinFlies[skin]=Math.max(Number(this.progress.skinFlies[skin])||0,absolute);
+      this.progress.activityCount=Math.max(1,Number(this.progress.activityCount)||0)+1;
+      setJson(this.key,this.progress);
+      this.evaluate(bridge()?.snapshot?.()||{});
+    }
     event(){/* Opponent-specific events intentionally do not unlock hats. */}
     finished(d={}){if(!this.progress)return;const level=d.level||"unknown",skin=d.skin||"azure";this.progress.activityCount=(this.progress.activityCount||0)+1;this.add(this.progress.levelWins,level);this.progress.skinLevelWins[skin] ||= {};this.add(this.progress.skinLevelWins[skin],level);if(d.randomSelected)this.progress.counters.randomWins++;setJson(this.key,this.progress);this.evaluate(d)}
     matchFinished(d={}){if(!this.progress||!d.ownWon)return;const skin=d.skin||bridge()?.currentSkin?.()||"azure";this.progress.activityCount=(this.progress.activityCount||0)+1;this.progress.counters.versusWins++;if(!d.onlineVersus)this.progress.counters.cpuWins++;this.add(this.progress.skinVersusWins,skin);setJson(this.key,this.progress);this.evaluate(d)}
@@ -162,7 +191,7 @@
     unlockCustom3(){localStorage.setItem("ribbitRaceCustom3UnlockedV2","true")}
     evaluate(snap=bridge()?.snapshot?.()||{}){if(!this.progress||(this.progress.activityCount||0)<=0)return;for(const id of this.ids()){if(!this.unlocked.has(id)&&this.requirements(id,snap).ok)this.unlock(id)}this.custom3()}
     custom3(){const flies=this.stat(/total.*flies|flies.*total/i)-this.progress.fliesBase,wins=(this.progress.counters?.versusWins||0),levels=Object.keys(this.progress.levelWins||{}).length;if(flies>=100&&wins>=3&&levels>=3)this.unlockCustom3()}
-    tick(){if(this.featureUnlocked())this.initialize();if(this.progress){this.updateDeltas();this.sanitizeAssignments();setJson(this.key,this.progress)}this.lastSnapshot=bridge()?.snapshot?.()||{};setTimeout(()=>this.tick(),750)}
+    tick(){if(this.featureUnlocked())this.initialize();if(this.progress){this.syncEngineCounts();this.updateDeltas();this.sanitizeAssignments();setJson(this.key,this.progress)}this.lastSnapshot=bridge()?.snapshot?.()||{};setTimeout(()=>this.tick(),750)}
   }
   new HatProgressController();
 })();

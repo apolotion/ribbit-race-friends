@@ -62,7 +62,8 @@ test("tutorial hides legacy floating controls and preserves cloud progress",()=>
   assert.match(engine,/restorePlaytestSnapshot/);
   assert.match(engine,/endPlaytestSession/);
   assert.match(polish,/tutorialActive\(\)/);
-  assert.match(polish,/medal\.hidden = inTutorial/);
+  assert.match(polish,/rr170-achievement-leaderboard/);
+  assert.doesNotMatch(polish,/medal\.hidden = inTutorial/);
   assert.match(css,/\.rr170-button\[hidden\]/);
   assert.match(css,/display:\s*none\s*!important/);
 });
@@ -88,7 +89,7 @@ test("tutorial scenarios use Park layouts and reachable authored fly placement",
   assert.match(engine,/oneAttempt:\s*true/);
   assert.match(engine,/platforms = cloneParkPlatforms\(\)/);
   assert.match(engine,/positionSoloFrog\(getNormalParkStartX\(\), CONFIG\.groundY - frog\.h, 1\)/);
-  assert.match(engine,/makeFly\(324, 38 \+ deltaY, 0, 4\)/);
+  assert.match(engine,/makeFly\(targetX, targetY, 0, 4\)/);
   assert.match(engine,/makeFly\(240, 108, 1, 1\)/);
   assert.match(engine,/bufferEventCount >= 2/);
   assert.match(engine,/catch all three matching flies before you land!/i);
@@ -111,7 +112,7 @@ test("Ember dialogue is modal, left-aligned, and uses a down triangle instead of
     "drawDialogueContinueTriangle",
     "dialogueSpaceHeld",
     "closeDialogue",
-    'portrait: "smile"',
+    'portrait: "happy"',
     "Hey there, tadpole! Welcome to Ribbit Race!"
   ]) assert.match(engine,new RegExp(word.replace(/[.*+?^${}()|[\]\\]/g,"\\$&")));
   assert.match(engine,/const portraitPanel = \{ x: 338/);

@@ -137,7 +137,7 @@
       continueButton: { x: 105, y: 163, w: 130, h: 20 },
       restartButton: { x: 245, y: 163, w: 130, h: 20 },
       homeButton: { x: 176, y: 190, w: 128, h: 20 },
-      helpButton: { x: 372, y: 198, w: 20, h: 20 },
+      helpButton: { x: 320, y: 198, w: 20, h: 20 },
       helpCloseButton: { x: 366, y: 73, w: 19, h: 19 }
     });
 
@@ -692,6 +692,15 @@
         game.cheatToastTimer = CONFIG.achievementToastDuration;
         tone(520, 0.07, 0.018, 70);
         tone(760, 0.10, 0.014, 90, 0.06);
+        return;
+      }
+      if (game.cheatBuffer.endsWith(WORLD_RECORD_TEST_CODE)) {
+        // Visual-only QA shortcut. It does not save, upload, or append a real
+        // leaderboard record.
+        game.cheatBuffer = "";
+        queueAchievementToast({ type: "generic", text: "WORLD RECORD: PARK JUMPS" });
+        tone(784, 0.09, 0.021, 95);
+        tone(1047, 0.12, 0.017, 120, 0.075);
         return;
       }
       if (FROG_UNLOCK_CHEAT && game.cheatBuffer.endsWith(FROG_UNLOCK_CHEAT)) unlockAllFrogSkinsByCheat();
@@ -2227,6 +2236,7 @@
     function activatePvpSetupSelection() {
       if (game.pvpSetupFocusArea === "bottom") {
         if (game.pvpSetupBottomSelection === "wifi") OnlineVersus.open();
+        else if (game.pvpSetupBottomSelection === "tutorial") window.RibbitRaceTutorialEngine?.start?.("pvp");
         else if (game.pvpSetupBottomSelection === "back") closePvpSetupMenu();
         else if (game.pvpSetupBottomSelection === "time") {
           if (isTimeSelectUnlocked()) cycleTimeOfDayMode(); else playLockedSkinSound();

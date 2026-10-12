@@ -3,12 +3,12 @@
     // Friends Edition: accounts, matchmaking, and live human gameplay use the
     // same-origin Cloudflare Worker/Durable Object service. The historical
     // directOnlyVersion field is retained only as a protocol compatibility marker.
-    const RIBBIT_DIRECT_BUILD = "2026.10.12-friends-polish-8";
+    const RIBBIT_DIRECT_BUILD = "2026.10.12-friends-polish-11";
     const RIBBIT_DIRECT_POLICY_VERSION = 2;
     const RIBBIT_ONLINE_PROTOCOL_VERSION = 3;
     const RIBBIT_QUICKPLAY_VERSION = 3;
 
-    const RIBBIT_CLOUD_CLIENT_VERSION = "2026.10.12-friends-polish-8";
+    const RIBBIT_CLOUD_CLIENT_VERSION = "2026.10.12-friends-polish-11";
     const RIBBIT_CLOUD_SAVE_SCHEMA_VERSION = 2;
     // Preserve every current and future Ribbit Race key, including legacy one-button keys.
     const RIBBIT_GAME_KEY = /^(?:ribbitRace|oneButtonFrog)/;
@@ -1222,6 +1222,10 @@
         getVocabulary,
         refreshVocabulary,
         returnToCloudLogin,
+        getLeaderboardData: async () => {
+          if (guestMode || !sessionToken) return { ok:false, entries:[], message:"SIGN IN TO VIEW LEADERBOARD" };
+          return serverCall("apiGetLeaderboard", { sessionToken });
+        },
         createOnlineRoom: (payload = {}) => onlineCall("apiOnlineCreateRoom", payload),
         joinOnlineRoom: (payload = {}) => onlineCall("apiOnlineJoinRoom", payload),
         onlineExchange: (payload = {}) => onlineCall("apiOnlineExchange", payload),

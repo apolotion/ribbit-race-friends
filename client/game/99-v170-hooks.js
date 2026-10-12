@@ -467,15 +467,30 @@
   }
   requestAnimationFrame(rr170RemoteSmoothing);
 
-  // Final Catch labels stay gone after their fade completes.
+  // Final Catch labels stay gone after their fade completes. The old guard
+  // watched a generic alpha that could reset to 1 on the first post-cinematic
+  // frame, which caused every label to pop back in once. Track the actual
+  // critical-catch lifecycle instead and keep the labels suppressed for the
+  // remainder of the round.
   let finalCatchLabelsGone = false;
+  let finalCatchWasActive = false;
   function finalCatchGuard() {
     const g = gameObject();
-    const final = Boolean(firstValue(g?.finalCatch, g?.finalCatchActive,
-      /final.?catch/i.test(stateName())));
-    const fade = Number(firstValue(g?.finalCatchWordAlpha, g?.labelAlpha, 1));
-    if (!final) finalCatchLabelsGone = false;
-    if (final && fade <= 0.02) finalCatchLabelsGone = true;
+    const state = stateName();
+    const active = Boolean(firstValue(
+      g?.soloCriticalCatchActive,
+      g?.pvpCriticalCatchActive,
+      g?.finalCatchActive,
+      /final.?catch/i.test(state)
+    ));
+    const newRound = /main|title|setup|onlineconnect|countdown/i.test(state);
+    if (newRound && !active) {
+      finalCatchLabelsGone = false;
+      finalCatchWasActive = false;
+    }
+    if (active) finalCatchWasActive = true;
+    if (finalCatchWasActive && !active && !newRound) finalCatchLabelsGone = true;
+    if (!newRound && window.RibbitRaceFinalCatchLabelsGone === true) finalCatchLabelsGone = true;
     window.RibbitRaceFinalCatchLabelsGone = finalCatchLabelsGone;
     requestAnimationFrame(finalCatchGuard);
   }
