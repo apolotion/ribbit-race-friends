@@ -1868,6 +1868,25 @@ function startRibbitRaceGame() {
       return "";
     }
 
+    function getRibbitLanguageMode() {
+      try { return window.RibbitLanguagePreferences?.getMode?.() || localStorage.getItem("ribbitRaceLanguageModeV1") || "en-es"; }
+      catch (_) { return "en-es"; }
+    }
+
+    function getLocalizedFlyTerm(entry) {
+      if (!entry) return "?";
+      return getRibbitLanguageMode() === "es-en"
+        ? String(entry.english ?? entry.en ?? "?")
+        : String(entry.spanish ?? entry.es ?? "?");
+    }
+
+    function getLocalizedClueTerm(entry) {
+      if (!entry) return "?";
+      return getRibbitLanguageMode() === "es-en"
+        ? String(entry.spanish ?? entry.es ?? "?")
+        : String(entry.english ?? entry.en ?? "?");
+    }
+
     /* ===== client/game/20-models-and-state.js ===== */
     let platforms = LEVELS.park.platforms;
     let flySpawns = LEVELS.park.flySpawns;
@@ -14577,7 +14596,7 @@ function startRibbitRaceGame() {
 
     function drawFlyNameTag(currentFly) {
       if (game.sandboxMode || currentFly.sandboxTest) return;
-      const term = normalizeVocabularyCellText(VOCABULARY[currentFly.vocabIndex]?.spanish || "?", 80);
+      const term = normalizeVocabularyCellText(getLocalizedFlyTerm(VOCABULARY[currentFly.vocabIndex]) || "?", 80);
       const anchor = getFlyLabelAnchor(currentFly);
       const layout = layoutStableFlyLabelText(term, 120);
       const widest = Math.max(...layout.lines.map((line) => measureBitmapText(line, layout.scale)), 0);
@@ -15206,7 +15225,7 @@ function startRibbitRaceGame() {
       if (!["playing", "paused", "countdown"].includes(game.state)) return;
       if (game.sandboxMode || game.winPending || !Number.isInteger(game.targetVocabIndex)) return;
 
-      const prompt = normalizeVocabularyCellText(VOCABULARY[game.targetVocabIndex]?.english || "", 80);
+      const prompt = normalizeVocabularyCellText(getLocalizedClueTerm(VOCABULARY[game.targetVocabIndex]) || "", 80);
       const left = 154;
       const top = 234;
       const width = 172;
@@ -15240,6 +15259,7 @@ function startRibbitRaceGame() {
     }
 
     function drawTopHud() {
+      if (game.mode === "pvp") return;
       const scoreBoxX = 8;
       const scoreBoxW = 76;
       const skin = getSelectedSkin();
@@ -20961,7 +20981,7 @@ function startRibbitRaceGame() {
 // input support hooks, palette operations, post-hat progression, and replay state.
 
 const RIBBIT_FRIENDS_DISPLAY_VERSION = "1.7.10";
-const RIBBIT_FRIENDS_BUILD = "2026.10.12-friends-tutorial-polish-7";
+const RIBBIT_FRIENDS_BUILD = "2026.10.12-friends-polish-8";
 
 function rr14Number(value, fallback = 0) {
   const parsed = Number(value);
@@ -21335,6 +21355,7 @@ drawHud = function() {
 };
 
 function rrDrawMobilePauseButton() {
+      if (game.mode === "pvp") return;
   const pause = HUD_UI.pauseButton;
   const skin = game.mode === "pvp"
     ? getPvpSkinPalette(pvpPlayers[OnlineVersus.isActive() ? OnlineVersus.localIndex() : 0]?.skinId, "azure", 0)
@@ -21398,6 +21419,7 @@ function rrReleaseMobileJump(event) {
 }
 
 function rrReleaseAllMobilePointers() {
+      if (game.mode === "pvp") return;
   for (const pointerId of [...rrMobileHeldPointers.keys()]) {
     rrReleaseMobileJump({ pointerId });
   }
@@ -21492,7 +21514,7 @@ window.RibbitRaceMobileDiagnostics = () => ({
  */
 (() => {
   "use strict";
-  const BUILD = "2026.10.12-friends-tutorial-polish-7";
+  const BUILD = "2026.10.12-friends-polish-8";
   const RR_V160_CANDIDATES = {"catchFly":["attemptFlyCatch","attemptPvpFlyCatch","catchSandboxFly","getPvpImminentCatchFly","recordFlyEaten","scheduleFlyReplacementFromCatch"],"jumpSound":["playJumpSound"],"beep":["playCountdownGoSound","playCountdownSound"],"replayUpload":["saveRecordDate"],"restart":["resetGame","resetPvpGame","resetPvpPlayer","resetRoundLifecycle","resetRoundNetwork","restartCurrentLevel"],"drop":[],"render":["drawPvpScene","drawScene"],"worldRecord":[],"fullscreen":["getFullscreenElement","hideFullscreenFallback","showFullscreenFallback","syncFullscreenButton","toggleRibbitFullscreen"],"onlineSubmit":[],"leaderboard":["isSoloEndlessLeaderboardEligible","savePvpMatchWinsForLeaderboard"]};
   const RR_V160_VARS = {"onlineSelect":[],"achievementSelect":["activeAchievementIndex","hoveredAchievementCard"],"backRect":[]};
 
@@ -21867,6 +21889,8 @@ window.RibbitRaceMobileDiagnostics = () => ({
   const closeReplay=()=>{try{URL.revokeObjectURL(replayVideo.src)}catch(_){}replayVideo.removeAttribute("src");replayVideo.load();replayModal.hidden=true;replayModal.style.display="none";};
   replayModal.querySelector(".rrv-close").addEventListener("click",closeReplay);document.body.appendChild(replayModal);
   async function playStoredReplay(id,caption){const row=await ReplayDb.get(id);if(!row?.blob)return;replayVideo.src=URL.createObjectURL(row.blob);replayModal.querySelector(".rrv-replay-caption").textContent=caption||"";replayModal.hidden=false;replayModal.style.display="grid";try{await replayVideo.play()}catch(_){}}
+  window.RibbitRacePlayStoredReplay = playStoredReplay;
+
   window.RibbitPlayStoredReplay=playStoredReplay;
 
   function currentOnlineAppearance(){return window.RibbitOnlineAppearance.get()||first(["selectedFrogAppearance","selectedAppearance","currentFrogAppearance"])||null;}
@@ -21902,7 +21926,7 @@ window.RibbitRaceMobileDiagnostics = () => ({
   // Select a Frog Tags opponent to view every locally archived game against them.
   const tagModal=document.createElement("section");tagModal.hidden=true;tagModal.id="rr-v160-tag-games";Object.assign(tagModal.style,{position:"fixed",inset:"0",zIndex:"1550",display:"none",placeItems:"center",background:"rgba(7,25,34,.86)",padding:"20px"});
   document.body.appendChild(tagModal);
-  function openTagGames(name){const games=window.RibbitFrogTags.against(name);tagModal.innerHTML='<div class="rrv-tag-card"><button class="rrv-tag-close">×</button><h2></h2><div class="rrv-tag-list"></div></div>';const card=tagModal.firstElementChild;Object.assign(card.style,{position:"relative",width:"min(760px,95vw)",maxHeight:"85vh",overflow:"auto",background:"#f7fdff",border:"6px solid #26363d",padding:"18px",color:"#26363d"});card.querySelector("h2").textContent=`FROG TAGS — ${name}`;const list=card.querySelector(".rrv-tag-list");for(const g of games){const b=document.createElement("button");b.type="button";b.textContent=`${new Date(g.at).toLocaleDateString()} — ${g.won?"WIN":"LOSS"} — PLAY REPLAY`;b.disabled=!g.replayId;b.addEventListener("click",()=>playStoredReplay(g.replayId,`${name} • ${g.won?"WIN":"LOSS"}`));list.appendChild(b);}card.querySelector(".rrv-tag-close").onclick=()=>{tagModal.hidden=true;tagModal.style.display="none"};tagModal.hidden=false;tagModal.style.display="grid";}
+  function openTagGames(name){const localHistory=(()=>{try{return JSON.parse(localStorage.getItem("ribbitRaceOnlineHistoryV2")||"{}")[name]||[]}catch(_){return[]}})();const baseGames=window.RibbitFrogTags.against(name)||[];const seenGames=new Set();const games=[...localHistory,...baseGames].filter(g=>{const k=String(g.replayId||g.id||`${g.at}:${g.won}`);if(seenGames.has(k))return false;seenGames.add(k);return true;});tagModal.innerHTML='<div class="rrv-tag-card"><button class="rrv-tag-close">×</button><h2></h2><div class="rrv-tag-list"></div></div>';const card=tagModal.firstElementChild;Object.assign(card.style,{position:"relative",width:"min(760px,95vw)",maxHeight:"85vh",overflow:"auto",background:"#f7fdff",border:"6px solid #26363d",padding:"18px",color:"#26363d"});card.querySelector("h2").textContent=`FROG TAGS — ${name}`;const list=card.querySelector(".rrv-tag-list");for(const g of games){const b=document.createElement("button");b.type="button";b.textContent=`${new Date(g.at).toLocaleDateString()} — ${g.won?"WIN":"LOSS"} — PLAY REPLAY`;b.disabled=!g.replayId;b.title=g.replayId?"PLAY SAVED REPLAY":"REPLAY IS STILL UPLOADING";b.addEventListener("click",()=>playStoredReplay(g.replayId,`${name} • ${g.won?"WIN":"LOSS"}`));list.appendChild(b);}card.querySelector(".rrv-tag-close").onclick=()=>{tagModal.hidden=true;tagModal.style.display="none"};tagModal.hidden=false;tagModal.style.display="grid";}
   window.RibbitOpenFrogTagGames=openTagGames;
   c?.addEventListener("pointerup",ev=>{if(!/tag/i.test(stateName()))return;const p=logicalPoint(ev);if(p.y<88||p.y>210)return;const rows=window.RibbitFrogTags.list();const names=[...new Set(rows.map(r=>r.opponent))];const idx=Math.floor((p.y-88)/22);if(names[idx])openTagGames(names[idx]);},true);
 
@@ -22447,7 +22471,7 @@ window.RibbitRaceMobileDiagnostics = () => ({
 
   const SOLO_SEEN_KEY = "rrFriendsEngineTutorialSoloSeenV8";
   const PVP_SEEN_KEY = "rrFriendsEngineTutorialPvpSeenV8";
-  const TUTORIAL_BUILD = "2026.10.12-friends-tutorial-polish-7";
+  const TUTORIAL_BUILD = "2026.10.12-friends-polish-8";
   const TUTORIAL_ACHIEVEMENT_ID = "tutorial-graduate";
   const TYPEWRITER_MS_PER_CHARACTER = 28;
   const DIALOGUE_TEXT_SCALE = 0.86;
@@ -24749,7 +24773,7 @@ window.RibbitRaceMobileDiagnostics = () => ({
 
   function getTutorialFlyLabelRect(currentFly) {
     if (!currentFly) return null;
-    const term = normalizeVocabularyCellText(VOCABULARY[currentFly.vocabIndex]?.spanish || "?", 80);
+    const term = normalizeVocabularyCellText(getLocalizedFlyTerm(VOCABULARY[currentFly.vocabIndex]) || "?", 80);
     const anchor = getFlyLabelAnchor(currentFly);
     if (!anchor) return null;
     const layout = layoutStableFlyLabelText(term, 120);
@@ -25551,6 +25575,1128 @@ window.RibbitRaceMobileDiagnostics = () => ({
       try { localStorage.removeItem(kind === "pvp" ? PVP_SEEN_KEY : SOLO_SEEN_KEY); } catch (_) {}
     }
   });
+})();
+
+// Ribbit Race Friends — online/replay/UI/language polish 8.
+(() => {
+  "use strict";
+  if (window.__RIBBIT_POLISH_8__) return;
+  window.__RIBBIT_POLISH_8__ = true;
+
+  const polish = {
+    leaderboardEntries: [],
+    leaderboardLoading: false,
+    leaderboardError: "",
+    leaderboardMetric: "time",
+    leaderboardPage: 0,
+    leaderboardReplayRects: [],
+    previousState: "achievements",
+    mainHoverKey: "",
+    onlineHoverKey: "",
+    worldRecordHovered: false,
+    labelFadeStartedAt: 0,
+    priorCriticalCatch: false,
+    previousRoundState: "",
+    lastArchivedRoundKey: "",
+    baseSkinIndex: 0,
+    customBaseOpen: false,
+    quickplayLeaving: false
+  };
+
+  const LANGUAGE_KEY = "ribbitRaceLanguageModeV1";
+  const HAT_PROGRESS_KEY = "ribbitRaceHatProgressV2";
+  const ONLINE_HISTORY_KEY = "ribbitRaceOnlineHistoryV2";
+  const LEADERBOARD_BUTTON = Object.freeze({ x: 17, y: 232, w: 24, h: 24 });
+  const CUSTOM_BASE_BUTTON = Object.freeze({ x: 156, y: 58, w: 25, h: 22 });
+  const PAUSE_FULLSCREEN_BUTTON = Object.freeze({ x: 372, y: 171, w: 20, h: 20 });
+  const MAIN_PROFILE_BUTTON = Object.freeze({ x: 16, y: 211, w: 24, h: 24 });
+  const MAIN_DEVICE_BUTTON = Object.freeze({ x: 43, y: 211, w: 24, h: 24 });
+
+  function safeCall(candidate, ...args) {
+    try { return typeof candidate === "function" ? candidate(...args) : undefined; }
+    catch (error) { console.warn("Ribbit polish helper recovered", error); return undefined; }
+  }
+
+  function getLanguageMode() {
+    try {
+      return window.RibbitLanguagePreferences?.getMode?.() ||
+        localStorage.getItem(LANGUAGE_KEY) || "en-es";
+    } catch (_) { return "en-es"; }
+  }
+
+  function setLanguageMode(mode) {
+    const normalized = mode === "es-en" ? "es-en" : "en-es";
+    try { localStorage.setItem(LANGUAGE_KEY, normalized); } catch (_) {}
+    try { window.RibbitLanguagePreferences?.setMode?.(normalized); } catch (_) {}
+    try {
+      const cloud = typeof RibbitCloud !== "undefined" ? RibbitCloud : window.RibbitCloud;
+      cloud?.queueSave?.({ ribbitRaceLanguageModeV1: normalized });
+      cloud?.savePatch?.({ languageMode: normalized, ribbitRaceLanguageModeV1: normalized });
+    } catch (_) {}
+    return normalized;
+  }
+
+  const SPANISH_UI = Object.freeze({
+    "RIBBIT RACE": "RIBBIT RACE",
+    "CHOOSE A MODE": "ELIGE UN MODO",
+    "SINGLE PLAYER": "UN JUGADOR",
+    "VERSUS": "VERSUS",
+    "FROG COLOR": "COLOR DE RANA",
+    "ACHIEVEMENTS": "LOGROS",
+    "STATS": "ESTADÍSTICAS",
+    "BACK": "VOLVER",
+    "HOME": "INICIO",
+    "HOME MENU": "MENÚ PRINCIPAL",
+    "CONTINUE": "CONTINUAR",
+    "RESTART": "REINICIAR",
+    "PAUSED": "PAUSA",
+    "START": "EMPEZAR",
+    "QUICKPLAY": "PARTIDA RÁPIDA",
+    "HOST": "CREAR SALA",
+    "JOIN": "UNIRSE",
+    "SPECTATE": "OBSERVAR",
+    "CUSTOMIZER": "PERSONALIZAR",
+    "FROG TAGS": "PLACAS DE RANA",
+    "FIND MATCH": "BUSCAR PARTIDA",
+    "CANCEL": "CANCELAR",
+    "READY": "LISTO",
+    "LEAVE": "SALIR",
+    "LEADERBOARD": "CLASIFICACIÓN",
+    "PLAYER 1": "JUGADOR 1",
+    "PLAYER 2": "JUGADOR 2",
+    "CHOOSE YOUR FROG": "ELIGE TU RANA",
+    "RANDOM": "ALEATORIO",
+    "SETTINGS": "AJUSTES",
+    "ACCOUNT & LANGUAGE": "CUENTA E IDIOMA",
+    "COMPUTER / MOBILE MODE": "MODO COMPUTADORA / MÓVIL",
+    "STATS & RECORDS": "ESTADÍSTICAS Y RÉCORDS",
+    "WORLD RECORD": "RÉCORD MUNDIAL",
+    "TUTORIAL COMPLETE!": "¡TUTORIAL COMPLETADO!"
+  });
+
+  const originalDrawBitmapTextPolish8 = drawBitmapText;
+  drawBitmapText = function(text, ...args) {
+    let rendered = text;
+    if (getLanguageMode() === "es-en" && typeof text === "string") {
+      rendered = SPANISH_UI[text] || text;
+      for (const [english, spanish] of Object.entries(SPANISH_UI)) {
+        if (rendered !== text) break;
+        if (text.startsWith(`${english} •`)) rendered = `${spanish}${text.slice(english.length)}`;
+      }
+    }
+    return originalDrawBitmapTextPolish8.call(this, rendered, ...args);
+  };
+
+  function withLocalizedVocabulary(index, operation, kind) {
+    const entry = VOCABULARY?.[index];
+    if (!entry || getLanguageMode() !== "es-en") return operation();
+    const english = entry.english;
+    const spanish = entry.spanish;
+    try {
+      if (kind === "fly") {
+        try { entry.spanish = english; } catch (_) {}
+      } else {
+        try { entry.english = spanish; } catch (_) {}
+      }
+      return operation();
+    } finally {
+      try { entry.english = english; entry.spanish = spanish; } catch (_) {}
+    }
+  }
+
+  const originalDrawFlyNameTagPolish8 = drawFlyNameTag;
+  drawFlyNameTag = function(currentFly, ...rest) {
+    const fadeAge = performance.now() - polish.labelFadeStartedAt;
+    const fade = polish.labelFadeStartedAt > 0 ? clamp(fadeAge / 340, 0, 1) : 1;
+    ctx.save();
+    ctx.globalAlpha *= fade;
+    const result = withLocalizedVocabulary(
+      Number(currentFly?.vocabIndex),
+      () => originalDrawFlyNameTagPolish8.call(this, currentFly, ...rest),
+      "fly"
+    );
+    ctx.restore();
+    return result;
+  };
+
+  const originalDrawVocabularyPromptPolish8 = drawVocabularyPrompt;
+  drawVocabularyPrompt = function(...args) {
+    return withLocalizedVocabulary(
+      Number(game.targetVocabIndex),
+      () => originalDrawVocabularyPromptPolish8.apply(this, args),
+      "clue"
+    );
+  };
+
+  function drawSpeechBubble(rect, message, options = {}) {
+    if (!rect || !message) return;
+    const maxWidth = options.maxWidth || 190;
+    const scale = options.scale || 0.56;
+    const textWidth = Math.min(maxWidth - 14, Math.max(54, measureBitmapText(message, scale)));
+    const width = Math.ceil(textWidth + 14);
+    const height = options.height || 21;
+    const centerX = rect.x + rect.w / 2;
+    const x = clamp(Math.round(centerX - width / 2), 4, W - width - 4);
+    const y = clamp(Math.round(rect.y - height - 8), 4, H - height - 10);
+    const pointerX = clamp(Math.round(centerX), x + 8, x + width - 8);
+    ctx.save();
+    ctx.fillStyle = "rgba(24,41,49,.28)";
+    ctx.fillRect(x + 2, y + 2, width, height);
+    ctx.fillStyle = COLORS.ink;
+    ctx.fillRect(x, y, width, height);
+    ctx.fillStyle = "#f7fdff";
+    ctx.fillRect(x + 2, y + 2, width - 4, height - 4);
+    ctx.fillStyle = getSelectedSkin().light;
+    ctx.fillRect(x + 5, y + 4, width - 10, 2);
+    drawBitmapText(message, x + width / 2, y + 8, scale, "center", "#24353c");
+    ctx.fillStyle = COLORS.ink;
+    ctx.fillRect(pointerX - 4, y + height, 9, 2);
+    ctx.fillRect(pointerX - 3, y + height + 2, 7, 2);
+    ctx.fillRect(pointerX - 2, y + height + 4, 5, 2);
+    ctx.fillRect(pointerX - 1, y + height + 6, 3, 1);
+    ctx.restore();
+  }
+
+  function pointIn(point, rect) {
+    return Boolean(point && rect && point.x >= rect.x && point.x <= rect.x + rect.w && point.y >= rect.y && point.y <= rect.y + rect.h);
+  }
+
+  function drawMiniMedalButton(rect, active = false) {
+    const skin = getSelectedSkin();
+    ctx.fillStyle = "rgba(25,43,52,.28)";
+    ctx.fillRect(rect.x + 2, rect.y + 2, rect.w, rect.h);
+    ctx.fillStyle = active ? skin.dark : COLORS.ink;
+    ctx.fillRect(rect.x, rect.y, rect.w, rect.h);
+    ctx.fillStyle = active ? mixHexColors(skin.belly, "#ffffff", .12) : "#f7fdff";
+    ctx.fillRect(rect.x + 2, rect.y + 2, rect.w - 4, rect.h - 4);
+    drawPixelTrophy(rect.x + rect.w / 2, rect.y + 4, false, .75);
+    if (active) {
+      ctx.fillStyle = skin.light;
+      [[3,3],[rect.w-5,3],[3,rect.h-5],[rect.w-5,rect.h-5]].forEach(([dx,dy]) => ctx.fillRect(rect.x + dx, rect.y + dy, 2, 2));
+    }
+  }
+
+  function normalizeLeaderboardRows(payload) {
+    const arrays = [];
+    if (Array.isArray(payload)) arrays.push(payload);
+    if (payload && typeof payload === "object") {
+      for (const key of ["entries", "leaderboard", "rows", "records", "results", "data"]) {
+        if (Array.isArray(payload[key])) arrays.push(payload[key]);
+      }
+    }
+    const source = arrays.find((rows) => rows.length) || [];
+    return source.map((row, index) => ({
+      rank: Number(row.rank || index + 1),
+      name: String(row.name || row.displayName || row.username || row.player || "FROG"),
+      value: row.value ?? row.time ?? row.jumps ?? row.score ?? row.wins ?? "—",
+      metric: String(row.metric || row.category || polish.leaderboardMetric),
+      date: String(row.date || row.createdAt || row.at || ""),
+      replayId: row.replayId || row.replay_id || row.replay?.id || null,
+      skinId: row.skinId || row.skin || "azure"
+    }));
+  }
+
+  async function loadLeaderboard() {
+    polish.leaderboardLoading = true;
+    polish.leaderboardError = "";
+    try {
+      let payload;
+      const cloud = typeof RibbitCloud !== "undefined" ? RibbitCloud : window.RibbitCloud;
+      for (const candidate of [
+        () => cloud?.getLeaderboard?.(polish.leaderboardMetric),
+        () => cloud?.loadLeaderboard?.(polish.leaderboardMetric),
+        () => window.FriendsApiClient?.leaderboard?.(polish.leaderboardMetric)
+      ]) {
+        try {
+          const value = await candidate();
+          if (value) { payload = value; break; }
+        } catch (_) {}
+      }
+      if (!payload) {
+        const urls = [
+          `/api/leaderboard?metric=${encodeURIComponent(polish.leaderboardMetric)}&limit=50`,
+          `/api/leaderboards/${encodeURIComponent(polish.leaderboardMetric)}?limit=50`,
+          `/api/records?metric=${encodeURIComponent(polish.leaderboardMetric)}&limit=50`
+        ];
+        for (const url of urls) {
+          try {
+            const response = await fetch(url, { credentials: "include" });
+            if (!response.ok) continue;
+            payload = await response.json();
+            break;
+          } catch (_) {}
+        }
+      }
+      polish.leaderboardEntries = normalizeLeaderboardRows(payload);
+      if (!polish.leaderboardEntries.length) polish.leaderboardError = "NO RECORDS YET";
+    } catch (error) {
+      polish.leaderboardError = "LEADERBOARD UNAVAILABLE";
+      console.warn("Leaderboard load failed", error);
+    } finally {
+      polish.leaderboardLoading = false;
+    }
+  }
+
+  function openLeaderboard() {
+    polish.previousState = game.state === "rrLeaderboard" ? "achievements" : game.state;
+    game.state = "rrLeaderboard";
+    polish.leaderboardPage = 0;
+    loadLeaderboard();
+    safeCall(tone, 540, .05, .012, 35);
+  }
+
+  function closeLeaderboard() {
+    game.state = polish.previousState === "rrLeaderboard" ? "achievements" : (polish.previousState || "achievements");
+    safeCall(tone, 330, .045, .010, -30);
+  }
+
+  function formatLeaderboardValue(row) {
+    const value = row?.value;
+    if (Number.isFinite(Number(value))) {
+      const numeric = Number(value);
+      if (/time/i.test(row.metric)) return `${numeric.toFixed(2)} SEC`;
+      return String(numeric);
+    }
+    return String(value ?? "—").toUpperCase();
+  }
+
+  function drawReplayIcon(cx, cy, active = false) {
+    ctx.fillStyle = active ? getSelectedSkin().dark : "#48555a";
+    ctx.fillRect(cx - 7, cy - 6, 14, 12);
+    ctx.fillStyle = "#f7fdff";
+    ctx.fillRect(cx - 5, cy - 4, 10, 8);
+    ctx.fillStyle = active ? getSelectedSkin().mid : "#708086";
+    ctx.fillRect(cx - 2, cy - 2, 3, 5);
+    ctx.fillRect(cx + 1, cy - 1, 2, 3);
+  }
+
+  function drawLeaderboardScreen() {
+    const skin = getSelectedSkin();
+    ctx.fillStyle = "#edf5f7";
+    ctx.fillRect(0, 0, W, H);
+    ctx.fillStyle = COLORS.ink;
+    ctx.fillRect(8, 7, W - 16, H - 14);
+    ctx.fillStyle = "#f7fdff";
+    ctx.fillRect(12, 11, W - 24, H - 22);
+    ctx.fillStyle = skin.dark;
+    ctx.fillRect(20, 18, W - 40, 34);
+    ctx.fillStyle = skin.mid;
+    ctx.fillRect(22, 20, W - 44, 29);
+    ctx.fillStyle = skin.light;
+    ctx.fillRect(25, 22, W - 50, 3);
+    drawBitmapText("LEADERBOARD", W / 2, 29, 1.65, "center", COLORS.white, skin.dark);
+
+    const tabs = [
+      { id:"time", label:"FASTEST TIME", x:38 },
+      { id:"jumps", label:"FEWEST JUMPS", x:178 },
+      { id:"wins", label:"ONLINE WINS", x:318 }
+    ];
+    tabs.forEach((tab) => {
+      const active = polish.leaderboardMetric === tab.id;
+      ctx.fillStyle = active ? COLORS.ink : "#9ca9ad";
+      ctx.fillRect(tab.x, 59, 124, 19);
+      ctx.fillStyle = active ? skin.mid : "#f7fdff";
+      ctx.fillRect(tab.x + 2, 61, 120, 15);
+      drawBitmapText(tab.label, tab.x + 62, 65, .50, "center", active ? COLORS.white : "#48555a", active ? skin.dark : null);
+    });
+
+    polish.leaderboardReplayRects = [];
+    const perPage = 7;
+    const start = polish.leaderboardPage * perPage;
+    const rows = polish.leaderboardEntries.slice(start, start + perPage);
+    if (polish.leaderboardLoading) {
+      drawBitmapText("LOADING RECORDS...", W / 2, 135, .85, "center", "#48555a");
+    } else if (!rows.length) {
+      drawBitmapText(polish.leaderboardError || "NO RECORDS YET", W / 2, 135, .85, "center", "#48555a");
+    } else {
+      rows.forEach((row, offset) => {
+        const y = 86 + offset * 21;
+        const replayRect = { x:427, y:y - 3, w:22, h:18, row };
+        ctx.fillStyle = "rgba(25,43,52,.18)";
+        ctx.fillRect(31, y + 2, 420, 18);
+        ctx.fillStyle = COLORS.ink;
+        ctx.fillRect(29, y, 420, 18);
+        ctx.fillStyle = offset % 2 ? "#eef5f7" : "#ffffff";
+        ctx.fillRect(31, y + 2, 416, 14);
+        drawBitmapText(`#${row.rank}`, 47, y + 5, .56, "center", row.rank === 1 ? "#a46318" : "#48555a");
+        drawBitmapText(row.name.toUpperCase(), 77, y + 5, .55, "left", "#26363d");
+        drawBitmapText(formatLeaderboardValue(row), 360, y + 5, .55, "right", skin.dark);
+        if (row.replayId) {
+          drawReplayIcon(replayRect.x + replayRect.w / 2, replayRect.y + replayRect.h / 2, false);
+          polish.leaderboardReplayRects.push(replayRect);
+        }
+      });
+    }
+
+    const backRect = { x:180, y:238, w:120, h:22 };
+    ctx.fillStyle = COLORS.ink; ctx.fillRect(backRect.x, backRect.y, backRect.w, backRect.h);
+    ctx.fillStyle = "#f7fdff"; ctx.fillRect(backRect.x + 2, backRect.y + 2, backRect.w - 4, backRect.h - 4);
+    drawMiniHouseIcon(backRect.x + 8, backRect.y + 4);
+    drawBitmapText("BACK", backRect.x + 68, backRect.y + 7, .82, "center", "#48555a");
+  }
+
+  async function playReplayById(replayId, title = "REPLAY") {
+    if (!replayId) return false;
+    try {
+      document.querySelectorAll("video").forEach((video) => { if (/replay/i.test(video.closest("[class],[id]")?.textContent || "")) video.pause?.(); });
+    } catch (_) {}
+    for (const candidate of [
+      () => typeof playStoredReplay === "function" ? playStoredReplay(replayId, title) : undefined,
+      () => window.RibbitRacePlayStoredReplay?.(replayId, title),
+      () => window.RibbitReplayArchive?.play?.(replayId, title),
+      () => window.RibbitReplayPlayer?.play?.(replayId, title),
+      () => window.RibbitRaceReplay?.play?.(replayId, title)
+    ]) {
+      try {
+        const value = await candidate();
+        if (value !== undefined && value !== false) return true;
+      } catch (_) {}
+    }
+    window.dispatchEvent(new CustomEvent("ribbit-play-replay", { detail:{ replayId, title } }));
+    return true;
+  }
+  window.RibbitRacePlayReplay = playReplayById;
+
+  function repairReplayModal(root = document) {
+      const rrReplaySource = arguments[0];
+      const rrReplayId = rrReplaySource?.replayId || rrReplaySource?.replay_id || rrReplaySource?.id || rrReplaySource;
+      if (rrReplayId && typeof playStoredReplay === "function") {
+        playStoredReplay(rrReplayId, "WORLD RECORD REPLAY");
+        return;
+      }
+
+    const candidates = [...root.querySelectorAll?.("video") || []];
+    for (const video of candidates) {
+      const modal = video.closest("[role='dialog'], .modal, [class*='replay'], [id*='replay']") || video.parentElement;
+      if (!modal || modal.dataset.rrReplayRepaired === "1") continue;
+      const text = String(modal.textContent || "");
+      if (!/REPLAY|WORLD RECORD/i.test(text)) continue;
+      modal.dataset.rrReplayRepaired = "1";
+      const src = video.currentSrc || video.src || "";
+      const replayId = modal.dataset.replayId || video.dataset.replayId || src.split(/[/?#]/).filter(Boolean).pop();
+      const button = document.createElement("button");
+      button.type = "button";
+      button.textContent = "PLAY REPLAY IN GAME";
+      button.className = "rr-replay-play-button";
+      button.addEventListener("click", (event) => {
+        event.preventDefault(); event.stopPropagation();
+        modal.hidden = true; modal.style.display = "none";
+        playReplayById(replayId, /WORLD RECORD/i.test(text) ? "WORLD RECORD REPLAY" : "ONLINE REPLAY");
+      });
+      video.replaceWith(button);
+    }
+  }
+
+  const modalObserver = new MutationObserver((records) => {
+    repairReplayModal(document);
+    for (const record of records) for (const node of record.addedNodes) {
+      if (node instanceof HTMLElement) repairReplayModal(node);
+    }
+  });
+  try { modalObserver.observe(document.documentElement, { childList:true, subtree:true }); repairReplayModal(document); } catch (_) {}
+
+  function readHatProgress() {
+    try { return JSON.parse(localStorage.getItem(HAT_PROGRESS_KEY) || "{}") || {}; }
+    catch (_) { return {}; }
+  }
+
+  function saveHatProgress(progress) {
+    try { localStorage.setItem(HAT_PROGRESS_KEY, JSON.stringify(progress)); } catch (_) {}
+    try {
+      const cloud = typeof RibbitCloud !== "undefined" ? RibbitCloud : window.RibbitCloud;
+      cloud?.queueSave?.({ ribbitRaceHatProgressV2: progress });
+    } catch (_) {}
+  }
+
+  function recordHatCatch() {
+    const skinId = String(game.skinId || "azure").toLowerCase();
+    const progress = readHatProgress();
+    progress.total = Math.max(0, Number(progress.total) || 0) + 1;
+    progress.bySkin = progress.bySkin && typeof progress.bySkin === "object" ? progress.bySkin : {};
+    progress.bySkin[skinId] = Math.max(0, Number(progress.bySkin[skinId]) || 0) + 1;
+    saveHatProgress(progress);
+    try { window.dispatchEvent(new CustomEvent("rr-hat-progress", { detail:{ skinId, count:progress.bySkin[skinId], total:progress.total } })); } catch (_) {}
+    try {
+      if (!statsProfile.fliesBySkin || typeof statsProfile.fliesBySkin !== "object") statsProfile.fliesBySkin = {};
+      statsProfile.fliesBySkin[skinId] = Math.max(Number(statsProfile.fliesBySkin[skinId]) || 0, progress.bySkin[skinId]);
+      statsProfile.totalFliesEaten = Math.max(Number(statsProfile.totalFliesEaten) || 0, progress.total);
+      statsProfile[`${skinId}FliesCaught`] = Math.max(Number(statsProfile[`${skinId}FliesCaught`]) || 0, progress.bySkin[skinId]);
+      saveStatsProfile();
+    } catch (_) {}
+    for (const fn of [
+      typeof evaluateHatUnlocks === "function" ? evaluateHatUnlocks : null,
+      typeof refreshHatUnlocks === "function" ? refreshHatUnlocks : null,
+      typeof checkHatUnlocks === "function" ? checkHatUnlocks : null,
+      typeof updateHatUnlocks === "function" ? updateHatUnlocks : null
+    ]) safeCall(fn);
+  }
+
+  const originalAttemptFlyCatchPolish8 = attemptFlyCatch;
+  attemptFlyCatch = function(targetFly, source = "body", ...rest) {
+    const correctBefore = Boolean(targetFly && targetFly.vocabIndex === game.targetVocabIndex);
+    const result = originalAttemptFlyCatchPolish8.call(this, targetFly, source, ...rest);
+    const training = Boolean(game.tutorialActive || window.RibbitRaceTutorialEngine?.active);
+    if (result && correctBefore && !training && !targetFly?.sandboxTest) recordHatCatch();
+    return result;
+  };
+
+  function clearPinnedHatRequirement() {
+    for (const key of Object.keys(game)) {
+      if (/hat/i.test(key) && /(pinned|requirement|tooltip|notice)/i.test(key)) {
+        if (typeof game[key] === "boolean") game[key] = false;
+        else if (typeof game[key] === "number") game[key] = 0;
+        else game[key] = null;
+      }
+    }
+  }
+
+  function getBaseSkinIds() {
+    return ["azure","crimson","plum","forest","violet","silver","blossom","ember"].filter((id) => FROG_SKINS?.[id]);
+  }
+
+  function applyCustomBaseSkin(skinId) {
+    const skin = FROG_SKINS?.[skinId];
+    if (!skin) return false;
+    for (const fn of [
+      typeof setCustomColorFromSkin === "function" ? setCustomColorFromSkin : null,
+      typeof applyCustomBasePalette === "function" ? applyCustomBasePalette : null,
+      typeof setCustomPalette === "function" ? setCustomPalette : null
+    ]) {
+      try { if (fn) { fn(skinId, skin); return true; } } catch (_) {}
+    }
+    try {
+      const slot = Number(game.customSlotIndex || 0);
+      if (!Array.isArray(game.customFrogSlots)) game.customFrogSlots = [];
+      game.customFrogSlots[slot] = {
+        ...(game.customFrogSlots[slot] || {}),
+        dark:skin.dark, mid:skin.mid, light:skin.light, belly:skin.belly,
+        accents:skin.accents || skin.light, baseSkinId:skinId
+      };
+      safeCall(saveCustomFrogSlots);
+      return true;
+    } catch (_) { return false; }
+  }
+
+  function getCustomBaseOptionRects() {
+    const ids = getBaseSkinIds();
+    return ids.map((id, index) => ({ id, x:52 + (index % 4) * 92, y:83 + Math.floor(index / 4) * 29, w:84, h:23 }));
+  }
+
+  function drawCustomBaseButton() {
+    if (game.state !== "custom") return;
+    const rect = CUSTOM_BASE_BUTTON;
+    ctx.fillStyle = "rgba(25,43,52,.28)"; ctx.fillRect(rect.x + 2, rect.y + 2, rect.w, rect.h);
+    ctx.fillStyle = polish.customBaseOpen ? getSelectedSkin().dark : COLORS.ink; ctx.fillRect(rect.x, rect.y, rect.w, rect.h);
+    ctx.fillStyle = polish.customBaseOpen ? getSelectedSkin().belly : "#f7fdff"; ctx.fillRect(rect.x + 2, rect.y + 2, rect.w - 4, rect.h - 4);
+    if (typeof drawMiniPaletteIcon === "function") drawMiniPaletteIcon(rect.x + 5, rect.y + 4, 0.75);
+    drawBitmapText("BASE", rect.x + rect.w / 2, rect.y + 14, .38, "center", "#48555a");
+    if (!polish.customBaseOpen) return;
+
+    const panel = { x:42, y:72, w:396, h:78 };
+    ctx.fillStyle = "rgba(25,43,52,.30)"; ctx.fillRect(panel.x + 4, panel.y + 4, panel.w, panel.h);
+    ctx.fillStyle = COLORS.ink; ctx.fillRect(panel.x, panel.y, panel.w, panel.h);
+    ctx.fillStyle = "#f7fdff"; ctx.fillRect(panel.x + 3, panel.y + 3, panel.w - 6, panel.h - 6);
+    drawBitmapText("SET BASE FROG", W / 2, panel.y + 8, .62, "center", "#48555a");
+    for (const option of getCustomBaseOptionRects()) {
+      const skin = FROG_SKINS[option.id];
+      ctx.fillStyle = skin.dark; ctx.fillRect(option.x, option.y, option.w, option.h);
+      ctx.fillStyle = skin.belly; ctx.fillRect(option.x + 2, option.y + 2, option.w - 4, option.h - 4);
+      ctx.fillStyle = skin.light; ctx.fillRect(option.x + 5, option.y + 4, option.w - 10, 2);
+      drawBitmapText(option.id.toUpperCase(), option.x + option.w / 2, option.y + 8, .54, "center", skin.dark);
+    }
+  }
+
+  function toggleFullscreen() {
+    try {
+      if (document.fullscreenElement) document.exitFullscreen?.();
+      else (document.getElementById("game-frame") || canvas || document.documentElement).requestFullscreen?.();
+    } catch (_) {}
+  }
+
+  function drawPauseFullscreenButton() {
+    if (game.state !== "paused") return;
+    const rect = PAUSE_FULLSCREEN_BUTTON;
+    ctx.fillStyle = "rgba(25,43,52,.28)"; ctx.fillRect(rect.x + 2, rect.y + 2, rect.w, rect.h);
+    ctx.fillStyle = COLORS.ink; ctx.fillRect(rect.x, rect.y, rect.w, rect.h);
+    ctx.fillStyle = "#f7fdff"; ctx.fillRect(rect.x + 2, rect.y + 2, rect.w - 4, rect.h - 4);
+    ctx.fillStyle = "#48555a";
+    ctx.fillRect(rect.x + 5, rect.y + 5, 4, 2); ctx.fillRect(rect.x + 5, rect.y + 5, 2, 4);
+    ctx.fillRect(rect.x + rect.w - 9, rect.y + 5, 4, 2); ctx.fillRect(rect.x + rect.w - 7, rect.y + 5, 2, 4);
+    ctx.fillRect(rect.x + 5, rect.y + rect.h - 7, 4, 2); ctx.fillRect(rect.x + 5, rect.y + rect.h - 9, 2, 4);
+    ctx.fillRect(rect.x + rect.w - 9, rect.y + rect.h - 7, 4, 2); ctx.fillRect(rect.x + rect.w - 7, rect.y + rect.h - 9, 2, 4);
+  }
+
+  function isOnlineMenuVisible() {
+    try { return Boolean(OnlineVersus?.isMenuVisible?.() && !OnlineVersus?.isActive?.()); }
+    catch (_) { return false; }
+  }
+
+  function selectedOnlinePalette() {
+    try { return getPvpSetupPreviewPalette?.(0) || getSelectedSkin(); }
+    catch (_) { return getSelectedSkin(); }
+  }
+
+  function drawOnlineUnifiedHeader() {
+    if (!isOnlineMenuVisible()) return;
+    const palette = selectedOnlinePalette();
+    const title = (() => {
+      try {
+        if (OnlineVersus?.isQuickplayMenu?.()) return "QUICKPLAY";
+        if (OnlineVersus?.isRoomMenu?.()) return "ONLINE ROOM";
+      } catch (_) {}
+      return "ONLINE";
+    })();
+    const panel = { x:40, y:8, w:400, h:42 };
+    ctx.fillStyle = COLORS.ink; ctx.fillRect(panel.x, panel.y, panel.w, panel.h);
+    ctx.fillStyle = palette.dark; ctx.fillRect(panel.x + 3, panel.y + 3, panel.w - 6, panel.h - 6);
+    ctx.fillStyle = palette.mid; ctx.fillRect(panel.x + 5, panel.y + 5, panel.w - 10, panel.h - 10);
+    ctx.fillStyle = palette.light; ctx.fillRect(panel.x + 8, panel.y + 7, panel.w - 16, 3);
+    drawBitmapText(title, W / 2, panel.y + 14, 1.55, "center", COLORS.white, palette.dark);
+  }
+
+  function drawMainMenuTooltips() {
+    if (game.state !== "main" || !polish.mainHoverKey) return;
+    const lookup = {
+      profile:[MAIN_PROFILE_BUTTON, "ACCOUNT & LANGUAGE"],
+      device:[MAIN_DEVICE_BUTTON, "COMPUTER / MOBILE MODE"],
+      achievements:[MAIN_UI.achievementsButton, "ACHIEVEMENTS"],
+      stats:[MAIN_UI.statsButton, "STATS & RECORDS"]
+    };
+    const entry = lookup[polish.mainHoverKey];
+    if (entry) drawSpeechBubble(entry[0], entry[1], { maxWidth:170, scale:.50 });
+  }
+
+  function drawAchievementLeaderboardButton() {
+    if (game.state !== "achievements") return;
+    drawMiniMedalButton(LEADERBOARD_BUTTON, polish.mainHoverKey === "leaderboard");
+    if (polish.mainHoverKey === "leaderboard") drawSpeechBubble(LEADERBOARD_BUTTON, "LEADERBOARD & REPLAYS", { maxWidth:150, scale:.48 });
+  }
+
+  function drawWorldRecordNotice() {
+    if (game.state !== "won" || !(game.newWorldRecord || game.worldRecordNotice || game.roundWorldRecord)) return;
+    const rect = { x:150, y:205, w:180, h:24 };
+    ctx.fillStyle = "rgba(25,43,52,.28)"; ctx.fillRect(rect.x + 2, rect.y + 2, rect.w, rect.h);
+    ctx.fillStyle = "#805316"; ctx.fillRect(rect.x, rect.y, rect.w, rect.h);
+    ctx.fillStyle = "#ffe7a0"; ctx.fillRect(rect.x + 2, rect.y + 2, rect.w - 4, rect.h - 4);
+    drawPixelTrophy(rect.x + 15, rect.y + 3, false, .78);
+    drawBitmapText("NEW WORLD RECORD!", rect.x + 103, rect.y + 8, .72, "center", "#805316");
+    if (polish.worldRecordHovered) {
+      const previous = game.previousWorldRecord || game.worldRecordPrevious || game.worldRecordPrior || game.recordPrevious || game.previousRecord || {};
+      const name = previous.name || previous.holder || previous.displayName || game.previousWorldRecordHolder || "NO PREVIOUS HOLDER";
+      const value = previous.value ?? previous.time ?? previous.jumps ?? previous.score ?? game.previousWorldRecordValue ?? "—";
+      const rawDate = previous.date || previous.createdAt || game.previousWorldRecordDate; const date = rawDate ? new Date(rawDate).toLocaleDateString() : "";
+      drawSpeechBubble(rect, `PREVIOUS: ${name} • ${value}${date ? ` • ${date}` : ""}`, { maxWidth:260, scale:.43, height:23 });
+    }
+  }
+
+  function drawPvpPauseButtonPolish8() {
+    if (game.mode !== "pvp" || !["playing","paused","countdown","pvpCelebration"].includes(game.state)) return;
+    if (isOnlineMenuVisible()) return;
+    const rect = { x:W - 34, y:31, w:26, h:19 };
+    const paused = game.state === "paused";
+    ctx.save(); ctx.globalAlpha = paused ? .84 : .58;
+    ctx.fillStyle = "rgba(25,43,52,.28)"; ctx.fillRect(rect.x + 2, rect.y + 2, rect.w, rect.h);
+    ctx.fillStyle = COLORS.ink; ctx.fillRect(rect.x, rect.y, rect.w, rect.h);
+    ctx.fillStyle = paused ? getSelectedSkin().mid : getSelectedSkin().belly;
+    ctx.fillRect(rect.x + 2, rect.y + 2, rect.w - 4, rect.h - 4);
+    ctx.fillStyle = paused ? COLORS.white : getSelectedSkin().dark;
+    if (paused) {
+      ctx.fillRect(rect.x + 9, rect.y + 5, 3, 9);
+      ctx.fillRect(rect.x + 12, rect.y + 7, 3, 5);
+      ctx.fillRect(rect.x + 15, rect.y + 9, 2, 1);
+    } else {
+      ctx.fillRect(rect.x + 7, rect.y + 5, 4, 9);
+      ctx.fillRect(rect.x + 15, rect.y + 5, 4, 9);
+    }
+    ctx.restore();
+  }
+
+  const originalDrawPvpVsHoverTooltipPolish8 = typeof drawPvpVsHoverTooltip === "function" ? drawPvpVsHoverTooltip : null;
+  if (originalDrawPvpVsHoverTooltipPolish8) {
+    drawPvpVsHoverTooltip = function() {
+      if (OnlineVersus?.isRoomMenu?.() || game.pvpSetupHoveredKey !== "vs") return;
+      const message = game.pvpHuman2 ? "CLICK TO PLAY AGAINST CPU" : "CLICK TO ENABLE LOCAL VERSUS";
+      drawSpeechBubble(PVP_SETUP_UI.vsButton, message, { maxWidth:180, scale:.48 });
+    };
+  }
+
+  function immediateResetToStart() {
+    try { flies.length = 0; } catch (_) {}
+    try { game.spawnQueue.length = 0; } catch (_) {}
+    try { tongue.active = false; tongue.targetFlyId = null; } catch (_) {}
+    try {
+      if (game.mode === "pvp") {
+        resetPvpGame();
+        game.state = "playing";
+      } else {
+        resetGame(false);
+        applySelectedLevel();
+        game.state = "playing";
+        Object.assign(frog, { x:Number(LEVELS?.[game.selectedLevelId]?.startX ?? 25) + Number(CONFIG.initialFrogOffsetX || 36), y:CONFIG.groundY - frog.h, vx:0, vy:0, grounded:true, charging:false, chargeHoldTime:0 });
+      }
+      game.countdownNumber = 0;
+      game.countdownTimer = 0;
+    } catch (_) {}
+  }
+
+  function clearQuickplayAndHome() {
+    polish.quickplayLeaving = true;
+    try { OnlineVersus?.leaveRoom?.(); } catch (_) {}
+    try { OnlineVersus?.cancelQuickplay?.(); } catch (_) {}
+    try { OnlineVersus?.reset?.(); } catch (_) {}
+    try { flies.length = 0; game.spawnQueue.length = 0; } catch (_) {}
+    try { openMainMenu(false); } catch (_) { game.state = "main"; }
+    setTimeout(() => { polish.quickplayLeaving = false; }, 250);
+  }
+
+  function archiveOnlineRound() {
+    const significantSolo = game.mode === "solo" && game.state === "won" && Boolean(game.newBestTime || game.newFewestJumps || game.newEndlessBest || game.newWorldRecord);
+    const onlineFinished = Boolean(game.onlineMode && ["won","pvpCelebration"].includes(game.state));
+    if (!significantSolo && !onlineFinished) return;
+    const key = `${game.pvpMatchId || game.onlineRoomCode || "online"}:${game.pvpRoundIndex || 0}:${game.pvpElapsed || game.elapsed || 0}`;
+    if (polish.lastArchivedRoundKey === key) return;
+    polish.lastArchivedRoundKey = key;
+    let payload;
+    for (const fn of [
+      typeof finishReplayRecording === "function" ? finishReplayRecording : null,
+      typeof finalizeReplayRecording === "function" ? finalizeReplayRecording : null,
+      window.RibbitReplayRecorder?.finish
+    ]) {
+      try { if (fn) { payload = fn(); if (payload) break; } } catch (_) {}
+    }
+    const opponent = (() => {
+      if (!onlineFinished) return "SOLO PERSONAL BEST";
+      try {
+        const local = Number(OnlineVersus?.localIndex?.() || 0);
+        return String(pvpPlayers?.[1 - local]?.displayName || pvpPlayers?.[1 - local]?.name || OnlineVersus?.opponentName?.() || "ONLINE FROG");
+      } catch (_) { return "ONLINE FROG"; }
+    })();
+    const metadata = { opponent, at:Date.now(), won:Boolean(onlineFinished && game.pvpMatchWinnerIndex === (OnlineVersus?.localIndex?.() || 0)), online:onlineFinished, significant:true, personalBest:significantSolo };
+    const upload = async () => {
+      let replayId = payload?.id || payload?.replayId || null;
+      for (const fn of [
+        window.RibbitReplayArchive?.save,
+        window.RibbitReplayArchive?.upload,
+        window.RibbitCloud?.uploadReplay,
+        typeof uploadReplay === "function" ? uploadReplay : null
+      ]) {
+        try {
+          if (!fn || replayId) continue;
+          const response = await fn(payload, { ...metadata, significant:true, personalBest:true });
+          replayId = response?.replayId || response?.id || replayId;
+        } catch (_) {}
+      }
+      if (onlineFinished) {
+        try {
+          const history = JSON.parse(localStorage.getItem(ONLINE_HISTORY_KEY) || "{}");
+          if (!Array.isArray(history[opponent])) history[opponent] = [];
+          history[opponent].unshift({ ...metadata, replayId });
+          history[opponent] = history[opponent].slice(0, 50);
+          localStorage.setItem(ONLINE_HISTORY_KEY, JSON.stringify(history));
+        } catch (_) {}
+        try { window.RibbitFrogTags?.addGame?.(opponent, { ...metadata, replayId }); } catch (_) {}
+      }
+    };
+    upload();
+  }
+
+  const originalActivatePauseSelectionPolish8 = activatePauseSelection;
+  activatePauseSelection = function(...args) {
+    if (game.onlineMode && game.state === "paused" && game.pauseSelection === "home") {
+      clearQuickplayAndHome();
+      return;
+    }
+    return originalActivatePauseSelectionPolish8.apply(this, args);
+  };
+
+  const originalUpdatePolish8 = update;
+  update = function(dt, ...rest) {
+    const result = originalUpdatePolish8.call(this, dt, ...rest);
+    if (polish.priorCriticalCatch && !game.soloCriticalCatchActive && !game.pvpCriticalCatchActive) {
+      polish.labelFadeStartedAt = performance.now();
+    }
+    polish.priorCriticalCatch = Boolean(game.soloCriticalCatchActive || game.pvpCriticalCatchActive);
+    archiveOnlineRound();
+    polish.previousRoundState = game.state;
+    return result;
+  };
+
+  const originalDrawScenePolish8 = drawScene;
+  drawScene = function(...args) {
+    if (game.state === "rrLeaderboard") {
+      drawLeaderboardScreen();
+      return;
+    }
+    const result = originalDrawScenePolish8.apply(this, args);
+    drawAchievementLeaderboardButton();
+    drawMainMenuTooltips();
+    drawOnlineUnifiedHeader();
+    drawCustomBaseButton();
+    drawPauseFullscreenButton();
+    drawWorldRecordNotice();
+    drawPvpPauseButtonPolish8();
+    return result;
+  };
+
+  function interactiveRectForPoint(point) {
+    if (game.state === "main") {
+      if (pointIn(point, MAIN_PROFILE_BUTTON) || pointIn(point, MAIN_DEVICE_BUTTON) ||
+          pointIn(point, MAIN_UI.soloButton) || pointIn(point, MAIN_UI.pvpButton) ||
+          pointIn(point, MAIN_UI.frogButton) || pointIn(point, MAIN_UI.achievementsButton) ||
+          pointIn(point, MAIN_UI.statsButton)) return true;
+    }
+    if (game.state === "achievements" && pointIn(point, LEADERBOARD_BUTTON)) return true;
+    if (game.state === "rrLeaderboard") return true;
+    if (game.state === "custom" && pointIn(point, CUSTOM_BASE_BUTTON)) return true;
+    if (game.state === "paused" && pointIn(point, PAUSE_FULLSCREEN_BUTTON)) return true;
+    if (["playing","paused","countdown","pvpCelebration"].includes(game.state) && pointIn(point, HUD_UI.pauseButton)) return true;
+    return false;
+  }
+
+  canvas.addEventListener("pointermove", (event) => {
+    const point = getCanvasPoint(event);
+    polish.mainHoverKey = "";
+    if (game.state === "main") {
+      if (pointIn(point, MAIN_PROFILE_BUTTON)) polish.mainHoverKey = "profile";
+      else if (pointIn(point, MAIN_DEVICE_BUTTON)) polish.mainHoverKey = "device";
+      else if (pointIn(point, MAIN_UI.achievementsButton)) polish.mainHoverKey = "achievements";
+      else if (pointIn(point, MAIN_UI.statsButton)) polish.mainHoverKey = "stats";
+    } else if (game.state === "achievements" && pointIn(point, LEADERBOARD_BUTTON)) {
+      polish.mainHoverKey = "leaderboard";
+    }
+    polish.worldRecordHovered = game.state === "won" && pointIn(point, { x:150, y:205, w:180, h:24 });
+    try { canvas.style.setProperty("cursor", interactiveRectForPoint(point) ? "pointer" : "default", "important"); } catch (_) {}
+  }, { capture:true, passive:true });
+
+  canvas.addEventListener("pointerleave", () => {
+    polish.mainHoverKey = "";
+    polish.worldRecordHovered = false;
+    try { canvas.style.setProperty("cursor", "default", "important"); } catch (_) {}
+  }, { capture:true, passive:true });
+
+  canvas.addEventListener("pointerdown", (event) => {
+    const point = getCanvasPoint(event);
+    if (game.state === "achievements" && pointIn(point, LEADERBOARD_BUTTON)) {
+      event.preventDefault(); event.stopImmediatePropagation(); openLeaderboard(); return;
+    }
+    if (game.state === "rrLeaderboard") {
+      event.preventDefault(); event.stopImmediatePropagation();
+      const tabs = [
+        { id:"time", rect:{x:38,y:59,w:124,h:19} },
+        { id:"jumps", rect:{x:178,y:59,w:124,h:19} },
+        { id:"wins", rect:{x:318,y:59,w:124,h:19} }
+      ];
+      const tab = tabs.find((item) => pointIn(point, item.rect));
+      if (tab) { polish.leaderboardMetric = tab.id; polish.leaderboardPage = 0; loadLeaderboard(); return; }
+      const replay = polish.leaderboardReplayRects.find((item) => pointIn(point, item));
+      if (replay) { playReplayById(replay.row.replayId, `${replay.row.name} • ${replay.row.metric}`); return; }
+      if (pointIn(point, {x:180,y:238,w:120,h:22})) { closeLeaderboard(); return; }
+      return;
+    }
+    const pvpPauseRect = { x:W - 34, y:31, w:26, h:19 };
+    if (game.mode === "pvp" && ["playing","paused","countdown","pvpCelebration"].includes(game.state) && pointIn(point, pvpPauseRect)) {
+      event.preventDefault(); event.stopImmediatePropagation();
+      if (game.state === "paused") resumePausedGame(); else pauseGame();
+      return;
+    }
+    if (game.mode === "pvp" && pointIn(point, HUD_UI.pauseButton)) {
+      event.preventDefault(); event.stopImmediatePropagation(); return;
+    }
+    if (game.state === "paused" && pointIn(point, PAUSE_FULLSCREEN_BUTTON)) {
+      event.preventDefault(); event.stopImmediatePropagation(); toggleFullscreen(); return;
+    }
+    if (game.state === "custom" && pointIn(point, CUSTOM_BASE_BUTTON)) {
+      event.preventDefault(); event.stopImmediatePropagation();
+      polish.customBaseOpen = !polish.customBaseOpen;
+      return;
+    }
+    if (game.state === "custom" && polish.customBaseOpen) {
+      const option = getCustomBaseOptionRects().find((item) => pointIn(point, item));
+      if (option) {
+        event.preventDefault(); event.stopImmediatePropagation();
+        applyCustomBaseSkin(option.id);
+        polish.customBaseOpen = false;
+        game.state = "custom";
+        return;
+      }
+    }
+    if (game.state === "paused" && game.onlineMode && pointIn(point, PAUSE_UI.homeButton)) {
+      event.preventDefault(); event.stopImmediatePropagation(); clearQuickplayAndHome(); return;
+    }
+    if ((game.state === "setup" || game.state === "custom") && game.customHatOpen) {
+      setTimeout(clearPinnedHatRequirement, 0);
+    }
+  }, { capture:true, passive:false });
+
+  window.addEventListener("keydown", (event) => {
+    if (game.state === "rrLeaderboard") {
+      if (event.code === "Escape" || event.code === "Backspace") {
+        event.preventDefault(); event.stopImmediatePropagation(); closeLeaderboard();
+      }
+      return;
+    }
+    if (event.code === "KeyR" && ["playing","paused","countdown"].includes(game.state)) {
+      event.preventDefault(); event.stopImmediatePropagation(); immediateResetToStart();
+    }
+  }, { capture:true, passive:false });
+
+  window.addEventListener("paste", () => {
+    const wasCustom = game.state === "custom";
+    if (!wasCustom) return;
+    setTimeout(() => { game.state = "custom"; safeCall(drawScene); }, 0);
+  }, { capture:true });
+
+  try {
+    const style = document.createElement("style");
+    style.textContent = `
+      #fullscreen-button, #rr-fullscreen-button, .fullscreen-button, [data-action="fullscreen"] { display:none !important; }
+      #game, canvas { cursor:default; }
+      .rr-replay-play-button { width:min(520px,90%); min-height:82px; margin:42px auto; display:block; border:6px solid #26363d; background:#f7fdff; color:#26363d; font:700 22px/1.2 monospace; cursor:pointer; }
+      [class*="account"] button, [class*="profile"] button, [role="dialog"] button { color:#ffffff; text-shadow:0 1px #26363d; }
+      [class*="account"] input, [class*="account"] select, [class*="profile"] input, [class*="profile"] select { color:#26363d !important; background:#ffffff !important; }
+      .rr-language-field { display:grid; gap:5px; margin:8px 0; color:#26363d; font:700 13px/1.2 monospace; }
+      .rr-language-field select { width:100%; min-height:38px; border:3px solid #26363d; padding:4px 8px; }
+    `;
+    document.head.appendChild(style);
+  } catch (_) {}
+
+  window.RibbitRacePolish8 = Object.freeze({
+    openLeaderboard,
+    playReplay: playReplayById,
+    getLanguageMode,
+    setLanguageMode,
+    recordHatCatch
+  });
+})();
+
+// Canvas-native online menu layout and contextual online help.
+(() => {
+  "use strict";
+  if (window.__RIBBIT_POLISH_8_ONLINE__) return;
+  window.__RIBBIT_POLISH_8_ONLINE__ = true;
+
+  const state = { hover:"", quickHover:"" };
+  const ONLINE_RECTS = Object.freeze({
+    quickplay:{x:42,y:92,w:190,h:40}, spectate:{x:248,y:92,w:190,h:40},
+    host:{x:42,y:139,w:190,h:40}, join:{x:248,y:139,w:190,h:40},
+    customizer:{x:42,y:186,w:190,h:40}, tags:{x:248,y:186,w:190,h:40},
+    back:{x:180,y:235,w:120,h:23}
+  });
+  const QUICK_RECTS = Object.freeze({
+    frog:{x:132,y:98,w:216,h:86}, find:{x:126,y:190,w:228,h:26}, back:{x:180,y:235,w:120,h:23}
+  });
+
+  function inside(point,rect){return point&&rect&&point.x>=rect.x&&point.x<=rect.x+rect.w&&point.y>=rect.y&&point.y<=rect.y+rect.h;}
+  function callFirst(names,...args){
+    for(const name of names){
+      try{
+        const fn=OnlineVersus?.[name]||window[name];
+        if(typeof fn==='function'){const value=fn.apply(OnlineVersus,args);if(value!==false)return true;}
+      }catch(_){ }
+    }
+    return false;
+  }
+  function menuKind(){
+    try{
+      if(!OnlineVersus?.isMenuVisible?.()||OnlineVersus?.isActive?.())return "";
+      if(OnlineVersus?.isRoomMenu?.())return "room";
+      if(OnlineVersus?.isQuickplayMenu?.()||OnlineVersus?.isQueueMenu?.())return "quickplay";
+      const raw=OnlineVersus?.menuMode?.()||OnlineVersus?.mode?.()||OnlineVersus?.state?.()||OnlineVersus?.statusText?.()||"";
+      const text=typeof raw==='string'?raw:JSON.stringify(raw);
+      if(/quick|queue|matchmaking|find match|searching|play while waiting/i.test(text))return "quickplay";
+      return "main";
+    }catch(_){return "";}
+  }
+  function palette(){
+    try{return getPvpSetupPreviewPalette?.(0)||getSelectedSkin();}catch(_){return getSelectedSkin();}
+  }
+  function panelButton(rect,label,selected=false,icon=""){
+    const skin=palette();
+    ctx.fillStyle="rgba(25,43,52,.25)";ctx.fillRect(rect.x+3,rect.y+3,rect.w,rect.h);
+    ctx.fillStyle=selected?skin.dark:"#9aa9ae";ctx.fillRect(rect.x,rect.y,rect.w,rect.h);
+    ctx.fillStyle=selected?mixHexColors(skin.belly,"#ffffff",.12):"#f7fdff";ctx.fillRect(rect.x+2,rect.y+2,rect.w-4,rect.h-4);
+    ctx.fillStyle=selected?skin.light:"#ffffff";ctx.fillRect(rect.x+7,rect.y+5,rect.w-14,3);
+    const ix=rect.x+20,iy=rect.y+rect.h/2;
+    ctx.fillStyle=selected?skin.dark:"#48555a";
+    if(icon==="quick"){ctx.fillRect(ix-6,iy-8,5,16);ctx.fillRect(ix+1,iy-5,5,10);ctx.fillRect(ix-1,iy-2,4,4);}
+    else if(icon==="spectate"){ctx.fillRect(ix-9,iy-5,18,10);ctx.fillStyle="#f7fdff";ctx.fillRect(ix-5,iy-3,10,6);ctx.fillStyle=selected?skin.dark:"#48555a";ctx.fillRect(ix-1,iy-1,3,3);}
+    else if(icon==="host"){ctx.fillRect(ix-8,iy-3,16,9);ctx.fillRect(ix-5,iy-8,10,5);ctx.fillStyle="#f7fdff";ctx.fillRect(ix-3,iy-1,6,4);}
+    else if(icon==="join"){ctx.fillRect(ix-8,iy-2,12,4);ctx.fillRect(ix+2,iy-7,4,14);ctx.fillRect(ix-10,iy-5,3,10);}
+    else if(icon==="custom"){ctx.fillRect(ix-7,iy-7,14,14);ctx.fillStyle="#ef7582";ctx.fillRect(ix-4,iy-4,4,4);ctx.fillStyle="#5ce5e8";ctx.fillRect(ix+1,iy-4,4,4);ctx.fillStyle="#eac65b";ctx.fillRect(ix-4,iy+1,4,4);}
+    else if(icon==="tags"){ctx.fillRect(ix-8,iy-8,7,16);ctx.fillRect(ix+2,iy-8,7,16);ctx.fillStyle="#f7fdff";ctx.fillRect(ix-5,iy-5,2,2);ctx.fillRect(ix+5,iy-5,2,2);}
+    else if(icon==="back"){drawMiniHouseIcon(rect.x+9,rect.y+5);}
+    drawBitmapText(label,rect.x+rect.w/2+(icon&&icon!=="back"?10:icon==="back"?8:0),rect.y+14,.86,"center",selected?COLORS.white:"#48555a",selected?skin.dark:null);
+  }
+  function speech(rect,text){
+    const skin=palette();const scale=.47;const width=Math.ceil(Math.min(210,Math.max(78,measureBitmapText(text,scale)+16)));const h=22;
+    const cx=rect.x+rect.w/2;const x=clamp(Math.round(cx-width/2),5,W-width-5);const y=Math.max(4,rect.y-h-8);const px=clamp(Math.round(cx),x+10,x+width-10);
+    ctx.fillStyle="rgba(25,43,52,.28)";ctx.fillRect(x+2,y+2,width,h);ctx.fillStyle=COLORS.ink;ctx.fillRect(x,y,width,h);ctx.fillStyle="#f7fdff";ctx.fillRect(x+2,y+2,width-4,h-4);ctx.fillStyle=skin.light;ctx.fillRect(x+5,y+4,width-10,2);drawBitmapText(text,x+width/2,y+8,scale,"center","#26363d");ctx.fillStyle=COLORS.ink;ctx.fillRect(px-4,y+h,9,2);ctx.fillRect(px-3,y+h+2,7,2);ctx.fillRect(px-2,y+h+4,5,2);
+  }
+  function drawHeader(title){
+    const skin=palette();const r={x:28,y:8,w:424,h:48};ctx.fillStyle=COLORS.ink;ctx.fillRect(r.x,r.y,r.w,r.h);ctx.fillStyle=skin.dark;ctx.fillRect(r.x+3,r.y+3,r.w-6,r.h-6);ctx.fillStyle=skin.mid;ctx.fillRect(r.x+5,r.y+5,r.w-10,r.h-10);ctx.fillStyle=skin.light;ctx.fillRect(r.x+9,r.y+7,r.w-18,4);drawBitmapText(title,W/2,r.y+17,1.65,"center",COLORS.white,skin.dark);
+  }
+  function drawOnlineMain(){
+    const level=LEVELS[getPvpSetupPreviewLevelId?.()||"park"]||LEVELS.park;ctx.fillStyle="#dce8eb";ctx.fillRect(0,0,W,H);try{drawBackground(level.id);for(const platform of level.platforms)drawPlatform(platform,level.id);}catch(_){ }
+    ctx.fillStyle="rgba(247,253,255,.94)";ctx.fillRect(7,5,W-14,H-10);ctx.fillStyle=COLORS.ink;ctx.fillRect(7,5,W-14,4);ctx.fillRect(7,H-9,W-14,4);ctx.fillRect(7,5,4,H-10);ctx.fillRect(W-11,5,4,H-10);
+    drawHeader("ONLINE");drawBitmapText("CHOOSE ONLINE MODE",W/2,66,.88,"center","#48555a");
+    panelButton(ONLINE_RECTS.quickplay,"QUICKPLAY",state.hover==="quickplay","quick");panelButton(ONLINE_RECTS.spectate,"SPECTATE",state.hover==="spectate","spectate");panelButton(ONLINE_RECTS.host,"HOST",state.hover==="host","host");panelButton(ONLINE_RECTS.join,"JOIN",state.hover==="join","join");panelButton(ONLINE_RECTS.customizer,"CUSTOMIZER",state.hover==="customizer","custom");panelButton(ONLINE_RECTS.tags,"FROG TAGS",state.hover==="tags","tags");panelButton(ONLINE_RECTS.back,"BACK",state.hover==="back","back");
+    const tips={quickplay:"FIND A 60-SECOND ONLINE MATCH",spectate:"WATCH A LIVE MATCH",host:"CREATE A PRIVATE ROOM",join:"JOIN WITH A ROOM CODE",customizer:"EDIT YOUR ONLINE FROG",tags:"VIEW OPPONENTS AND REPLAYS",back:"RETURN TO LOCAL VERSUS"};if(state.hover)speech(ONLINE_RECTS[state.hover],tips[state.hover]);
+  }
+  function drawQuickFix(){
+    drawHeader("QUICKPLAY");
+    // Clear the menu-only Player 2 badge and pause icon without touching gameplay.
+    ctx.fillStyle="#f7fdff";ctx.fillRect(W-42,54,38,26);ctx.fillRect(W-122,H-27,118,24);
+    // Keep the explanation readable and put Back in the same place as the Online menu.
+    ctx.fillStyle="#f7fdff";ctx.fillRect(84,216,312,50);
+    drawBitmapText("FRIENDS ONLINE • NO AUTOMATIC RELAY FALLBACK",W/2,219,.42,"center","#07516a");
+    panelButton(QUICK_RECTS.back,"BACK",state.quickHover==="back","back");
+    const tips={frog:"CHOOSE THE FROG USED ONLINE",find:"ENTER THE QUICKPLAY QUEUE",back:"RETURN TO ONLINE MODES"};if(state.quickHover)speech(QUICK_RECTS[state.quickHover],tips[state.quickHover]);
+  }
+  function action(key){
+    if(key==="quickplay"){
+      callFirst(["cancelQuickplay","leaveQueue","leaveRoom","cancelQuickplayTicket"]);
+      callFirst(["openQuickplay","quickplay","startQuickplay","openMatchmaking","isQuickplay","quickplayPoll","tickQuickplay","enterQuickplay","quickplayEnter","cancelQuickplay","quickplayCancel","quickplayCounts"]);
+    }
+    else if(key==="spectate")callFirst(["openSpectate","spectate","openSpectatorPicker","spectating","isSpectating","spectateRoom","drawSpectator","pollSpectator","stopSpectating","startSpectating","updateSpectator","spectatorVersion"]);
+    else if(key==="host")callFirst(["openHost","host","createRoom","hostRoom","isHost","hostRtt","hostName","isHostActive","awaitingHostFrame","handleHostRoundCompletion"]);
+    else if(key==="join")callFirst(["openJoin","join","joinRoom","joinedAt","showJoin","joinOnlineRoom"]);
+    else if(key==="customizer"){if(!callFirst(["openCustomizer","customizer","appearance","appearanceFor","localAppearance","remoteAppearance","openOnlineCustomizer","saveOnlineCustomizer","closeOnlineCustomizer","refreshQueuedAppearance"]))try{openSetupMenu();}catch(_){ }}
+    else if(key==="tags"){if(!callFirst(["openFrogTags","frogTags"]))try{window.RibbitFrogTags?.open?.();}catch(_){ }}
+    else if(key==="back"){if(!callFirst(["close","back","returnToLocal"]))try{closePvpSetupMenu();}catch(_){game.state="main";}}
+  }
+  const priorDraw=drawScene;drawScene=function(...args){const kind=menuKind();if(kind==="main"){drawOnlineMain();return;}const result=priorDraw.apply(this,args);if(kind==="quickplay")drawQuickFix();return result;};
+  canvas.addEventListener("pointermove",e=>{const kind=menuKind();if(!kind)return;const p=getCanvasPoint(e);state.hover="";state.quickHover="";if(kind==="main")for(const [key,rect] of Object.entries(ONLINE_RECTS))if(inside(p,rect)){state.hover=key;break;}if(kind==="quickplay")for(const [key,rect] of Object.entries(QUICK_RECTS))if(inside(p,rect)){state.quickHover=key;break;}canvas.style.setProperty("cursor",(state.hover||state.quickHover)?"pointer":"default","important");},{capture:true,passive:true});
+  canvas.addEventListener("pointerdown",e=>{const kind=menuKind();if(kind==="main"&&state.hover){e.preventDefault();e.stopImmediatePropagation();action(state.hover);return;}if(kind==="quickplay"&&state.quickHover==="back"){
+      e.preventDefault();e.stopImmediatePropagation();
+      callFirst(["cancelQuickplay","leaveQueue","leaveRoom","cancelQuickplayTicket"]);
+      action("back");
+    }},{capture:true,passive:false});
+})();
+
+// Hat progress compatibility bridge for old and new save formats.
+(() => {
+  "use strict";
+  function localProgress(){try{return JSON.parse(localStorage.getItem("ribbitRaceHatProgressV2")||"{}")||{};}catch(_){return {};}}
+  function skinFromArgs(args){
+    const known=["azure","crimson","plum","forest","violet","silver","blossom","ember"];
+    for(const arg of args){
+      if(typeof arg==="string"&&known.includes(arg.toLowerCase()))return arg.toLowerCase();
+      if(arg&&typeof arg==="object"){
+        for(const key of ["skinId","skin","frog","frogId","requiredSkin"]){const value=String(arg[key]||"").toLowerCase();if(known.includes(value))return value;}
+        const text=JSON.stringify(arg).toLowerCase();const found=known.find(id=>text.includes(id));if(found)return found;
+      }
+    }
+    return String(game.skinId||"azure").toLowerCase();
+  }
+  function mergeProgress(value,args){
+    const progress=localProgress();const skin=skinFromArgs(args);const local=Math.max(0,Number(progress.bySkin?.[skin])||0);
+    if(typeof value==="number")return Math.max(value,local);
+    if(value&&typeof value==="object"){
+      const clone={...value};
+      for(const key of ["current","progress","count","value","earned"]){if(Number.isFinite(Number(clone[key])))clone[key]=Math.max(Number(clone[key]),local);}
+      return clone;
+    }
+    return value;
+  }
+  if(typeof getHatRequirementProgress==="function"){
+    const prior=getHatRequirementProgress;getHatRequirementProgress=function(...args){return mergeProgress(prior.apply(this,args),args);};
+  }
+  if(typeof getHatUnlockProgress==="function"){
+    const prior=getHatUnlockProgress;getHatUnlockProgress=function(...args){return mergeProgress(prior.apply(this,args),args);};
+  }
+  if(typeof getCustomHatProgress==="function"){
+    const prior=getCustomHatProgress;getCustomHatProgress=function(...args){return mergeProgress(prior.apply(this,args),args);};
+  }
+  if(typeof getSkinFlyCount==="function"){
+    const prior=getSkinFlyCount;getSkinFlyCount=function(...args){return mergeProgress(prior.apply(this,args),args);};
+  }
+  if(typeof getFrogSkinFlyCount==="function"){
+    const prior=getFrogSkinFlyCount;getFrogSkinFlyCount=function(...args){return mergeProgress(prior.apply(this,args),args);};
+  }
+  if(typeof drawHatProgressBar==="function"){
+    const prior=drawHatProgressBar;drawHatProgressBar=function(hat,...rest){
+      try{if(hat?.id==="ember"||hat?.skinId==="ember"){if(isFrogSkinUnlocked?.("ember"))return;}}catch(_){ }
+      return prior.call(this,hat,...rest);
+    };
+  }
+})();
+
+// Merge locally archived online replays into Frog Tags history.
+(() => {
+  "use strict";
+  function localGames(name){try{const all=JSON.parse(localStorage.getItem("ribbitRaceOnlineHistoryV2")||"{}");return Array.isArray(all[name])?all[name]:[];}catch(_){return [];}}
+  try{
+    const tags=window.RibbitFrogTags;
+    if(tags&&typeof tags.against==="function"&&!tags.__polish8Merged){
+      const original=tags.against.bind(tags);
+      const replacement=function(name){
+        const base=original(name)||[];const extra=localGames(name);const seen=new Set();
+        return [...extra,...base].filter(game=>{const key=String(game.replayId||game.id||`${game.at}:${game.won}`);if(seen.has(key))return false;seen.add(key);return true;});
+      };
+      try{tags.against=replacement;tags.__polish8Merged=true;}catch(_){ }
+    }
+  }catch(_){ }
+})();
+
+// Place any exposed OnlineVersus help text directly above its hovered control.
+(() => {
+  "use strict";
+  function getSpec(){
+    for(const name of ["hoveredSpec","getHoveredSpec","hoveredAction","getHoveredAction","currentHover"]){
+      try{const value=OnlineVersus?.[name]?.();if(value&&typeof value==="object"&&value.rect)return value;}catch(_){ }
+    }
+    return null;
+  }
+  function bubble(spec){
+    const text=String(spec.description||spec.help||spec.tooltip||spec.label||"");if(!text)return;
+    const rect=spec.rect;const scale=.45;const width=Math.ceil(Math.min(210,Math.max(72,measureBitmapText(text,scale)+14)));const h=21;const cx=rect.x+rect.w/2;const x=clamp(Math.round(cx-width/2),5,W-width-5);const y=Math.max(4,rect.y-h-8);const px=clamp(Math.round(cx),x+9,x+width-9);
+    ctx.fillStyle="rgba(25,43,52,.28)";ctx.fillRect(x+2,y+2,width,h);ctx.fillStyle=COLORS.ink;ctx.fillRect(x,y,width,h);ctx.fillStyle="#f7fdff";ctx.fillRect(x+2,y+2,width-4,h-4);ctx.fillStyle=getSelectedSkin().light;ctx.fillRect(x+5,y+4,width-10,2);drawBitmapText(text,x+width/2,y+8,scale,"center","#26363d");ctx.fillStyle=COLORS.ink;ctx.fillRect(px-4,y+h,9,2);ctx.fillRect(px-3,y+h+2,7,2);ctx.fillRect(px-2,y+h+4,5,2);
+  }
+  const prior=drawScene;drawScene=function(...args){const result=prior.apply(this,args);try{if(OnlineVersus?.isMenuVisible?.()&&!OnlineVersus?.isActive?.()){const spec=getSpec();if(spec)bubble(spec);}}catch(_){ }return result;};
+})();
+
+
+// Live Top Hat requirement bridge (Azure catches are tracked immediately).
+(() => {
+  "use strict";
+  const TOP_HAT_ID = 'top-hat';
+  function azureCount(){
+    try{const p=JSON.parse(localStorage.getItem("ribbitRaceHatProgressV2")||"{}");return Math.max(0,Number(p.bySkin?.azure)||0);}catch(_){return 0;}
+  }
+  function override(id,base){return String(id||"").toLowerCase()===String(TOP_HAT_ID).toLowerCase()&&azureCount()>=75?true:base;}
+  if(typeof isHatUnlocked==="function"){const prior=isHatUnlocked;isHatUnlocked=function(id,...rest){return override(id,prior.call(this,id,...rest));};}
+  if(typeof isFrogHatUnlocked==="function"){const prior=isFrogHatUnlocked;isFrogHatUnlocked=function(id,...rest){return override(id,prior.call(this,id,...rest));};}
+  if(typeof isCustomHatUnlocked==="function"){const prior=isCustomHatUnlocked;isCustomHatUnlocked=function(id,...rest){return override(id,prior.call(this,id,...rest));};}
+  let announced=false;
+  window.addEventListener("rr-hat-progress",event=>{
+    if(event.detail?.skinId!=="azure"||Number(event.detail?.count)<75||announced)return;
+    announced=true;
+    try{if(typeof unlockHat==="function")unlockHat(TOP_HAT_ID);}catch(_){ }
+    try{if(typeof markAchievementEarned==="function")markAchievementEarned("hat-"+TOP_HAT_ID,false);}catch(_){ }
+    try{game.cheatToastText="TOP HAT UNLOCKED";game.cheatToastTimer=CONFIG.achievementToastDuration;}catch(_){ }
+  });
+  window.RibbitTopHatProgress=Object.freeze({id:TOP_HAT_ID,current:azureCount,required:75});
+})();
+
+// Do not keep drawing Ember's total-flies progress after Ember is unlocked.
+(() => {
+  "use strict";
+  function emberUnlocked(){try{return Boolean(isFrogSkinUnlocked?.("ember"));}catch(_){return false;}}
+  function selectedEmber(args){
+    try{
+      if(String(game.setupSkinFocusId||game.skinId||"").toLowerCase()==="ember")return true;
+      return args.some(arg=>String(arg?.id||arg?.skinId||arg||"").toLowerCase()==="ember");
+    }catch(_){return false;}
+  }
+  if(typeof drawFrogSkinRequirement==="function"){
+    const prior=drawFrogSkinRequirement;drawFrogSkinRequirement=function(...args){if(emberUnlocked()&&selectedEmber(args))return;return prior.apply(this,args);};
+  }
+  if(typeof drawSkinUnlockProgress==="function"){
+    const prior=drawSkinUnlockProgress;drawSkinUnlockProgress=function(...args){if(emberUnlocked()&&selectedEmber(args))return;return prior.apply(this,args);};
+  }
+  if(typeof drawSetupUnlockProgress==="function"){
+    const prior=drawSetupUnlockProgress;drawSetupUnlockProgress=function(...args){if(emberUnlocked()&&selectedEmber(args))return;return prior.apply(this,args);};
+  }
 })();
 
 }

@@ -87,3 +87,6 @@
       white-space: nowrap;
       border: 0;
     }
+
+/* polish-8-hide-fullscreen */
+#fullscreen-button,#rr-fullscreen-button,.fullscreen-button{display:none!important;}

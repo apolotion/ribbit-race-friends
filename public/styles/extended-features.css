@@ -19,3 +19,6 @@ body.rr-mobile-enabled canvas,body.rr-mobile-enabled #game-frame{-webkit-touch-c
 @media(display-mode:standalone){html,body{width:100%;height:100dvh;min-height:100dvh}#game-frame{position:fixed;inset:0;width:100vw;height:100dvh;max-width:none;aspect-ratio:auto;border:0;box-shadow:none;padding:max(0px,env(safe-area-inset-top)) max(0px,env(safe-area-inset-right)) max(0px,env(safe-area-inset-bottom)) max(0px,env(safe-area-inset-left));background:#111a2b}#game-frame canvas{width:100%;height:100%;object-fit:contain}}
 body.rr-mobile-enabled #rr-mobile-toggle,body.rr-mobile-enabled .rr-mobile-pad{display:none!important}
 body.rr-mobile-enabled #game{ -webkit-user-drag:none; -webkit-touch-callout:none; user-select:none; -webkit-user-select:none; }
+
+/* polish-8-hide-fullscreen */
+#fullscreen-button,#rr-fullscreen-button,.fullscreen-button{display:none!important;}

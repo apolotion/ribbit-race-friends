@@ -15,9 +15,9 @@ function block(start, end) {
   return engine.slice(from, to);
 }
 
-test("polish-7 cache marker forces the rebuilt tutorial UI to load", () => {
-  assert.match(engine, /2026\.10\.12-friends-tutorial-polish-7/);
-  assert.match(index, /game\.bundle\.js\?v=2026\.10\.12-tutorial-polish-7/);
+test("polish-8 cache marker forces the rebuilt tutorial UI to load", () => {
+  assert.match(engine, /2026\.10\.12-friends-friends-polish-8/);
+  assert.match(index, /game\.bundle\.js\?v=2026\.10\.12-friends-polish-8/);
 });
 
 test("dialogue uses the new reference framing and keeps Ember's full square above the nameplate", () => {
@@ -92,7 +92,7 @@ test("Current Goal trophy is centered from the header to the lower border", () =
 });
 
 
-test("polish-7 centers the drop frog, moves buffer-drop start to ground, and changes the second smooth line", () => {
+test("polish-8 centers the drop frog, moves buffer-drop start to ground, and changes the second smooth line", () => {
   assert.match(engine, /case "quickDrop":[\s\S]{0,140}positionCenteredOnPlatform\(platforms\[2\], 1\)/);
   assert.match(engine, /case "bufferDrop":[\s\S]{0,260}platforms\[2\]\.x \+ Math\.round\(\(platforms\[2\]\.w - frog\.w\) \/ 2\)[\s\S]{0,100}CONFIG\.groundY - frog\.h/);
   assert.match(engine, /"Dropping it like it's hot!"/);

@@ -179,7 +179,7 @@
     root.appendChild(pause);
     tooltipFor(pause, "PAUSE");
 
-    const medal = button("rr170-achievement-leaderboard", "🏅", "OPEN LEADERBOARD");
+/* Legacy Open Leaderboard button removed by polish 8. */
     medal.hidden = true;
     activateOnRelease(medal, () => qs("#cloud-leaderboard")?.click());
     root.appendChild(medal);

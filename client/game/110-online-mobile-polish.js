@@ -5,7 +5,7 @@
  */
 (() => {
   "use strict";
-  const BUILD = "2026.10.12-friends-tutorial-polish-7";
+  const BUILD = "2026.10.12-friends-polish-8";
   const RR_V160_CANDIDATES = {"catchFly":["attemptFlyCatch","attemptPvpFlyCatch","catchSandboxFly","getPvpImminentCatchFly","recordFlyEaten","scheduleFlyReplacementFromCatch"],"jumpSound":["playJumpSound"],"beep":["playCountdownGoSound","playCountdownSound"],"replayUpload":["saveRecordDate"],"restart":["resetGame","resetPvpGame","resetPvpPlayer","resetRoundLifecycle","resetRoundNetwork","restartCurrentLevel"],"drop":[],"render":["drawPvpScene","drawScene"],"worldRecord":[],"fullscreen":["getFullscreenElement","hideFullscreenFallback","showFullscreenFallback","syncFullscreenButton","toggleRibbitFullscreen"],"onlineSubmit":[],"leaderboard":["isSoloEndlessLeaderboardEligible","savePvpMatchWinsForLeaderboard"]};
   const RR_V160_VARS = {"onlineSelect":[],"achievementSelect":["activeAchievementIndex","hoveredAchievementCard"],"backRect":[]};
 
@@ -380,6 +380,8 @@
   const closeReplay=()=>{try{URL.revokeObjectURL(replayVideo.src)}catch(_){}replayVideo.removeAttribute("src");replayVideo.load();replayModal.hidden=true;replayModal.style.display="none";};
   replayModal.querySelector(".rrv-close").addEventListener("click",closeReplay);document.body.appendChild(replayModal);
   async function playStoredReplay(id,caption){const row=await ReplayDb.get(id);if(!row?.blob)return;replayVideo.src=URL.createObjectURL(row.blob);replayModal.querySelector(".rrv-replay-caption").textContent=caption||"";replayModal.hidden=false;replayModal.style.display="grid";try{await replayVideo.play()}catch(_){}}
+  window.RibbitRacePlayStoredReplay = playStoredReplay;
+
   window.RibbitPlayStoredReplay=playStoredReplay;
 
   function currentOnlineAppearance(){return window.RibbitOnlineAppearance.get()||first(["selectedFrogAppearance","selectedAppearance","currentFrogAppearance"])||null;}
@@ -415,7 +417,7 @@
   // Select a Frog Tags opponent to view every locally archived game against them.
   const tagModal=document.createElement("section");tagModal.hidden=true;tagModal.id="rr-v160-tag-games";Object.assign(tagModal.style,{position:"fixed",inset:"0",zIndex:"1550",display:"none",placeItems:"center",background:"rgba(7,25,34,.86)",padding:"20px"});
   document.body.appendChild(tagModal);
-  function openTagGames(name){const games=window.RibbitFrogTags.against(name);tagModal.innerHTML='<div class="rrv-tag-card"><button class="rrv-tag-close">×</button><h2></h2><div class="rrv-tag-list"></div></div>';const card=tagModal.firstElementChild;Object.assign(card.style,{position:"relative",width:"min(760px,95vw)",maxHeight:"85vh",overflow:"auto",background:"#f7fdff",border:"6px solid #26363d",padding:"18px",color:"#26363d"});card.querySelector("h2").textContent=`FROG TAGS — ${name}`;const list=card.querySelector(".rrv-tag-list");for(const g of games){const b=document.createElement("button");b.type="button";b.textContent=`${new Date(g.at).toLocaleDateString()} — ${g.won?"WIN":"LOSS"} — PLAY REPLAY`;b.disabled=!g.replayId;b.addEventListener("click",()=>playStoredReplay(g.replayId,`${name} • ${g.won?"WIN":"LOSS"}`));list.appendChild(b);}card.querySelector(".rrv-tag-close").onclick=()=>{tagModal.hidden=true;tagModal.style.display="none"};tagModal.hidden=false;tagModal.style.display="grid";}
+  function openTagGames(name){const localHistory=(()=>{try{return JSON.parse(localStorage.getItem("ribbitRaceOnlineHistoryV2")||"{}")[name]||[]}catch(_){return[]}})();const baseGames=window.RibbitFrogTags.against(name)||[];const seenGames=new Set();const games=[...localHistory,...baseGames].filter(g=>{const k=String(g.replayId||g.id||`${g.at}:${g.won}`);if(seenGames.has(k))return false;seenGames.add(k);return true;});tagModal.innerHTML='<div class="rrv-tag-card"><button class="rrv-tag-close">×</button><h2></h2><div class="rrv-tag-list"></div></div>';const card=tagModal.firstElementChild;Object.assign(card.style,{position:"relative",width:"min(760px,95vw)",maxHeight:"85vh",overflow:"auto",background:"#f7fdff",border:"6px solid #26363d",padding:"18px",color:"#26363d"});card.querySelector("h2").textContent=`FROG TAGS — ${name}`;const list=card.querySelector(".rrv-tag-list");for(const g of games){const b=document.createElement("button");b.type="button";b.textContent=`${new Date(g.at).toLocaleDateString()} — ${g.won?"WIN":"LOSS"} — PLAY REPLAY`;b.disabled=!g.replayId;b.title=g.replayId?"PLAY SAVED REPLAY":"REPLAY IS STILL UPLOADING";b.addEventListener("click",()=>playStoredReplay(g.replayId,`${name} • ${g.won?"WIN":"LOSS"}`));list.appendChild(b);}card.querySelector(".rrv-tag-close").onclick=()=>{tagModal.hidden=true;tagModal.style.display="none"};tagModal.hidden=false;tagModal.style.display="grid";}
   window.RibbitOpenFrogTagGames=openTagGames;
   c?.addEventListener("pointerup",ev=>{if(!/tag/i.test(stateName()))return;const p=logicalPoint(ev);if(p.y<88||p.y>210)return;const rows=window.RibbitFrogTags.list();const names=[...new Set(rows.map(r=>r.opponent))];const idx=Math.floor((p.y-88)/22);if(names[idx])openTagGames(names[idx]);},true);
 

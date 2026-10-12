@@ -138,3 +138,6 @@
     body.ribbit-auth-locked #game-frame{visibility:hidden;}
     #leaderboard-overlay .leaderboard-card{width:min(980px,100%);min-width:0;}
     .cloud-field input{min-width:0;}
+
+/* polish-8-hide-fullscreen */
+#fullscreen-button,#rr-fullscreen-button,.fullscreen-button{display:none!important;}

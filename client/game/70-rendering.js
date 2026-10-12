@@ -1809,7 +1809,7 @@
 
     function drawFlyNameTag(currentFly) {
       if (game.sandboxMode || currentFly.sandboxTest) return;
-      const term = normalizeVocabularyCellText(VOCABULARY[currentFly.vocabIndex]?.spanish || "?", 80);
+      const term = normalizeVocabularyCellText(getLocalizedFlyTerm(VOCABULARY[currentFly.vocabIndex]) || "?", 80);
       const anchor = getFlyLabelAnchor(currentFly);
       const layout = layoutStableFlyLabelText(term, 120);
       const widest = Math.max(...layout.lines.map((line) => measureBitmapText(line, layout.scale)), 0);
@@ -2438,7 +2438,7 @@
       if (!["playing", "paused", "countdown"].includes(game.state)) return;
       if (game.sandboxMode || game.winPending || !Number.isInteger(game.targetVocabIndex)) return;
 
-      const prompt = normalizeVocabularyCellText(VOCABULARY[game.targetVocabIndex]?.english || "", 80);
+      const prompt = normalizeVocabularyCellText(getLocalizedClueTerm(VOCABULARY[game.targetVocabIndex]) || "", 80);
       const left = 154;
       const top = 234;
       const width = 172;
@@ -2472,6 +2472,7 @@
     }
 
     function drawTopHud() {
+      if (game.mode === "pvp") return;
       const scoreBoxX = 8;
       const scoreBoxW = 76;
       const skin = getSelectedSkin();

@@ -1862,3 +1862,22 @@
       }
       return "";
     }
+
+    function getRibbitLanguageMode() {
+      try { return window.RibbitLanguagePreferences?.getMode?.() || localStorage.getItem("ribbitRaceLanguageModeV1") || "en-es"; }
+      catch (_) { return "en-es"; }
+    }
+
+    function getLocalizedFlyTerm(entry) {
+      if (!entry) return "?";
+      return getRibbitLanguageMode() === "es-en"
+        ? String(entry.english ?? entry.en ?? "?")
+        : String(entry.spanish ?? entry.es ?? "?");
+    }
+
+    function getLocalizedClueTerm(entry) {
+      if (!entry) return "?";
+      return getRibbitLanguageMode() === "es-en"
+        ? String(entry.spanish ?? entry.es ?? "?")
+        : String(entry.english ?? entry.en ?? "?");
+    }

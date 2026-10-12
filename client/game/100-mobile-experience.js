@@ -126,6 +126,7 @@ drawHud = function() {
 };
 
 function rrDrawMobilePauseButton() {
+      if (game.mode === "pvp") return;
   const pause = HUD_UI.pauseButton;
   const skin = game.mode === "pvp"
     ? getPvpSkinPalette(pvpPlayers[OnlineVersus.isActive() ? OnlineVersus.localIndex() : 0]?.skinId, "azure", 0)
@@ -189,6 +190,7 @@ function rrReleaseMobileJump(event) {
 }
 
 function rrReleaseAllMobilePointers() {
+      if (game.mode === "pvp") return;
   for (const pointerId of [...rrMobileHeldPointers.keys()]) {
     rrReleaseMobileJump({ pointerId });
   }

@@ -18,8 +18,8 @@ function block(start, end) {
 
 test("1.7.10 polished tutorial build and first-boot marker are installed", () => {
   assert.equal(JSON.parse(read("package.json")).version, "1.7.10");
-  assert.match(read("src/common.js"), /2026\.10\.12-friends-tutorial-polish-7/);
-  assert.match(engine, /const TUTORIAL_BUILD = "2026\.10\.12-friends-tutorial-polish-7"/);
+  assert.match(read("src/common.js"), /2026\.10\.12-friends-friends-polish-8/);
+  assert.match(engine, /const TUTORIAL_BUILD = "2026\.10\.12-friends-friends-polish-8"/);
   assert.match(engine, /rrFriendsEngineTutorialSoloSeenV8/);
 });
 

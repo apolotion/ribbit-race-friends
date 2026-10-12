@@ -5,6 +5,13 @@
   const setJson=(k,v)=>localStorage.setItem(k,JSON.stringify(v));
   const bridge=()=>window.RibbitRaceRuntimeBridge;
   function toast(title,detail="",duration=4500){
+      const rrReplaySource = arguments[0];
+      const rrReplayId = rrReplaySource?.replayId || rrReplaySource?.replay_id || rrReplaySource?.id || rrReplaySource;
+      if (rrReplayId && typeof playStoredReplay === "function") {
+        playStoredReplay(rrReplayId, "WORLD RECORD REPLAY");
+        return;
+      }
+
     let el=q("#rr14-toast"); if(!el){el=document.createElement("div");el.id="rr14-toast";document.body.append(el)}
     el.innerHTML=`<strong>${title}</strong>${detail?`<span>${detail}</span>`:""}`; el.classList.add("show");
     clearTimeout(el._timer);el._timer=setTimeout(()=>el.classList.remove("show"),duration);

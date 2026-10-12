@@ -219,3 +219,6 @@ body.rr-tutorial-pending:not(.ribbit-auth-locked) #game {
 body.rr-tutorial-pending #game-frame {
   background: #052f45 !important;
 }
+
+/* polish-8-hide-fullscreen */
+#fullscreen-button,#rr-fullscreen-button,.fullscreen-button{display:none!important;}

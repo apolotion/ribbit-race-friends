@@ -3,12 +3,12 @@
     // Friends Edition: accounts, matchmaking, and live human gameplay use the
     // same-origin Cloudflare Worker/Durable Object service. The historical
     // directOnlyVersion field is retained only as a protocol compatibility marker.
-    const RIBBIT_DIRECT_BUILD = "2026.10.12-friends-tutorial-polish-7";
+    const RIBBIT_DIRECT_BUILD = "2026.10.12-friends-polish-8";
     const RIBBIT_DIRECT_POLICY_VERSION = 2;
     const RIBBIT_ONLINE_PROTOCOL_VERSION = 3;
     const RIBBIT_QUICKPLAY_VERSION = 3;
 
-    const RIBBIT_CLOUD_CLIENT_VERSION = "2026.10.12-friends-tutorial-polish-7";
+    const RIBBIT_CLOUD_CLIENT_VERSION = "2026.10.12-friends-polish-8";
     const RIBBIT_CLOUD_SAVE_SCHEMA_VERSION = 2;
     // Preserve every current and future Ribbit Race key, including legacy one-button keys.
     const RIBBIT_GAME_KEY = /^(?:ribbitRace|oneButtonFrog)/;
@@ -390,7 +390,7 @@
         ]);
         const objectKeys = new Set([
           "ribbitRaceStatsV1", "ribbitRaceCustomFrogColors",
-          "ribbitRaceLeaderboardFirstPlaceNoticesV1", "ribbitRaceFrogHatAssignmentsV1"
+          "ribbitRaceLeaderboardFirstPlaceNoticesV1", "ribbitRaceFrogHatAssignmentsV1", "ribbitRaceLanguageModeV1", "ribbitRaceHatProgressV2"
         ]);
         const numericKeys = /^(?:ribbitRaceTotal|ribbitRacePvpMatchWins$|ribbitRaceFewestJumps:|ribbitRaceBestEndlessFlies:|ribbitRaceBest:|oneButtonFrogBest(?::|$))/;
         for (const [rawKey, rawValue] of Object.entries(source)) {
