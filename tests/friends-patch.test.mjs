@@ -37,7 +37,7 @@ test("PIN hashing stays within Cloudflare PBKDF2 limit and matches 100000 rounds
 
 test("Friends release exposes the new build marker",()=>{
   assert.equal(BUILD,"2026.10.12-friends-polish-8");
-  assert.match(browserSource,/2026\.10\.12\-friends\-tutorial\-polish\-7/);
+  assert.match(browserSource,/2026\.10\.12\-friends\-polish\-8/);
 });
 
 test("server vocabulary is exactly the requested 15 entries",()=>{
@@ -71,7 +71,7 @@ test("auth boundary hides and inerts the runtime until sign-in or guest play",()
 
 test("index is presentation-only and gameplay source is separated by responsibility",()=>{
   assert.doesNotMatch(indexHtml,/<style\b/i);
-  assert.equal((indexHtml.match(/<script\b[^>]*src=/g)||[]).length,12);
+  assert.equal((indexHtml.match(/<script\b[^>]*src=/g)||[]).length,13);
   assert.match(indexHtml,/\/scripts\/friends-api-client\.js/);
   assert.match(indexHtml,/\/scripts\/auth-screen-controller\.js/);
   assert.match(indexHtml,/\/scripts\/cloud-client\.js/);
