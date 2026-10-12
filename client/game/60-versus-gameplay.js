@@ -105,6 +105,7 @@
       game.pvpCriticalCatchCameraY = CONFIG.playBottom / 2;
       game.pvpCriticalCatchCameraZoom = 1;
       game.pvpCriticalCatchWinnerIndex = null;
+      game.pvpCriticalCatchKind = "";
       game.pvpCpuPlan = null;
       game.pvpCpuDecisionTimer = 0;
       game.pvpCpuEvasionCooldownFrames = 0;
@@ -1455,15 +1456,21 @@
       ctx.globalAlpha = holdFade;
       ctx.fillStyle = "rgba(38,54,61,0.78)";
       ctx.fillRect(W / 2 - 74, 29, 148, 18);
-      drawBitmapText("FINAL CATCH!", W / 2, 34, 1.08, "center", COLORS.white, COLORS.ink);
+      drawBitmapText(game.pvpCriticalCatchKind === "contest" ? "CLOSE CATCH!" : "FINAL CATCH!", W / 2, 34, 1.08, "center", COLORS.white, COLORS.ink);
       ctx.restore();
     }
 
-    function startPvpCriticalCatch(player, targetFly) {
-      if (!player || game.pvpCriticalCatchActive || game.mode !== "pvp" || game.pvpCriticalCatchPlayedThisRound) return false;
-      const criticalKey=`${game.pvpRoundNumber}:${game.pvpSuddenDeath?'sd':'normal'}:final`;
+    function startPvpCriticalCatch(player, targetFly, kind = "final") {
+      if (!player || game.pvpCriticalCatchActive || game.mode !== "pvp") return false;
+      const normalizedKind = kind === "contest" ? "contest" : "final";
+      if (normalizedKind === "final" && game.pvpCriticalCatchPlayedThisRound) return false;
+      const criticalKey = normalizedKind === "contest"
+        ? `contest:${game.pvpRoundNumber}:${game.promptSerial}:${targetFly?.id ?? "fly"}`
+        : `${game.pvpRoundNumber}:${game.pvpSuddenDeath?'sd':'normal'}:final`;
       if(!OnlineVersus.canStartCritical(criticalKey))return false;
-      game.pvpCriticalCatchEventId=criticalKey;game.pvpCriticalCatchPlayedThisRound=true;
+      game.pvpCriticalCatchEventId=criticalKey;
+      if (normalizedKind === "final") game.pvpCriticalCatchPlayedThisRound=true;
+      game.pvpCriticalCatchKind = normalizedKind;
       game.pvpCriticalCatchActive = true;
       game.pvpCriticalCatchElapsed = 0;
       game.pvpCriticalCatchWinnerIndex = player.index;
@@ -1472,7 +1479,7 @@
       game.pvpCriticalCatchCameraX = W / 2;
       game.pvpCriticalCatchCameraY = CONFIG.playBottom / 2;
       game.pvpCriticalCatchCameraZoom = 1;
-      tone(92, 0.22, 0.032, -12);
+      tone(normalizedKind === "contest" ? 118 : 92, 0.22, 0.032, -12);
       tone(210, 0.08, 0.020, 210, 0.02);
       tone(380, 0.10, 0.022, 310, 0.035);
       tone(784, 0.16, 0.016, 260, 0.090);
@@ -1585,6 +1592,45 @@
       ctx.restore();
     }
 
+    function pvpFlyContestIsClose(player, targetFly) {
+      if (!player || !targetFly) return false;
+      const other = pvpPlayers[player.index === 0 ? 1 : 0];
+      if (!other || other.bonked || Number(other.stunTimer || 0) > 0) return false;
+      const fx = Number(targetFly.baseX ?? targetFly.x);
+      const fy = Number(targetFly.baseY ?? targetFly.y);
+      const otherMouth = getPvpMouth(other);
+      const dx = otherMouth.x - fx;
+      const dy = otherMouth.y - fy;
+      const close = Math.hypot(dx, dy) <= 56;
+      const pursuing = Boolean(
+        (other.tongue?.active && other.tongue.targetFlyId === targetFly.id) ||
+        pvpPlayerTouchesFly(other, targetFly) ||
+        targetFly.pvpPursuers?.[other.index]
+      );
+      return close && pursuing;
+    }
+
+    function getPvpCriticalCatchKind(player, targetFly) {
+      if (!player || !targetFly || game.mode !== "pvp" || game.pvpCriticalCatchActive || !flyMatchesPrompt(targetFly)) return "";
+      const otherPlayer = pvpPlayers[player.index === 0 ? 1 : 0];
+      const target = getPvpTargetScore();
+      const reachedTarget = game.pvpSuddenDeath
+        ? Number((game.pvpSuddenDeathScores[player.index] || 0) + 1) >= target
+        : (!isPvpEndlessMode() && Number(player.score || 0) + 1 >= target);
+      const buzzerWinningCatch = Boolean(
+        game.pvpTimerGraceActive &&
+        Number(player.score || 0) <= Number(otherPlayer?.score || 0) &&
+        Number(player.score || 0) + 1 > Number(otherPlayer?.score || 0)
+      );
+      const lastSecondCatch = Boolean(
+        game.pvpTimeLimitSeconds > 0 && !game.pvpSuddenDeath &&
+        Number(game.pvpTimeRemaining) > 0 && Number(game.pvpTimeRemaining) <= 1.05
+      );
+      if (reachedTarget || buzzerWinningCatch || lastSecondCatch) return "final";
+      if (pvpFlyContestIsClose(player, targetFly)) return "contest";
+      return "";
+    }
+
     function completePvpCorrectCatch(player, targetFly) {
       const onlineCatchSerial=game.promptSerial;
       const index = flies.findIndex((fly) => fly.id === targetFly.id);
@@ -1601,6 +1647,7 @@
         registerPvpFlyPursuit(otherPlayer, targetFly);
       }
       const noseAheadQualified = playerWonNoseAheadContest(player.index, targetFly);
+      const criticalCatchKind = getPvpCriticalCatchKind(player, targetFly);
       const playerScoreBefore = Number(player.score || 0);
       const otherScoreBefore = Number(otherPlayer?.score || 0);
       flies.splice(index, 1);
@@ -1633,7 +1680,8 @@
         playerScoreBefore <= otherScoreBefore &&
         Number(player.score || 0) > Number(otherPlayer?.score || 0)
       );
-      if (reachedTarget || buzzerWinningCatch) startPvpCriticalCatch(player, targetFly);
+      if (criticalCatchKind) startPvpCriticalCatch(player, targetFly, criticalCatchKind);
+      else if (reachedTarget || buzzerWinningCatch) startPvpCriticalCatch(player, targetFly, "final");
       if (game.pvpTimerGraceActive) {
         game.targetVocabIndex = null;
         game.spawnQueue = [];
@@ -1666,20 +1714,7 @@
     }
 
     function shouldStartPvpCriticalCatch(player, targetFly) {
-      if (!player || !targetFly || game.mode !== "pvp" || game.pvpCriticalCatchActive) return false;
-      if (!flyMatchesPrompt(targetFly)) return false;
-      const otherPlayer = pvpPlayers[player.index === 0 ? 1 : 0];
-      const target = getPvpTargetScore();
-      const timedRoundInProgress = game.pvpTimeLimitSeconds > 0 && !game.pvpSuddenDeath;
-      const reachedTarget = game.pvpSuddenDeath
-        ? Number((game.pvpSuddenDeathScores[player.index] || 0) + 1) >= target
-        : (!isPvpEndlessMode() && Number(player.score || 0) + 1 >= target);
-      const buzzerWinningCatch = Boolean(
-        game.pvpTimerGraceActive &&
-        Number(player.score || 0) <= Number(otherPlayer?.score || 0) &&
-        Number(player.score || 0) + 1 > Number(otherPlayer?.score || 0)
-      );
-      return reachedTarget || buzzerWinningCatch;
+      return Boolean(getPvpCriticalCatchKind(player, targetFly));
     }
 
     function beginPvpTongue(player, targetFly) {
@@ -1691,7 +1726,8 @@
       t.targetX = targetFly.baseX; t.targetY = targetFly.baseY; t.captured = false;
       t.chainNextFlyId = null;
       OnlineVersus.rememberTongueContact(player);
-      if (shouldStartPvpCriticalCatch(player, targetFly)) startPvpCriticalCatch(player, targetFly);
+      const criticalKind = getPvpCriticalCatchKind(player, targetFly);
+      if (criticalKind) startPvpCriticalCatch(player, targetFly, criticalKind);
       tone(player.index === 0 ? 330 : 300, 0.05, 0.015, 80);
     }
 
@@ -1871,6 +1907,7 @@
       game.pvpCriticalCatchCameraY = CONFIG.playBottom / 2;
       game.pvpCriticalCatchCameraZoom = 1;
       game.pvpCriticalCatchWinnerIndex = null;
+      game.pvpCriticalCatchKind = "";
       game.pvpCelebrationWinnerIndex = index;
       pvpPlayers.forEach(clearFrogAfterimages);
       game.pvpCelebrationTimer = CONFIG.pvpCelebrationSeconds;
@@ -1927,6 +1964,7 @@
       game.pvpCriticalCatchCameraY = CONFIG.playBottom / 2;
       game.pvpCriticalCatchCameraZoom = 1;
       game.pvpCriticalCatchWinnerIndex = null;
+      game.pvpCriticalCatchKind = "";
       game.pvpSuddenDeath = true;
       game.pvpSuddenDeathScores = [0, 0];
       game.pvpWinPendingIndex = null;
@@ -3476,6 +3514,7 @@
 
 
     function drawPvpSetupTutorialButton() {
+      if (OnlineVersus.isRoomMenu()) return;
       const rect = PVP_SETUP_UI.tutorialButton;
       const focused = (game.pvpSetupFocusArea === "bottom" && game.pvpSetupBottomSelection === "tutorial") || game.pvpTutorialButtonHovered;
       const palette = { dark: "#5d5114", mid: "#d3b64f", light: "#f4e08e", belly: "#fff6d7" };

@@ -18,8 +18,8 @@ function block(start, end) {
 
 test("1.7.10 polished tutorial build and first-boot marker are installed", () => {
   assert.equal(JSON.parse(read("package.json")).version, "1.7.10");
-  assert.match(read("src/common.js"), /2026\.10\.12-friends-polish-16/);
-  assert.match(engine, /const TUTORIAL_BUILD = "2026\.10\.12-friends-polish-16"/);
+  assert.match(read("src/common.js"), /2026\.10\.12-friends-polish-17/);
+  assert.match(engine, /const TUTORIAL_BUILD = "2026\.10\.12-friends-polish-17"/);
   assert.match(engine, /rrFriendsEngineTutorialSoloSeenV8/);
 });
 
@@ -39,7 +39,7 @@ test("dialogue uses large left-aligned two-line RPG typography, hold-to-speed, a
   assert.match(engine, /layoutBitmapText\(fullLine, textArea\.w, \{/);
   assert.match(engine, /maxScale: DIALOGUE_TEXT_SCALE/);
   assert.match(engine, /minScale: 0\.68/);
-  assert.match(engine, /drawBitmapText\([\s\S]{0,180}textArea\.x,[\s\S]{0,180}"left"/);
+  assert.match(engine, /drawEmberDialogueLine\([\s\S]{0,180}textArea\.x/);
   assert.doesNotMatch(engine, /textArea\.x \+ textArea\.w \/ 2 - fullLineWidth \/ 2/);
   assert.match(engine, /Adding held time once more makes holding\s+\/\/ Space exactly twice as fast/);
   assert.match(engine, /DIALOGUE_SPACE_HOLD_THRESHOLD_MS = 180/);
@@ -171,9 +171,8 @@ test("multi-fly lessons use the requested mirrored and three-fly routes", () => 
   assert.match(engine, /setupThreeCatchAttempt\(missedAttemptIndex, true\)/);
 });
 
-test("correct three-catch landings hold for half a second before the next poof", () => {
-  assert.match(engine, /CORRECT_CATCH_LANDING_HOLD_MS = 500/);
-  assert.match(engine, /tutorial\.sceneLandingDelayUntil = now \+ CORRECT_CATCH_LANDING_HOLD_MS/);
+test("correct three-catch landings hold a quarter second before the next poof", () => {
+  assert.match(engine, /tutorial\.sceneLandingDelayUntil = now \+ 250/);
   assert.match(engine, /freezeControlledEntity\(\)/);
   assert.match(engine, /if \(now < tutorial\.sceneLandingDelayUntil\) return/);
 });
@@ -204,20 +203,17 @@ test("Current Goal uses the normal stats footprint and the clue shadow stops at 
   assert.match(engine, /pointInsideRect\(getCanvasPoint\(event\), getTutorialGoalRect\(\)\)/);
 });
 
-test("terms stay blank until controls return while the three-catch goal remains live", () => {
-  assert.match(engine, /const pausedGoal = game\.state === "paused"/);
-  assert.match(engine, /if \(!tutorialPlayerHasControl\(\) && !pausedGoal/);
+test("tutorial terms blank only their value while goals remain live", () => {
   assert.match(engine, /Math\.min\(3, tutorial\.sceneCatchCount\)/);
-  assert.match(engine, /if \(!tutorial\.sceneAttemptCaught\)[\s\S]{0,160}sceneCatchCount = Math\.min\(3, tutorial\.sceneCatchCount \+ 1\)/);
-  assert.doesNotMatch(engine, /sceneLandingDelayUntil = 0;\s*tutorial\.sceneCatchCount \+= 1/);
-  assert.match(engine, /drawBlankTutorialVocabularyPrompt\(\)/);
-  assert.match(engine, /function drawTutorialOverlay\(\)[\s\S]{0,300}drawCurrentGoalHud\(\)/);
-  assert.match(engine, /if \(game\.state === "paused"\) \{[\s\S]{0,100}drawCurrentGoalHud\(\)/);
+  assert.match(engine, /function drawBlankTutorialVocabularyPrompt/);
+  assert.match(engine, /"FIND THE MATCH"/);
+  assert.match(engine, /function currentGoalLines[\s\S]{0,220}scene's objective remains visible/);
+  assert.match(engine, /function drawTutorialOverlay\(\)[\s\S]{0,500}drawCurrentGoalHud\(\)/);
 });
 
 test("pause provides retry and skip, and resuming tutorial bypasses the countdown", () => {
-  assert.match(engine, /"RETRY SCENE"/);
-  assert.match(engine, /"SKIP TUTORIAL"/);
+  assert.match(engine, /"RESTART SCENE"/);
+  assert.match(engine, /"EXIT TUTORIAL"/);
   assert.match(engine, /const originalResumePausedGameForTutorial = resumePausedGame/);
   assert.match(engine, /if \(tutorial\.active && game\.state === "paused"\)[\s\S]{0,260}game\.state = "playing"/);
   assert.match(engine, /game\.countdownNumber = 0/);

@@ -338,6 +338,7 @@
       if (!entry) return "";
       if (entry.type === "frog") return `frog:${entry.skinId || ""}`;
       if (entry.type === "achievement") return `achievement:${entry.achievementId || ""}`;
+      if (entry.type === "hat") return `hat:${entry.hatId || ""}`;
       return `generic:${entry.text || ""}`;
     }
 
@@ -346,6 +347,7 @@
       const entry = game.achievementToastQueue.shift();
       game.achievementToastSkinId = entry.type === "frog" ? entry.skinId : null;
       game.achievementToastAchievementId = entry.type === "achievement" ? entry.achievementId : null;
+      game.achievementToastHatId = entry.type === "hat" ? entry.hatId : null;
       game.achievementToastPvpPlayerIndex = entry.type === "achievement" && Number.isInteger(entry.pvpPlayerIndex)
         ? entry.pvpPlayerIndex
         : null;
@@ -1721,6 +1723,23 @@
       }
     }
 
+    const PVP_LAST_SKINS_STORAGE_KEY = "ribbitRaceLastVersusFrogsV1";
+
+    function readLastPvpSkinSelections() {
+      try {
+        const parsed = JSON.parse(localStorage.getItem(PVP_LAST_SKINS_STORAGE_KEY) || "null");
+        if (!Array.isArray(parsed) || parsed.length < 2) return null;
+        return [normalizePvpSkinId(parsed[0], "azure"), normalizePvpSkinId(parsed[1], "crimson")];
+      } catch (_) { return null; }
+    }
+
+    function saveLastPvpSkinSelections(ids = game.pvpSetupSkinIds) {
+      try {
+        const normalized = [normalizePvpSkinId(ids?.[0], "azure"), normalizePvpSkinId(ids?.[1], "crimson")];
+        localStorage.setItem(PVP_LAST_SKINS_STORAGE_KEY, JSON.stringify(normalized));
+      } catch (_) {}
+    }
+
     function isCustomPvpSkinId(skinId) {
       return /^custom[1-3]$/.test(String(skinId || "").toLowerCase());
     }
@@ -1840,6 +1859,7 @@
       const nextIds = [p1Id, p2Id];
       game.pvpSetupSkinIds = nextIds;
       game.pvpSetupSkinIndex = nextIds.map((id) => Math.max(0, PVP_FROG_SKIN_ORDER.indexOf(id)));
+      saveLastPvpSkinSelections(nextIds);
       return nextIds;
     }
 
@@ -1880,8 +1900,9 @@
       if (!PVP_STAGE_ORDER.includes(game.pvpSetupLevelId)) game.pvpSetupLevelId = game.selectedLevelId || "park";
       if (game.pvpSetupLevelId === "random") refreshPvpRandomPreview();
       game.pvpSetupLevelIndex = Math.max(0, PVP_STAGE_ORDER.indexOf(game.pvpSetupLevelId));
-      const storedP1 = normalizePvpSkinId(game.pvpSetupSkinIds?.[0], "azure");
-      const storedP2 = normalizePvpSkinId(game.pvpSetupSkinIds?.[1], "crimson");
+      const persistedSkins = readLastPvpSkinSelections();
+      const storedP1 = normalizePvpSkinId(persistedSkins?.[0] || game.pvpSetupSkinIds?.[0], "azure");
+      const storedP2 = normalizePvpSkinId(persistedSkins?.[1] || game.pvpSetupSkinIds?.[1], "crimson");
       let p1 = isPvpSkinAvailable(storedP1) ? storedP1 : "azure";
       let p2 = isPvpSkinAvailable(storedP2) ? storedP2 : "crimson";
       if (p1 === p2) p2 = getFirstAvailablePvpSkin(p1, "crimson");
@@ -2146,6 +2167,7 @@
       game.pvpSetupConflictOwnerIndex = 1 - playerIndex;
       game.pvpSetupSkinIds[playerIndex] = id;
       game.pvpSetupSkinIndex[playerIndex] = index;
+      saveLastPvpSkinSelections(game.pvpSetupSkinIds);
       tone(playerIndex === 0 ? 540 : 430, 0.055, 0.013, 65);
       return true;
     }
@@ -2588,6 +2610,11 @@
         game.state = "playing";
         return;
       }
+      // Build the frozen countdown backing frame only after the reset has placed
+      // the frog at the level start and removed the previous run's flies/tongue.
+      clearSoloFrozenWorld();
+      game.state = "playing";
+      try { drawScene(); captureSoloFrozenWorld(); } catch (_) {}
       startResumeCountdown();
     }
 

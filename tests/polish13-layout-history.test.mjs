@@ -47,9 +47,9 @@ test("Pause utilities occupy the panel bottom-right while tutorial retry replays
   assert.match(input, /if \(game\.state === "paused"\)[\s\S]{0,900}KeyR/);
 });
 
-test("Locked hats do not pin help and unlocked Ember has no completed progress bar", () => {
-  assert.match(rendering, /game\.customHatHoveredIndex = null/);
-  assert.match(rendering, /A click is only a dud response/);
+test("Locked hats keep their requirement visible and unlocked Ember has no completed progress bar", () => {
+  assert.match(rendering, /game\.customHatHoveredIndex = Math\.max\(0, lockedIndex\)/);
+  assert.match(rendering, /Locked hats remain informational/);
   assert.match(rendering, /displayFocusId === "ember" && !isFrogSkinUnlocked\("ember"\)/);
   assert.doesNotMatch(tutorial, /setTimeout\(clearPinnedHatRequirement, 0\)/);
 });
@@ -61,6 +61,6 @@ test("Set Base is an undoable draft edit with a themed labeled picker", () => {
   assert.match(tutorial, /commitCustomColorHistoryTransaction\(\)/);
   assert.match(tutorial, /const draftSkin = getCustomDraftSkin\(\)/);
   assert.match(tutorial, /ctx\.fillRect\(panel\.x \+ 5, panel\.y \+ 5, panel\.w - 10, 24\)/);
-  assert.match(tutorial, /CUSTOM_BASE_CLOSE = Object\.freeze\(\{ x:355, y:67, w:18, h:18 \}\)/);
+  assert.match(tutorial, /CUSTOM_BASE_CLOSE = Object\.freeze\(\{ x:355, y:68, w:18, h:18 \}\)/);
   assert.match(tutorial, /skin\.name \|\| option\.id/);
 });

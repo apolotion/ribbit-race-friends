@@ -17,7 +17,7 @@ const index = read("public/index.html");
 
 test("polish 11 cache marker is wired through client, worker, and asset URLs", () => {
   for (const source of [tutorial, cloud, index, read("src/common.js")]) {
-    assert.match(source, /2026\.10\.12-friends-polish-16/);
+    assert.match(source, /2026\.10\.12-friends-polish-17/);
   }
 });
 
@@ -51,7 +51,7 @@ test("final-catch fly labels remain gone while flies and sparks keep rendering",
 test("original online panel owns rendering and input in requested order", () => {
   assert.match(tutorial, /legacy block inert so the real menu owns rendering\/input[\s\S]{0,40}return;/);
   const hub = online.slice(online.indexOf("const ONLINE_HUB"), online.indexOf("const PROFILE_UI"));
-  const order = ["quick", "host", "join", "spectate", "profile", "battle"];
+  const order = ["quick", "spectate", "host", "join", "profile", "battle"];
   let cursor = 0;
   for (const id of order) {
     const next = hub.indexOf(`id:'${id}'`, cursor);
@@ -127,7 +127,7 @@ test("custom frog has compact sprite-only base picker and no legacy palette pane
 
 test("Solo tutorial retains the requested fixes", () => {
   for (const phrase of [
-    "If you get lucky, you can catch two flies in a single jump!",
+    "If you get lucky, you might catch two flies in one jump!",
     "Now, let's say that you're REALLY hungry and need a snack as soon as possible.",
     "Show me a buffered jump charge right after you land.",
     "All this jumping sure does work up an appetite.",
@@ -135,7 +135,7 @@ test("Solo tutorial retains the requested fixes", () => {
   ]) assert.ok(tutorial.includes(phrase), phrase);
   assert.doesNotMatch(tutorial, /That wrong fly does not count|You can come back to it later/);
   assert.match(tutorial, /PLATFORM DROPS DO NOT COUNT AS LONG JUMPS/);
-  assert.match(tutorial, /tutorialStep\(\)\?\.setup !== "longJumps"/);
+  assert.match(tutorial, /if \(setup === "longJumps"\) \{[\s\S]{0,120}failAttempt\("PLATFORM DROPS DO NOT COUNT AS LONG JUMPS"\)/);
   assert.match(tutorial, /updateTutorialAmbient\(dt, \{ animateFlies: true \}\)/);
   assert.match(tutorial, /isComboThreeFinish/);
   assert.match(tutorial, /PARK_FLY_SPAWNS\[1\]\.y \+ 14/);

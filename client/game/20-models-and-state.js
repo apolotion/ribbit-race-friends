@@ -114,6 +114,8 @@
     const game = {
       state: "main", // main, setup, custom, achievements, stats, pvpSetup, pvpSettings, soloSettings, title, playing, paused, countdown, won
       mode: "solo", // solo or pvp
+      tutorialActive: false,
+      tutorialDisplayCatchTarget: null,
       score: 0,
       jumps: 0,
       elapsed: 0,
@@ -225,6 +227,7 @@
       victoryMessage: "",
       achievementToastSkinId: null,
       achievementToastAchievementId: null,
+      achievementToastHatId: null,
       achievementToastPvpPlayerIndex: null,
       achievementToastText: "",
       achievementToastTimer: 0,
@@ -341,6 +344,7 @@
       pvpSuddenDeathAlertTimer: 0,
       pvpPauseChargeSnapshot: null,
       pvpCriticalCatchActive: false,
+      pvpCriticalCatchKind: "",
       pvpCriticalCatchElapsed: 0,
       pvpCriticalCatchDuration: 2.0,
       pvpCriticalCatchX: W / 2,

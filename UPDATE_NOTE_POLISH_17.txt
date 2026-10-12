@@ -1,0 +1,53 @@
+RIBBIT RACE FRIENDS — POLISH 17
+Displayed version: VERSION 1.7.10
+Build: 2026.10.12-friends-polish-17
+
+ONLINE MENUS
+1. The Online home menu uses the requested order: Quickplay/Spectate, Host/Join, Customizer/Frog Tags.
+2. Hover help exists only on the first Online menu. Back, Quickplay internals, Host/Join rooms, Spectate, Customizer, and Frog Tags no longer show unnecessary hover text.
+3. All first-page Online help bubbles use one centered 218x30 format and point at the exact focused control.
+4. The online display-name editor now occupies the former tutorial-button slot in private rooms and matches the neighboring Wi-Fi control's size, shadow, highlight, and frame.
+5. Leaving a private room returns to the Online menu instead of Local Versus.
+
+PAUSE AND RESTART
+6. Pause's book and Fullscreen controls are flush with the panel and have no external drop shadows.
+7. Fullscreen disappears behind the open instruction book just like the book button.
+8. Restart clears the old world, places the frog at the level start, captures that clean frame, and then runs the normal 3-2-1 countdown.
+9. Tutorial pause labels are now RESTART SCENE and EXIT TUTORIAL.
+10. Restart Scene replays Ember's dialogue without adding a countdown.
+
+HATS, UNLOCKS, AND ACHIEVEMENTS
+11. Hovering across gaps in the hat grid preserves the current informational requirement instead of flickering away.
+12. Clicking a locked hat keeps the unlock requirement visible and only plays the dud sound; it does not equip or close anything.
+13. Hat unlocks use the pixel-art achievement banner and are included as end-of-round unlock cards.
+14. Added/retained RAINBOW POND for unlocking all base frog colors.
+15. Tutorial and Sandbox actions cannot update ordinary hat progress, stats, jumps, fly totals, or achievements.
+16. Ember's completed progress meter remains hidden after Ember unlocks.
+
+CUSTOM FROG
+17. Added a dice button opposite Set Base to randomize the active custom frog's palette.
+18. Randomize and Set Base both participate in Undo/Redo history.
+19. Randomize, Set Base, Undo, and Redo have readable hover labels.
+20. CHOOSE BASE FROG is larger and centered; the custom color streak spans the header and the X sits in the inner top-right corner.
+21. Base choices retain sprite previews and names beneath each frog.
+
+EMBER AND SOLO TUTORIAL
+22. All packaged Ember expressions now use the identical blue background shade.
+23. Selected tutorial terms such as Ribbit Race, Ember, flies, bonks, rebounds, and Versus use restrained orange emphasis.
+24. Find the Match remains drawn while only its vocabulary term is blank when a scene has no fly.
+25. The first matching-fly English clue appears with its fly, and the next poof occurs 0.25 seconds after a successful landing.
+26. Current Goal remains visible throughout dialogue, poofs, pauses, and scene transitions without a blank flash.
+27. Added the requested wrong-fly return instructions and exact multi-fly/wall-turn dialogue revisions.
+28. Tutorial score denominators change with each scene's actual fly objective rather than repeatedly showing /5.
+29. Missing a buffered landing immediately restarts the attempt instead of granting three extra jumps.
+
+VERSUS
+30. Player 1 and Player 2's last selected frogs are remembered between visits to Versus.
+31. A close two-player race to the same fly can trigger a CLOSE CATCH slow-motion cinematic.
+32. A correct catch in the last second triggers the normal FINAL CATCH cinematic.
+33. The PvP clock is frozen while either cinematic plays so the timer remains fair.
+34. The full scripted Versus tutorial remains installed with Level 5 Ember, authored demonstrations, controlled fly reveals, and the final 30-second match.
+
+VERIFICATION
+- npm run check: passed
+- npm test: 261 passed, 0 failed

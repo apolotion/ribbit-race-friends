@@ -17,8 +17,8 @@ function block(start, end) {
 }
 
 test("polish-9 cache marker and tutorial seen key are synchronized", () => {
-  assert.match(engine, /TUTORIAL_BUILD = "2026\.10\.12-friends-polish-16"/);
-  assert.match(index, /game\.bundle\.js\?v=2026\.10\.12-friends-polish-16/);
+  assert.match(engine, /TUTORIAL_BUILD = "2026\.10\.12-friends-polish-17"/);
+  assert.match(index, /game\.bundle\.js\?v=2026\.10\.12-friends-polish-17/);
   assert.match(engine, /rrFriendsEngineTutorialSoloSeenV8/);
   assert.match(read("public/scripts/tutorial-preboot.js"), /rrFriendsEngineTutorialSoloSeenV8/);
 });
@@ -28,7 +28,7 @@ test("latest Solo tutorial copy and mechanics are installed", () => {
     "You don't have to land right on top of a fly to catch it.",
     "All this jumping sure does work up an appetite.",
     "So why stop at only one fly per jump?",
-    "If you get lucky, you can catch two flies in a single jump!",
+    "If you get lucky, you might catch two flies in one jump!",
     "Now, let's say that you're REALLY hungry and need a snack as soon as possible.",
     "Show me a buffered jump charge right after you land."
   ]) assert.ok(engine.includes(phrase), phrase);

@@ -20,7 +20,7 @@ function block(source, start, end) {
 
 test("Polish 16 cache marker is wired", () => {
   for (const source of [tutorial, read("src/common.js"), read("public/index.html"), read("public/scripts/cloud-client.js")]) {
-    assert.match(source, /2026\.10\.12-friends-polish-16/);
+    assert.match(source, /2026\.10\.12-friends-polish-17/);
   }
 });
 
@@ -32,9 +32,9 @@ test("leaderboard rows and dropdowns use visibly different gray stripes", () => 
 test("online tooltip follows the exact hovered button with compact width", () => {
   const tooltip = block(online, "function drawOnlineTooltip", "function drawOnlineProfile");
   assert.match(tooltip, /const centerX=b\.x\+b\.w\/2/);
-  assert.match(tooltip, /const width=Math\.ceil\(Math\.min\(230,widest\+16\)\)/);
+  assert.match(tooltip, /const width=218/);
   assert.match(tooltip, /const pointerX=clamp\(Math\.round\(centerX\)/);
-  assert.match(tooltip, /const rect=index<4\?PVP_SETTINGS_UI\.rows\[index\]:PVP_SETTINGS_UI\.backButton/);
+  assert.match(tooltip, /state\.screen!==\'entry\'/);
 });
 
 test("Quickplay frog label is raised clear of the frame", () => {
@@ -57,7 +57,7 @@ test("tutorial retry replays dialogue and deliberately skips countdown", () => {
 
 test("locked hats remain nonselectable and do not keep a black focus border", () => {
   assert.match(rendering, /\(\(focused&&unlocked\)\|\|selected\)\?COLORS\.ink:"#9aa9ae"/);
-  assert.match(rendering, /A click is only a dud response/);
+  assert.match(rendering, /Locked hats remain informational/);
   assert.match(input, /if \(!isHatUnlocked\(chosen\.id\)\)[\s\S]{0,360}playLockedSkinSound\(\)/);
   assert.doesNotMatch(input, /if \(!isHatUnlocked\(chosen\.id\)\)[\s\S]{0,260}applyHatSelectorChoice/);
 });
@@ -69,9 +69,9 @@ test("unlocking every base frog color has an achievement and evaluator", () => {
 });
 
 test("Set Base header spans the picker and close sits at the extreme inner corner", () => {
-  assert.match(tutorial, /CUSTOM_BASE_CLOSE = Object\.freeze\(\{ x:355, y:67, w:18, h:18 \}\)/);
+  assert.match(tutorial, /CUSTOM_BASE_CLOSE = Object\.freeze\(\{ x:355, y:68, w:18, h:18 \}\)/);
   assert.match(tutorial, /ctx\.fillRect\(panel\.x \+ 5, panel\.y \+ 5, panel\.w - 10, 24\)/);
-  assert.match(tutorial, /drawBitmapText\("SET BASE FROG", panel\.x \+ panel\.w \/ 2, panel\.y \+ 11, \.52, "center"/);
+  assert.match(tutorial, /drawBitmapText\("CHOOSE BASE FROG", panel\.x \+ panel\.w \/ 2, panel\.y \+ 10, \.72, "center"/);
   assert.match(tutorial, /drawMiniFrogSwatchFacing\(option\.x \+ option\.w \/ 2/);
   assert.match(tutorial, /skin\.name \|\| option\.id/);
 });
@@ -112,7 +112,8 @@ test("time-based hats unlock at the win boundary and appear as victory cards", (
   assert.match(pageHats, /finished\(d=\{\}\)\{if\(!this\.progress\)this\.initialize\(\)/);
 });
 
-test("only the stock Versus pause control is rendered", () => {
+test("Versus renders the compact single-player-style pause control once", () => {
   assert.match(tutorial, /function drawPvpPauseButtonPolish8/);
-  assert.doesNotMatch(tutorial, /drawPvpPauseButtonPolish8\(\);/);
+  assert.match(tutorial, /drawPvpPauseButtonPolish8\(\);/);
+  assert.match(tutorial, /const rect = HUD_UI\.pauseButton/);
 });

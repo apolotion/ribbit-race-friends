@@ -18,10 +18,10 @@ function block(start, end) {
 
 test("1.7.10 tutorial-polish build is wired everywhere", () => {
   assert.equal(JSON.parse(read("package.json")).version, "1.7.10");
-  assert.match(read("src/common.js"), /2026\.10\.12-friends-polish-16/);
-  assert.match(read("client/game/110-online-mobile-polish.js"), /2026\.10\.12-friends-polish-16/);
-  assert.match(read("public/scripts/cloud-client.js"), /2026\.10\.12-friends-polish-16/);
-  assert.match(index, /2026\.10\.12-friends-polish-16/);
+  assert.match(read("src/common.js"), /2026\.10\.12-friends-polish-17/);
+  assert.match(read("client/game/110-online-mobile-polish.js"), /2026\.10\.12-friends-polish-17/);
+  assert.match(read("public/scripts/cloud-client.js"), /2026\.10\.12-friends-polish-17/);
+  assert.match(index, /2026\.10\.12-friends-polish-17/);
   assert.doesNotMatch(index, /tutorial-scripted-1/);
 });
 
@@ -36,7 +36,7 @@ test("first-boot tutorial waits for auth and suppresses the menu before first pa
     "rr-authenticated"
   ]) assert.ok(polish.includes(phrase), phrase);
   assert.match(index, /<body class="ribbit-auth-locked rr-tutorial-pending">/);
-  assert.match(index, /tutorial-preboot\.js\?v=2026\.10\.12-friends-polish-16/);
+  assert.match(index, /tutorial-preboot\.js\?v=2026\.10\.12-friends-polish-17/);
   assert.match(read("public/scripts/tutorial-preboot.js"), /rrFriendsEngineTutorialSoloSeenV8/);
   assert.match(css, /body\.rr-tutorial-pending:not\(\.ribbit-auth-locked\) #game\s*\{[\s\S]{0,120}visibility:\s*hidden\s*!important/);
   assert.doesNotMatch(polish, /requestAnimationFrame\(\(\) => requestAnimationFrame/);
@@ -55,7 +55,7 @@ test("Ember dialogue uses the supplied layered reference, left-aligned text, and
   assert.match(dialogue, /const namePlate = \{ x:textPanel\.x \+ 7, y:textPanel\.y \+ 7, w:48, h:10 \}/);
   assert.match(dialogue, /drawBitmapText\("EMBER", namePlate\.x \+ namePlate\.w \/ 2, namePlate\.y \+ 2, \.58, "center"/);
   assert.match(dialogue, /const textTop = Math\.round\(textArea\.y\)/);
-  assert.match(dialogue, /visibleOnLine,[\s\S]{0,80}textArea\.x,[\s\S]{0,120}"left"/);
+  assert.match(dialogue, /drawEmberDialogueLine\([\s\S]{0,140}textArea\.x/);
   assert.doesNotMatch(dialogue, /fullLineWidth|textArea\.x \+ textArea\.w \/ 2/);
   assert.match(dialogue, /holdingPreviousLine/);
 });
@@ -111,10 +111,9 @@ test("closing the final dialogue with Space consumes that physical key press", (
   assert.match(engine, /tutorialBlocksLiveInput\(\)[\s\S]{0,180}tutorial\.blockJumpUntilRelease/);
 });
 
-test("tutorial restart keeps terms blank while preserving live goals for catch sequencing", () => {
+test("tutorial restart preserves goals while prompt visibility follows the scene", () => {
   assert.match(engine, /function tutorialPlayerHasControl/);
-  assert.match(engine, /const pausedGoal = game\.state === "paused"/);
-  assert.match(engine, /if \(!tutorialPlayerHasControl\(\) && !pausedGoal/);
+  assert.match(engine, /scene's objective remains visible/);
   assert.match(engine, /const visibleDuringExplanation = tutorialPromptVisibleDuringDialogue\(\)/);
   assert.match(engine, /keepDuringMissReset[\s\S]{0,260}keepDuringTongueCinematic[\s\S]{0,300}tutorial\.promptHidden/);
   assert.match(engine, /tutorial\.resetPending/);

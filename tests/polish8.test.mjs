@@ -29,7 +29,7 @@ test("achievements uses a small bottom-left leaderboard button", () => {
 
 test("online menu follows requested order and contextual speech bubbles", () => {
   const versus = read("client/game/60-versus-gameplay.js");
-  const order = ["quick","host","join","spectate","profile","battle"];
+  const order = ["quick","spectate","host","join","profile","battle"];
   let cursor = online.indexOf("const ONLINE_HUB");
   for (const key of order) {
     const next = online.indexOf(`id:'${key}'`, cursor);
@@ -37,7 +37,7 @@ test("online menu follows requested order and contextual speech bubbles", () => 
     cursor = next;
   }
   assert.match(online, /View completed Quickplay encounters and your head-to-head record/);
-  assert.match(online, /Return to Local Versus/);
+  assert.match(online, /tip:''/);
   assert.match(versus, /CLICK TO PLAY AGAINST CPU/);
   assert.match(versus, /CLICK TO ENABLE LOCAL VERSUS/);
 });
@@ -63,7 +63,7 @@ test("hat progress updates per skin outside training", () => {
 });
 
 test("custom frog uses an in-preview Set Base selector and preserves paste state", () => {
-  assert.match(tutorial, /SET BASE FROG/);
+  assert.match(tutorial, /CHOOSE BASE FROG/);
   assert.match(tutorial, /getCustomBaseOptionRects/);
   assert.match(tutorial, /applyCustomBaseSkin/);
   assert.match(tutorial, /window\.addEventListener\("paste"/);

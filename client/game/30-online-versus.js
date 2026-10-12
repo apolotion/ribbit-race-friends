@@ -28,7 +28,7 @@
         'pvpTimerGraceActive','pvpTimerGraceEligible','pvpSuddenDeath','pvpSuddenDeathScores','pvpCelebrationTimer',
         'pvpCelebrationWinnerIndex','pvpTimeExpiredAt','winInputLock','pvpCriticalCatchActive','pvpCriticalCatchElapsed',
         'pvpCriticalCatchDuration','pvpCriticalCatchX','pvpCriticalCatchY','pvpCriticalCatchWinnerIndex',
-        'pvpSuddenDeathAlertTimer','quickplayNextRoundAt','pvpCriticalCatchEventId','pvpCriticalCatchPlayedThisRound'
+        'pvpSuddenDeathAlertTimer','quickplayNextRoundAt','pvpCriticalCatchEventId','pvpCriticalCatchPlayedThisRound','pvpCriticalCatchKind'
       ];
       const MOTION_FIELDS=['x','y','vx','vy','dir','grounded','charging','charge','chargeDirection','chargeHoldTime',
         'inputHeld','chargeFacingDir','firstJumpMade','airTime','jumpStartY','highestY','lastLaunchPower',
@@ -891,7 +891,8 @@
       }
       function canStartCritical(key){
         if(!state.active)return true;
-        if(game.pvpCriticalCatchPlayedThisRound||life.criticalDone.has(key)||life.criticalKey===key)return false;
+        const contest=String(key||'').startsWith('contest:');
+        if((!contest&&game.pvpCriticalCatchPlayedThisRound)||life.criticalDone.has(key)||life.criticalKey===key)return false;
         life.criticalKey=key;life.criticalElapsed=0;return true;
       }
       function criticalProgress(){
@@ -1143,12 +1144,12 @@
       // Quickplay/Spectate, Host/Join, Customizer/Frog Tags.
       const ONLINE_HUB=[
         {id:'quick',label:'QUICKPLAY',x:66,y:100,w:163,h:29,icon:'quick',stripe:'#7fe3ae',tip:'Choose a frog, then find a similarly skilled opponent.'},
-        {id:'host',label:'HOST',x:251,y:100,w:163,h:29,icon:'host',stripe:'#5ce5e8',tip:'Create a private room and share its five-character ID.'},
-        {id:'join',label:'JOIN',x:66,y:142,w:163,h:29,icon:'join',stripe:'#ef7582',tip:'Join a friend using their room ID.'},
-        {id:'spectate',label:'SPECTATE',x:251,y:142,w:163,h:29,icon:'eye',stripe:'#a68be5',tip:'Watch delayed recorded frames without joining a player connection.'},
+        {id:'spectate',label:'SPECTATE',x:251,y:100,w:163,h:29,icon:'eye',stripe:'#a68be5',tip:'Watch delayed recorded frames without joining a player connection.'},
+        {id:'host',label:'HOST',x:66,y:142,w:163,h:29,icon:'host',stripe:'#5ce5e8',tip:'Create a private room and share its five-character ID.'},
+        {id:'join',label:'JOIN',x:251,y:142,w:163,h:29,icon:'join',stripe:'#ef7582',tip:'Join a friend using their room ID.'},
         {id:'profile',label:'CUSTOMIZER',x:66,y:184,w:163,h:29,icon:'palette',stripe:'#ef9ebc',tip:'Edit the display name opponents see. Your Friends account is unchanged.'},
         {id:'battle',label:'FROG TAGS',x:251,y:184,w:163,h:29,icon:'tags',stripe:'#eac65b',tip:'View completed Quickplay encounters and your head-to-head record.'},
-        {id:'back',label:'BACK',x:184,y:231,w:112,h:23,icon:'back',stripe:'#b2c6cd',tip:'Return to Local Versus.'}
+        {id:'back',label:'BACK',x:184,y:231,w:112,h:23,icon:'back',stripe:'#b2c6cd',tip:''}
       ];
       const PROFILE_UI={name:{x:108,y:112,w:264,h:31},save:{x:127,y:193,w:104,h:29},back:{x:250,y:193,w:104,h:29}};
       function onlineName(){return (onlineIdentity.sessionGeneration===profile().sessionGeneration?onlineIdentity.name:'')||compactPlayerName(profile().name||'GUEST');}
@@ -1264,7 +1265,7 @@
         if(state.screen==='room'){
           const arr=[spec('myFrog','',localIndex()?PVP_SETUP_UI.p2Selector:PVP_SETUP_UI.p1Selector,null,'#5ce5e8','Left and right change your frog.'),
             spec('ready',!directReady()?'CHECKING LINK':state.localReady?'NOT READY':'READY',PVP_SETUP_UI.startButton,'play','#7fe3ae','The match starts when both players are ready.'),
-            spec('leave','LEAVE',PVP_SETUP_UI.backButton,'home','#ef7582','Leave this private room.'),spec('profile','',{x:67,y:225,w:24,h:24},'palette','#ef9ebc','Edit your online display name.')];
+            spec('leave','LEAVE',PVP_SETUP_UI.backButton,'home','#ef7582','Leave this private room.'),spec('profile','',PVP_SETUP_UI.tutorialButton,'palette','#ef9ebc','Edit your online display name.')];
           if(state.role==='host')arr.push(...PVP_SETUP_UI.levelButtons.map((r,i)=>spec('stage:'+i,r.id.toUpperCase(),r,null,'#5ce5e8','Choose the stage for this private match.')),
             spec('settings','',PVP_SETUP_UI.settingsButton,'gear','#bac8cf','Host-only match settings.'),spec('time','',PVP_SETUP_UI.timeButton,'sun','#eac65b','Change the time of day.'));
           return arr;
@@ -1321,37 +1322,32 @@
         drawOnlineAction({...rect,id:match?.id,label:text,icon,stripe:match?.stripe||palette?.light||'#5ce5e8',subLabel:match?.subLabel||''},selected||state.focus===match?.id);
       }
       function drawOnlineTooltip(){
-        if(!isMenuVisible()||state.screen==='quickConnecting')return;
-        let b=onlineButtons().find(v=>v.id===(state.keyboardFocus?state.focus:(state.hoverId||state.focus)));
-        if(state.screen==='settings'){
-          const tips=['Choose First to 5, First to 10, or Endless.','Choose the round timer.','Choose how many rounds make a match.','Local-mode resume countdown. Online play never pauses.','Return to the room without showing settings to your opponent.'];
-          const index=Math.max(0,Math.min(4,game.pvpSettingsFocusIndex||0));
-          const rect=index<4?PVP_SETTINGS_UI.rows[index]:PVP_SETTINGS_UI.backButton;
-          b={...rect,tip:tips[index]};
-        }
+        // Help bubbles belong only on the first Online menu. Secondary menus
+        // already label their controls clearly and no longer show hover popups.
+        if(!isMenuVisible()||state.screen!=='entry')return;
+        const focusId=state.keyboardFocus?state.focus:(state.hoverId||state.focus);
+        if(!focusId||focusId==='back')return;
+        const b=onlineButtons().find(v=>v.id===focusId);
         if(!b?.tip||!Number.isFinite(b.x)||!Number.isFinite(b.y)||!Number.isFinite(b.w)||!Number.isFinite(b.h))return;
 
-        const scale=.47;
-        const maxTextWidth=Math.min(220,Math.max(92,b.w+26));
+        const scale=.46;
+        const width=218;
+        const height=30;
         const words=String(b.tip).toUpperCase().split(/\s+/).filter(Boolean);
         const lines=[];let line='';
         for(const word of words){
           const next=line?`${line} ${word}`:word;
-          if(line&&measureBitmapText(next,scale)>maxTextWidth-16){lines.push(line);line=word;}
+          if(line&&measureBitmapText(next,scale)>width-18){lines.push(line);line=word;}
           else line=next;
         }
         if(line)lines.push(line);
-        while(lines.length>3){lines[lines.length-2]+=' '+lines.pop();}
-        const widest=Math.max(...lines.map(text=>measureBitmapText(text,scale)),54);
-        const width=Math.ceil(Math.min(230,widest+16));
-        const lineStep=Math.ceil(7*scale+3);
-        const height=Math.max(20,10+lines.length*lineStep);
+        while(lines.length>2){lines[lines.length-2]+=' '+lines.pop();}
         const centerX=b.x+b.w/2;
         const x=clamp(Math.round(centerX-width/2),5,W-width-5);
         let y=Math.round(b.y-height-8);
         let pointerBelow=true;
-        if(y<4){y=Math.min(H-height-5,Math.round(b.y+b.h+8));pointerBelow=false;}
-        const pointerX=clamp(Math.round(centerX),x+9,x+width-9);
+        if(y<4){y=Math.min(H-height-7,Math.round(b.y+b.h+8));pointerBelow=false;}
+        const pointerX=clamp(Math.round(centerX),x+10,x+width-10);
 
         ctx.save();
         ctx.fillStyle='rgba(25,43,52,.24)';ctx.fillRect(x+2,y+2,width,height);
@@ -1359,8 +1355,9 @@
         ctx.fillStyle='#ffffff';ctx.fillRect(x+2,y+2,width-4,height-4);
         const palette=state.localAppearance||appearanceFor(state.localSkinId)||PVP_NEUTRAL_PALETTE;
         ctx.fillStyle=palette.light||'#5ce5e8';ctx.fillRect(x+5,y+4,width-10,2);
-        const top=y+Math.round((height-(lines.length*lineStep-3))/2);
-        lines.forEach((text,i)=>fitText(text,x+width/2,top+i*lineStep,width-12,scale,'#26363d'));
+        const lineStep=8;
+        const textTop=y+(lines.length===1?11:7);
+        lines.slice(0,2).forEach((text,i)=>fitText(text,x+width/2,textTop+i*lineStep,width-14,scale,'#26363d'));
         ctx.fillStyle=COLORS.ink;
         if(pointerBelow){
           ctx.fillRect(pointerX-4,y+height,9,2);ctx.fillRect(pointerX-3,y+height+2,7,2);ctx.fillRect(pointerX-2,y+height+4,5,2);ctx.fillRect(pointerX-1,y+height+6,3,1);
@@ -2228,7 +2225,12 @@
       function leaveRoom(){
         const req={protocol:3,lifecycleVersion:3,roomCode:state.roomCode,playerToken:state.playerToken},connected=state.connected;
         if(connected){sendPeer('leaving',{role:state.role});sendLeaveRequest(req);}
-        cleanup();
+        cleanup(false);
+        open();
+        state.screen='entry';
+        state.focus='quick';
+        state.keyboardFocus=false;
+        state.hoverId='';
       }
       function disconnect(message,code=''){
         const wasQuickplay=state.quickplay;
@@ -2295,7 +2297,19 @@
         ctx.fillStyle=b.mid;ctx.fillRect(r.x+r.w/2,r.y+2,r.w/2-2,r.h-4);
         drawMiniWifiIcon(r.x+r.w/2,r.y+r.h/2+1,COLORS.white);
       }
-      function drawRoom(){drawPvpSetupScreen();const b=onlineButtons().find(b=>b.id==='profile');if(b)drawOnlineAction(b,state.focus==='profile');}
+      function drawRoomProfileButton(spec,focused=false){
+        if(!spec)return;
+        const r=spec,palette={dark:'#07516a',mid:'#0f9fbb',light:'#5ce5e8',belly:'#b8f5dc'};
+        // Match the neighboring Wi-Fi control exactly: same shadow, frame,
+        // highlight stripe and compact 24px footprint in the tutorial slot.
+        ctx.fillStyle='rgba(25,43,52,0.28)';ctx.fillRect(r.x+2,r.y+2,r.w,r.h);
+        ctx.fillStyle=focused?palette.dark:COLORS.ink;ctx.fillRect(r.x,r.y,r.w,r.h);
+        ctx.fillStyle=focused?palette.belly:'#f7fdff';ctx.fillRect(r.x+2,r.y+2,r.w-4,r.h-4);
+        ctx.fillStyle=focused?palette.light:'#ffffff';ctx.fillRect(r.x+5,r.y+4,r.w-10,2);
+        drawOnlineIcon('palette',r.x+r.w/2,r.y+r.h/2+1,focused?palette.mid:'#48555a');
+        if(focused){ctx.fillStyle=COLORS.white;[[3,3],[r.w-5,3],[3,r.h-5],[r.w-5,r.h-5]].forEach(([dx,dy])=>ctx.fillRect(r.x+dx,r.y+dy,2,2));}
+      }
+      function drawRoom(){drawPvpSetupScreen();const b=onlineButtons().find(b=>b.id==='profile');if(b)drawRoomProfileButton(b,state.focus==='profile');}
       function drawHud(){
         if(!state.active)return;
         const direct=directReady(),rtt=direct?net.peerRtt:state.rttMs,stale=isGuestActive()&&now()-state.lastSnapshotAt>RELAY.staleMs;

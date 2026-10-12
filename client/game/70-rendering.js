@@ -2494,8 +2494,13 @@
         drawBitmapText("SANDBOX", 57, 15, 0.72, "center", skin.dark);
       } else {
         drawFlyAt(22, 17, 0.75);
-        const target = getSoloTargetScore();
-        const scoreLabel = isSoloEndlessMode() ? `${game.score}` : `${game.score} / ${target}`;
+        const tutorialTarget = Number(game.tutorialDisplayCatchTarget);
+        const target = game.tutorialActive && Number.isFinite(tutorialTarget)
+          ? Math.max(0, Math.floor(tutorialTarget))
+          : getSoloTargetScore();
+        const scoreLabel = isSoloEndlessMode() || (game.tutorialActive && target <= 0)
+          ? `${game.score}`
+          : `${game.score} / ${target}`;
         drawBitmapText(scoreLabel, 55, 15, 1, "center", skin.dark);
         ctx.save();
         ctx.globalAlpha = 0.24;
@@ -3716,11 +3721,13 @@
     function applyHatSelectorChoice(hatId, close = true) {
       const normalizedHat = normalizeFrogHatId(hatId);
       if (!isHatUnlocked(normalizedHat)) {
-        game.customHatSuppressedRequirementIndex = CUSTOM_HAT_OPTIONS.findIndex((hat) => hat.id === normalizedHat);
-        game.customHatDismissedRequirementId = normalizedHat;
-        game.customHatHoveredIndex = null;
-        // A click is only a dud response. It never pins the unlock requirement;
-        // the requirement may appear again only after a fresh hover/focus change.
+        const lockedIndex = CUSTOM_HAT_OPTIONS.findIndex((hat) => hat.id === normalizedHat);
+        game.customHatFocusIndex = Math.max(0, lockedIndex);
+        game.customHatHoveredIndex = Math.max(0, lockedIndex);
+        game.customHatSuppressedRequirementIndex = null;
+        game.customHatDismissedRequirementId = null;
+        // Locked hats remain informational: keep the requirement visible and
+        // acknowledge the click only with the normal dud sound.
         playLockedSkinSound();
         return false;
       }
@@ -3887,12 +3894,12 @@
       const left = clamp(Math.round(anchorRect.x + anchorRect.w / 2 - width / 2), 8, W - width - 8);
       const top = Math.round(anchorRect.y + anchorRect.h + 7);
       const pointerX = clamp(Math.round(anchorRect.x + anchorRect.w / 2), left + 14, left + width - 14);
+      // Match the compact speech-bubble pointer used throughout the menus.
       ctx.fillStyle = COLORS.ink;
-      ctx.fillRect(pointerX - 5, top - 7, 10, 4);
-      ctx.fillRect(pointerX - 3, top - 3, 6, 4);
-      ctx.fillStyle = "#f7fdff";
-      ctx.fillRect(pointerX - 3, top - 5, 6, 4);
-      ctx.fillRect(pointerX - 1, top - 7, 2, 3);
+      ctx.fillRect(pointerX - 4, top - 7, 9, 2);
+      ctx.fillRect(pointerX - 3, top - 5, 7, 2);
+      ctx.fillRect(pointerX - 2, top - 3, 5, 2);
+      ctx.fillRect(pointerX - 1, top - 1, 3, 1);
       ctx.fillStyle = "rgba(25,43,52,0.30)";
       ctx.fillRect(left + 3, top + 3, width, height);
       ctx.fillStyle = COLORS.ink;
@@ -4008,7 +4015,7 @@
         const focused=game.customHatFocusIndex===option.index||game.customHatHoveredIndex===option.index;
         const unlocked=isHatUnlocked(option.id);
         const lockedHovered=game.customHatHoveredIndex===option.index && !unlocked;
-        if (lockedHovered && option.index !== game.customHatSuppressedRequirementIndex && option.id !== game.customHatDismissedRequirementId) lockedFocusedOption=option;
+        if (lockedHovered) lockedFocusedOption=option;
         // Locked hats are informational hover targets, not selectable buttons.
         // A click never leaves a black focus border behind.
         ctx.fillStyle=((focused&&unlocked)||selected)?COLORS.ink:"#9aa9ae";ctx.fillRect(option.x,option.y,option.w,option.h);
@@ -4026,7 +4033,7 @@
         drawBitmapText(shortLabel,option.x+option.w/2,option.y+35,0.43,"center",!unlocked?"#6d7a80":skin.dark);
         if(!unlocked) drawMiniLockIcon(option.x+option.w-10,option.y+6,0.62);
       });
-      const close={x:386,y:39,w:20,h:20};
+      const close={x:386,y:40,w:20,h:20};
       ctx.fillStyle=COLORS.ink;ctx.fillRect(close.x,close.y,close.w,close.h);
       ctx.fillStyle="#f7fdff";ctx.fillRect(close.x+2,close.y+2,close.w-4,close.h-4);
       ctx.fillStyle=skin.dark;
@@ -5658,7 +5665,7 @@
       const help = PAUSE_UI.helpButton;
       const helpActive = game.pauseHoveredSelection === "help" || game.pausePressedSelection === "help" || game.pauseHelpOpen;
       const bookTheme = getPauseBookTheme(helpActive);
-      ctx.fillStyle = "rgba(25,43,52,0.28)"; ctx.fillRect(help.x + 2, help.y + 2, help.w, help.h);
+      // Pause utility icons sit flush inside the panel without external drop shadows.
       ctx.fillStyle = bookTheme.frame; ctx.fillRect(help.x, help.y, help.w, help.h);
       ctx.fillStyle = bookTheme.buttonFill; ctx.fillRect(help.x + 2, help.y + 2, help.w - 4, help.h - 4);
       drawMiniBookIcon(help.x + help.w / 2, help.y + help.h / 2, bookTheme);
@@ -5817,7 +5824,10 @@
       const toastSkin = worldRecordToast
         ? { dark:"#805316", mid:"#e5a72d", light:"#ffe27a", belly:"#fff3a8" }
         : skin;
-      const width = definition ? 208 : genericText ? Math.max(178, measureBitmapText(genericText, 1) + 42) : 178;
+      const hatToast = game.achievementToastHatId
+        ? CUSTOM_HAT_OPTIONS.find((item) => item.id === game.achievementToastHatId)
+        : null;
+      const width = definition || hatToast ? 208 : genericText ? Math.max(178, measureBitmapText(genericText, 1) + 42) : 178;
       const height = 29;
       const left = Math.round((W - width) / 2);
       const top = 31;
@@ -5847,6 +5857,10 @@
         drawAchievementIcon(definition.icon, left + 13, top + 8, true, 0.82, skin);
         drawBitmapText("ACHIEVEMENT!", left + 124, top + 5, 1, "center", skin.dark);
         drawBitmapText(definition.name, left + 124, top + 16, 1, "center", skin.dark);
+      } else if (hatToast) {
+        drawPixelFrogHat(left + 22, top + 16, hatToast.id, .92, 1, { ...skin, previewCenterHat:true });
+        drawBitmapText("HAT UNLOCKED!", left + 126, top + 5, 1, "center", skin.dark);
+        drawBitmapText(hatToast.name, left + 126, top + 16, .92, "center", skin.dark);
       } else {
         if (worldRecordToast) drawPixelTrophy(left + 18, top + 7, false, .92);
         else drawMiniSun(left + 18, top + 15, false);

@@ -1502,15 +1502,15 @@
       if (game.customHatOpen && (game.state === "setup" || game.state === "custom")) {
         const point = getCanvasPoint(event);
         ensureAudio();
-        const closeRect = { x:386, y:39, w:20, h:20 };
+        const closeRect = { x:386, y:40, w:20, h:20 };
         const pageButtons = getCustomHatPageButtons();
         const chosen = getCustomHatOptionRects().find((option) => pointInsideRect(point, option));
         if (chosen) {
           if (!isHatUnlocked(chosen.id)) {
-            game.customHatSuppressedRequirementIndex = chosen.index;
-            game.customHatDismissedRequirementId = chosen.id;
-            game.customHatHoveredIndex = null;
-            game.customHatFocusIndex = Math.max(0, CUSTOM_HAT_OPTIONS.findIndex((hat) => hat.id === (game.customHatId || "none")));
+            game.customHatFocusIndex = chosen.index;
+            game.customHatHoveredIndex = chosen.index;
+            game.customHatSuppressedRequirementIndex = null;
+            game.customHatDismissedRequirementId = null;
             playLockedSkinSound();
           } else {
             game.customHatFocusIndex = chosen.index;
@@ -1789,10 +1789,15 @@
         const point=getCanvasPoint(event);
         const option=getCustomHatOptionRects().find((item)=>pointInsideRect(point,item));
         const pageButtons=getCustomHatPageButtons();
-        const nextHatHover=option?option.index:null;
-        const nextHatId=option?option.id:null;
-        if(nextHatHover!==game.customHatSuppressedRequirementIndex)game.customHatSuppressedRequirementIndex=null;
-        if(nextHatId&&nextHatId!==game.customHatDismissedRequirementId)game.customHatDismissedRequirementId=null;
+        const visibleHatRects=getCustomHatOptionRects();
+        const minX=Math.min(...visibleHatRects.map(item=>item.x));
+        const minY=Math.min(...visibleHatRects.map(item=>item.y));
+        const maxX=Math.max(...visibleHatRects.map(item=>item.x+item.w));
+        const maxY=Math.max(...visibleHatRects.map(item=>item.y+item.h));
+        const withinHatGrid=point.x>=minX&&point.x<=maxX&&point.y>=minY&&point.y<=maxY;
+        const nextHatHover=option?option.index:(withinHatGrid?game.customHatHoveredIndex:null);
+        game.customHatSuppressedRequirementIndex=null;
+        game.customHatDismissedRequirementId=null;
         game.customHatHoveredIndex=nextHatHover;
         game.customHatRemoveAllHovered=pointInsideRect(point,pageButtons.removeAll);
         game.customHatPageHovered=pointInsideRect(point,pageButtons.search)?"search":pointInsideRect(point,game.customHatSearchInputRect||{x:0,y:0,w:0,h:0})?"searchInput":pointInsideRect(point,pageButtons.prev)?"prev":pointInsideRect(point,pageButtons.next)?"next":null;

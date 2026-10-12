@@ -4,7 +4,7 @@
 
   const SOLO_SEEN_KEY = "rrFriendsEngineTutorialSoloSeenV8";
   const PVP_SEEN_KEY = "rrFriendsEngineTutorialPvpSeenV8";
-  const TUTORIAL_BUILD = "2026.10.12-friends-polish-16";
+  const TUTORIAL_BUILD = "2026.10.12-friends-polish-17";
   const TUTORIAL_ACHIEVEMENT_ID = "tutorial-graduate";
   const TYPEWRITER_MS_PER_CHARACTER = 28;
   const DIALOGUE_TEXT_SCALE = 0.86;
@@ -317,7 +317,9 @@
         "There can be up to four flies on the screen at once, so check your clue!",
         "Catch the wrong fly, and you'll spit it right back out.",
                 "Catch the right fly, and your English clue can update.",
-        "That can turn the fly you skipped into the new correct match!"
+        "That can turn the fly you skipped into the new correct match!",
+        "Skip the wrong fly first and catch the matching one.",
+        "When the clue changes, come back and catch the fly you left behind!"
       ],
       portrait: "questioning",
       goal: ["SPIT, MATCH,", "THEN RETURN"],
@@ -348,7 +350,7 @@
         "One match and one spit-out!",
         "Let's try turning both catches into points.",
         "Watch your English clue as you go.",
-        "If you get lucky, you can catch two flies in a single jump!"
+        "If you get lucky, you might catch two flies in one jump!"
       ],
       portrait: "thumbsup",
       goal: ["2 MATCHES", "IN ONE JUMP"],
@@ -376,8 +378,8 @@
       dialogue: [
         "Three flies in one jump?! Okay, now you're showing off!",
         "There's just one catch to this all-you-can-eat buffet...",
-        "The only way to turn around is by hitting a wall.",
-        "Miss a fly, and you'll need to bounce off a wall to head back for it.",
+        "The only way that you can turn around is by bouncing off of a wall.",
+        "Miss a fly, and you'll need to hit a wall to head back for it.",
         "Let's practice! Use your first jump to hit the wall and turn around.",
         "Then jump back and catch the fly you passed."
       ],
@@ -2034,10 +2036,21 @@
     }
   }
 
+  function tutorialDisplayCatchTarget(setup) {
+    const targets = {
+      intro:0, longJumps:0, threeCatches:3, rangeCatch:1, wrongFly:2,
+      comboMixed:1, comboTwo:2, comboThree:3, wallTurn:1,
+      reboundCatch:1, quickDrop:1, bufferJumpCharge:0,
+      bufferDrop:1, doubleBuffer:3, normalRound:5
+    };
+    return Number.isInteger(targets[setup]) ? targets[setup] : 0;
+  }
+
   function configureSoloStep(index) {
     baseSoloScenario();
     clearScenarioState();
     const step = SOLO_STEPS[index] || SOLO_STEPS[0];
+    game.tutorialDisplayCatchTarget = tutorialDisplayCatchTarget(step.setup);
     setMentor(step.mentor || "right");
 
     switch (step.setup) {
@@ -3209,6 +3222,7 @@
     tutorial.frogHidden = false;
     resetDialogueSpaceHold();
     game.tutorialActive = false;
+    game.tutorialDisplayCatchTarget = null;
     flies.length = 0;
     game.spawnQueue.length = 0;
     resetTutorialTongue();
@@ -3523,6 +3537,11 @@
       tutorial.bufferedJumpWindowOpenedAt = now;
       if (setup === "bufferJumpCharge") {
         tutorial.bufferedJumpChainCount = game.buttonHeld ? 1 : 0;
+        if (tutorial.jumpAttempts >= 1 && !game.buttonHeld) {
+          failAttempt("HOLD JUMP BEFORE YOU LAND TO BUFFER THE NEXT CHARGE");
+          tutorial.wasGroundedLastFrame = Boolean(frog.grounded);
+          return;
+        }
       }
     }
     tutorial.wasGroundedLastFrame = Boolean(frog.grounded);
@@ -3559,7 +3578,7 @@
       }
       if (!attemptEnded) return;
       if (tutorial.sceneAttemptCaught) {
-        tutorial.sceneLandingDelayUntil = now + CORRECT_CATCH_LANDING_HOLD_MS;
+        tutorial.sceneLandingDelayUntil = now + 250;
         freezeControlledEntity();
       } else {
         retryThreeCatchAttempt();
@@ -3654,7 +3673,7 @@
     if (setup === "bufferJumpCharge") {
       if (tutorial.bufferedJumpChainCount >= 1 && tutorial.bufferedJumpReleased) {
         passStep();
-      } else if (attemptEnded && tutorial.jumpAttempts >= 3) {
+      } else if (attemptEnded && tutorial.bufferedJumpChainCount < 1) {
         failAttempt("HOLD JUMP BEFORE LANDING, THEN RELEASE");
       }
       return;
@@ -4078,7 +4097,8 @@
     const step = tutorialStep();
     if (!step) return ["TUTORIAL"];
     const pausedGoal = game.state === "paused";
-    if (!tutorialPlayerHasControl() && !pausedGoal && !step.demonstration && step.setup !== "threeCatches" && step.setup !== "wrongFly") return [];
+    // A scene's objective remains visible from its first dialogue frame through
+    // its final poof so there is never a blank goal-card flash between lessons.
     if (tutorial.kind === "pvp") {
       if (step.setup === "pvpBonkThree") return ["BONK EMBER", `${Math.min(3, tutorial.pvpBonks)} / 3`];
       if (step.setup === "pvpUnderBonkTwo") return ["UNDER BONKS", `${Math.min(2, tutorial.pvpUnderBonks)} / 2`];
@@ -4107,6 +4127,27 @@
     ctx.fillRect(left + 1, top + 1, 5, 1);
     ctx.fillRect(left + 2, top + 2, 3, 1);
     ctx.fillRect(left + 3, top + 3, 1, 1);
+  }
+
+  function drawEmberDialogueLine(fullLine, visibleText, x, y, scale) {
+    const emphasis = /RIBBIT RACE|EMBER|FL(?:Y|IES)|BONKS?|REBOUNDS?|VERSUS/gi;
+    const ranges=[];
+    let match;
+    while((match=emphasis.exec(String(fullLine||"")))) ranges.push([match.index,match.index+match[0].length]);
+    const visible=String(visibleText||"");
+    if(!visible){return;}
+    let cursor=0,drawX=x;
+    while(cursor<visible.length){
+      const orangeRange=ranges.find(([start,end])=>cursor>=start&&cursor<end);
+      const nextBoundary=orangeRange
+        ? Math.min(visible.length,orangeRange[1])
+        : Math.min(visible.length,...ranges.filter(([start])=>start>cursor).map(([start])=>start),visible.length);
+      const chunk=visible.slice(cursor,nextBoundary);
+      const color=orangeRange?"#ff9b45":COLORS.white;
+      drawBitmapText(chunk,drawX,y,scale,"left",color);
+      drawX+=measureBitmapText(chunk,scale);
+      cursor=nextBoundary;
+    }
   }
 
   function drawTutorialDialogue() {
@@ -4247,13 +4288,12 @@
     let remaining = visibleCount;
     wrappedLines.forEach((wrappedLine, index) => {
       const visibleOnLine = wrappedLine.slice(0, Math.max(0, Math.min(wrappedLine.length, remaining)));
-      drawBitmapText(
+      drawEmberDialogueLine(
+        wrappedLine,
         visibleOnLine,
         textArea.x,
         textTop + index * lineHeight,
-        textScale,
-        "left",
-        COLORS.white
+        textScale
       );
       remaining -= wrappedLine.length + 1;
     });
@@ -4722,26 +4762,19 @@
     ctx.fillRect(left, top, width, height);
     ctx.fillStyle = COLORS.white;
     ctx.fillRect(left + 2, top + 2, width - 4, height - 4);
-    // The card stays completely blank whenever the current tutorial lesson has
-    // no visible authored fly. Bonk, rebound and movement chapters never show a
-    // stale vocabulary header.
-    const hasRelevantFly = flies.some((currentFly) =>
-      currentFly && currentFly.state === "active" &&
-      (!currentFly.tutorialAuthored || currentFly.tutorialArmed !== false)
+    // The tutorial can hide the vocabulary term while preserving the familiar
+    // FIND THE MATCH card and its header.
+    ctx.fillStyle = getSelectedSkin().mid;
+    ctx.fillRect(left + 4, top + 4, width - 8, 8);
+    drawBitmapText(
+      "FIND THE MATCH",
+      W / 2,
+      top + 5,
+      0.96,
+      "center",
+      COLORS.white,
+      getSelectedSkin().dark
     );
-    if (tutorialStep()?.setup !== "longJumps" && hasRelevantFly) {
-      ctx.fillStyle = getSelectedSkin().mid;
-      ctx.fillRect(left + 4, top + 4, width - 8, 8);
-      drawBitmapText(
-        "FIND THE MATCH",
-        W / 2,
-        top + 5,
-        0.96,
-        "center",
-        COLORS.white,
-        getSelectedSkin().dark
-      );
-    }
   }
 
 
@@ -4750,7 +4783,6 @@
       tutorial.active &&
       tutorial.dialogueOpen &&
       tutorialStep()?.setup === "threeCatches" &&
-      tutorial.dialogueLineIndex >= 3 &&
       flies.some((currentFly) => currentFly?.tutorialAuthored && currentFly.tutorialArmed !== false)
     );
   }
@@ -4869,6 +4901,38 @@
   markPvpAchievementEarned = function(...args) {
     if (tutorial.active || tutorial.completeScreen || game.tutorialActive) return false;
     return originalMarkPvpAchievementEarnedForTutorial.apply(this, args);
+  };
+
+  function tutorialTrainingSessionActive() {
+    return Boolean(tutorial.active || tutorial.completeScreen || game.tutorialActive);
+  }
+
+  // Training is a reversible sandbox. None of its catches, jumps, hat counters,
+  // or normal statistics may leak into the player's permanent profile.
+  const originalRecordFlyEatenForTutorial = recordFlyEaten;
+  recordFlyEaten = function(...args) {
+    if (tutorialTrainingSessionActive()) return;
+    return originalRecordFlyEatenForTutorial.apply(this, args);
+  };
+  const originalRecordCorrectCatchForAchievementsForTutorial = recordCorrectCatchForAchievements;
+  recordCorrectCatchForAchievements = function(...args) {
+    if (tutorialTrainingSessionActive()) return;
+    return originalRecordCorrectCatchForAchievementsForTutorial.apply(this, args);
+  };
+  const originalSaveTotalFlyCountForTutorial = saveTotalFlyCount;
+  saveTotalFlyCount = function(...args) {
+    if (tutorialTrainingSessionActive()) return;
+    return originalSaveTotalFlyCountForTutorial.apply(this, args);
+  };
+  const originalSaveTotalJumpCountForTutorial = saveTotalJumpCount;
+  saveTotalJumpCount = function(...args) {
+    if (tutorialTrainingSessionActive()) return;
+    return originalSaveTotalJumpCountForTutorial.apply(this, args);
+  };
+  const originalSaveStatsProfileForTutorial = saveStatsProfile;
+  saveStatsProfile = function(...args) {
+    if (tutorialTrainingSessionActive()) return;
+    return originalSaveStatsProfileForTutorial.apply(this, args);
   };
 
   const originalDrawFlyNameTagForTutorial = drawFlyNameTag;
@@ -5075,7 +5139,7 @@
       game.pauseHoveredSelection === "restart",
       game.pausePressedSelection === "restart",
       { dark: "#6b4c21", mid: "#b78634", light: "#f2cf70" },
-      "RETRY SCENE",
+      "RESTART SCENE",
       (full) => drawMiniRestartIcon(restartButton.x + 8, restartButton.y + 3, full ? COLORS.white : "#7a5a2a"),
       restartButton.x + restartButton.w / 2 + 10
     );
@@ -5085,7 +5149,7 @@
       game.pauseHoveredSelection === "home",
       game.pausePressedSelection === "home",
       { dark: skin.dark, mid: "#d76b31", light: "#ffb45f" },
-      "SKIP TUTORIAL",
+      "EXIT TUTORIAL",
       () => drawMiniHouseIcon(homeButton.x + 7, homeButton.y + 3),
       homeButton.x + homeButton.w / 2 + 10
     );
@@ -5484,6 +5548,7 @@
     lastArchivedRoundKey: "",
     baseSkinIndex: 0,
     customBaseOpen: false,
+    customToolHover: "",
     quickplayLeaving: false
   };
 
@@ -5492,6 +5557,7 @@
   const ONLINE_HISTORY_KEY = "ribbitRaceOnlineHistoryV2";
   const countedHatFlyObjects = new WeakSet();
   const LEADERBOARD_BUTTON = Object.freeze({ x: 34, y: 229, w: 28, h: 28 });
+  const CUSTOM_RANDOM_BUTTON = Object.freeze({ x: 51, y: 67, w: 25, h: 22 });
   const CUSTOM_BASE_BUTTON = Object.freeze({ x: 159, y: 67, w: 25, h: 22 });
   const PAUSE_FULLSCREEN_BUTTON = Object.freeze({ x: 379, y: 198, w: 20, h: 20 });
   const MAIN_PROFILE_BUTTON = Object.freeze({ x: 47, y: 211, w: 24, h: 24 });
@@ -6195,10 +6261,12 @@
     } catch (_) {}
     registerRoundHatUnlock(hatId);
     try { window.dispatchEvent(new CustomEvent("ribbit-hat-unlocked", { detail:{ id:hatId, at:Date.now() } })); } catch (_) {}
-    try { queueAchievementToast?.({ type:"generic", text:`${displayName} UNLOCKED` }); } catch (_) {}
+    try { queueAchievementToast?.({ type:"hat", hatId }); } catch (_) {}
     try { tone(784, .08, .016, 100); tone(1047, .10, .012, 115, .06); } catch (_) {}
     return true;
   }
+
+  window.RibbitUnlockHatFromLiveProgress = unlockHatFromLiveProgress;
 
   function recordHatCatch(skinIdOverride = null) {
     const skinId = String(skinIdOverride || game.skinId || "azure").toLowerCase();
@@ -6338,7 +6406,7 @@
   }
 
   const CUSTOM_BASE_PANEL = Object.freeze({ x:104, y:64, w:272, h:132 });
-  const CUSTOM_BASE_CLOSE = Object.freeze({ x:355, y:67, w:18, h:18 });
+  const CUSTOM_BASE_CLOSE = Object.freeze({ x:355, y:68, w:18, h:18 });
 
   function getCustomBaseOptionRects() {
     const ids = getBaseSkinIds();
@@ -6349,6 +6417,52 @@
       w:56,
       h:40
     }));
+  }
+
+  function hslColorToHex(h, s, l) {
+    const hue=((Number(h)%360)+360)%360/360;
+    const sat=clamp(Number(s),0,1), light=clamp(Number(l),0,1);
+    if(sat===0){const v=Math.round(light*255);return rgbToHex(v,v,v);}
+    const q=light<.5?light*(1+sat):light+sat-light*sat;
+    const p=2*light-q;
+    const channel=(t)=>{t=(t+1)%1;if(t<1/6)return p+(q-p)*6*t;if(t<1/2)return q;if(t<2/3)return p+(q-p)*(2/3-t)*6;return p;};
+    return rgbToHex(Math.round(channel(hue+1/3)*255),Math.round(channel(hue)*255),Math.round(channel(hue-1/3)*255));
+  }
+
+  function randomizeCustomPalette() {
+    try {
+      finalizeCustomEditorForHistory();
+      beginCustomColorHistoryTransaction();
+      const baseHue=Math.floor(Math.random()*360);
+      const accentHue=(baseHue+70+Math.floor(Math.random()*100))%360;
+      const bellyHue=(baseHue+20+Math.floor(Math.random()*36))%360;
+      const palette=normalizeCustomPalette({
+        body:hslColorToHex(baseHue,.58+Math.random()*.25,.34+Math.random()*.18),
+        belly:hslColorToHex(bellyHue,.30+Math.random()*.25,.72+Math.random()*.16),
+        accents:hslColorToHex(accentHue,.68+Math.random()*.25,.48+Math.random()*.20)
+      });
+      game.customDraftBody=palette.body;
+      game.customDraftBelly=palette.belly;
+      game.customDraftAccents=palette.accents;
+      commitCustomColorHistoryTransaction();
+      requestCustomPreviewRender();
+      try{tone(680,.05,.012,72);}catch(_){}
+      return true;
+    } catch(error){console.warn("Could not randomize custom frog",error);return false;}
+  }
+
+  function drawCustomRandomButton() {
+    if(game.state!=="custom") return;
+    const rect=CUSTOM_RANDOM_BUTTON;
+    const skin=getCustomDraftSkin();
+    const active=polish.customToolHover==="random";
+    ctx.fillStyle=active?skin.dark:COLORS.ink;ctx.fillRect(rect.x,rect.y,rect.w,rect.h);
+    ctx.fillStyle=active?skin.belly:"#f7fdff";ctx.fillRect(rect.x+2,rect.y+2,rect.w-4,rect.h-4);
+    ctx.fillStyle=active?skin.light:"#ffffff";ctx.fillRect(rect.x+5,rect.y+4,rect.w-10,2);
+    // Pixel die: show, don't tell.
+    ctx.fillStyle=active?skin.dark:"#48555a";ctx.fillRect(rect.x+7,rect.y+7,11,10);
+    ctx.fillStyle="#f7fdff";
+    [[9,9],[15,9],[12,12],[9,15],[15,15]].forEach(([x,y])=>ctx.fillRect(rect.x+x,rect.y+y,2,2));
   }
 
   function drawCustomBaseButton() {
@@ -6374,7 +6488,7 @@
     // control sits on top at the extreme corner instead of leaving a white gap.
     ctx.fillStyle = draftSkin.mid; ctx.fillRect(panel.x + 5, panel.y + 5, panel.w - 10, 24);
     ctx.fillStyle = draftSkin.light; ctx.fillRect(panel.x + 9, panel.y + 8, panel.w - 18, 3);
-    drawBitmapText("SET BASE FROG", panel.x + panel.w / 2, panel.y + 11, .52, "center", COLORS.white, draftSkin.dark);
+    drawBitmapText("CHOOSE BASE FROG", panel.x + panel.w / 2, panel.y + 10, .72, "center", COLORS.white, draftSkin.dark);
 
     ctx.fillStyle = COLORS.ink; ctx.fillRect(CUSTOM_BASE_CLOSE.x, CUSTOM_BASE_CLOSE.y, CUSTOM_BASE_CLOSE.w, CUSTOM_BASE_CLOSE.h);
     ctx.fillStyle = "#f7fdff"; ctx.fillRect(CUSTOM_BASE_CLOSE.x + 2, CUSTOM_BASE_CLOSE.y + 2, CUSTOM_BASE_CLOSE.w - 4, CUSTOM_BASE_CLOSE.h - 4);
@@ -6414,6 +6528,15 @@
     }
   }
 
+  function drawCustomTooltips() {
+    if(game.state!=="custom"||polish.customBaseOpen)return;
+    const hover=polish.customToolHover;
+    if(hover==="random")drawSpeechBubble(CUSTOM_RANDOM_BUTTON,"RANDOMIZE",{maxWidth:96,scale:.46});
+    else if(hover==="base")drawSpeechBubble(CUSTOM_BASE_BUTTON,"CHOOSE TEMPLATE",{maxWidth:126,scale:.44});
+    else if(hover==="undo")drawSpeechBubble(CUSTOM_UI.undoButton,"UNDO",{maxWidth:70,scale:.50});
+    else if(hover==="redo")drawSpeechBubble(CUSTOM_UI.redoButton,"REDO",{maxWidth:70,scale:.50});
+  }
+
   function toggleFullscreen() {
     try {
       if (document.fullscreenElement) document.exitFullscreen?.();
@@ -6422,9 +6545,8 @@
   }
 
   function drawPauseFullscreenButton() {
-    if (game.state !== "paused") return;
+    if (game.state !== "paused" || game.pauseHelpOpen) return;
     const rect = PAUSE_FULLSCREEN_BUTTON;
-    ctx.fillStyle = "rgba(25,43,52,.28)"; ctx.fillRect(rect.x + 2, rect.y + 2, rect.w, rect.h);
     ctx.fillStyle = COLORS.ink; ctx.fillRect(rect.x, rect.y, rect.w, rect.h);
     ctx.fillStyle = "#f7fdff"; ctx.fillRect(rect.x + 2, rect.y + 2, rect.w - 4, rect.h - 4);
     ctx.fillStyle = "#48555a";
@@ -6498,9 +6620,9 @@
   }
 
   function drawPvpPauseButtonPolish8() {
-    if (game.mode !== "pvp" || !["playing","paused","countdown","pvpCelebration"].includes(game.state)) return;
+    if (game.mode !== "pvp" || !["playing","countdown","pvpCelebration"].includes(game.state)) return;
     if (isOnlineMenuVisible()) return;
-    const rect = { x:W - 34, y:31, w:26, h:19 };
+    const rect = HUD_UI.pauseButton;
     const paused = game.state === "paused";
     ctx.save(); ctx.globalAlpha = paused ? .84 : .58;
     ctx.fillStyle = "rgba(25,43,52,.28)"; ctx.fillRect(rect.x + 2, rect.y + 2, rect.w, rect.h);
@@ -6668,11 +6790,12 @@
     drawAchievementLeaderboardButton();
     drawMainMenuTooltips();
     // The core Online renderer owns its original split-color header and panel.
+    drawCustomRandomButton();
     drawCustomBaseButton();
+    drawCustomTooltips();
     drawPauseFullscreenButton();
     drawWorldRecordNotice();
-    // The stock Versus HUD already owns the single pause button.
-    // Do not draw the obsolete second II button here.
+    drawPvpPauseButtonPolish8();
     return result;
   };
 
@@ -6694,7 +6817,7 @@
       const sliders = (CUSTOM_UI.sliders || []).map((item) => ({ x:item.hitX, y:item.hitY, w:item.hitW, h:item.hitH }));
       return insideAny([...(CUSTOM_UI.slotButtons || []), ...(CUSTOM_UI.partButtons || []), ...sliders,
         CUSTOM_UI.useButton, CUSTOM_UI.backButton, CUSTOM_UI.undoButton, CUSTOM_UI.redoButton,
-        CUSTOM_BASE_BUTTON, polish.customBaseOpen ? CUSTOM_BASE_CLOSE : null,
+        CUSTOM_RANDOM_BUTTON, CUSTOM_BASE_BUTTON, polish.customBaseOpen ? CUSTOM_BASE_CLOSE : null,
         ...(polish.customBaseOpen ? getCustomBaseOptionRects() : [])]);
     }
     if (game.state === "achievements") {
@@ -6717,7 +6840,7 @@
     }
     if (game.state === "paused") {
       return insideAny([PAUSE_UI.muteButton, PAUSE_UI.sliderHit, PAUSE_UI.continueButton, PAUSE_UI.restartButton,
-        PAUSE_UI.homeButton, PAUSE_UI.helpButton, PAUSE_UI.helpCloseButton, PAUSE_FULLSCREEN_BUTTON]);
+        PAUSE_UI.homeButton, PAUSE_UI.helpButton, PAUSE_UI.helpCloseButton, ...(game.pauseHelpOpen ? [] : [PAUSE_FULLSCREEN_BUTTON])]);
     }
     if (game.state === "won") {
       return insideAny([VICTORY_UI.replayButton, VICTORY_UI.homeButton, VICTORY_UI.pagePrevButton, VICTORY_UI.pageNextButton]);
@@ -6751,6 +6874,13 @@
       if (replayIndex >= 0) polish.leaderboardHoverKey = `replay:${replayIndex}`;
     }
     polish.worldRecordHovered = game.state === "won" && pointIn(point, { x:150, y:205, w:180, h:24 });
+    polish.customToolHover = "";
+    if(game.state === "custom" && !polish.customBaseOpen){
+      if(pointIn(point,CUSTOM_RANDOM_BUTTON))polish.customToolHover="random";
+      else if(pointIn(point,CUSTOM_BASE_BUTTON))polish.customToolHover="base";
+      else if(pointIn(point,CUSTOM_UI.undoButton))polish.customToolHover="undo";
+      else if(pointIn(point,CUSTOM_UI.redoButton))polish.customToolHover="redo";
+    }
     try { canvas.style.setProperty("cursor", interactiveRectForPoint(point) ? "pointer" : "default", "important"); } catch (_) {}
   }, { capture:true, passive:true });
 
@@ -6811,17 +6941,14 @@
       polish.leaderboardDropdown = "";
       return;
     }
-    const pvpPauseRect = { x:W - 34, y:31, w:26, h:19 };
-    if (game.mode === "pvp" && ["playing","paused","countdown","pvpCelebration"].includes(game.state) && pointIn(point, pvpPauseRect)) {
-      event.preventDefault(); event.stopImmediatePropagation();
-      if (game.state === "paused") resumePausedGame(); else pauseGame();
-      return;
+    if (game.mode === "pvp" && ["playing","countdown","pvpCelebration"].includes(game.state) && pointIn(point, HUD_UI.pauseButton)) {
+      event.preventDefault(); event.stopImmediatePropagation(); pauseGame(); return;
     }
-    if (game.mode === "pvp" && pointIn(point, HUD_UI.pauseButton)) {
-      event.preventDefault(); event.stopImmediatePropagation(); return;
-    }
-    if (game.state === "paused" && pointIn(point, PAUSE_FULLSCREEN_BUTTON)) {
+    if (game.state === "paused" && !game.pauseHelpOpen && pointIn(point, PAUSE_FULLSCREEN_BUTTON)) {
       event.preventDefault(); event.stopImmediatePropagation(); toggleFullscreen(); return;
+    }
+    if (game.state === "custom" && !polish.customBaseOpen && pointIn(point, CUSTOM_RANDOM_BUTTON)) {
+      event.preventDefault(); event.stopImmediatePropagation(); randomizeCustomPalette(); return;
     }
     if (game.state === "custom" && pointIn(point, CUSTOM_BASE_BUTTON)) {
       event.preventDefault(); event.stopImmediatePropagation();
@@ -7097,11 +7224,13 @@
   if(typeof isCustomHatUnlocked==="function"){const prior=isCustomHatUnlocked;isCustomHatUnlocked=function(id,...rest){return override(id,prior.call(this,id,...rest));};}
   let announced=false;
   window.addEventListener("rr-hat-progress",event=>{
+    if(game.tutorialActive||window.RibbitRaceTutorialEngine?.active)return;
     if(event.detail?.skinId!=="azure"||Number(event.detail?.count)<75||announced)return;
     announced=true;
-    try{if(typeof unlockHat==="function")unlockHat(TOP_HAT_ID);}catch(_){ }
-    try{if(typeof markAchievementEarned==="function")markAchievementEarned("hat-"+TOP_HAT_ID,false);}catch(_){ }
-    try{game.cheatToastText="TOP HAT UNLOCKED";game.cheatToastTimer=CONFIG.achievementToastDuration;}catch(_){ }
+    try{
+      if(typeof window.RibbitUnlockHatFromLiveProgress==="function")window.RibbitUnlockHatFromLiveProgress(TOP_HAT_ID,"TOP HAT");
+      else if(typeof unlockHat==="function")unlockHat(TOP_HAT_ID);
+    }catch(_){ }
   });
   window.RibbitTopHatProgress=Object.freeze({id:TOP_HAT_ID,current:azureCount,required:75});
 })();
