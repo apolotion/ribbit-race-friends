@@ -1,10 +1,11 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
+import { readGameModuleGroup } from "./source-reader.mjs";
 
 const read = (path) => readFileSync(path, "utf8");
-const tutorial = read("client/game/120-engine-tutorial.js");
-const rendering = read("client/game/70-rendering.js");
+const tutorial = readGameModuleGroup(120, 139);
+const rendering = readGameModuleGroup(70, 79);
 const soloModel = read("client/game/20-models-and-state.js");
 const nav = read("client/game/40-ui-navigation-audio.js");
 const replay = read("public/scripts/extended-features.js");
@@ -23,7 +24,7 @@ function between(text, start, end) {
 
 test("polish 18 build marker is wired through client and Worker", () => {
   for (const text of [tutorial, common, read("client/game/90-extended-features.js"), read("client/game/110-online-mobile-polish.js"), read("public/scripts/cloud-client.js")]) {
-    assert.match(text, /2026\.10\.12-friends-polish-20/);
+    assert.match(text, /2026\.10\.12-friends-polish-21/);
   }
 });
 

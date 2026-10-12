@@ -556,21 +556,47 @@
       }
     }
 
-    function getCanvasPoint(event) {
+    let cachedCanvasPointMetrics = null;
+    let canvasPointCacheScheduled = false;
+
+    function invalidateCanvasPointMetrics() {
+      cachedCanvasPointMetrics = null;
+      canvasPointCacheScheduled = false;
+    }
+
+    function getCanvasPointMetrics() {
+      if (cachedCanvasPointMetrics) return cachedCanvasPointMetrics;
       const rect = canvas.getBoundingClientRect();
       // In standalone/fullscreen mode Safari can letterbox the 16:9 canvas
       // inside a wider or taller CSS box. Map touches through the actual
       // rendered content rectangle rather than the outer element bounds.
       const scale = Math.min(rect.width / W, rect.height / H) || 1;
-      const contentWidth = W * scale;
-      const contentHeight = H * scale;
-      const offsetX = (rect.width - contentWidth) / 2;
-      const offsetY = (rect.height - contentHeight) / 2;
+      cachedCanvasPointMetrics = {
+        left: rect.left,
+        top: rect.top,
+        scale,
+        offsetX: (rect.width - W * scale) / 2,
+        offsetY: (rect.height - H * scale) / 2
+      };
+      if (!canvasPointCacheScheduled) {
+        canvasPointCacheScheduled = true;
+        requestAnimationFrame(invalidateCanvasPointMetrics);
+      }
+      return cachedCanvasPointMetrics;
+    }
+
+    function getCanvasPoint(event) {
+      const metrics = getCanvasPointMetrics();
       return {
-        x: (event.clientX - rect.left - offsetX) / scale,
-        y: (event.clientY - rect.top - offsetY) / scale
+        x: (event.clientX - metrics.left - metrics.offsetX) / metrics.scale,
+        y: (event.clientY - metrics.top - metrics.offsetY) / metrics.scale
       };
     }
+
+    window.addEventListener("resize", invalidateCanvasPointMetrics, { passive:true });
+    window.addEventListener("scroll", invalidateCanvasPointMetrics, { passive:true });
+    document.addEventListener("fullscreenchange", invalidateCanvasPointMetrics);
+    document.addEventListener("webkitfullscreenchange", invalidateCanvasPointMetrics);
 
     function pointInsideRect(point, rect) {
       return point.x >= rect.x && point.x <= rect.x + rect.w &&

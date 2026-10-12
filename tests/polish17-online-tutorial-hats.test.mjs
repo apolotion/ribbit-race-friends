@@ -3,14 +3,15 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import zlib from 'node:zlib';
+import { readGameModuleGroup } from "./source-reader.mjs";
 
 const root = process.cwd();
 const read = (file) => fs.readFileSync(path.join(root, file), 'utf8');
 const online = read('client/game/30-online-versus.js');
-const tutorial = read('client/game/120-engine-tutorial.js');
-const rendering = read('client/game/70-rendering.js');
+const tutorial = readGameModuleGroup(120, 139);
+const rendering = readGameModuleGroup(70, 79);
 const nav = read('client/game/40-ui-navigation-audio.js');
-const versus = read('client/game/60-versus-gameplay.js');
+const versus = readGameModuleGroup(60, 69);
 const config = read('client/game/10-core-config.js');
 
 function decodeRgbaPng(file) {
@@ -69,7 +70,7 @@ test('Only the first Online page draws a fixed-size centered help bubble and Bac
   assert.match(online, /const width=Math\.ceil\(widest\+18\)[\s\S]*?height=Math\.max\(22/);
   assert.match(online, /const cx=b\.x\+b\.w\/2/);
   assert.match(online, /id:'back'[\s\S]{0,120}tip:''/);
-  assert.match(tutorial, /Keep the old generic helper disabled[\s\S]*?return;/);
+  assert.doesNotMatch(tutorial, /function getSpec\(\)[\s\S]*?function bubble\(spec\)/);
 });
 
 test('Pause utility buttons are flush, Fullscreen hides behind the book, and tutorial labels are renamed', () => {

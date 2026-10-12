@@ -1,10 +1,11 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
+import { readGameModuleGroup } from "./source-reader.mjs";
 
 const read = (path) => readFileSync(path, "utf8");
-const tutorial = read("client/game/120-engine-tutorial.js");
-const rendering = read("client/game/70-rendering.js");
+const tutorial = readGameModuleGroup(120, 139);
+const rendering = readGameModuleGroup(70, 79);
 const nav = read("client/game/40-ui-navigation-audio.js");
 const index = read("public/index.html");
 const common = read("src/common.js");
@@ -16,9 +17,9 @@ function block(source, start, end) {
   return source.slice(from, to);
 }
 
-test("Polish 20 cache marker is wired through the Worker, client, and asset URLs", () => {
+test("Polish 21 cache marker is wired through the Worker, client, and asset URLs", () => {
   for (const source of [tutorial, common, index, read("public/scripts/cloud-client.js")]) {
-    assert.match(source, /2026\.10\.12-friends-polish-20/);
+    assert.match(source, /2026\.10\.12-friends-polish-21/);
   }
 });
 

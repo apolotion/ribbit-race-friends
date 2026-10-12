@@ -1,10 +1,11 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { existsSync, readFileSync } from "node:fs";
+import { readGameModuleGroup } from "./source-reader.mjs";
 
 const read = (path) => readFileSync(path, "utf8");
-const tutorial = read("client/game/120-engine-tutorial.js");
-const versus = read("client/game/60-versus-gameplay.js");
+const tutorial = readGameModuleGroup(120, 139);
+const versus = readGameModuleGroup(60, 69);
 const hub = read("src/hub.js");
 const worker = read("src/index.js");
 const replay = read("public/scripts/extended-features.js");
@@ -19,7 +20,7 @@ function block(source, start, end) {
 
 test("Polish 16 is wired and restores the prior packaged app icons", () => {
   for (const source of [tutorial, read("src/common.js"), index, read("public/scripts/cloud-client.js")]) {
-    assert.match(source, /2026\.10\.12-friends-polish-20/);
+    assert.match(source, /2026\.10\.12-friends-polish-21/);
   }
   assert.match(index, /\/icons\/favicon-32\.png/);
   assert.match(index, /\/icons\/ribbit-race-180\.png/);

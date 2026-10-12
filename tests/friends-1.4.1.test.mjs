@@ -1,9 +1,10 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
+import { readGameModuleGroup } from "./source-reader.mjs";
 
 const read=(path)=>readFileSync(path,"utf8");
-const rendering=read("client/game/70-rendering.js");
+const rendering=readGameModuleGroup(70, 79);
 
 function extractFunctionSource(source,name){
   const marker=`function ${name}(`;

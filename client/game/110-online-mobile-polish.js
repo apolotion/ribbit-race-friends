@@ -5,7 +5,7 @@
  */
 (() => {
   "use strict";
-  const BUILD = "2026.10.12-friends-polish-20";
+  const BUILD = "2026.10.12-friends-polish-21";
   const RR_V160_CANDIDATES = {"catchFly":["attemptFlyCatch","attemptPvpFlyCatch","catchSandboxFly","getPvpImminentCatchFly","recordFlyEaten","scheduleFlyReplacementFromCatch"],"jumpSound":["playJumpSound"],"beep":["playCountdownGoSound","playCountdownSound"],"replayUpload":["saveRecordDate"],"restart":["resetGame","resetPvpGame","resetPvpPlayer","resetRoundLifecycle","resetRoundNetwork","restartCurrentLevel"],"drop":[],"render":["drawPvpScene","drawScene"],"worldRecord":[],"fullscreen":["getFullscreenElement","hideFullscreenFallback","showFullscreenFallback","syncFullscreenButton","toggleRibbitFullscreen"],"onlineSubmit":[],"leaderboard":["isSoloEndlessLeaderboardEligible","savePvpMatchWinsForLeaderboard"]};
   const RR_V160_VARS = {"onlineSelect":[],"achievementSelect":["activeAchievementIndex","hoveredAchievementCard"],"backRect":[]};
 
@@ -35,8 +35,10 @@
     return candidates.some(v=>v===true||v===1||v==="1"||v==="true"||v==="mobile");
   };
   const logicalPoint = (ev) => {
-    const c=canvasEl(); if(!c) return {x:0,y:0}; const r=c.getBoundingClientRect();
-    const cw=c.width||1920,ch=c.height||1080, aspect=16/9;
+    if (typeof getCanvasPoint === "function") return getCanvasPoint(ev);
+    const c=canvasEl();
+    if(!c) return {x:0,y:0};
+    const r=c.getBoundingClientRect(), aspect=16/9;
     let vw=r.width,vh=r.height,ox=0,oy=0;
     if(vw/vh>aspect){vw=vh*aspect;ox=(r.width-vw)/2;} else {vh=vw/aspect;oy=(r.height-vh)/2;}
     return {x:(ev.clientX-r.left-ox)/vw*480,y:(ev.clientY-r.top-oy)/vh*270};

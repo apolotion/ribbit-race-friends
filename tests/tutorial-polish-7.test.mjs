@@ -1,9 +1,10 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
+import { readGameModuleGroup } from "./source-reader.mjs";
 
 const read = (path) => readFileSync(new URL(`../${path}`, import.meta.url), "utf8");
-const engine = read("client/game/120-engine-tutorial.js");
+const engine = readGameModuleGroup(120, 139);
 const ui = read("client/game/40-ui-navigation-audio.js");
 const index = read("public/index.html");
 
@@ -16,8 +17,8 @@ function block(start, end) {
 }
 
 test("polish-9 cache marker forces the rebuilt tutorial and Versus lesson UI to load", () => {
-  assert.match(engine, /2026\.10\.12-friends-polish-20/);
-  assert.match(index, /game\.bundle\.js\?v=2026\.10\.12-friends-polish-20/);
+  assert.match(engine, /2026\.10\.12-friends-polish-21/);
+  assert.match(index, /game\.bundle\.js\?v=2026\.10\.12-friends-polish-21/);
 });
 
 test("dialogue uses the new reference framing and keeps Ember's full square unobstructed", () => {

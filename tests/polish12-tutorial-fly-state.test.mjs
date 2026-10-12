@@ -3,11 +3,12 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
+import { readGameModuleGroup } from "./source-reader.mjs";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const read = (path) => readFileSync(join(root, path), "utf8");
-const engine = read("client/game/120-engine-tutorial.js");
-const hooks = read("client/game/99-v170-hooks.js");
+const engine = readGameModuleGroup(120, 139);
+const hooks = read("client/game/115-v170-hooks.js");
 const mobilePolish = read("client/game/110-online-mobile-polish.js");
 
 function block(start, end) {
@@ -18,9 +19,9 @@ function block(start, end) {
 }
 
 test("polish 12 cache marker is wired", () => {
-  assert.match(engine, /2026\.10\.12-friends-polish-20/);
-  assert.match(read("public/index.html"), /game\.bundle\.js\?v=2026\.10\.12-friends-polish-20/);
-  assert.match(read("src/common.js"), /2026\.10\.12-friends-polish-20/);
+  assert.match(engine, /2026\.10\.12-friends-polish-21/);
+  assert.match(read("public/index.html"), /game\.bundle\.js\?v=2026\.10\.12-friends-polish-21/);
+  assert.match(read("src/common.js"), /2026\.10\.12-friends-polish-21/);
 });
 
 test("Ember nameplate is centered in the upper-left of the dialogue panel", () => {
