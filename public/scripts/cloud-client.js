@@ -3,12 +3,12 @@
     // Friends Edition: accounts, matchmaking, and live human gameplay use the
     // same-origin Cloudflare Worker/Durable Object service. The historical
     // directOnlyVersion field is retained only as a protocol compatibility marker.
-    const RIBBIT_DIRECT_BUILD = "2026.10.12-friends-polish-13";
+    const RIBBIT_DIRECT_BUILD = "2026.10.12-friends-polish-14";
     const RIBBIT_DIRECT_POLICY_VERSION = 2;
     const RIBBIT_ONLINE_PROTOCOL_VERSION = 3;
     const RIBBIT_QUICKPLAY_VERSION = 3;
 
-    const RIBBIT_CLOUD_CLIENT_VERSION = "2026.10.12-friends-polish-13";
+    const RIBBIT_CLOUD_CLIENT_VERSION = "2026.10.12-friends-polish-14";
     const RIBBIT_CLOUD_SAVE_SCHEMA_VERSION = 2;
     // Preserve every current and future Ribbit Race key, including legacy one-button keys.
     const RIBBIT_GAME_KEY = /^(?:ribbitRace|oneButtonFrog)/;
@@ -741,6 +741,13 @@
         if(pin!==confirmPin){setMessage('The two PIN entries do not match.');return;}
         setBusy(true);setMessage('CREATING YOUR FRIENDS SAVE...',false);
         try{const r=await serverCall('apiCreatePlayer',{username,pin});if(!r?.ok)throw new Error(r?.message||'Could not create save.');
+          // A new Friends account always receives the Solo tutorial, even when
+          // this browser has already completed training on a different account.
+          try {
+            localStorage.removeItem('rrFriendsEngineTutorialSoloSeenV8');
+            sessionStorage.setItem('rrForceSoloTutorialAfterSignup','1');
+            document.body.classList.add('rr-tutorial-pending');
+          } catch (_) {}
           pendingCreatedAuth=r;elements['cloud-created-name'].textContent=r.name;showView('created');
         }catch(e){setMessage(e.message);}finally{setBusy(false);}
       }
@@ -1160,7 +1167,14 @@
         elements["cloud-save-profile"].addEventListener("click", saveProfile);
         elements["cloud-profile-sign-out"].addEventListener("click", () => returnToCloudLogin(false));
         elements["cloud-created-continue"].addEventListener("click", () => {
-          if (pendingCreatedAuth) beginAuthenticatedGame(pendingCreatedAuth);
+          if (pendingCreatedAuth) {
+            try {
+              localStorage.removeItem('rrFriendsEngineTutorialSoloSeenV8');
+              sessionStorage.setItem('rrForceSoloTutorialAfterSignup','1');
+              document.body.classList.add('rr-tutorial-pending');
+            } catch (_) {}
+            beginAuthenticatedGame(pendingCreatedAuth);
+          }
           pendingCreatedAuth = null;
         });
         elements["cloud-account-button"].addEventListener("click", () => {

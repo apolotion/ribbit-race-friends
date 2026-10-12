@@ -580,7 +580,7 @@
         isSoloEndlessMode() ||
         !game.winPending ||
         game.score < getSoloTargetScore() ||
-        game.score >= getSoloTargetScore() + 2 ||
+        game.score >= getSoloTargetScore() + 1 ||
         !targetFly ||
         targetFly.state !== "active"
       ) return false;
@@ -698,7 +698,10 @@
 
       if (game.winPending) {
         if (isSoloEndlessMode()) return false;
-        return source === "body" ? completeBonusCatch(targetFly) : false;
+        // The jump remains live after the fifth match. A tongue already in
+        // motion—or a new tongue target reached before landing—may collect the
+        // one optional sixth fly, producing a legitimate 6 / 5 finish.
+        return completeBonusCatch(targetFly);
       }
 
       if (targetFly.touchLocked || flyIsBlockedForCurrentPrompt(targetFly)) return false;
@@ -868,9 +871,9 @@
         return;
       }
 
-      // The one optional sixth fly is body-contact only. Do not create a new
-      // tongue target after the fifth answer has removed the word prompt.
-      if (game.winPending) return;
+      const bonusTongueAvailable = game.winPending && !isSoloEndlessMode() &&
+        game.score < getSoloTargetScore() + 1 && game.bonusFlyCount < 1;
+      if (game.winPending && !bonusTongueAvailable) return;
 
       const mouth = getFrogMouth();
       let nearestFly = null;
@@ -880,7 +883,7 @@
         if (
           currentFly.state !== "active" ||
           currentFly.touchLocked ||
-          flyIsBlockedForCurrentPrompt(currentFly)
+          (!bonusTongueAvailable && flyIsBlockedForCurrentPrompt(currentFly))
         ) continue;
 
         const dx = currentFly.baseX - mouth.x;

@@ -368,7 +368,8 @@
     const gate=qs("#cloud-gate");
     const frame=qs("#game-frame");
     const requested=(()=>{try{return new URLSearchParams(location.search).get("tutorial")||"";}catch(_){return "";}})();
-    const forcedKind=/^pvp$/i.test(requested)?"pvp":/^solo$/i.test(requested)?"solo":"";
+    const signupForced=(()=>{try{return sessionStorage.getItem('rrForceSoloTutorialAfterSignup')==='1';}catch(_){return false;}})();
+    const forcedKind=/^pvp$/i.test(requested)?"pvp":(/^solo$/i.test(requested)||signupForced)?"solo":"";
     let starting=false;
     let finished=false;
     let authReady=false;
@@ -421,6 +422,7 @@
         const started=engine.start(forcedKind||"solo");
         finished=Boolean(started || engine.active);
         if(finished && engine.active){
+          try{sessionStorage.removeItem('rrForceSoloTutorialAfterSignup');}catch(_){}
           requestAnimationFrame(()=>document.body.classList.remove("rr-tutorial-pending"));
         }
       } catch (error) {

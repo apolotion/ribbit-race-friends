@@ -4,7 +4,7 @@
 
   const SOLO_SEEN_KEY = "rrFriendsEngineTutorialSoloSeenV8";
   const PVP_SEEN_KEY = "rrFriendsEngineTutorialPvpSeenV8";
-  const TUTORIAL_BUILD = "2026.10.12-friends-polish-13";
+  const TUTORIAL_BUILD = "2026.10.12-friends-polish-14";
   const TUTORIAL_ACHIEVEMENT_ID = "tutorial-graduate";
   const TYPEWRITER_MS_PER_CHARACTER = 28;
   const DIALOGUE_TEXT_SCALE = 0.86;
@@ -195,6 +195,28 @@
     pvpFinalOutcome: null,
     pvpFlyRevealAt: 0,
     pvpFlyRevealSetup: "",
+    pvpPlayerSkinId: "azure",
+    pvpPracticeLayoutIndex: 0,
+    pvpPracticeCatchCount: 0,
+    pvpScriptActions: [],
+    pvpDemoStage: 0,
+    pvpDemoBonkAt: 0,
+    pvpPlayerAttemptWasAirborne: false,
+    pvpPlayerOnlyReset: false,
+    pvpEmberChargeStarted: false,
+    pvpEmberLaunchStarted: false,
+    pvpLastEmberPositionKey: "",
+    pvpPendingPracticePoofAt: 0,
+    pvpPracticeStartedAt: 0,
+    pvpPracticeFailureAt: 0,
+    pvpDemoBonkHandled: false,
+    pvpDemoFollowupStarted: false,
+    pvpDemoComparePhase: 0,
+    pvpScriptBufferPlatform: null,
+    pvpScriptBufferTriggered: false,
+    pvpEmberJumpScheduledAt: 0,
+    pvpLastP1Grounded: true,
+    pvpLastEmberGrounded: true,
     originalLaunchJump: null,
     previousState: "",
     completionButton: Object.freeze({ x: 151, y: 199, w: 178, h: 30 })
@@ -865,8 +887,8 @@
       ],
       "dialogue": [
         "Now let's see how much bounce you can borrow from me.",
-        "Start charging your jump, and I'll start just after you.",
-        "Time your leap to land on me as I spring upward with a strong jump."
+        "One second after this message closes, I'll start a maximum-charge jump.",
+        "Time your leap to land on me as I spring upward."
       ],
       "successDialogue": [
         "There you go!",
@@ -1611,7 +1633,7 @@
     const setup = step?.setup;
     if (tutorial.kind === "pvp") {
       if (step?.demonstration) {
-        startPvpDemonstration();
+        startPvpDemonstration({ skipPoof:tutorial.scenePositionedDuringDialogue });
         return;
       }
       if (step?.finalMatch) {
@@ -1818,6 +1840,27 @@
     tutorial.pvpFinalOutcome = null;
     tutorial.pvpFlyRevealAt = 0;
     tutorial.pvpFlyRevealSetup = "";
+    tutorial.pvpPracticeLayoutIndex = 0;
+    tutorial.pvpPracticeCatchCount = 0;
+    tutorial.pvpScriptActions = [];
+    tutorial.pvpDemoStage = 0;
+    tutorial.pvpDemoBonkAt = 0;
+    tutorial.pvpPlayerAttemptWasAirborne = false;
+    tutorial.pvpPlayerOnlyReset = false;
+    tutorial.pvpEmberChargeStarted = false;
+    tutorial.pvpEmberLaunchStarted = false;
+    tutorial.pvpLastEmberPositionKey = "";
+    tutorial.pvpPendingPracticePoofAt = 0;
+    tutorial.pvpPracticeStartedAt = performance.now();
+    tutorial.pvpPracticeFailureAt = 0;
+    tutorial.pvpDemoBonkHandled = false;
+    tutorial.pvpDemoFollowupStarted = false;
+    tutorial.pvpDemoComparePhase = 0;
+    tutorial.pvpScriptBufferPlatform = null;
+    tutorial.pvpScriptBufferTriggered = false;
+    tutorial.pvpEmberJumpScheduledAt = 0;
+    tutorial.pvpLastP1Grounded = Boolean(pvpPlayers[0]?.grounded);
+    tutorial.pvpLastEmberGrounded = Boolean(pvpPlayers[1]?.grounded);
     tutorial.bufferedJumpChainCount = 0;
     tutorial.bufferedJumpWindowOpenedAt = 0;
     tutorial.bufferedJumpReleased = false;
@@ -2097,11 +2140,14 @@
   }
 
   function basePvpScenario() {
+    const selectedPlayerSkin = String(tutorial.pvpPlayerSkinId || game.pvpSetupSkinIds?.[0] || game.skinId || "azure");
     game.mode = "pvp";
     game.onlineMode = false;
     game.selectedLevelId = "park";
     game.pvpSetupLevelId = "park";
-    game.pvpCpuEnabled = false;
+    // CPU mode gives the human player the normal Space control. Ember's normal
+    // AI is suppressed during lessons and restored only for the final match.
+    game.pvpCpuEnabled = true;
     game.pvpCpuDifficulty = 5;
     game.pvpRoundTarget = 99;
     game.pvpRoundGoalMode = "firstto";
@@ -2118,7 +2164,9 @@
     nextFlyId = 1;
     resetPvpPlayer(pvpPlayers[0], 70, 1);
     resetPvpPlayer(pvpPlayers[1], 330, -1);
+    pvpPlayers[0].skinId = selectedPlayerSkin;
     pvpPlayers[1].skinId = "ember";
+    game.pvpSetupSkinIds[0] = selectedPlayerSkin;
     game.pvpSetupSkinIds[1] = "ember";
     setPrompt(0);
   }
@@ -2185,6 +2233,22 @@
     return true;
   }
 
+  function positionPvpBonkPracticeLayout(index = 0) {
+    const p1 = pvpPlayers[0];
+    const ember = pvpPlayers[1];
+    const lowerLeft = PARK_PLATFORMS[1];
+    const lowerRight = PARK_PLATFORMS[6];
+    const layouts = [
+      () => { positionPvp(p1, 94, CONFIG.groundY - p1.h, 1); positionPvp(ember, 205, CONFIG.groundY - ember.h, -1); },
+      () => { positionPvpOnPlatform(p1, lowerLeft, 1, 7); positionPvp(ember, 156, CONFIG.groundY - ember.h, -1); },
+      () => { positionPvp(p1, 284, CONFIG.groundY - p1.h, 1); positionPvpOnPlatform(ember, lowerRight, -1, 9); }
+    ];
+    tutorial.pvpPracticeLayoutIndex = clamp(Math.floor(index), 0, layouts.length - 1);
+    layouts[tutorial.pvpPracticeLayoutIndex]();
+    ember.inputHeld = false;
+    ember.charging = false;
+  }
+
   function configurePvpStep(index) {
     basePvpScenario();
     const step = PVP_STEPS[index] || PVP_STEPS[0];
@@ -2201,98 +2265,93 @@
         positionPvp(ember, 305, CONFIG.groundY - ember.h, -1);
         break;
       case "pvpDemoBonk":
-        positionPvp(p1, 230, CONFIG.groundY - p1.h, 1);
-        setPvpAirborne(ember, 230, 62, 0, 105, -1);
+        // Ember begins from a normal grounded launch point and performs a real
+        // charged jump instead of being dropped from above.
+        positionPvp(p1, 226, CONFIG.groundY - p1.h, -1);
+        positionPvp(ember, 82, CONFIG.groundY - ember.h, 1);
         break;
       case "pvpBonkThree":
-        positionPvp(p1, 135, CONFIG.groundY - p1.h, 1);
-        positionPvp(ember, 255, CONFIG.groundY - ember.h, -1);
+        positionPvpBonkPracticeLayout(tutorial.pvpPracticeLayoutIndex || 0);
         break;
       case "pvpDemoBonkCatch":
-        positionPvp(p1, 185, CONFIG.groundY - p1.h, 1);
-        setPvpAirborne(ember, 185, 62, 0, 105, 1);
-        addPvpTutorialFly(310, 125, 0, 0);
+        positionPvp(p1, 210, CONFIG.groundY - p1.h, -1);
+        positionPvp(ember, 96, CONFIG.groundY - ember.h, 1);
+        // The fly is beyond the player so Ember can bonk, land, then reach it
+        // with one follow-up jump.
+        addPvpTutorialFly(338, 150, 0, 0);
         break;
       case "pvpBonkCatch":
-        positionPvp(p1, 120, CONFIG.groundY - p1.h, 1);
-        positionPvp(ember, 225, CONFIG.groundY - ember.h, -1);
-        addPvpTutorialFly(340, 120, 0, 0);
+        positionPvp(p1, 96, CONFIG.groundY - p1.h, 1);
+        positionPvp(ember, 205, CONFIG.groundY - ember.h, -1);
+        addPvpTutorialFly(338, 150, 0, 0);
         break;
       case "pvpDemoDropLow":
-        positionPvp(p1, lowerLeft.x + Math.round((lowerLeft.w - p1.w) / 2), CONFIG.groundY - p1.h, 1);
-        positionPvpOnPlatform(ember, lowerLeft, -1);
+        positionPvp(p1, lowerLeft.x + 39, CONFIG.groundY - p1.h, -1);
+        positionPvpOnPlatform(ember, lowerLeft, 1, 27);
         break;
       case "pvpDropLow":
-        positionPvpOnPlatform(p1, lowerLeft, 1);
-        positionPvp(ember, lowerLeft.x + Math.round((lowerLeft.w - ember.w) / 2), CONFIG.groundY - ember.h, -1);
+        positionPvpOnPlatform(p1, lowerLeft, 1, 27);
+        positionPvp(ember, lowerLeft.x + 39, CONFIG.groundY - ember.h, -1);
         break;
       case "pvpDemoDropHigh":
-        positionPvp(p1, top.x + Math.round((top.w - p1.w) / 2), CONFIG.groundY - p1.h, 1);
-        positionPvpOnPlatform(ember, top, -1);
+        positionPvp(p1, top.x - 18, CONFIG.groundY - p1.h, 1);
+        positionPvpOnPlatform(ember, top, 1, 4);
         break;
       case "pvpDropHigh":
-        positionPvpOnPlatform(p1, top, 1);
-        positionPvp(ember, top.x + Math.round((top.w - ember.w) / 2), CONFIG.groundY - ember.h, -1);
+        positionPvpOnPlatform(p1, top, 1, 4);
+        positionPvp(ember, top.x - 18, CONFIG.groundY - ember.h, -1);
         break;
       case "pvpDemoBufferedBonk":
-        positionPvp(p1, middleRight.x + Math.round((middleRight.w - p1.w) / 2), CONFIG.groundY - p1.h, 1);
-        setPvpAirborne(ember, middleRight.x + Math.round((middleRight.w - ember.w) / 2), 24, 0, 90, -1);
-        ember.dropThroughPlatform = middleRight;
-        ember.bufferedDropBonkArmed = true;
+        positionPvp(p1, middleRight.x + 31, CONFIG.groundY - p1.h, -1);
+        positionPvp(ember, 188, CONFIG.groundY - ember.h, 1);
         break;
       case "pvpBufferedBonk":
-        positionPvp(p1, 95, CONFIG.groundY - p1.h, 1);
-        positionPvp(ember, middleLeft.x + Math.round((middleLeft.w - ember.w) / 2), CONFIG.groundY - ember.h, -1);
+        positionPvp(p1, 188, CONFIG.groundY - p1.h, 1);
+        positionPvp(ember, middleRight.x + 31, CONFIG.groundY - ember.h, -1);
         break;
       case "pvpDemoSkyBonk":
-        positionPvp(p1, 245, CONFIG.groundY - p1.h, 1);
-        setPvpAirborne(ember, 245, -12, 0, 105, -1);
-        ember.highestY = -20;
-        ember.wentAboveMapThisJump = true;
+        positionPvpOnPlatform(ember, top, 1);
+        positionPvpOnPlatform(p1, PARK_PLATFORMS[6], -1);
         break;
       case "pvpSkyBonk":
-        positionPvp(p1, 92, CONFIG.groundY - p1.h, 1);
-        positionPvp(ember, 355, CONFIG.groundY - ember.h, -1);
+        positionPvpOnPlatform(p1, top, 1);
+        positionPvpOnPlatform(ember, PARK_PLATFORMS[6], -1);
         break;
       case "pvpDemoBufferedSky":
-        positionPvp(p1, middleRight.x + Math.round((middleRight.w - p1.w) / 2), CONFIG.groundY - p1.h, 1);
-        setPvpAirborne(ember, middleRight.x + Math.round((middleRight.w - ember.w) / 2), -18, 0, 110, -1);
-        ember.highestY = -24;
-        ember.wentAboveMapThisJump = true;
-        ember.dropThroughPlatform = middleRight;
-        ember.bufferedDropBonkArmed = true;
+        positionPvpOnPlatform(ember, top, 1, 4);
+        positionPvp(p1, middleRight.x + Math.round((middleRight.w - p1.w) / 2), CONFIG.groundY - p1.h, -1);
         break;
       case "pvpBufferedSky":
-        positionPvp(p1, 92, CONFIG.groundY - p1.h, 1);
+        positionPvpOnPlatform(p1, top, 1, 4);
         positionPvp(ember, middleRight.x + Math.round((middleRight.w - ember.w) / 2), CONFIG.groundY - ember.h, -1);
         break;
       case "pvpDemoHighGround":
-        positionPvpOnPlatform(p1, top, 1);
-        setPvpAirborne(ember, top.x + 5, 20, 40, 95, 1);
+        positionPvpOnPlatform(p1, top, -1, Math.max(2, top.w - p1.w - 6));
+        positionPvpOnPlatform(ember, middleLeft, 1, Math.max(2, middleLeft.w - ember.w - 8));
         break;
       case "pvpHighGround":
-        positionPvpOnPlatform(p1, middleLeft, 1);
-        positionPvpOnPlatform(ember, top, -1);
+        positionPvpOnPlatform(p1, middleLeft, 1, Math.max(2, middleLeft.w - p1.w - 8));
+        positionPvpOnPlatform(ember, top, -1, Math.max(2, top.w - ember.w - 6));
         break;
       case "pvpDemoRecoveryBonk":
-        positionPvp(p1, 405, CONFIG.groundY - p1.h, 1);
-        setPvpAirborne(ember, 405, 70, 0, 100, -1);
+        positionPvp(ember, 320, CONFIG.groundY - ember.h, 1);
+        positionPvp(p1, 415, CONFIG.groundY - p1.h, -1);
         break;
       case "pvpRecoveryBonk":
-        positionPvp(p1, 385, CONFIG.groundY - p1.h, 1);
-        positionPvp(ember, 315, CONFIG.groundY - ember.h, 1);
+        positionPvp(p1, 320, CONFIG.groundY - p1.h, 1);
+        positionPvp(ember, 404, CONFIG.groundY - ember.h, 1);
         break;
       case "pvpDemoBoostBonk":
-        setPvpAirborne(p1, 225, 155, 0, -170, 1);
-        setPvpAirborne(ember, 225, 105, 0, 90, -1);
+        positionPvp(p1, 230, CONFIG.groundY - p1.h, 1);
+        positionPvp(ember, 78, CONFIG.groundY - ember.h, 1);
         break;
       case "pvpBoostBonk":
-        positionPvp(p1, 150, CONFIG.groundY - p1.h, 1);
-        positionPvp(ember, 260, CONFIG.groundY - ember.h, -1);
+        positionPvpOnPlatform(p1, middleLeft, 1, 12);
+        positionPvp(ember, middleLeft.x + 38, CONFIG.groundY - ember.h, -1);
         break;
       case "pvpDemoUnderBonk":
         positionPvpOnPlatform(ember, middleLeft, -1);
-        setPvpAirborne(p1, middleLeft.x + Math.round((middleLeft.w - p1.w) / 2), CONFIG.groundY - p1.h, 0, -190, 1);
+        positionPvp(p1, middleLeft.x + Math.round((middleLeft.w - p1.w) / 2), CONFIG.groundY - p1.h, 1);
         break;
       case "pvpUnderBonkTwo":
         positionPvpOnPlatform(p1, middleLeft, 1);
@@ -2313,8 +2372,8 @@
         break;
       case "pvpDemoReboundCatch":
         positionPvpOnPlatform(p1, middleLeft, 1);
-        setPvpAirborne(ember, 285, 145, -105, -70, -1);
-        addPvpTutorialFly(365, 145, 0, 0);
+        positionPvp(ember, 330, CONFIG.groundY - ember.h, -1);
+        addPvpTutorialFly(402, 145, 0, 0);
         break;
       case "pvpReboundCatch":
         positionPvpOnPlatform(ember, middleRight, -1);
@@ -2322,8 +2381,8 @@
         addPvpTutorialFly(440, 145, 0, 0);
         break;
       case "pvpDemoIntercept":
-        setPvpAirborne(p1, 135, 150, 105, -80, 1);
-        setPvpAirborne(ember, 315, 150, -105, -80, -1);
+        positionPvp(p1, 118, CONFIG.groundY - p1.h, 1);
+        positionPvp(ember, 305, CONFIG.groundY - ember.h, -1);
         addPvpTutorialFly(390, 130, 0, 0);
         break;
       case "pvpIntercept":
@@ -2332,9 +2391,9 @@
         addPvpTutorialFly(390, 130, 0, 0);
         break;
       case "pvpDemoDinnerSteal":
-        setPvpAirborne(p1, 130, 150, 105, -75, 1);
-        setPvpAirborne(ember, 300, 150, -105, -75, -1);
-        addPvpTutorialFly(365, 130, 0, 0);
+        positionPvp(p1, 118, CONFIG.groundY - p1.h, 1);
+        positionPvp(ember, 305, CONFIG.groundY - ember.h, -1);
+        addPvpTutorialFly(390, 130, 0, 0);
         break;
       case "pvpDinnerSteal":
         positionPvp(p1, 315, CONFIG.groundY - p1.h, -1);
@@ -2353,6 +2412,117 @@
     clearScenarioState();
   }
 
+  function clearPvpScriptActions() {
+    tutorial.pvpScriptActions = [];
+    tutorial.pvpScriptBufferPlatform = null;
+    tutorial.pvpScriptBufferTriggered = false;
+  }
+
+  function queuePvpScriptAction(delayMs, action, label = "") {
+    if (typeof action !== "function") return;
+    tutorial.pvpScriptActions.push({
+      dueAt: performance.now() + Math.max(0, Number(delayMs) || 0),
+      action,
+      label:String(label || "")
+    });
+    tutorial.pvpScriptActions.sort((a, b) => a.dueAt - b.dueAt);
+  }
+
+  function updatePvpScriptActions(now = performance.now()) {
+    if (!tutorial.pvpScriptActions.length) return;
+    const due = [];
+    const pending = [];
+    for (const item of tutorial.pvpScriptActions) {
+      if (now >= item.dueAt) due.push(item);
+      else pending.push(item);
+    }
+    tutorial.pvpScriptActions = pending;
+    for (const item of due) {
+      try { item.action(); }
+      catch (error) { console.warn("Ribbit Race tutorial script action recovered", item.label, error); }
+    }
+  }
+
+  function scriptPvpPress(index, facing = null) {
+    const player = pvpPlayers[index];
+    if (!player) return false;
+    if (Number(facing) === 1 || Number(facing) === -1) {
+      player.dir = Number(facing);
+      player.chargeFacingDir = Number(facing);
+    }
+    player.inputHeld = false;
+    try {
+      originalPressPvpButtonForTutorial.call(this, index, "tutorial-script");
+      return true;
+    } catch (_) {
+      player.inputHeld = true;
+      if (player.grounded) {
+        player.charging = true;
+        player.charge = 0.04;
+        player.chargeDirection = 1;
+        player.chargeHoldTime = 0;
+      }
+      return true;
+    }
+  }
+
+  function scriptPvpRelease(index, power = null) {
+    const player = pvpPlayers[index];
+    if (!player) return false;
+    if (Number.isFinite(Number(power))) {
+      player.charge = clamp(Number(power), 0.04, 1);
+      player.chargeDirection = player.charge >= .98 ? -1 : 1;
+    }
+    try {
+      originalReleasePvpButtonForTutorial.call(this, index, "tutorial-script");
+      return true;
+    } catch (_) {
+      player.inputHeld = false;
+      return false;
+    }
+  }
+
+  function scriptPvpChargedJump(index, power = .75, facing = null, delayMs = 0) {
+    const chargeMs = Math.max(120, Math.round(clamp(Number(power) || .75, .04, 1) * Number(CONFIG.chargeSecondsOneWay || .8333) * 1000));
+    queuePvpScriptAction(delayMs, () => scriptPvpPress(index, facing), `press-${index}`);
+    queuePvpScriptAction(delayMs + chargeMs, () => scriptPvpRelease(index, power), `release-${index}`);
+    return delayMs + chargeMs;
+  }
+
+  function scriptPvpQuickDrop(index, delayMs = 0) {
+    queuePvpScriptAction(delayMs, () => scriptPvpPress(index), `quick-drop-press-${index}`);
+    queuePvpScriptAction(delayMs + 70, () => scriptPvpRelease(index, .05), `quick-drop-release-${index}`);
+  }
+
+  function armPvpScriptedBuffer(index, platform) {
+    tutorial.pvpScriptBufferPlatform = { index:Number(index), platform };
+    tutorial.pvpScriptBufferTriggered = false;
+  }
+
+  function updatePvpScriptedBuffer() {
+    const state = tutorial.pvpScriptBufferPlatform;
+    if (!state || tutorial.pvpScriptBufferTriggered) return;
+    const player = pvpPlayers[state.index];
+    const platform = state.platform;
+    if (!player || !platform || player.grounded || player.vy <= 0) return;
+    const bottom = player.y + player.h;
+    const horizontallyOver = player.x + player.w * .78 > platform.x && player.x + player.w * .22 < platform.x + platform.w;
+    if (!horizontallyOver || bottom < platform.y - 24 || bottom > platform.y + 4) return;
+    tutorial.pvpScriptBufferTriggered = true;
+    scriptPvpPress(state.index);
+    queuePvpScriptAction(55, () => scriptPvpRelease(state.index), `buffer-release-${state.index}`);
+  }
+
+  function holdEmberStill() {
+    const ember = pvpPlayers[1];
+    if (!ember || ember.bonked || ember.stunTimer > 0 || !ember.grounded) return;
+    ember.inputHeld = false;
+    ember.charging = false;
+    ember.chargeHoldTime = 0;
+    ember.vx = 0;
+    ember.vy = 0;
+  }
+
   function beginPvpDemoMotion(setup) {
     const p1 = pvpPlayers[0];
     const ember = pvpPlayers[1];
@@ -2360,92 +2530,99 @@
     const middleLeft = PARK_PLATFORMS[2];
     const top = PARK_PLATFORMS[4];
     const middleRight = PARK_PLATFORMS[5];
+    clearPvpScriptActions();
     tutorial.pvpDemoBegun = true;
     tutorial.pvpDemoStartedAt = performance.now();
+    tutorial.pvpDemoStage = 0;
+    tutorial.pvpDemoBonkAt = 0;
+    tutorial.pvpDemoBonkHandled = false;
+    tutorial.pvpDemoFollowupStarted = false;
     tutorial.pvpCaption = "WATCH EMBER!";
-    tutorial.pvpCaptionUntil = performance.now() + 1800;
-    schedulePvpFlyReveal(setup);
+    tutorial.pvpCaptionUntil = performance.now() + 2400;
 
     switch (setup) {
       case "pvpDemoBonk":
-        setPvpAirborne(ember, 230, 58, 0, 118, -1);
+        scriptPvpChargedJump(1, .72, 1, 0);
         break;
       case "pvpDemoBonkCatch":
-        setPvpAirborne(ember, 185, 58, 0, 118, 1);
+        scriptPvpChargedJump(1, .72, 1, 0);
         break;
       case "pvpDemoDropLow":
-        ember.dropThroughPlatform = lowerLeft;
-        ember.quickDropThisJump = true;
-        ember.grounded = false;
-        ember.vy = CONFIG.platformDropVelocityY;
-        break;
       case "pvpDemoDropHigh":
-        ember.dropThroughPlatform = top;
-        ember.quickDropThisJump = true;
-        ember.grounded = false;
-        ember.vy = CONFIG.platformDropVelocityY;
+        scriptPvpQuickDrop(1, 0);
         break;
       case "pvpDemoBufferedBonk":
-        setPvpAirborne(ember, middleRight.x + Math.round((middleRight.w - ember.w) / 2), 18, 0, 110, -1);
-        ember.dropThroughPlatform = middleRight;
-        ember.bufferedDropBonkArmed = true;
+        armPvpScriptedBuffer(1, middleRight);
+        scriptPvpChargedJump(1, .86, 1, 0);
         break;
       case "pvpDemoSkyBonk":
-        setPvpAirborne(ember, 245, -16, 0, 115, -1);
-        ember.highestY = -24;
-        ember.wentAboveMapThisJump = true;
+        // Start from the top platform and perform the same strong charged leap a
+        // human player would use to reach the lower-right landing zone.
+        scriptPvpChargedJump(1, .92, 1, 0);
         break;
       case "pvpDemoBufferedSky":
-        setPvpAirborne(ember, middleRight.x + Math.round((middleRight.w - ember.w) / 2), -20, 0, 118, -1);
-        ember.highestY = -28;
-        ember.wentAboveMapThisJump = true;
-        ember.dropThroughPlatform = middleRight;
-        ember.bufferedDropBonkArmed = true;
+        armPvpScriptedBuffer(1, middleRight);
+        scriptPvpChargedJump(1, .98, 1, 0);
         break;
       case "pvpDemoHighGround":
-        setPvpAirborne(ember, top.x + Math.round((top.w - ember.w) / 2), 16, 0, 115, 1);
+        scriptPvpChargedJump(1, .88, 1, 0);
         break;
       case "pvpDemoRecoveryBonk":
-        setPvpAirborne(ember, 405, 58, 0, 118, -1);
+        scriptPvpChargedJump(1, .74, 1, 0);
         break;
       case "pvpDemoBoostBonk":
-        setPvpAirborne(p1, 225, 155, 0, -195, 1);
-        setPvpAirborne(ember, 225, 100, 0, 105, -1);
+        // First comparison: the lower frog makes a small hop while Ember uses a
+        // normal charged jump. The second comparison is staged after they land.
+        scriptPvpChargedJump(0, .24, 1, 0);
+        scriptPvpChargedJump(1, .74, 1, 120);
         break;
       case "pvpDemoUnderBonk":
-        setPvpAirborne(p1, middleLeft.x + Math.round((middleLeft.w - p1.w) / 2), CONFIG.groundY - p1.h, 0, -215, 1);
+        scriptPvpChargedJump(0, .78, 1, 0);
         break;
       case "pvpDemoAvoidUnder":
-        setPvpAirborne(ember, middleLeft.x - 45, CONFIG.groundY - ember.h, 95, -55, 1);
+        scriptPvpChargedJump(1, .10, 1, 0);
         break;
       case "pvpDemoRebound":
-        setPvpAirborne(p1, 150, 150, 95, -80, 1);
-        setPvpAirborne(ember, 300, 150, -95, -80, -1);
+        scriptPvpChargedJump(0, .58, 1, 0);
+        scriptPvpChargedJump(1, .58, -1, 0);
         break;
       case "pvpDemoReboundCatch":
-        setPvpAirborne(ember, 285, 145, -105, -75, -1);
+        scriptPvpChargedJump(1, .64, -1, 0);
         break;
       case "pvpDemoIntercept":
-        setPvpAirborne(p1, 135, 150, 105, -80, 1);
-        setPvpAirborne(ember, 315, 150, -105, -80, -1);
-        break;
       case "pvpDemoDinnerSteal":
-        setPvpAirborne(p1, 130, 150, 105, -75, 1);
-        setPvpAirborne(ember, 300, 150, -105, -75, -1);
+        scriptPvpChargedJump(0, .62, 1, 0);
+        scriptPvpChargedJump(1, .62, -1, 100);
         break;
       default:
         break;
     }
   }
 
-  function startPvpDemonstration() {
+  function startPvpDemonstration(options = {}) {
     const setup = tutorialStep()?.setup || "";
+    const skipPoof = Boolean(options.skipPoof);
+    const prepare = () => {
+      tutorial.pvpDemoActive = true;
+      tutorial.pvpDemoKind = setup;
+      tutorial.pvpDemoBegun = false;
+      tutorial.pvpDemoDuration = /Boost|Recovery|BufferedSky/.test(setup) ? 8.0 : /BonkCatch|ReboundCatch|DinnerSteal/.test(setup) ? 6.5 : 5.0;
+      tutorial.pvpCaption = "WATCH EMBER!";
+      tutorial.pvpCaptionUntil = performance.now() + 3000;
+      tutorial.pvpDemoStartedAt = performance.now() + 1000;
+      schedulePvpFlyReveal(setup, pvpFlyRevealDelayMs(setup));
+    };
+    if (skipPoof) {
+      tutorial.scenePositionedDuringDialogue = false;
+      tutorial.pendingStartPose = null;
+      prepare();
+      return;
+    }
     tutorial.pvpDemoActive = true;
     tutorial.pvpDemoKind = setup;
     tutorial.pvpDemoBegun = false;
-    tutorial.pvpDemoDuration = /DropHigh|BufferedSky|Recovery/.test(setup) ? 4.8 : 3.2;
     tutorial.pvpCaption = "WATCH EMBER!";
-    tutorial.pvpCaptionUntil = performance.now() + 2400;
+    tutorial.pvpCaptionUntil = performance.now() + 3000;
     beginPoofTransition({
       reason: "pvp-demo-entry",
       showFailure: false,
@@ -2453,10 +2630,7 @@
       armFlies: false,
       action: () => {
         configurePvpStep(tutorial.step);
-        tutorial.pvpDemoActive = true;
-        tutorial.pvpDemoKind = setup;
-        tutorial.pvpDemoBegun = false;
-        tutorial.pvpDemoStartedAt = performance.now() + 120;
+        prepare();
       }
     });
   }
@@ -2464,37 +2638,105 @@
   function updatePvpDemonstration() {
     if (!tutorial.pvpDemoActive || tutorial.resetPending) return;
     const now = performance.now();
+    updatePvpScriptActions(now);
+    updatePvpScriptedBuffer();
     if (!tutorial.pvpDemoBegun) {
       if (now < tutorial.pvpDemoStartedAt) return;
       beginPvpDemoMotion(tutorial.pvpDemoKind);
       return;
     }
+
     const elapsed = (now - tutorial.pvpDemoStartedAt) / 1000;
     const p1 = pvpPlayers[0];
     const ember = pvpPlayers[1];
     const setup = tutorial.pvpDemoKind;
 
-    // Script the demonstration's follow-up action without interrupting physics.
-    if (setup === "pvpDemoBonkCatch" && elapsed > 1.05 && ember.score === 0) {
-      const target = flies.find(fly => fly?.tutorialAuthored && fly.state === "active");
-      if (target) attemptPvpFlyCatch(ember, target, "body");
+    // After the opening bonk, Ember lands and makes one ordinary follow-up jump
+    // toward the fly. This visibly demonstrates the two-jump bonk-and-catch path.
+    if (setup === "pvpDemoBonkCatch" && tutorial.pvpDemoBonkAt > 0 && !tutorial.pvpDemoFollowupStarted &&
+        ember.grounded && now - tutorial.pvpDemoBonkAt >= 280) {
+      tutorial.pvpDemoFollowupStarted = true;
+      ember.dir = 1;
+      scriptPvpChargedJump(1, .64, 1, 0);
     }
-    if (setup === "pvpDemoRecoveryBonk" && elapsed > 2.5 && tutorial.pvpPracticeCount < 2 && p1.stunTimer <= 0 && !p1.bonked) {
-      tutorial.pvpPracticeCount = 2;
-      setPvpAirborne(ember, p1.x, Math.max(18, p1.y - 70), 0, 112, -1);
+
+    // The recovery lesson intentionally makes one early return while the player
+    // is still stunned, then a real second charged jump once recovery finishes.
+    if (setup === "pvpDemoRecoveryBonk" && tutorial.pvpDemoBonkAt > 0) {
+      if (tutorial.pvpDemoStage === 0 && now - tutorial.pvpDemoBonkAt >= 420) {
+        tutorial.pvpDemoStage = 1;
+        if (ember.grounded) scriptPvpChargedJump(1, .62, 1, 0);
+      } else if (tutorial.pvpDemoStage === 1 && p1.stunTimer <= 0 && !p1.bonked && ember.grounded) {
+        tutorial.pvpDemoStage = 2;
+        scriptPvpChargedJump(1, .72, 1, 0);
+      }
     }
-    if (setup === "pvpDemoReboundCatch" && elapsed > 1.15 && ember.score === 0) {
-      const target = flies.find(fly => fly?.tutorialAuthored && fly.state === "active");
-      if (target) attemptPvpFlyCatch(ember, target, "body");
+
+    // Show the bounce-boost comparison as two real jumps from the same launch
+    // points. The second lower-frog jump uses near-maximum charge.
+    if (setup === "pvpDemoBoostBonk" && tutorial.pvpDemoStage === 0 && elapsed >= 3.0) {
+      tutorial.pvpDemoStage = 1;
+      addTutorialPoof(p1.x + p1.w / 2, p1.y + p1.h / 2, "out");
+      addTutorialPoof(ember.x + ember.w / 2, ember.y + ember.h / 2, "out");
+      playTutorialPoofSound("out");
+      positionPvp(p1, 230, CONFIG.groundY - p1.h, 1);
+      positionPvp(ember, 78, CONFIG.groundY - ember.h, 1);
+      addTutorialPoof(p1.x + p1.w / 2, p1.y + p1.h / 2, "in");
+      addTutorialPoof(ember.x + ember.w / 2, ember.y + ember.h / 2, "in");
+      playTutorialPoofSound("in");
+      scriptPvpChargedJump(0, .96, 1, 520);
+      scriptPvpChargedJump(1, .74, 1, 650);
     }
-    if (setup === "pvpDemoDinnerSteal" && elapsed > 1.15 && ember.score === 0) {
-      const target = flies.find(fly => fly?.tutorialAuthored && fly.state === "active");
+
+    // Natural catch is preferred; these fallbacks fire only after the visible
+    // follow-up movement has played so a slight physics miss cannot stall class.
+    if ((setup === "pvpDemoBonkCatch" || setup === "pvpDemoReboundCatch" || setup === "pvpDemoDinnerSteal") &&
+        elapsed > 4.6 && tutorial.pvpPracticeCatchCount === 0) {
+      const target = flies.find(fly => fly?.tutorialAuthored && fly.state === "active" && fly.tutorialArmed !== false);
       if (target) attemptPvpFlyCatch(ember, target, "body");
     }
 
-    const settled = p1.grounded && ember.grounded && p1.stunTimer <= 0 && ember.stunTimer <= 0 &&
-      !p1.bonked && !ember.bonked && !p1.tongue.active && !ember.tongue.active;
-    if (elapsed >= tutorial.pvpDemoDuration && (settled || elapsed >= tutorial.pvpDemoDuration + 1.5)) {
+    // One second after Ember's introductory bonk, poof both frogs into a
+    // neutral side-by-side pose and begin her explanation. Do not wait for the
+    // player's entire stun countdown to finish.
+    if (setup === "pvpDemoBonk" && tutorial.pvpDemoBonkAt > 0 &&
+        now - tutorial.pvpDemoBonkAt >= 1000 && !tutorial.pvpDemoBonkHandled) {
+      tutorial.pvpDemoBonkHandled = true;
+      tutorial.pvpDemoActive = false;
+      clearPvpScriptActions();
+      beginPoofTransition({
+        reason:"pvp-demo-bonk-finished",
+        showFailure:false,
+        preserveExistingFlies:false,
+        armFlies:false,
+        action:() => {
+          positionPvp(p1, 145, CONFIG.groundY - p1.h, 1);
+          positionPvp(ember, 305, CONFIG.groundY - ember.h, -1);
+          passStep();
+        }
+      });
+      return;
+    }
+
+    let completed = false;
+    if (["pvpDemoDropLow","pvpDemoDropHigh","pvpDemoBufferedBonk","pvpDemoSkyBonk","pvpDemoBufferedSky","pvpDemoHighGround"].includes(setup)) {
+      completed = tutorial.pvpDemoBonkAt > 0 && now - tutorial.pvpDemoBonkAt >= 1000;
+    } else if (setup === "pvpDemoBonkCatch" || setup === "pvpDemoReboundCatch" || setup === "pvpDemoDinnerSteal") {
+      completed = tutorial.pvpPracticeCatchCount >= 1 && now - tutorial.pvpLastPracticeEventAt >= 650;
+    } else if (setup === "pvpDemoRebound" || setup === "pvpDemoIntercept") {
+      completed = tutorial.pvpReboundCount >= 1 && now - tutorial.pvpLastPracticeEventAt >= 750;
+    } else if (setup === "pvpDemoRecoveryBonk") {
+      completed = tutorial.pvpDemoStage >= 2 && tutorial.pvpDemoBonkAt > 0 && now - tutorial.pvpDemoBonkAt >= 1000;
+    } else if (setup === "pvpDemoBoostBonk") {
+      completed = tutorial.pvpDemoStage >= 1 && elapsed >= 6.2;
+    } else if (setup === "pvpDemoUnderBonk") {
+      completed = p1.bonked || p1.stunTimer > 0 || elapsed >= 3.3;
+    } else if (setup === "pvpDemoAvoidUnder") {
+      completed = ember.x > PARK_PLATFORMS[2].x + PARK_PLATFORMS[2].w + 12 || elapsed >= 3.0;
+    }
+
+    if (completed || elapsed >= tutorial.pvpDemoDuration + 2.0) {
+      clearPvpScriptActions();
       tutorial.pvpDemoActive = false;
       tutorial.pvpCaption = "";
       passStep();
@@ -2520,7 +2762,9 @@
     game.pvpSetupSkinIds[1] = "ember";
     applySelectedLevel();
     resetPvpGame();
+    pvpPlayers[0].skinId = String(tutorial.pvpPlayerSkinId || game.pvpSetupSkinIds?.[0] || game.skinId || "azure");
     pvpPlayers[1].skinId = "ember";
+    game.pvpSetupSkinIds[0] = pvpPlayers[0].skinId;
     game.pvpSetupSkinIds[1] = "ember";
     tutorial.scoreStart = 0;
     tutorial.pvpScoreStart = 0;
@@ -2540,7 +2784,29 @@
     tutorial.dialogueOpen = false;
     tutorial.dialoguePointerId = null;
     tutorial.blockJumpUntilRelease = false;
-    if (showDialogue) {
+    const prePoofHighGroundLine = Boolean(
+      showDialogue && tutorial.kind === "pvp" && tutorialStep()?.setup === "pvpDemoHighGround"
+    );
+    if (prePoofHighGroundLine) {
+      const intendedStartPose = tutorial.pendingStartPose || captureControlledPose();
+      tutorial.dialogueOpen = true;
+      tutorial.scenePositionedDuringDialogue = false;
+      beginDialogueLine(0, { delayMs:POOF_TRANSITION_MS + 1000, holdPreviousText:false });
+      game.state = "playing";
+      game.pauseHelpOpen = false;
+      beginPoofTransition({
+        reason:"pvp-high-ground-before-dialogue",
+        showFailure:false,
+        preserveExistingFlies:false,
+        armFlies:false,
+        action:() => {
+          applyControlledPose(intendedStartPose);
+          tutorial.pendingStartPose = null;
+          tutorial.scenePositionedDuringDialogue = true;
+          tutorial.enteredAt = performance.now();
+        }
+      });
+    } else if (showDialogue) {
       openDialogue();
     } else {
       restoreStepSequence();
@@ -2982,6 +3248,9 @@
     tutorial.authStartQueued = false;
     try { document.body.classList.add("rr-tutorial-active"); } catch (_) {}
     tutorial.kind = kind === "pvp" ? "pvp" : "solo";
+    if (tutorial.kind === "pvp") {
+      tutorial.pvpPlayerSkinId = String(game.pvpSetupSkinIds?.[0] || game.skinId || "azure");
+    }
     tutorial.step = 0;
     tutorial.runtime = saveRuntime();
     tutorial.snapshot = RibbitCloud.beginPlaytestSession?.() || {};
@@ -3287,52 +3556,80 @@
     );
   }
 
+  function consumePvpPlayerLanding() {
+    const player = pvpPlayers[0];
+    if (!player) return false;
+    if (!player.grounded) tutorial.pvpPlayerAttemptWasAirborne = true;
+    if (tutorial.pvpPlayerAttemptWasAirborne && player.grounded) {
+      tutorial.pvpPlayerAttemptWasAirborne = false;
+      return true;
+    }
+    return false;
+  }
+
+  function pvpPracticeEventReady(delayMs = 1000, now = performance.now()) {
+    return tutorial.pvpLastPracticeEventAt > 0 && now - tutorial.pvpLastPracticeEventAt >= delayMs;
+  }
+
   function drivePvpPracticeCpu(setup, now) {
     const p1 = pvpPlayers[0];
     const ember = pvpPlayers[1];
     if (!p1 || !ember) return;
 
+    updatePvpScriptActions(now);
+    updatePvpScriptedBuffer();
+
+    const movingSetups = new Set([
+      "pvpBoostBonk", "pvpUnderBonkTwo", "pvpReboundThree",
+      "pvpIntercept", "pvpDinnerSteal"
+    ]);
+    if (!movingSetups.has(setup)) holdEmberStill();
+
     if (setup === "pvpBoostBonk") {
-      if (p1.charging && tutorial.pvpCpuTriggerAt <= 0) tutorial.pvpCpuTriggerAt = now + 500;
-      if (tutorial.pvpCpuTriggerAt > 0 && now >= tutorial.pvpCpuTriggerAt && ember.grounded && !ember.charging && !ember.inputHeld) {
-        pressPvpButton(1, "tutorial");
+      // Ember always begins a visible maximum-charge jump one second after the
+      // dialogue handoff. Her launch no longer depends on the player's input.
+      if (tutorial.pvpEmberJumpScheduledAt <= 0) {
+        tutorial.pvpEmberJumpScheduledAt = Math.max(now, tutorial.enteredAt || now) + 1000;
       }
-      if (ember.charging && now >= tutorial.pvpCpuTriggerAt + 520) releasePvpButton(1, "tutorial");
+      if (!tutorial.pvpEmberLaunchStarted && now >= tutorial.pvpEmberJumpScheduledAt && ember.grounded) {
+        tutorial.pvpEmberLaunchStarted = true;
+        scriptPvpChargedJump(1, .98, -1, 0);
+      }
+      return;
     }
 
     if (setup === "pvpUnderBonkTwo") {
       const platform = getPvpStandingPlatform(p1);
       if (platform && !platform.ground && ember.grounded && ember.stunTimer <= 0 && !ember.bonked &&
-          now - tutorial.pvpLastPracticeEventAt > 1050) {
+          now - tutorial.pvpLastPracticeEventAt > 1050 && !ember.charging && !ember.inputHeld) {
         tutorial.pvpLastPracticeEventAt = now;
-        setPvpAirborne(
-          ember,
-          clamp(p1.x + (p1.w - ember.w) / 2, 0, W - ember.w),
-          CONFIG.groundY - ember.h,
-          0,
-          -205,
-          1
-        );
+        ember.dir = p1.x + p1.w / 2 >= ember.x + ember.w / 2 ? 1 : -1;
+        scriptPvpChargedJump(1, .62, ember.dir, 0);
       }
+      return;
     }
 
     if (setup === "pvpReboundThree") {
       if (p1.inputHeld && !tutorial.pvpMirrorWasHeld && ember.grounded) {
         tutorial.pvpMirrorWasHeld = true;
-        pressPvpButton(1, "tutorial");
+        scriptPvpPress(1, -p1.dir);
       } else if (!p1.inputHeld && tutorial.pvpMirrorWasHeld) {
         tutorial.pvpMirrorWasHeld = false;
-        releasePvpButton(1, "tutorial");
+        scriptPvpRelease(1, Math.max(.18, Number(p1.lastLaunchPower || p1.charge || .55)));
       }
+      return;
     }
 
     if (setup === "pvpIntercept" || setup === "pvpDinnerSteal") {
-      if (tutorial.pvpCpuTriggerAt <= 0) tutorial.pvpCpuTriggerAt = now + 500;
-      if (now >= tutorial.pvpCpuTriggerAt && ember.grounded && !ember.inputHeld && !ember.charging) {
-        ember.dir = setup === "pvpDinnerSteal" ? 1 : 1;
-        pressPvpButton(1, "tutorial");
+      if (tutorial.pvpEmberJumpScheduledAt <= 0) {
+        tutorial.pvpEmberJumpScheduledAt = Math.max(now, tutorial.enteredAt || now) + 500;
       }
-      if (ember.charging && now >= tutorial.pvpCpuTriggerAt + 500) releasePvpButton(1, "tutorial");
+      if (!tutorial.pvpEmberLaunchStarted && now >= tutorial.pvpEmberJumpScheduledAt && ember.grounded) {
+        tutorial.pvpEmberLaunchStarted = true;
+        ember.dir = 1;
+        scriptPvpChargedJump(1, setup === "pvpDinnerSteal" ? .68 : .72, 1, 0);
+      }
+      return;
     }
   }
 
@@ -3352,75 +3649,114 @@
     const ember = pvpPlayers[1];
     const now = performance.now();
     drivePvpPracticeCpu(setup, now);
+    const playerLanded = consumePvpPlayerLanding();
 
     if (setup === "pvpBonkThree") {
-      if (tutorial.pvpBonks >= 3 && pvpTutorialSettled()) passStep();
-      else if (tutorial.pvpBonks > tutorial.pvpPracticeCount && tutorial.pvpBonks < 3 && pvpTutorialSettled() && !tutorial.resetPending) {
-        tutorial.pvpPracticeCount = tutorial.pvpBonks;
-        const layouts = [[95,260],[285,165],[165,330]];
-        const layout = layouts[Math.min(layouts.length - 1, tutorial.pvpBonks)] || layouts[0];
-        beginPoofTransition({
-          reason: "next-pvp-bonk",
-          showFailure: false,
-          preserveExistingFlies: true,
-          action: () => {
-            positionPvp(p1, layout[0], CONFIG.groundY - p1.h, 1);
-            positionPvp(ember, layout[1], CONFIG.groundY - ember.h, -1);
-          }
-        });
+      if (tutorial.pvpBonks >= 3) {
+        if (pvpPracticeEventReady(1000, now)) passStep();
+        return;
+      }
+      if (tutorial.pvpBonks > tutorial.pvpPracticeCount) {
+        if (pvpPracticeEventReady(1000, now) && !tutorial.resetPending) {
+          tutorial.pvpPracticeCount = tutorial.pvpBonks;
+          const nextLayout = Math.min(2, tutorial.pvpBonks);
+          beginPoofTransition({
+            reason: "next-pvp-bonk",
+            showFailure: false,
+            preserveExistingFlies: true,
+            action: () => {
+              positionPvpBonkPracticeLayout(nextLayout);
+              tutorial.pvpPracticeStartedAt = performance.now();
+              tutorial.pvpPlayerAttemptWasAirborne = false;
+              clearHeldInput();
+            }
+          });
+        }
+        return;
+      }
+      if (playerLanded && now - tutorial.enteredAt > 450 && !tutorial.resetPending) {
+        failAttempt("LAND ON EMBER'S HEAD IN ONE JUMP");
       }
       return;
     }
 
     if (setup === "pvpBonkCatch") {
-      if (tutorial.pvpBonkCatchSucceeded && pvpTutorialSettled()) passStep();
-      else if (tutorial.pvpBonkCatchArmed && ember.stunTimer <= 0 && !ember.bonked && !tutorial.pvpBonkCatchSucceeded) {
+      if (tutorial.pvpBonkCatchSucceeded) {
+        if (pvpPracticeEventReady(800, now)) passStep();
+      } else if (tutorial.pvpBonkCatchArmed && ember.stunTimer <= 0 && !ember.bonked) {
         failAttempt("CATCH THE FLY BEFORE EMBER RECOVERS");
+      } else if (playerLanded && !tutorial.pvpBonkCatchArmed && now - tutorial.enteredAt > 450) {
+        failAttempt("BONK EMBER, THEN CATCH THE FLY");
       }
       return;
     }
 
     if (setup === "pvpDropLow" || setup === "pvpDropHigh") {
-      if (tutorial.pvpBonks >= 1 && tutorial.pvpLastBonkQuickDrop && pvpTutorialSettled()) passStep();
-      else if (tutorial.pvpBonks >= 1 && !tutorial.pvpLastBonkQuickDrop) failAttempt("USE A QUICK PLATFORM DROP FOR THE BONK");
+      if (tutorial.pvpBonks >= 1 && tutorial.pvpLastBonkQuickDrop) {
+        if (pvpPracticeEventReady(1000, now)) passStep();
+      } else if (tutorial.pvpBonks >= 1 && !tutorial.pvpLastBonkQuickDrop) {
+        failAttempt("USE A QUICK PLATFORM DROP FOR THE BONK");
+      } else if (playerLanded && now - tutorial.enteredAt > 400) {
+        failAttempt("DROP THROUGH THE PLATFORM AND LAND ON EMBER");
+      }
       return;
     }
 
     if (setup === "pvpBufferedBonk") {
-      if (tutorial.pvpBufferedBonkSeen && pvpTutorialSettled()) passStep();
-      else if (tutorial.pvpBonks >= 1 && !tutorial.pvpBufferedBonkSeen) failAttempt("BUFFER THROUGH THE PLATFORM BEFORE THE BONK");
+      if (tutorial.pvpBufferedBonkSeen) {
+        if (pvpPracticeEventReady(1000, now)) passStep();
+      } else if (tutorial.pvpBonks >= 1) {
+        failAttempt("BUFFER THROUGH THE PLATFORM BEFORE THE BONK");
+      } else if (playerLanded && now - tutorial.enteredAt > 500) {
+        failAttempt("CHARGE, BUFFER THROUGH, THEN BONK EMBER");
+      }
       return;
     }
 
     if (setup === "pvpSkyBonk") {
-      if (tutorial.pvpSkyBonkSeen && pvpTutorialSettled()) passStep();
-      else if (tutorial.pvpBonks >= 1 && !tutorial.pvpSkyBonkSeen) failAttempt("JUMP HIGH ABOVE THE MAP BEFORE THE BONK");
+      if (tutorial.pvpSkyBonkSeen) {
+        if (pvpPracticeEventReady(1000, now)) passStep();
+      } else if (tutorial.pvpBonks >= 1) {
+        failAttempt("JUMP HIGH ABOVE THE MAP BEFORE THE BONK");
+      } else if (playerLanded && now - tutorial.enteredAt > 600) {
+        failAttempt("LAND YOUR STRONG JUMP ON EMBER");
+      }
       return;
     }
 
     if (setup === "pvpBufferedSky") {
-      if (tutorial.pvpSkyBonkSeen && tutorial.pvpBufferedBonkSeen && tutorial.pvpMaximumBonkSeen && pvpTutorialSettled()) passStep();
-      else if (tutorial.pvpBonks >= 1 && (!tutorial.pvpSkyBonkSeen || !tutorial.pvpBufferedBonkSeen)) failAttempt("COMBINE A SKY BONK WITH A BUFFERED DROP");
+      if (tutorial.pvpSkyBonkSeen && tutorial.pvpBufferedBonkSeen && tutorial.pvpMaximumBonkSeen) {
+        if (pvpPracticeEventReady(1000, now)) passStep();
+      } else if (tutorial.pvpBonks >= 1) {
+        failAttempt("COMBINE A SKY BONK WITH A BUFFERED DROP");
+      } else if (playerLanded && now - tutorial.enteredAt > 700) {
+        failAttempt("JUMP HIGH, BUFFER THROUGH, THEN BONK");
+      }
       return;
     }
 
     if (setup === "pvpHighGround") {
-      if (tutorial.pvpHighGroundBonkSeen && ember.grounded && pvpTutorialSettled()) passStep();
+      if (tutorial.pvpHighGroundBonkSeen && pvpPracticeEventReady(1000, now)) passStep();
+      else if (playerLanded && tutorial.pvpBonks === 0 && now - tutorial.enteredAt > 600) failAttempt("BONK EMBER OFF THE TOP PLATFORM");
       return;
     }
 
     if (setup === "pvpRecoveryBonk") {
-      if (tutorial.pvpBonks >= 2 && pvpTutorialSettled()) passStep();
+      if (tutorial.pvpBonks >= 2 && pvpPracticeEventReady(1000, now)) passStep();
+      else if (playerLanded && tutorial.pvpBonks === 0 && now - tutorial.enteredAt > 500) failAttempt("BONK EMBER, TURN AT THE WALL, THEN RETURN");
       return;
     }
 
     if (setup === "pvpBoostBonk") {
-      if (tutorial.pvpBoostedBonkSeen && pvpTutorialSettled()) passStep();
+      if (tutorial.pvpBoostedBonkSeen && pvpPracticeEventReady(1000, now)) passStep();
+      else if (tutorial.pvpEmberLaunchStarted && ember.grounded && now - tutorial.pvpEmberJumpScheduledAt > 2600 && !tutorial.pvpBoostedBonkSeen) {
+        failAttempt("BONK EMBER AS HER MAX-CHARGE JUMP BEGINS");
+      }
       return;
     }
 
     if (setup === "pvpUnderBonkTwo") {
-      if (tutorial.pvpUnderBonks >= 2 && pvpTutorialSettled()) passStep();
+      if (tutorial.pvpUnderBonks >= 2 && pvpPracticeEventReady(1000, now)) passStep();
       return;
     }
 
@@ -3435,8 +3771,11 @@
     }
 
     if (setup === "pvpReboundThree") {
-      if (tutorial.pvpReboundCount >= 3 && pvpTutorialSettled()) passStep();
-      else if (tutorial.pvpReboundCount > tutorial.pvpPracticeCount && tutorial.pvpReboundCount < 3 && pvpTutorialSettled() && !tutorial.resetPending) {
+      if (tutorial.pvpReboundCount >= 3) {
+        if (pvpTutorialSettled()) passStep();
+        return;
+      }
+      if (tutorial.pvpReboundCount > tutorial.pvpPracticeCount && pvpTutorialSettled() && !tutorial.resetPending) {
         tutorial.pvpPracticeCount = tutorial.pvpReboundCount;
         const layouts = [[110,300],[285,140],[150,315]];
         const layout = layouts[Math.min(layouts.length - 1, tutorial.pvpReboundCount)] || layouts[0];
@@ -3447,26 +3786,32 @@
           action: () => {
             positionPvp(p1, layout[0], CONFIG.groundY - p1.h, 1);
             positionPvp(ember, layout[1], CONFIG.groundY - ember.h, -1);
+            tutorial.pvpMirrorWasHeld = false;
           }
         });
+      } else if (playerLanded && tutorial.pvpReboundCount === tutorial.pvpPracticeCount && now - tutorial.enteredAt > 500) {
+        failAttempt("MEET EMBER SIDE-TO-SIDE IN THE AIR");
       }
       return;
     }
 
     if (setup === "pvpReboundCatch") {
-      if (tutorial.pvpReboundCount >= 1 && Number(p1.score || 0) > tutorial.pvpScoreStart && pvpTutorialSettled()) passStep();
+      if (tutorial.pvpReboundCount >= 1 && tutorial.pvpPracticeCatchCount >= 1 && pvpTutorialSettled()) passStep();
+      else if (playerLanded && tutorial.pvpPracticeCatchCount < 1 && now - tutorial.enteredAt > 600) failAttempt("REBOUND OFF EMBER, THEN CATCH THE FLY");
       return;
     }
 
     if (setup === "pvpIntercept") {
-      if (Number(ember.score || 0) > tutorial.pvpScoreStart) failAttempt("REBOUND EMBER BEFORE SHE REACHES THE FLY");
+      if (tutorial.pvpPracticeCatchCount > 0 && !tutorial.pvpInterceptSeen) failAttempt("REBOUND EMBER BEFORE SHE REACHES THE FLY");
       else if (tutorial.pvpInterceptSeen && pvpTutorialSettled()) passStep();
+      else if (ember.grounded && tutorial.pvpEmberLaunchStarted && now - tutorial.pvpEmberJumpScheduledAt > 2600 && !tutorial.pvpInterceptSeen) failAttempt("INTERCEPT EMBER BEFORE THE FLY");
       return;
     }
 
     if (setup === "pvpDinnerSteal") {
-      if (Number(ember.score || 0) > tutorial.pvpScoreStart) failAttempt("TURN EMBER AWAY, THEN TAKE THE FLY");
-      else if (tutorial.pvpReboundCount >= 1 && Number(p1.score || 0) > tutorial.pvpScoreStart && pvpTutorialSettled()) passStep();
+      if (tutorial.pvpPracticeCatchCount > 0 && tutorial.pvpReboundCount < 1) failAttempt("TURN EMBER AWAY, THEN TAKE THE FLY");
+      else if (tutorial.pvpReboundCount >= 1 && tutorial.pvpPracticeCatchCount >= 1 && pvpTutorialSettled()) passStep();
+      else if (ember.grounded && tutorial.pvpEmberLaunchStarted && now - tutorial.pvpEmberJumpScheduledAt > 3000 && tutorial.pvpPracticeCatchCount < 1) failAttempt("REBOUND, THEN STEAL THE FLY");
       return;
     }
 
@@ -3508,6 +3853,14 @@
     }
   }
 
+  function clearUnrelatedPvpTutorialFlies() {
+    if (!tutorial.active || tutorial.kind !== "pvp" || tutorialStep()?.setup === "pvpFinalMatch") return;
+    game.spawnQueue.length = 0;
+    for (let index = flies.length - 1; index >= 0; index -= 1) {
+      if (!flies[index]?.tutorialAuthored) flies.splice(index, 1);
+    }
+  }
+
   function updateTutorial() {
     if (!tutorial.active) return;
     if (game.state === "paused" || game.state === "countdown") return;
@@ -3516,6 +3869,7 @@
       if (performance.now() >= tutorial.resetAt) completePendingReset();
       return;
     }
+    clearUnrelatedPvpTutorialFlies();
     updatePvpFlyReveal();
     if (tutorial.pvpDemoActive) {
       updatePvpDemonstration();
@@ -3987,19 +4341,23 @@
   function drawPvpTutorialCaption() {
     if (tutorial.kind !== "pvp" || !tutorial.pvpCaption || performance.now() > tutorial.pvpCaptionUntil) return;
     const text = tutorial.pvpCaption;
-    const width = Math.max(100, measureBitmapText(text, 1) + 28);
+    // Replace the normal center timer during lesson scenes. The final 30-second
+    // match restores the stock timer and no tutorial caption is drawn here.
+    if (tutorialStep()?.setup === "pvpFinalMatch") return;
+    const width = 96;
     const x = Math.round((W - width) / 2);
-    const y = 62;
+    const y = 7;
     ctx.save();
     ctx.fillStyle = "rgba(7,24,34,.34)";
-    ctx.fillRect(x + 3, y + 3, width, 22);
+    ctx.fillRect(x + 2, y + 2, width, 14);
     ctx.fillStyle = COLORS.ink;
-    ctx.fillRect(x, y, width, 22);
+    ctx.fillRect(x, y, width, 14);
     ctx.fillStyle = "#f7fdff";
-    ctx.fillRect(x + 2, y + 2, width - 4, 18);
+    ctx.fillRect(x + 2, y + 2, width - 4, 10);
     ctx.fillStyle = EMBER_SKIN.mid;
-    ctx.fillRect(x + 5, y + 4, width - 10, 3);
-    drawBitmapText(text, x + width / 2, y + 9, 1, "center", EMBER_SKIN.dark);
+    ctx.fillRect(x + 4, y + 3, width - 8, 2);
+    const scale = Math.min(.60, (width - 10) / Math.max(1, measureBitmapText(text, 1)));
+    drawBitmapText(text, x + width / 2, y + 5, scale, "center", EMBER_SKIN.dark);
     ctx.restore();
   }
 
@@ -4009,6 +4367,7 @@
     // pause panel, so the pause menu still owns the top visual layer.
     if (game.state === "paused") {
       drawCurrentGoalHud();
+      if (tutorial.dialogueOpen) drawTutorialDialogue();
       return;
     }
     drawCurrentGoalHud();
@@ -4175,6 +4534,10 @@
     const boosted = Boolean(victim && Number(victim.vy) < -80);
     const startedOnPlatform = Boolean(victim && getPvpStandingPlatform(victim) && !getPvpStandingPlatform(victim)?.ground);
     const result = originalBonkPvpPlayerForTutorial.call(this, victim, stomper, ...rest);
+    if (active && tutorialStep()?.demonstration && stomper?.index === 1 && victim?.index === 0) {
+      tutorial.pvpDemoBonkAt = performance.now();
+      tutorial.pvpLastPracticeEventAt = tutorial.pvpDemoBonkAt;
+    }
     if (active && stomper?.index === 0 && victim?.index === 1) {
       tutorial.pvpBonks += 1;
       tutorial.pvpLastPracticeEventAt = performance.now();
@@ -4220,8 +4583,15 @@
   attemptPvpFlyCatch = function(player, targetFly, source = "body", ...rest) {
     const scoreBefore = Number(player?.score || 0);
     const result = originalAttemptPvpFlyCatchForTutorial.call(this, player, targetFly, source, ...rest);
-    if (tutorial.active && tutorial.kind === "pvp" && result && player?.index === 0 && Number(player.score || 0) > scoreBefore) {
-      if (tutorialStep()?.setup === "pvpBonkCatch" && tutorial.pvpBonkCatchArmed && pvpPlayers[1].stunTimer > 0) {
+    const setup = tutorial.active && tutorial.kind === "pvp" ? tutorialStep()?.setup : "";
+    const scored = Boolean(result && player && Number(player.score || 0) > scoreBefore);
+    if (setup && setup !== "pvpFinalMatch" && scored) {
+      tutorial.pvpPracticeCatchCount += 1;
+      tutorial.pvpLastPracticeEventAt = performance.now();
+      // Lesson catches prove the technique but never alter the visible PvP score.
+      player.score = scoreBefore;
+      game.spawnQueue.length = 0;
+      if (player.index === 0 && setup === "pvpBonkCatch" && tutorial.pvpBonkCatchArmed && pvpPlayers[1].stunTimer > 0) {
         tutorial.pvpBonkCatchSucceeded = true;
       }
     }
@@ -4533,6 +4903,28 @@
     return originalReleaseMainButtonForTutorial.apply(this, args);
   };
 
+  const originalUpdatePvpCpuInputForTutorial = updatePvpCpuInput;
+  updatePvpCpuInput = function(dt, ...rest) {
+    const setup = tutorial.active && tutorial.kind === "pvp" ? tutorialStep()?.setup : "";
+    if (tutorial.active && tutorial.kind === "pvp" && setup !== "pvpFinalMatch") return;
+    return originalUpdatePvpCpuInputForTutorial.call(this, dt, ...rest);
+  };
+
+  const originalDrawPvpSpeechBubbleForTutorial = drawPvpSpeechBubble;
+  drawPvpSpeechBubble = function(player, ...rest) {
+    if (tutorial.active && tutorial.kind === "pvp") return;
+    return originalDrawPvpSpeechBubbleForTutorial.call(this, player, ...rest);
+  };
+
+  const originalGetPvpSkinPaletteForTutorial = getPvpSkinPalette;
+  getPvpSkinPalette = function(skinId, fallbackId = "azure", playerIndexHint = null, ...rest) {
+    const palette = originalGetPvpSkinPaletteForTutorial.call(this, skinId, fallbackId, playerIndexHint, ...rest);
+    if (tutorial.active && tutorial.kind === "pvp" && (playerIndexHint === 1 || String(skinId) === "ember")) {
+      return { ...palette, hat:"crown" };
+    }
+    return palette;
+  };
+
   const originalPressPvpButtonForTutorial = pressPvpButton;
   pressPvpButton = function(index, ...rest) {
     if (tutorialBlocksLiveInput()) {
@@ -4575,6 +4967,7 @@
   drawScene = function(...args) {
     const result = originalDrawScene.apply(this, args);
     if (tutorial.active) drawTutorialOverlay();
+    if (tutorial.active && game.state === "paused") drawPauseControls();
     if (tutorial.completeScreen) drawCompletionScreen();
     return result;
   };
@@ -4605,6 +4998,24 @@
   };
 
   window.addEventListener("keydown", (event) => {
+    if (tutorial.active && tutorial.kind === "pvp" && event.code === "ShiftRight") {
+      // Ember is always the scripted Level 5 coach. Right Shift never hands her
+      // to the player during training.
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      const ember = pvpPlayers[1];
+      if (ember) { ember.inputHeld = false; ember.charging = false; ember.chargeHoldTime = 0; }
+      return;
+    }
+
+    if (tutorial.active && ["Escape", "KeyR"].includes(event.code) &&
+        game.state !== "paused" && !tutorial.completeScreen) {
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      if (!event.repeat) window.RibbitRaceTutorialEngine?.retryScene?.();
+      return;
+    }
+
     if (tutorial.completeScreen && ["Enter", "NumpadEnter", "Space", "Escape"].includes(event.code)) {
       event.preventDefault();
       event.stopImmediatePropagation();
@@ -4720,6 +5131,12 @@
     get dialogueOpen() { return tutorial.dialogueOpen; },
     get kind() { return tutorial.kind; },
     get step() { return tutorial.step; },
+    get setup() { return tutorialStep()?.setup || ""; },
+    retryScene() {
+      if (!tutorial.active || tutorial.resetPending) return false;
+      beginPoofTransition({ reason:"hotkey-retry", showFailure:false, preserveExistingFlies:false, action:rebuildCurrentScenarioForRetry });
+      return true;
+    },
     get build() { return TUTORIAL_BUILD; },
     get portraitsReady() { return emberPortraitsReady; },
     ready: () => EMBER_PORTRAITS_READY,
@@ -4748,6 +5165,7 @@
     leaderboardPage: 0,
     leaderboardRawPayload: null,
     leaderboardReplayRects: [],
+    leaderboardNameRects: [],
     leaderboardDropdown: "",
     leaderboardHitRects: {},
     leaderboardHoverKey: "",
@@ -5184,6 +5602,19 @@
     }
   }
 
+  function drawLeaderboardRefreshIcon(cx, cy, active = false) {
+    const color = active ? getSelectedSkin().dark : "#26363d";
+    ctx.fillStyle = color;
+    // Pixel circular arrow—avoids unsupported Unicode glyphs rendering as ?.
+    ctx.fillRect(cx - 5, cy - 5, 8, 2);
+    ctx.fillRect(cx - 7, cy - 3, 2, 7);
+    ctx.fillRect(cx - 5, cy + 4, 8, 2);
+    ctx.fillRect(cx + 3, cy + 1, 2, 5);
+    ctx.fillRect(cx + 2, cy - 6, 5, 2);
+    ctx.fillRect(cx + 5, cy - 4, 2, 5);
+    ctx.fillRect(cx + 3, cy - 4, 2, 2);
+  }
+
   function drawLeaderboardDropdown(rect, label, value, open, key) {
     drawBitmapText(label, rect.x, rect.y - 11, .44, "left", "#48555a");
     ctx.fillStyle = "rgba(25,43,52,.22)"; ctx.fillRect(rect.x + 2, rect.y + 2, rect.w, rect.h);
@@ -5203,6 +5634,7 @@
     const levelLabel = polish.leaderboardLevel === "any" ? "ANY LEVEL" : polish.leaderboardLevel.toUpperCase();
     polish.leaderboardHitRects = {};
     polish.leaderboardReplayRects = [];
+    polish.leaderboardNameRects = [];
 
     ctx.fillStyle = "#edf5f7"; ctx.fillRect(0, 0, W, H);
     ctx.fillStyle = COLORS.ink; ctx.fillRect(8, 6, W - 16, H - 12);
@@ -5224,7 +5656,7 @@
     const refresh = { x:13, y:72, w:22, h:22 };
     ctx.fillStyle = COLORS.ink; ctx.fillRect(refresh.x, refresh.y, refresh.w, refresh.h);
     ctx.fillStyle = "#f7fdff"; ctx.fillRect(refresh.x + 2, refresh.y + 2, refresh.w - 4, refresh.h - 4);
-    drawBitmapText("↻", refresh.x + refresh.w / 2, refresh.y + 5, .90, "center", "#26363d");
+    drawLeaderboardRefreshIcon(refresh.x + refresh.w / 2, refresh.y + refresh.h / 2, polish.leaderboardHoverKey === "refresh");
     polish.leaderboardHitRects.refresh = refresh;
 
     const metricRect = { x:42, y:72, w:198, h:22 };
@@ -5263,8 +5695,16 @@
         drawBitmapText(String(row.rank || "—"), columns.rank, y + 5, .50, "center", "#26363d");
         const rowPalette = leaderboardFrogPalette(row);
         drawMiniFrogSwatchFacing(77, y + 4, rowPalette, .43, 1);
+        const nameRect = { x:70, y:y + 1, w:140, h:14, row };
+        const nameHover = polish.leaderboardHoverKey === `name:${offset}`;
+        if (nameHover) {
+          ctx.fillStyle = mixHexColors(rowPalette.belly || "#b8f5dc", "#ffffff", .22);
+          ctx.fillRect(nameRect.x, nameRect.y, nameRect.w, nameRect.h);
+          drawMiniFrogSwatchFacing(77, y + 4, rowPalette, .43, 1);
+        }
         const nameScale = Math.min(.50, 105 / Math.max(1, measureBitmapText(row.name.toUpperCase(), 1)));
-        drawBitmapText(row.name.toUpperCase(), 89, y + 5, nameScale, "left", "#26363d");
+        drawBitmapText(row.name.toUpperCase(), 89, y + 5, nameScale, "left", nameHover ? rowPalette.dark : "#26363d");
+        polish.leaderboardNameRects.push(nameRect);
         drawBitmapText(row.level, columns.level, y + 5, .48, "center", "#26363d");
         drawBitmapText(formatLeaderboardValue(row), columns.result, y + 5, .50, "center", "#26363d");
         drawBitmapText(formatLeaderboardDate(row.date), columns.date, y + 5, .45, "center", "#26363d");
@@ -5306,6 +5746,35 @@
         drawBitmapText(entry === "any" ? "ANY LEVEL" : entry.toUpperCase(), rect.x + 7, rect.y + 5, .43, "left", "#26363d");
         polish.leaderboardHitRects[`level:${entry}`] = rect;
       });
+    }
+  }
+
+  async function playLeaderboardRecord(row) {
+    if (!row) return false;
+    const metric = String(row.metric || polish.leaderboardMetric || "time").toLowerCase();
+    const level = String(row.level || polish.leaderboardLevel || "park").toLowerCase();
+    if (!["time", "jumps"].includes(metric) || !level || level === "all" || level === "any") {
+      game.cheatToastText = "REPLAY AVAILABLE FOR TIME AND JUMP RECORDS";
+      game.cheatToastTimer = CONFIG.achievementToastDuration;
+      return false;
+    }
+    try {
+      if (typeof window.RibbitRacePlayRecordReplay === "function") {
+        await window.RibbitRacePlayRecordReplay(row.name, level, metric);
+        return true;
+      }
+      const response = await fetch(`/api/replays/get?username=${encodeURIComponent(row.name)}&level=${encodeURIComponent(level)}&metric=${encodeURIComponent(metric)}`);
+      const payload = await response.json();
+      if (!response.ok || !payload?.ok || !payload?.data) throw new Error(payload?.message || "Replay unavailable");
+      const blob = await (await fetch(`data:${payload.mime || "video/webm"};base64,${payload.data}`)).blob();
+      const id = `record-${row.name}-${level}-${metric}-${Date.now()}`;
+      await window.RibbitReplayStore?.put?.({ id, blob, at:Date.now(), type:blob.type });
+      await window.RibbitRacePlayStoredReplay?.(id, `${row.name} • ${level.toUpperCase()} • ${metric === "time" ? "FASTEST TIME" : "FEWEST JUMPS"}`);
+      return true;
+    } catch (error) {
+      game.cheatToastText = "REPLAY NOT AVAILABLE FOR THIS RECORD";
+      game.cheatToastTimer = CONFIG.achievementToastDuration;
+      return false;
     }
   }
 
@@ -5875,7 +6344,7 @@
       return insideAny([STATS_UI.backButton, STATS_UI.pagePrevButton, STATS_UI.pageNextButton]);
     }
     if (game.state === "rrLeaderboard") {
-      return insideAny([...Object.values(polish.leaderboardHitRects || {}), ...polish.leaderboardReplayRects]);
+      return insideAny([...Object.values(polish.leaderboardHitRects || {}), ...polish.leaderboardReplayRects, ...polish.leaderboardNameRects]);
     }
     if (game.state === "pvpSetup") {
       return insideAny([...(PVP_SETUP_UI.levelButtons || []), PVP_SETUP_UI.p1Selector, PVP_SETUP_UI.p2Selector,
@@ -5916,6 +6385,8 @@
       for (const [key, rect] of Object.entries(polish.leaderboardHitRects || {})) {
         if (pointIn(point, rect)) { polish.leaderboardHoverKey = key; break; }
       }
+      const nameIndex = polish.leaderboardNameRects.findIndex((item) => pointIn(point, item));
+      if (nameIndex >= 0) polish.leaderboardHoverKey = `name:${nameIndex}`;
       const replayIndex = polish.leaderboardReplayRects.findIndex((item) => pointIn(point, item));
       if (replayIndex >= 0) polish.leaderboardHoverKey = `replay:${replayIndex}`;
     }
@@ -5969,8 +6440,14 @@
       const pageCount = Math.max(1, Math.ceil(polish.leaderboardEntries.length / 5));
       if (pointIn(point, hits.prev) && polish.leaderboardPage > 0) { polish.leaderboardPage -= 1; polish.leaderboardDropdown = ""; return; }
       if (pointIn(point, hits.next) && polish.leaderboardPage < pageCount - 1) { polish.leaderboardPage += 1; polish.leaderboardDropdown = ""; return; }
+      const name = polish.leaderboardNameRects.find((item) => pointIn(point, item));
+      if (name) { playLeaderboardRecord(name.row); return; }
       const replay = polish.leaderboardReplayRects.find((item) => pointIn(point, item));
-      if (replay) { playReplayById(replay.row.replayId, `${replay.row.name} • ${replay.row.metric}`); return; }
+      if (replay) {
+        if (replay.row.replayId) playReplayById(replay.row.replayId, `${replay.row.name} • ${replay.row.metric}`);
+        else playLeaderboardRecord(replay.row);
+        return;
+      }
       polish.leaderboardDropdown = "";
       return;
     }

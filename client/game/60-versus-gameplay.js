@@ -3160,6 +3160,8 @@
 
       const target = getPvpTargetScore();
       const timedRound = game.pvpTimeLimitSeconds > 0 && !game.pvpSuddenDeath;
+      const tutorialPvp = Boolean(game.tutorialActive && window.RibbitRaceTutorialEngine?.active && window.RibbitRaceTutorialEngine?.kind === "pvp");
+      const tutorialFinalMatch = tutorialPvp && window.RibbitRaceTutorialEngine?.setup === "pvpFinalMatch";
       const boxes = [
         { player: pvpPlayers[0], x: 8, label: "P1", mirror: false },
         { player: pvpPlayers[1], x: W - 84, label: game.pvpCpuEnabled ? "CPU" : "P2", mirror: true }
@@ -3172,8 +3174,11 @@
         ctx.fillRect(x + 2, 9, 72, 16);
         ctx.fillStyle = palette.light;
         ctx.fillRect(x + 4, 11, 68, 3);
-        const score = game.pvpSuddenDeath ? game.pvpSuddenDeathScores[player.index] : player.score;
-        const scoreText = timedRound ? `${label} ${score}` : `${label} ${score} / ${target}`;
+        const rawScore = game.pvpSuddenDeath ? game.pvpSuddenDeathScores[player.index] : player.score;
+        const score = tutorialPvp && !tutorialFinalMatch ? 0 : rawScore;
+        const scoreText = tutorialPvp && !tutorialFinalMatch
+          ? `${label} ${score}`
+          : timedRound ? `${label} ${score}` : `${label} ${score} / ${target}`;
         if (mirror) {
           drawMirroredMiniFrogSwatch(x + 70, 13, palette, 0.55);
           drawBitmapText(scoreText, x + 30, 14, 1, "center", palette.dark);
@@ -3236,7 +3241,9 @@
         : game.pvpTimeLimitSeconds > 0
           ? `${Math.ceil(game.pvpTimeRemaining)} SEC`
           : formatTime(game.pvpElapsed);
-      drawBitmapText(`ROUND ${game.pvpRoundNumber}  ${clock}`, W / 2, 10, 0.68, "center", urgentClock ? "#ffffff" : "#d9edf2", urgentClock ? "#65111b" : null);
+      if (!tutorialPvp || tutorialFinalMatch) {
+        drawBitmapText(`ROUND ${game.pvpRoundNumber}  ${clock}`, W / 2, 10, 0.68, "center", urgentClock ? "#ffffff" : "#d9edf2", urgentClock ? "#65111b" : null);
+      }
     }
 
     function getPvpRoundAchievementDefinitions() {

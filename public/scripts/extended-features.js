@@ -85,7 +85,11 @@
     async play(username,level,metric){
       try{const r=await fetch(`/api/replays/get?username=${encodeURIComponent(username)}&level=${encodeURIComponent(level)}&metric=${encodeURIComponent(metric)}`);const j=await r.json();if(!r.ok||!j.ok||!j.data){toast("REPLAY NOT AVAILABLE","This record was made before replay capture was enabled.");return}let overlay=q("#rr-replay-overlay");if(!overlay){overlay=document.createElement("div");overlay.id="rr-replay-overlay";overlay.innerHTML='<div><button aria-label="Close">×</button><h2>WORLD RECORD REPLAY</h2><video controls autoplay playsinline></video><p></p></div>';document.body.append(overlay);q("button",overlay).onclick=()=>{q("video",overlay).pause();overlay.hidden=true}}q("p",overlay).textContent=`${username} • ${level.toUpperCase()} • ${metric==="time"?"FASTEST TIME":"FEWEST JUMPS"}`;q("video",overlay).src=`data:${j.mime||"video/webm"};base64,${j.data}`;overlay.hidden=false}catch(_){toast("REPLAY UNAVAILABLE","The replay server could not be reached.")}}
   }
-  new ReplayController();
+  const replayController = new ReplayController();
+  // Canvas-native leaderboard rows call this bridge directly. The server keeps
+  // the current PB recording for each player, level, and ranked metric.
+  window.RibbitRacePlayRecordReplay = (username, level, metric) =>
+    replayController.play(String(username || ""), String(level || "").toLowerCase(), String(metric || "time").toLowerCase());
 
   class PaletteController {
     constructor(){this.clip=json("rrFrogPaletteClipboardV1",null);this.panel=null;this.make();this.bind();setTimeout(()=>this.tick(),250)}
