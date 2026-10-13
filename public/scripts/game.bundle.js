@@ -64,7 +64,7 @@ function startRibbitRaceGame() {
     const canvas = document.getElementById("game");
     const gameFrame = document.getElementById("game-frame");
     const friendsGameInputLocked = () => window.RibbitFriendsGameInputLocked?.() === true;
-    const RIBBIT_DISPLAY_VERSION = "VERSION 1.7.11";
+    const RIBBIT_DISPLAY_VERSION = "VERSION 1.7.12";
     const RIBBIT_CREDIT_TEXT = "MADE BY NICK M.";
     const RIBBIT_CREDIT_Y = 228;
     const rgbValueEditor = document.getElementById("rgb-value-editor");
@@ -9444,18 +9444,20 @@ function startRibbitRaceGame() {
         ctx.fillStyle = COLORS.white;
         ctx.fillRect(0, 0, W, CONFIG.playBottom);
       }
-      ctx.globalAlpha = holdFade;
-      ctx.fillStyle = "rgba(38,54,61,0.78)";
-      ctx.fillRect(W / 2 - 74, 29, 148, 18);
-      drawBitmapText(game.pvpCriticalCatchKind === "contest" ? "CLOSE CATCH!" : "FINAL CATCH!", W / 2, 34, 1.08, "center", COLORS.white, COLORS.ink);
+      if (!window.RibbitTutorialShouldHideFinalCatchTitle?.()) {
+        ctx.globalAlpha = holdFade;
+        ctx.fillStyle = "rgba(38,54,61,0.78)";
+        ctx.fillRect(W / 2 - 74, 29, 148, 18);
+        drawBitmapText("FINAL CATCH!", W / 2, 34, 1.08, "center", COLORS.white, COLORS.ink);
+      }
       ctx.restore();
     }
     function startPvpCriticalCatch(player, targetFly, kind = "final") {
       if (!player || game.pvpCriticalCatchActive || game.mode !== "pvp") return false;
-      const normalizedKind = kind === "contest" ? "contest" : "final";
+      const normalizedKind = kind === "contest" ? "contest" : kind === "clutch" ? "clutch" : "final";
       if (normalizedKind === "final" && game.pvpCriticalCatchPlayedThisRound) return false;
-      const criticalKey = normalizedKind === "contest"
-        ? `contest:${game.pvpRoundNumber}:${game.promptSerial}:${targetFly?.id ?? "fly"}`
+      const criticalKey = normalizedKind !== "final"
+        ? `${normalizedKind}:${game.pvpRoundNumber}:${game.promptSerial}:${targetFly?.id ?? "fly"}`
         : `${game.pvpRoundNumber}:${game.pvpSuddenDeath?'sd':'normal'}:final`;
       if(!OnlineVersus.canStartCritical(criticalKey))return false;
       game.pvpCriticalCatchEventId=criticalKey;
@@ -9569,10 +9571,14 @@ function startRibbitRaceGame() {
         ctx.fillStyle = COLORS.white;
         ctx.fillRect(0, 0, W, CONFIG.playBottom);
       }
-      ctx.globalAlpha = holdFade;
-      ctx.fillStyle = "rgba(38,54,61,0.78)";
-      ctx.fillRect(W / 2 - 74, 29, 148, 18);
-      drawBitmapText("FINAL CATCH!", W / 2, 34, 1.08, "center", COLORS.white, COLORS.ink);
+      const title = game.pvpCriticalCatchKind === "final" ? "FINAL CATCH!"
+        : game.pvpCriticalCatchKind === "clutch" ? "CLUTCH CATCH!" : "CLOSE CATCH!";
+      if (title !== "FINAL CATCH!" || !window.RibbitTutorialShouldHideFinalCatchTitle?.()) {
+        ctx.globalAlpha = holdFade;
+        ctx.fillStyle = "rgba(38,54,61,0.78)";
+        ctx.fillRect(W / 2 - 74, 29, 148, 18);
+        drawBitmapText(title, W / 2, 34, 1.08, "center", COLORS.white, COLORS.ink);
+      }
       ctx.restore();
     }
     function pvpFlyContestIsClose(player, targetFly) {
@@ -9608,8 +9614,9 @@ function startRibbitRaceGame() {
         game.pvpTimeLimitSeconds > 0 && !game.pvpSuddenDeath &&
         Number(game.pvpTimeRemaining) > 0 && Number(game.pvpTimeRemaining) <= 1.05
       );
-      if (reachedTarget || buzzerWinningCatch || lastSecondCatch) return "final";
+      if (reachedTarget) return "final";
       if (pvpFlyContestIsClose(player, targetFly)) return "contest";
+      if (buzzerWinningCatch || lastSecondCatch) return "clutch";
       return "";
     }
     function completePvpCorrectCatch(player, targetFly) {
@@ -9660,7 +9667,8 @@ function startRibbitRaceGame() {
         Number(player.score || 0) > Number(otherPlayer?.score || 0)
       );
       if (criticalCatchKind) startPvpCriticalCatch(player, targetFly, criticalCatchKind);
-      else if (reachedTarget || buzzerWinningCatch) startPvpCriticalCatch(player, targetFly, "final");
+      else if (reachedTarget) startPvpCriticalCatch(player, targetFly, "final");
+      else if (buzzerWinningCatch) startPvpCriticalCatch(player, targetFly, "clutch");
       if (game.pvpTimerGraceActive) {
         game.targetVocabIndex = null;
         game.spawnQueue = [];
@@ -18187,8 +18195,8 @@ function startRibbitRaceGame() {
       if (game.pvpCpuEnabled && (code === "Space" || key === " ")) {
         return { playerIndex: 0, controlId: "Space" };
       }
-      if (code === "KeyZ" || (!code && lowerKey === "z")) {
-        return { playerIndex: 0, controlId: code || "KeyZ" };
+      if (code === "KeyZ" || code === "KeyW" || (!code && (lowerKey === "z" || lowerKey === "w"))) {
+        return { playerIndex: 0, controlId: code || (lowerKey === "w" ? "KeyW" : "KeyZ") };
       }
       if (code === "Slash" || (!code && (key === "/" || key === "?"))) {
         return { playerIndex: 1, controlId: code || "Slash" };
@@ -19531,8 +19539,8 @@ function startRibbitRaceGame() {
     requestAnimationFrame(frame);
 
     /* ===== client/game/90-extended-features.js ===== */
-const RIBBIT_FRIENDS_DISPLAY_VERSION = "1.7.11";
-const RIBBIT_FRIENDS_BUILD = "2026.10.12-friends-polish-22";
+const RIBBIT_FRIENDS_DISPLAY_VERSION = "1.7.12";
+const RIBBIT_FRIENDS_BUILD = "2026.10.12-friends-polish-23";
 function rr14Number(value, fallback = 0) {
   const parsed = Number(value);
   return Number.isFinite(parsed) ? parsed : fallback;
@@ -20011,10 +20019,10 @@ window.RibbitRaceMobileDiagnostics = () => ({
  */
 (() => {
   "use strict";
-  const BUILD = "2026.10.12-friends-polish-22";
+  const BUILD = "2026.10.12-friends-polish-23";
   const RR_V160_CANDIDATES = {"catchFly":["attemptFlyCatch","attemptPvpFlyCatch","catchSandboxFly","getPvpImminentCatchFly","recordFlyEaten","scheduleFlyReplacementFromCatch"],"jumpSound":["playJumpSound"],"beep":["playCountdownGoSound","playCountdownSound"],"replayUpload":["saveRecordDate"],"restart":["resetGame","resetPvpGame","resetPvpPlayer","resetRoundLifecycle","resetRoundNetwork","restartCurrentLevel"],"drop":[],"render":["drawPvpScene","drawScene"],"worldRecord":[],"fullscreen":["getFullscreenElement","hideFullscreenFallback","showFullscreenFallback","syncFullscreenButton","toggleRibbitFullscreen"],"onlineSubmit":[],"leaderboard":["isSoloEndlessLeaderboardEligible","savePvpMatchWinsForLeaderboard"]};
   const RR_V160_VARS = {"onlineSelect":[],"achievementSelect":["activeAchievementIndex","hoveredAchievementCard"],"backRect":[]};
-  const VERSION = "1.7.11";
+  const VERSION = "1.7.12";
   const V = {
     menuTouch: new Map(), chargeTouch: new Map(), achievementPinned: -1,
     finalCatchStarted: 0, finalCatchLabelsGone: false,
@@ -20858,7 +20866,7 @@ window.RibbitRaceMobileDiagnostics = () => ({
 "use strict";
 const SOLO_SEEN_KEY = "rrFriendsEngineTutorialSoloSeenV8";
 const PVP_SEEN_KEY = "rrFriendsEngineTutorialPvpSeenV8";
-const TUTORIAL_BUILD = "2026.10.12-friends-polish-22";
+const TUTORIAL_BUILD = "2026.10.12-friends-polish-23";
 const TUTORIAL_ACHIEVEMENT_ID = "tutorial-graduate";
 const PVP_TUTORIAL_ACHIEVEMENT_ID = "versus-tutorial-graduate";
 const TYPEWRITER_MS_PER_CHARACTER = 28;
@@ -28385,12 +28393,10 @@ window.RibbitRaceTutorialEngine = Object.freeze({
   if(priorDrawSoloHudP19){drawSoloHud=function(...args){const e=engine();if(e?.active&&game.mode==="solo"){const old=game.soloCatchGoal;const goal=Number(e.sceneFlyGoal||0);if(goal>0)game.soloCatchGoal=goal;const result=priorDrawSoloHudP19.apply(this,args);game.soloCatchGoal=old;return result;}return priorDrawSoloHudP19.apply(this,args);};}
   const priorDrawSceneP19=drawScene;
   drawScene=function(...args){const result=priorDrawSceneP19.apply(this,args);if(game.state==="paused"&&game.pauseHelpOpen){const r={x:448,y:238,w:22,h:22};ctx.save();ctx.globalAlpha=.28;ctx.fillStyle=COLORS.ink;ctx.fillRect(r.x,r.y,r.w,r.h);ctx.fillStyle="#f7fdff";ctx.fillRect(r.x+2,r.y+2,r.w-4,r.h-4);ctx.fillStyle="#48555a";ctx.fillRect(r.x+5,r.y+5,4,2);ctx.fillRect(r.x+5,r.y+5,2,4);ctx.fillRect(r.x+r.w-9,r.y+5,4,2);ctx.fillRect(r.x+r.w-7,r.y+5,2,4);ctx.fillRect(r.x+5,r.y+r.h-7,4,2);ctx.fillRect(r.x+5,r.y+r.h-9,2,4);ctx.fillRect(r.x+r.w-9,r.y+r.h-7,4,2);ctx.fillRect(r.x+r.w-7,r.y+r.h-9,2,4);ctx.restore();}return result;};
-  function p1Only(){return game.mode!=="pvp"||!game.pvpHuman2||game.onlineMode;}
+  function p1Only(){return game.mode!=="pvp"||game.pvpCpuEnabled||game.onlineMode;}
   function livePlay(){return game.state==="playing"&&!game.pauseHelpOpen&&!friendsGameInputLocked?.();}
   canvas.addEventListener("pointerdown",ev=>{if(ev.pointerType!=="mouse"||!livePlay()||!p1Only())return;const p=getCanvasPoint(ev);if(pointInsideRect(p,HUD_UI.pauseButton))return;P19.mouseJump=true;if(game.mode==="pvp")pressPvpButton(0);else pressMainButton();},{passive:true});
   window.addEventListener("pointerup",ev=>{if(!P19.mouseJump)return;P19.mouseJump=false;if(game.mode==="pvp")releasePvpButton(0);else releaseMainButton();},{passive:true});
-  window.addEventListener("keydown",ev=>{if(!["KeyW","ShiftRight"].includes(ev.code)||ev.repeat||!livePlay()||!p1Only())return;ev.preventDefault();if(game.mode==="pvp")pressPvpButton(0);else pressMainButton();},{capture:true});
-  window.addEventListener("keyup",ev=>{if(!["KeyW","ShiftRight"].includes(ev.code)||!p1Only())return;ev.preventDefault();if(game.mode==="pvp")releasePvpButton(0);else releaseMainButton();},{capture:true});
   const priorUpdateP19=update;update=function(dt,...rest){
     const e=engine(),pvpTraining=!!(e?.active&&e.kindPolish19==="pvp"),setup=String(e?.polish19Setup||"").toLowerCase(),title=String(e?.stepTitlePolish19||"").toLowerCase();
     if(game.mode==="pvp"&&game.state==="countdown"){flies.length=0;if(game.spawnQueue)game.spawnQueue.length=0;}

@@ -186,19 +186,23 @@
         ctx.fillStyle = COLORS.white;
         ctx.fillRect(0, 0, W, CONFIG.playBottom);
       }
-      ctx.globalAlpha = holdFade;
-      ctx.fillStyle = "rgba(38,54,61,0.78)";
-      ctx.fillRect(W / 2 - 74, 29, 148, 18);
-      drawBitmapText(game.pvpCriticalCatchKind === "contest" ? "CLOSE CATCH!" : "FINAL CATCH!", W / 2, 34, 1.08, "center", COLORS.white, COLORS.ink);
+      // Authored practice scenes may reuse the camera without finishing a
+      // level. Never borrow a stale Versus catch kind for the solo title.
+      if (!window.RibbitTutorialShouldHideFinalCatchTitle?.()) {
+        ctx.globalAlpha = holdFade;
+        ctx.fillStyle = "rgba(38,54,61,0.78)";
+        ctx.fillRect(W / 2 - 74, 29, 148, 18);
+        drawBitmapText("FINAL CATCH!", W / 2, 34, 1.08, "center", COLORS.white, COLORS.ink);
+      }
       ctx.restore();
     }
 
     function startPvpCriticalCatch(player, targetFly, kind = "final") {
       if (!player || game.pvpCriticalCatchActive || game.mode !== "pvp") return false;
-      const normalizedKind = kind === "contest" ? "contest" : "final";
+      const normalizedKind = kind === "contest" ? "contest" : kind === "clutch" ? "clutch" : "final";
       if (normalizedKind === "final" && game.pvpCriticalCatchPlayedThisRound) return false;
-      const criticalKey = normalizedKind === "contest"
-        ? `contest:${game.pvpRoundNumber}:${game.promptSerial}:${targetFly?.id ?? "fly"}`
+      const criticalKey = normalizedKind !== "final"
+        ? `${normalizedKind}:${game.pvpRoundNumber}:${game.promptSerial}:${targetFly?.id ?? "fly"}`
         : `${game.pvpRoundNumber}:${game.pvpSuddenDeath?'sd':'normal'}:final`;
       if(!OnlineVersus.canStartCritical(criticalKey))return false;
       game.pvpCriticalCatchEventId=criticalKey;
@@ -318,10 +322,14 @@
         ctx.fillStyle = COLORS.white;
         ctx.fillRect(0, 0, W, CONFIG.playBottom);
       }
-      ctx.globalAlpha = holdFade;
-      ctx.fillStyle = "rgba(38,54,61,0.78)";
-      ctx.fillRect(W / 2 - 74, 29, 148, 18);
-      drawBitmapText("FINAL CATCH!", W / 2, 34, 1.08, "center", COLORS.white, COLORS.ink);
+      const title = game.pvpCriticalCatchKind === "final" ? "FINAL CATCH!"
+        : game.pvpCriticalCatchKind === "clutch" ? "CLUTCH CATCH!" : "CLOSE CATCH!";
+      if (title !== "FINAL CATCH!" || !window.RibbitTutorialShouldHideFinalCatchTitle?.()) {
+        ctx.globalAlpha = holdFade;
+        ctx.fillStyle = "rgba(38,54,61,0.78)";
+        ctx.fillRect(W / 2 - 74, 29, 148, 18);
+        drawBitmapText(title, W / 2, 34, 1.08, "center", COLORS.white, COLORS.ink);
+      }
       ctx.restore();
     }
 
@@ -359,8 +367,12 @@
         game.pvpTimeLimitSeconds > 0 && !game.pvpSuddenDeath &&
         Number(game.pvpTimeRemaining) > 0 && Number(game.pvpTimeRemaining) <= 1.05
       );
-      if (reachedTarget || buzzerWinningCatch || lastSecondCatch) return "final";
+      // Only a score-goal finish (e.g. the fifth of five flies) is final.
+      // A contested fly or a last-second catch still gets the same zoom and
+      // slow motion, without claiming the level has ended.
+      if (reachedTarget) return "final";
       if (pvpFlyContestIsClose(player, targetFly)) return "contest";
+      if (buzzerWinningCatch || lastSecondCatch) return "clutch";
       return "";
     }
 
@@ -414,7 +426,8 @@
         Number(player.score || 0) > Number(otherPlayer?.score || 0)
       );
       if (criticalCatchKind) startPvpCriticalCatch(player, targetFly, criticalCatchKind);
-      else if (reachedTarget || buzzerWinningCatch) startPvpCriticalCatch(player, targetFly, "final");
+      else if (reachedTarget) startPvpCriticalCatch(player, targetFly, "final");
+      else if (buzzerWinningCatch) startPvpCriticalCatch(player, targetFly, "clutch");
       if (game.pvpTimerGraceActive) {
         game.targetVocabIndex = null;
         game.spawnQueue = [];

@@ -18,13 +18,16 @@
   // Keep Fullscreen present but dimmed while the book is open.
   const priorDrawSceneP19=drawScene;
   drawScene=function(...args){const result=priorDrawSceneP19.apply(this,args);if(game.state==="paused"&&game.pauseHelpOpen){const r={x:448,y:238,w:22,h:22};ctx.save();ctx.globalAlpha=.28;ctx.fillStyle=COLORS.ink;ctx.fillRect(r.x,r.y,r.w,r.h);ctx.fillStyle="#f7fdff";ctx.fillRect(r.x+2,r.y+2,r.w-4,r.h-4);ctx.fillStyle="#48555a";ctx.fillRect(r.x+5,r.y+5,4,2);ctx.fillRect(r.x+5,r.y+5,2,4);ctx.fillRect(r.x+r.w-9,r.y+5,4,2);ctx.fillRect(r.x+r.w-7,r.y+5,2,4);ctx.fillRect(r.x+5,r.y+r.h-7,4,2);ctx.fillRect(r.x+5,r.y+r.h-9,2,4);ctx.fillRect(r.x+r.w-9,r.y+r.h-7,4,2);ctx.fillRect(r.x+r.w-7,r.y+r.h-9,2,4);ctx.restore();}return result;};
-  // Mouse press/release can jump on desktop. W and Right Shift also control P1 when no local P2 exists.
-  function p1Only(){return game.mode!=="pvp"||!game.pvpHuman2||game.onlineMode;}
+  // Mouse press/release can jump on desktop when only one human is local.
+  // Keyboard aliases belong to the core physical-input router. A second
+  // window capture listener used to send Right Shift to P1 before the core
+  // correctly sent the same press/release to P2.
+  function p1Only(){return game.mode!=="pvp"||game.pvpCpuEnabled||game.onlineMode;}
   function livePlay(){return game.state==="playing"&&!game.pauseHelpOpen&&!friendsGameInputLocked?.();}
   canvas.addEventListener("pointerdown",ev=>{if(ev.pointerType!=="mouse"||!livePlay()||!p1Only())return;const p=getCanvasPoint(ev);if(pointInsideRect(p,HUD_UI.pauseButton))return;P19.mouseJump=true;if(game.mode==="pvp")pressPvpButton(0);else pressMainButton();},{passive:true});
   window.addEventListener("pointerup",ev=>{if(!P19.mouseJump)return;P19.mouseJump=false;if(game.mode==="pvp")releasePvpButton(0);else releaseMainButton();},{passive:true});
-  window.addEventListener("keydown",ev=>{if(!["KeyW","ShiftRight"].includes(ev.code)||ev.repeat||!livePlay()||!p1Only())return;ev.preventDefault();if(game.mode==="pvp")pressPvpButton(0);else pressMainButton();},{capture:true});
-  window.addEventListener("keyup",ev=>{if(!["KeyW","ShiftRight"].includes(ev.code)||!p1Only())return;ev.preventDefault();if(game.mode==="pvp")releasePvpButton(0);else releaseMainButton();},{capture:true});
+  // W is preserved as a P1 alias by getPvpControlBinding; in solo the core
+  // router already handles W and both Shift keys with a single held-key set.
   // Sudden-death flies never start appearing behind the countdown.
   const priorUpdateP19=update;update=function(dt,...rest){
     const e=engine(),pvpTraining=!!(e?.active&&e.kindPolish19==="pvp"),setup=String(e?.polish19Setup||"").toLowerCase(),title=String(e?.stepTitlePolish19||"").toLowerCase();

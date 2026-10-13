@@ -844,8 +844,8 @@
       if (game.pvpCpuEnabled && (code === "Space" || key === " ")) {
         return { playerIndex: 0, controlId: "Space" };
       }
-      if (code === "KeyZ" || (!code && lowerKey === "z")) {
-        return { playerIndex: 0, controlId: code || "KeyZ" };
+      if (code === "KeyZ" || code === "KeyW" || (!code && (lowerKey === "z" || lowerKey === "w"))) {
+        return { playerIndex: 0, controlId: code || (lowerKey === "w" ? "KeyW" : "KeyZ") };
       }
       if (code === "Slash" || (!code && (key === "/" || key === "?"))) {
         return { playerIndex: 1, controlId: code || "Slash" };

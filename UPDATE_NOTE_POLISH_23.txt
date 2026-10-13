@@ -1,0 +1,56 @@
+RIBBIT RACE FRIENDS — POLISH 23
+Display version: VERSION 1.7.12
+Build: 2026.10.12-friends-polish-23
+Base: Ribbit_Race_Friends_Polish_22_1.7.11.zip
+
+RIGHT SHIFT / LOCAL VERSUS
+- Removed the extra window-capture keyboard handler that sent Right Shift to
+  P1 before the normal physical-input router also sent it to P2.
+- Right Shift charges and releases only P2 in local two-player Versus. Left
+  Shift remains P1. Releasing either key does not release the other frog.
+- CPU and Versus-tutorial ownership are preserved: Right Shift does not take
+  over Ember/the CPU and does not fall back to controlling P1.
+- W remains a P1 alias, now in the normal held-key router instead of a second
+  listener. W/Left Shift and Slash/Right Shift can overlap without a premature
+  release. Single Player retains both Shift keys and W as jump controls.
+- Existing online local-player ownership, mobile controls, and server protocol
+  are unchanged; the duplicate P1 listener is removed from those screens too.
+
+CATCH-CAMERA TITLES
+- Contested fly zooms display CLOSE CATCH!, not FINAL CATCH!.
+- FINAL CATCH! is reserved for reaching the configured score goal: e.g. the
+  fifth fly in a five-fly level/round. A close contest on that goal-completing
+  fly still correctly says FINAL CATCH!.
+- The ten-fly option honors its actual ten-fly goal; Endless mode does not
+  falsely treat the fifth fly as a level finish.
+- Last-second/buzzer catches that do not reach a score goal use CLUTCH CATCH!;
+  a close contest at that time still uses CLOSE CATCH!.
+- The zoom, slow-motion physics, sounds and impact effects remain intact.
+- A non-final cinematic does not consume the actual final-goal cinematic.
+- Single Player no longer reads a stale Versus catch kind for its title.
+- Authored tutorial practice cinematics use the existing title-suppression
+  rule; the normal final five-fly tutorial round can still show FINAL CATCH!.
+
+VERIFICATION
+- npm run check: passed; 29 source modules bundled, JavaScript parses, and all
+  23 checked external assets exist.
+- npm test: 339 passed, 0 failed, 0 skipped (31 new behavior regression tests).
+- Local Chromium: 25 patched-build checks passed, plus 2 baseline checks that
+  reproduced both reported defects in the uploaded 1.7.11 bundle.
+- Browser checks included real keyboard presses/releases, simultaneous Shift
+  keys, CPU input ownership, overlapping W/Left Shift, both pre-catch and
+  post-score contest titles at scores 1-5, Endless/ten-fly/timer cases, retained
+  slow motion/zoom, solo-title isolation and tutorial-title suppression.
+- No JavaScript page errors occurred in the patched browser run.
+- Managed browser navigation is disabled in the test environment. Browser QA
+  used the actual HTML/CSS/game scripts and image bytes in a local in-memory
+  Chromium document, with mock authentication, storage and API responses.
+  This was not a live Cloudflare, leaderboard or multiplayer integration test.
+- QA-only browser instrumentation is not included in the production files.
+
+DEPLOYMENT
+This is the complete project, including modular source, rebuilt browser bundle
+and regression tests. Replace your project files and use the existing deployment
+workflow. Do not replace index.html alone: the gameplay fixes are in the bundle.
+No code.gs, Cloudflare binding, database schema or migration changes are required.
+Versioned asset URLs have been updated. This archive does not redeploy the live site.
