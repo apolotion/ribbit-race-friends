@@ -775,20 +775,18 @@
     function drawHudPausePlaySprite(rect, paused = false, palette = getSelectedSkin()) {
       if (!rect) return;
       const x = Math.round(rect.x), y = Math.round(rect.y), w = Math.round(rect.w), h = Math.round(rect.h);
-      // Match the original fixed mint pause icon across ALL frog palettes.
-      // Only the glyph alternates between pause and play.
+      const theme = palette || getSelectedSkin();
       ctx.save();
       ctx.fillStyle = "rgba(30,49,55,0.25)";
       ctx.fillRect(x + 1, y + 2, w, h);
       ctx.fillStyle = COLORS.ink;
       ctx.fillRect(x, y, w, h);
-      ctx.fillStyle = "#b8f5dc";
+      ctx.fillStyle = theme.belly;
       ctx.fillRect(x + 2, y + 2, w - 4, h - 4);
-      ctx.fillStyle = "#e3fff4";
+      ctx.fillStyle = theme.light;
       ctx.fillRect(x + 3, y + 2, w - 6, 2);
-      ctx.fillStyle = "#215465";
+      ctx.fillStyle = theme.dark;
       if (paused) {
-        // The play triangle takes up exactly the pause bars' footprint.
         ctx.fillRect(x + 9, y + 5, 3, 10);
         ctx.fillRect(x + 12, y + 7, 3, 6);
         ctx.fillRect(x + 15, y + 8, 2, 4);
@@ -861,9 +859,10 @@
     function drawVocabularyPrompt() {
       if (!["playing", "paused", "countdown"].includes(game.state)) return;
       if (game.sandboxMode || game.winPending || !Number.isInteger(game.targetVocabIndex)) return;
-      if (game.tutorialActive && !flies.some((fly) => fly && fly.state === "active" && fly.tutorialArmed !== false)) return;
-
-      const prompt = normalizeVocabularyCellText(getLocalizedClueTerm(VOCABULARY[game.targetVocabIndex]) || "", 80);
+      const tutorialHasFly = flies.some((fly) => fly && fly.state === "active" && fly.tutorialArmed !== false);
+      const prompt = game.tutorialActive && !tutorialHasFly
+        ? ""
+        : normalizeVocabularyCellText(getLocalizedClueTerm(VOCABULARY[game.targetVocabIndex]) || "", 80);
       const left = 154;
       const top = 234;
       const width = 172;

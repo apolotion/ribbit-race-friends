@@ -163,7 +163,7 @@
       );
     }
 
-    function drawBitmapTextToContext(targetContext, text, x, y, scale = 1, align = "left", color = COLORS.white, shadowColor = null) {
+    function paintBitmapTextUncached(targetContext, text, x, y, scale = 1, align = "left", color = COLORS.white, shadowColor = null) {
       const value = normalizeBitmapText(text).toUpperCase();
       const totalWidth = measureNormalizedBitmapText(value, scale);
       let startX = x;
@@ -200,6 +200,61 @@
       if (shadowColor) drawLayer(1, 1, shadowColor);
       drawLayer(0, 0, color);
     }
+
+    // Bounded backing-scale text cache. No renamed glyphs, altered spacing,
+    // downsampling, physics changes or unbounded per-frame canvas allocation.
+    const bitmapRunCache = new Map();
+    const BITMAP_RUN_CACHE_BYTES = 6 * 1024 * 1024;
+    let bitmapRunCacheBytes = 0;
+    let bitmapRunCacheHits = 0;
+    let bitmapRunCacheMisses = 0;
+    function drawBitmapTextToContext(targetContext, text, x, y, scale = 1, align = "left", color = COLORS.white, shadowColor = null) {
+      const value = normalizeBitmapText(text).toUpperCase();
+      if (!value) return;
+      const t = targetContext.getTransform();
+      const resolution = t.a;
+      // Scaling/rotating a frog, a flipped flash card or a cinematic must retain
+      // the original renderer. The common HUD/menu path is axis-aligned.
+      if (t.b || t.c || t.d !== resolution || resolution < 1 || resolution > 4 ||
+          !Number.isInteger(resolution) || !Number.isInteger(t.e) || !Number.isInteger(t.f) ||
+          targetContext.globalCompositeOperation !== "source-over" ||
+          typeof color !== "string" || (shadowColor && typeof shadowColor !== "string")) {
+        return paintBitmapTextUncached(targetContext, value, x, y, scale, align, color, shadowColor);
+      }
+      const key = JSON.stringify([value, scale, color, shadowColor, resolution]);
+      let item = bitmapRunCache.get(key);
+      if (!item) {
+        const width = Math.ceil(measureNormalizedBitmapText(value, scale) + 4);
+        const height = Math.ceil(8 * scale + 5);
+        const bytes = width * height * resolution * resolution * 4;
+        if (bytes > 262144 || scale <= 0) {
+          return paintBitmapTextUncached(targetContext, value, x, y, scale, align, color, shadowColor);
+        }
+        while (bitmapRunCache.size && (bitmapRunCacheBytes + bytes > BITMAP_RUN_CACHE_BYTES || bitmapRunCache.size >= 256)) {
+          const oldest = bitmapRunCache.keys().next().value;
+          const removed = bitmapRunCache.get(oldest);
+          bitmapRunCacheBytes -= removed.bytes;
+          removed.image.width = 0; removed.image.height = 0;
+          bitmapRunCache.delete(oldest);
+        }
+        const image = document.createElement("canvas");
+        image.width = width * resolution; image.height = height * resolution;
+        const surface = image.getContext("2d");
+        surface.imageSmoothingEnabled = false;
+        surface.setTransform(resolution, 0, 0, resolution, 0, 0);
+        // Padding accommodates accented glyph ascenders and the one-pixel shadow.
+        paintBitmapTextUncached(surface, value, 1, Math.ceil(scale) + 1, scale, "left", color, shadowColor);
+        item = {image, bytes, width, height, padY:Math.ceil(scale) + 1};
+        bitmapRunCache.set(key, item); bitmapRunCacheBytes += bytes; bitmapRunCacheMisses++;
+      } else {
+        bitmapRunCache.delete(key); bitmapRunCache.set(key, item); bitmapRunCacheHits++;
+      }
+      const width = measureNormalizedBitmapText(value, scale);
+      const startX = Math.round(x - (align === "center" ? width / 2 : align === "right" ? width : 0));
+      targetContext.drawImage(item.image, startX - 1, Math.round(y) - item.padY, item.width, item.height);
+      targetContext.fillStyle = color;
+    }
+
 
     function drawBitmapText(text, x, y, scale = 1, align = "left", color = COLORS.white, shadowColor = null) {
       drawBitmapTextToContext(ctx, text, x, y, scale, align, color, shadowColor);
@@ -412,6 +467,30 @@
       fillLevelSky(skyTop, skyBottom);
       drawTimeSkyDetails("park");
 
+      drawCachedParkScenery("back");
+      // The kite stays animated between the skyline and the foreground.
+      drawParkKite();
+      drawCachedParkScenery("front");
+    }
+
+    // Both layers use integer-coordinate pixel art and take < 1 MiB together.
+    // Moving clouds, sun, stars and the kite are deliberately NOT cached.
+    const parkSceneryCache = new Map();
+    function drawCachedParkScenery(layer) {
+      let image = parkSceneryCache.get(layer);
+      if (!image) {
+        image = document.createElement("canvas");
+        image.width = W;
+        image.height = CONFIG.playBottom;
+        const target = image.getContext("2d");
+        target.imageSmoothingEnabled = false;
+        if (layer === "back") drawParkBackScenery(target);
+        else drawParkFrontScenery(target);
+        parkSceneryCache.set(layer, image);
+      }
+      ctx.drawImage(image, 0, 0);
+    }
+    function drawParkBackScenery(ctx) {
       // Austin-inspired skyline behind a dense urban playground park.
       const buildings = [
         [8, 94, 15, 29, "#728b95"], [30, 84, 18, 39, "#8b9ba2"],
@@ -466,9 +545,8 @@
       ctx.fillStyle = "#6f5843";
       [22,62,128,207,280,356,436].forEach(x => ctx.fillRect(x,128,4,28));
 
-      // Keep the kite in front of both the skyline and the treetops.
-      drawParkKite();
-
+    }
+    function drawParkFrontScenery(ctx) {
       ctx.fillStyle = "#8fc76e";
       ctx.fillRect(0,143,W,71);
       ctx.fillStyle = "#a7d67d";
@@ -527,7 +605,7 @@
         ctx.fillStyle = x % 40 === 0 ? "#c5a478" : "#aa855a";
         ctx.fillRect(x+2,226+(x%3),11,3);
       }
-    }
+        }
 
 
     function fillLevelSky(topColor, bottomColor) {

@@ -54,26 +54,90 @@
   new MobileController();
 
   class ReplayController {
-    constructor(){this.recorder=null;this.parts=[];this.run=null;this.installLeaderboard();window.addEventListener("ribbit-solo-finished",e=>this.finish(e.detail));setTimeout(()=>this.tick(),250);}
-    tick(){const snap=bridge()?.snapshot?.()||{};const mobile=window.RibbitMobileExperience?.enabled?.()||window.matchMedia?.("(pointer: coarse)")?.matches;if(mobile&&this.recorder){try{this.recorder.stop()}catch(_){}this.recorder=null;this.parts=[];this.run=null;}const single=!mobile&&/playing/i.test(snap.state||"")&&!snap.localVersus&&!snap.onlineVersus&&!/pvp|versus|online|quick/i.test(snap.state||"");if(single&&!this.recorder)this.start(snap);setTimeout(()=>this.tick(),250)}
-    start(snap){
-      const canvas=bridge()?.canvas?.();if(!canvas?.captureStream||typeof MediaRecorder==="undefined")return;
-      try{const stream=canvas.captureStream(20),type=MediaRecorder.isTypeSupported("video/webm;codecs=vp8")?"video/webm;codecs=vp8":"video/webm";this.parts=[];this.run={level:snap.level||"unknown",started:Date.now()};this.recorder=new MediaRecorder(stream,{mimeType:type,videoBitsPerSecond:420000});this.recorder.ondataavailable=e=>{if(e.data?.size)this.parts.push(e.data)};this.recorder.start(1000)}catch(_){this.recorder=null}
+    constructor() {
+      this.recorder=null; this.session=null; this.suppressedRun=null;
+      this.installLeaderboard();
+      window.addEventListener("ribbit-solo-finished", e => { void this.finish(e.detail).catch(error=>console.warn("Replay capture unavailable",error)); });
+      window.addEventListener("pagehide",()=>this.discard());
+      setTimeout(()=>this.tick(),100);
     }
-    async finish(snap){
-      const rec=this.recorder;if(!rec||!this.run)return;this.recorder=null;const run=this.run;this.run=null;
-      const stopped=new Promise(resolve=>rec.addEventListener("stop",resolve,{once:true}));try{rec.stop()}catch(_){return}await stopped;
-      const blob=new Blob(this.parts,{type:rec.mimeType||"video/webm"});this.parts=[];if(!blob.size||blob.size>2_800_000)return;
-      const data=await new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(String(reader.result).split(",")[1]||"");reader.onerror=reject;reader.readAsDataURL(blob)});
-      // The Worker binds a replay to the authenticated session. Do not depend
-      // on account-name text being present in the DOM; that prevented valid PBs
-      // from uploading on the canvas-native account UI.
-      const payload={level:snap.level||run.level,time:Number(snap.time)||((Date.now()-run.started)/1000),jumps:Number(snap.jumps)||0,mime:blob.type,data};
-      fetch("/api/replays/submit",{method:"POST",credentials:"same-origin",headers:{"content-type":"application/json"},body:JSON.stringify(payload)})
-        .then(async response=>{let detail={};try{detail=await response.json()}catch(_){};
-          if(response.ok&&detail.ok){window.dispatchEvent(new CustomEvent("ribbit-replay-uploaded",{detail:{level:payload.level,stored:detail.stored||[]}}));}
-          else console.warn("Replay PB upload skipped:",detail.message||response.status)})
-        .catch(error=>console.warn("Replay PB upload unavailable:",error));
+    releaseTracks(session) {
+      for (const track of session?.stream?.getTracks?.() || []) track.stop();
+    }
+    discard() {
+      const session=this.session;
+      this.session=null;this.recorder=null;
+      if(!session)return;
+      session.cancelled=true;
+      try { if(session.recorder.state!=="inactive")session.recorder.stop(); } catch (_) {}
+      this.releaseTracks(session);
+      session.parts.length=0;
+    }
+    tick() {
+      const snap=bridge()?.snapshot?.()||{};
+      const mobile=window.RibbitMobileExperience?.enabled?.()||window.matchMedia?.("(pointer: coarse)")?.matches;
+      const eligible=!mobile&&snap.mode==="solo"&&!snap.tutorialActive&&!snap.sandboxMode&&!snap.onlineVersus;
+      const sameRun=this.session&&this.session.runId===snap.runId;
+      if(this.session&&(!eligible||!sameRun||!["playing","paused","countdown","won"].includes(snap.state)))this.discard();
+      if(eligible&&snap.state==="playing"&&!this.recorder&&this.suppressedRun!==snap.runId)this.start(snap);
+      if(this.recorder){
+        try {
+          if(["paused","countdown"].includes(snap.state)&&this.recorder.state==="recording")this.recorder.pause();
+          else if(snap.state==="playing"&&this.recorder.state==="paused")this.recorder.resume();
+        }catch(_){}
+      }
+      setTimeout(()=>this.tick(),100);
+    }
+    start(snap) {
+      const canvas=bridge()?.canvas?.();
+      if(!canvas?.captureStream||typeof MediaRecorder==="undefined")return;
+      let stream;
+      try {
+        stream=canvas.captureStream(20);
+        const type=MediaRecorder.isTypeSupported("video/webm;codecs=vp8")?"video/webm;codecs=vp8":"video/webm";
+        const rec=new MediaRecorder(stream,{mimeType:type,videoBitsPerSecond:420000});
+        // Chunks belong to ONE session, never to the next run while stop is pending.
+        const session={recorder:rec,stream,parts:[],bytes:0,runId:snap.runId,level:snap.level,started:Date.now(),cancelled:false};
+        this.session=session;this.recorder=rec;
+        rec.ondataavailable=e=>{
+          if(session.cancelled||!e.data?.size)return;
+          session.bytes+=e.data.size;
+          if(session.bytes>2800000){
+            this.suppressedRun=session.runId;
+            session.cancelled=true;session.parts.length=0;
+            if(this.session===session)this.discard();else this.releaseTracks(session);
+          } else session.parts.push(e.data);
+        };
+        rec.addEventListener("stop",()=>this.releaseTracks(session),{once:true});
+        rec.start(1000);
+      } catch (_) {
+        for(const track of stream?.getTracks?.()||[])track.stop();
+        this.recorder=null;this.session=null;
+      }
+    }
+    async finish(snap={}) {
+      const session=this.session;
+      if(!session)return;
+      this.session=null;this.recorder=null;
+      const rec=session.recorder;
+      if(rec.state!=="inactive")await new Promise(resolve=>{
+        rec.addEventListener("stop",resolve,{once:true});
+        try{rec.stop();}catch(_){resolve();}
+      });
+      this.releaseTracks(session);
+      if(session.cancelled||!session.parts.length)return;
+      const blob=new Blob(session.parts,{type:rec.mimeType||"video/webm"});
+      session.parts.length=0;
+      if(!blob.size||blob.size>2800000)return;
+      const data=await new Promise((resolve,reject)=>{
+        const reader=new FileReader();reader.onload=()=>resolve(String(reader.result).split(",")[1]||"");reader.onerror=reject;reader.readAsDataURL(blob);
+      });
+      // Keep the existing authenticated PB endpoint and server record comparisons.
+      const payload={level:snap.level||session.level,time:Number(snap.time)||((Date.now()-session.started)/1000),jumps:Number(snap.jumps)||0,mime:blob.type,data};
+      const response=await fetch("/api/replays/submit",{method:"POST",credentials:"same-origin",headers:{"content-type":"application/json"},body:JSON.stringify(payload)});
+      const detail=await response.json().catch(()=>({}));
+      if(response.ok&&detail.ok)window.dispatchEvent(new CustomEvent("ribbit-replay-uploaded",{detail:{level:payload.level,stored:detail.stored||[]}}));
+      else console.warn("Replay PB upload skipped:",detail.message||response.status);
     }
     installLeaderboard(){
       document.addEventListener("click",e=>{const frog=e.target.closest?.(".rr-replay-frog"),row=e.target.closest?.("#leaderboard-body tr");if(!row||(!frog&&!e.target.closest?.("td:nth-child(2)")))return;const metric=q("#leaderboard-metric")?.value;if(!["time","jumps"].includes(metric))return;const cells=row.querySelectorAll("td");const username=(cells[1]?.dataset.playerName||cells[1]?.textContent||"").replace("🐸","").trim(),level=(cells[3]?.textContent||q("#leaderboard-level")?.value||"").trim().toLowerCase();if(username)this.play(username,level,metric)});

@@ -5,11 +5,11 @@
  */
 (() => {
   "use strict";
-  const BUILD = "2026.10.13-friends-polish-38";
+  const BUILD = "2026.10.13-friends-polish-40";
   const RR_V160_CANDIDATES = {"catchFly":["attemptFlyCatch","attemptPvpFlyCatch","catchSandboxFly","getPvpImminentCatchFly","recordFlyEaten","scheduleFlyReplacementFromCatch"],"jumpSound":["playJumpSound"],"beep":["playCountdownGoSound","playCountdownSound"],"replayUpload":["saveRecordDate"],"restart":["resetGame","resetPvpGame","resetPvpPlayer","resetRoundLifecycle","resetRoundNetwork","restartCurrentLevel"],"drop":[],"render":["drawPvpScene","drawScene"],"worldRecord":[],"fullscreen":["getFullscreenElement","hideFullscreenFallback","showFullscreenFallback","syncFullscreenButton","toggleRibbitFullscreen"],"onlineSubmit":[],"leaderboard":["isSoloEndlessLeaderboardEligible","savePvpMatchWinsForLeaderboard"]};
   const RR_V160_VARS = {"onlineSelect":[],"achievementSelect":["activeAchievementIndex","hoveredAchievementCard"],"backRect":[]};
 
-  const VERSION = "1.7.26";
+  const VERSION = "1.7.27";
   const V = {
     menuTouch: new Map(), chargeTouch: new Map(), achievementPinned: -1,
     finalCatchStarted: 0, finalCatchLabelsGone: false,
@@ -21,7 +21,14 @@
     worldRecordDetail: "", worldRecordUntil: 0,
     longPressTimer: 0,
   };
-  const get = (name) => { try { return eval(name); } catch (_) { return undefined; } };
+  const get = (name) => {
+    if (name === "game") return game;
+    if (name === "pvpPlayers") return pvpPlayers;
+    if (name === "flies") return flies;
+    if (name === "canvas") return canvas;
+    if (["onlineSession","online","onlineState","pvpOnline"].includes(name)) return window.RibbitRaceOnlineSession;
+    try { return eval(name); } catch (_) { return undefined; }
+  };
   const set = (name, value) => { try { const __rrv=value; eval(name + " = __rrv"); return true; } catch (_) { return false; } };
   const first = (names, type) => { for (const n of names){ const v=get(n); if (!type || typeof v===type) return v; } return undefined; };
   const canvasEl = () => document.getElementById("game") || first(["canvas"]);
@@ -30,10 +37,7 @@
     if(typeof g==="string") return g;
     return String(g?.state ?? g?.mode ?? g?.screen ?? "");
   };
-  const mobileOn = () => {
-    const candidates=[get("mobileMode"),get("isMobileMode"),get("mobileControlsEnabled"),localStorage.getItem("ribbitRaceMobileModeV1")];
-    return candidates.some(v=>v===true||v===1||v==="1"||v==="true"||v==="mobile");
-  };
+  const mobileOn = () => isRibbitMobileMode();
   const logicalPoint = (ev) => {
     if (typeof getCanvasPoint === "function") return getCanvasPoint(ev);
     const c=canvasEl();
@@ -171,27 +175,43 @@
 
   // Replay recording: begin at run start, timesliced chunks, retain only qualifying records.
   window.RibbitRecordReplay={
+    session:null,
     start(){
-      if(mobileOn()) return false;
-      const cv=canvasEl(); if(!cv?.captureStream||typeof MediaRecorder==="undefined") return false;
-      this.discard();
-      const choices=["video/webm;codecs=vp9","video/webm;codecs=vp8","video/webm"];
-      const mime=choices.find(m=>MediaRecorder.isTypeSupported?.(m))||"";
+      if(mobileOn())return false;
+      const cv=canvasEl();if(!cv?.captureStream||typeof MediaRecorder==="undefined")return false;
+      this.discard();let stream;
       try{
-        const stream=cv.captureStream(24);V.replayChunks=[];V.replay=new MediaRecorder(stream,mime?{mimeType:mime,videoBitsPerSecond:2500000}:undefined);
-        V.replay.ondataavailable=e=>{if(e.data?.size)V.replayChunks.push(e.data)};V.replay.start(500);V.replayStartedAt=performance.now();return true;
-      }catch(_){this.discard();return false;}
+        stream=cv.captureStream(24);
+        const choices=["video/webm;codecs=vp9","video/webm;codecs=vp8","video/webm"];
+        const mime=choices.find(m=>MediaRecorder.isTypeSupported?.(m))||"";
+        const rec=new MediaRecorder(stream,mime?{mimeType:mime,videoBitsPerSecond:2500000}:undefined);
+        const session={rec,stream,parts:[],cancelled:false};this.session=session;
+        V.replay=rec;V.replayChunks=session.parts;V.replayStartedAt=performance.now();
+        rec.ondataavailable=e=>{if(!session.cancelled&&e.data?.size)session.parts.push(e.data);};
+        rec.addEventListener("stop",()=>{for(const track of stream.getTracks())track.stop();},{once:true});
+        rec.start(500);return true;
+      }catch(_){for(const track of stream?.getTracks?.()||[])track.stop();this.discard();return false;}
     },
     async finish(qualifies){
-      const rec=V.replay;if(!rec)return null;
-      const done=new Promise(resolve=>{rec.onstop=()=>resolve();});
-      if(rec.state!=="inactive")rec.stop();await done;
-      const chunks=V.replayChunks.slice();const type=rec.mimeType||"video/webm";this.discard();
-      if(!qualifies||!chunks.length)return null;
-      return new Blob(chunks,{type});
+      const session=this.session;if(!session)return null;
+      this.session=null;V.replay=null;V.replayChunks=[];V.replayStartedAt=0;
+      const rec=session.rec;
+      if(rec.state!=="inactive")await new Promise(resolve=>{
+        rec.addEventListener("stop",resolve,{once:true});try{rec.stop();}catch(_){resolve();}
+      });
+      for(const track of session.stream.getTracks())track.stop();
+      if(session.cancelled||!qualifies||!session.parts.length){session.parts.length=0;return null;}
+      const blob=new Blob(session.parts,{type:rec.mimeType||"video/webm"});session.parts.length=0;return blob;
     },
-    discard(){try{if(V.replay&&V.replay.state!=="inactive")V.replay.stop()}catch(_){}V.replay=null;V.replayChunks=[];V.replayStartedAt=0;}
+    discard(){
+      const session=this.session;this.session=null;
+      V.replay=null;V.replayChunks=[];V.replayStartedAt=0;
+      if(!session)return;
+      session.cancelled=true;try{if(session.rec.state!=="inactive")session.rec.stop();}catch(_){}
+      for(const track of session.stream.getTracks())track.stop();session.parts.length=0;
+    }
   };
+  window.addEventListener("pagehide",()=>window.RibbitRecordReplay.discard());
 
   // Guest save linking hook: after a newly created account signs in, apply and save guest keys.
   window.RibbitApplyPendingGuestSave=()=>{
@@ -315,19 +335,6 @@
     callCandidate(RR_V160_CANDIDATES.catchFly,[[p,best,"tongue"],[best,p,"tongue"],[p,best],[best,p],[best]]);
   }
 
-  // Start replay at run start; stop and keep only if the engine marks a personal or public record.
-  let observedRun=false;
-  function runLooksActive(){return /playing/i.test(stateName())&&!/online/i.test(stateName());}
-  function qualifiesAsRecord(){
-    const g=first(["game","gameState"]),p=first(["player"]);const bags=[g,p].filter(Boolean);
-    return bags.some(o=>Object.entries(o).some(([k,v])=>/record|personalBest|newBest|world/i.test(k)&&v===true));
-  }
-  async function uploadReplayBlob(blob){
-    if(!blob)return;
-    const hit=functionByNames(RR_V160_CANDIDATES.replayUpload);if(hit){try{await hit.fn(blob,{source:"full-run",startedAt:V.replayStartedAt});return;}catch(_){}}
-    window.dispatchEvent(new CustomEvent("rr-record-replay-ready",{detail:{blob,startedAt:V.replayStartedAt}}));
-  }
-
   // Guest conversion applies pending guest storage immediately after account creation/login.
   window.addEventListener("rr-authenticated",()=>{
     if(!window.RibbitApplyPendingGuestSave?.())return;
@@ -338,13 +345,7 @@
   window.addEventListener("rr-online-customizer-save",ev=>window.RibbitOnlineAppearance.set(ev.detail));
   window.addEventListener("rr-online-payload",ev=>{const a=window.RibbitOnlineAppearance.get();if(a&&ev.detail){ev.detail.appearance=a;ev.detail.skinId=a.id||ev.detail.skinId;}});
 
-  // Pause menu gets a real DOM fullscreen option that works with touch.
-  const frame=document.getElementById("game-frame");
-  const fsButton=document.createElement("button");fsButton.type="button";fsButton.id="rr-pause-fullscreen";fsButton.textContent="FULLSCREEN";
-  Object.assign(fsButton.style,{position:"absolute",zIndex:"91",display:"none",left:"50%",top:"71%",transform:"translate(-50%,-50%)",minWidth:"170px",padding:"10px 14px",border:"4px solid #26363d",background:"#f7fdff",color:"#34484f",font:'700 14px "Courier New",monospace',boxShadow:"4px 4px #aebbc0",cursor:"pointer"});
-  fsButton.addEventListener("click",()=>{const fn=functionByNames(RR_V160_CANDIDATES.fullscreen)?.fn;if(fn)fn();else document.getElementById("fullscreen-button")?.click();});
-  frame?.appendChild(fsButton);
-
+  // Canvas pause controls own fullscreen; there is no duplicate hidden DOM button.
   // Wrap platform drop functions when possible.
   for(const n of RR_V160_CANDIDATES.drop||[]){
     const old=get(n);if(typeof old!=="function"||old.__rrv160)continue;
@@ -359,19 +360,9 @@
     wrapped.__rrv160=true;set(n,wrapped);
   }
 
-  // Enrich the existing per-frame monitor.
-  const deepTick=async(now)=>{
-    finalCatchTongueAssist();
-    // Canvas pause chrome already has a working fullscreen icon. Do not
-    // display this legacy DOM button on top of the tutorial/Versus panel.
-    fsButton.style.display="none";
-    const active=runLooksActive();
-    if(active&&!observedRun){observedRun=true;window.RibbitRecordReplay.start();}
-    if(!active&&observedRun){observedRun=false;const q=qualifiesAsRecord();const blob=await window.RibbitRecordReplay.finish(q);if(q)await uploadReplayBlob(blob);}
-    requestAnimationFrame(deepTick);
-  };
+  // Keep the input assist, without a second recorder or hidden DOM writes.
+  const deepTick=()=>{finalCatchTongueAssist();requestAnimationFrame(deepTick);};
   requestAnimationFrame(deepTick);
-
 
   // --- Replay archive, Frog Tags details, record baselines, and post-render UI. ---
   const ReplayDb={

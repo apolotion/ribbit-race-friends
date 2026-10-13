@@ -2,8 +2,8 @@
 // Responsibilities: runtime bridge, deterministic PvP event telemetry, mobile
 // input support hooks, palette operations, post-hat progression, and replay state.
 
-const RIBBIT_FRIENDS_DISPLAY_VERSION = "1.7.26";
-const RIBBIT_FRIENDS_BUILD = "2026.10.13-friends-polish-38";
+const RIBBIT_FRIENDS_DISPLAY_VERSION = "1.7.27";
+const RIBBIT_FRIENDS_BUILD = "2026.10.13-friends-polish-40";
 
 function rr14Number(value, fallback = 0) {
   const parsed = Number(value);
@@ -108,7 +108,11 @@ function rr14Snapshot() {
     ownPlayerIndex: Math.floor(rr14FindNumeric(/onlinePlayerIndex|localPlayerIndex|pvpLocalIndex/i, 0)),
     randomSelected: (() => { try { return /random/i.test(String(game?.requestedStage || game?.selectedLevel || game?.levelSelection || "")); } catch (_) { return false; } })(),
     mobile: localStorage.getItem("rrFriendsMobileModeV1") === "1",
-    localVersus: (/pvp|versus/i.test(state) || Boolean(game?.pvpActive)) && !rr14OnlineActive(),
+    localVersus: game.mode === "pvp" && !rr14OnlineActive(),
+    mode: game.mode,
+    tutorialActive: Boolean(game.tutorialActive),
+    sandboxMode: Boolean(game.sandboxMode),
+    runId: game.replayRunId || 0,
     onlineVersus: rr14OnlineActive() || /online|quick/i.test(state),
     twoHuman: (() => { try { return !(game?.pvpCpuEnabled ?? game?.pvpCpu ?? true); } catch (_) { return false; } })()
   };

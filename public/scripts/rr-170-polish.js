@@ -256,9 +256,11 @@
       const isVs = versus();
       // The old DOM pause was removed; canvas HUD owns the only pause target.
       const inTutorial = tutorialActive();
-      hatHover.hidden = inTutorial || !hatMenu();
+      const hideHat = inTutorial || !hatMenu();
+      if (hatHover.hidden !== hideHat) hatHover.hidden = hideHat;
       const two = mobile() && isPlay && humanLocalVersus();
-      left.hidden = !two; right.hidden = !two;
+      if (left.hidden === two) left.hidden = !two;
+      if (right.hidden === two) right.hidden = !two;
       document.body.classList.toggle("rr-mobile-mode", mobile());
       requestAnimationFrame(update);
     }
@@ -267,17 +269,20 @@
 
   function installSpectatorPresentation() {
     let lastWinner = "";
+    let lastPresentationState = "";
     let overlay = null;
     function frame() {
       const h=hooks(), g=h?.game, spectator=h?.spectator;
       const onlineRound = /online|quickplay|spectat/.test(`${h?.state||""} ${h?.mode||""}`.toLowerCase());
       if (spectator || onlineRound) {
         // Remove the old delayed-replay footer if it is a DOM element.
-        document.querySelectorAll("*").forEach(el => {
+        const presentationState = `${h?.state}:${h?.mode}:${Boolean(spectator)}`;
+        if (lastPresentationState !== presentationState) document.querySelectorAll("*").forEach(el => {
           if (el.children.length===0 && /DELAYED VIEW|LEFT SHIFT|RIGHT SHIFT/i.test(el.textContent||"")) {
             if (/DELAYED VIEW/.test(el.textContent||"")) el.style.display="none";
           }
         });
+        lastPresentationState = presentationState;
         const winnerIndex=Number(g?.pvpRoundWinnerIndex??g?.roundWinnerIndex??g?.winnerIndex??-1);
         const winner=String(g?.roundWinnerName || g?.winnerName || (winnerIndex>=0?h?.playerName?.(winnerIndex):""));
         const signature=`${g?.pvpRoundIndex||g?.round||""}:${winner}:${g?.pvpRoundWinnerIndex??""}`;
