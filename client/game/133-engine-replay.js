@@ -11,7 +11,7 @@ const RIBBIT_REPLAY_SNAPSHOT_FIELDS = [
   "x","y","w","h","vx","vy","dir","grounded","charging","charge","landingSquash",
   "blinkTimer","blinking","score","skinId","bonked","stunTimer","bonkLandingPopTimer",
   "collisionCooldown","firstJumpMade","airTime","catchSparkleTimer","wrongCatchBubbleTimer","danceTime",
-  "jumpStreakTimer"
+  "jumpStreakTimer","recoveryFlipTimer"
 ];
 const RIBBIT_REPLAY_GAME_FIELDS = [
   "mode","state","selectedLevelId","timeOfDay","moonPhaseIndex","worldTime","visualTime",
@@ -25,7 +25,8 @@ const RIBBIT_REPLAY_GAME_FIELDS = [
   "pvpCriticalCatchScreenX","pvpCriticalCatchScreenY","pvpCriticalCatchFlyVisual",
   "winPending","pvpWinPendingIndex","finishTime","soloTimeRemaining","soloTimeLimitSeconds","soloTimedOut",
   "pvpCelebrationWinnerIndex","pvpWinnerIndex","pvpMatchWinnerIndex","messageTimer",
-  "tutorialActive","pvpImpactEffects","newBestTime","newFewestJumps"
+  "tutorialActive","pvpImpactEffects","newBestTime","newFewestJumps",
+  "countdownNumber","countdownTimer"
 ];
 let ribbitReplayCapture = null;
 let ribbitReplayLastCapture = null;
@@ -92,8 +93,12 @@ function finishRibbitReplayCapture(){
 function ribbitReplayCaptureTick(now=performance.now()){
   if(ribbitReplayView)return;
   const isSoloDance=!!(ribbitReplayCapture?.mode==="solo" && game.mode==="solo" && game.state==="won");
-  const normalGame=game.state==="playing" && ["solo","pvp"].includes(game.mode) &&
-    !tutorial.active && !game.tutorialActive && !game.sandboxMode && !OnlineVersus.isSpectating();
+  const validRecording = ["solo","pvp"].includes(game.mode) && !tutorial.active &&
+    !game.tutorialActive && !game.sandboxMode && !OnlineVersus.isSpectating();
+  const initialCountdown = validRecording && game.state === "countdown" &&
+    (!ribbitReplayCapture || ribbitReplayCapture.initialCountdownActive) &&
+    Number(game.elapsed || 0) < .2;
+  const normalGame = validRecording && (game.state === "playing" || initialCountdown);
   if(!normalGame&&!isSoloDance){
     const betweenRounds=ribbitReplayCapture?.mode==="pvp" &&
       ["pvpCelebration","pvpSuddenDeathAlert"].includes(game.state);
@@ -130,11 +135,12 @@ function ribbitReplayCaptureTick(now=performance.now()){
         pvpRoundGoalMode:game.pvpRoundGoalMode,pvpBestOf:game.pvpBestOf,
         vocab:VOCABULARY.map(e=>({english:e.english,spanish:e.spanish})),
         startedAt:now,lastAt:-Infinity,lastGameTime:0,pausedAt:0,pausedMillis:0,
-        victoryAt:0,final:null,frames:[],sounds:[]
+        initialCountdownActive:initialCountdown,victoryAt:0,final:null,frames:[],sounds:[]
       };
     }
   }
   const capture=ribbitReplayCapture;
+  if(capture && game.state === "playing") capture.initialCountdownActive = false;
   if(now-capture.lastAt>=RIBBIT_REPLAY_FRAME_INTERVAL-.6 && capture.frames.length<RIBBIT_REPLAY_MAX_FRAMES){
     capture.lastAt=now;
     capture.lastGameTime=Number(game.elapsed)||0;
@@ -145,6 +151,14 @@ function ribbitReplayCaptureTick(now=performance.now()){
     finishRibbitReplayCapture();
   }
   if(capture.frames.length>=RIBBIT_REPLAY_MAX_FRAMES)finishRibbitReplayCapture();
+}
+// Called before the three-count sound, so the recording includes 3, 2, 1,
+// then the game itself rather than beginning on the first Space release.
+function ribbitReplayCaptureCountdownStart(now=performance.now()) {
+  if (ribbitReplayView || ribbitReplayCapture || tutorial.active || game.tutorialActive ||
+      OnlineVersus.isSpectating() || game.state !== "countdown" ||
+      Number(game.elapsed || 0) > .15) return;
+  ribbitReplayCaptureTick(now);
 }
 // Every in-game sound is synthesized through tone(); capture its oscillator
 // parameters rather than an unsynchronized microphone/browser video recording.
@@ -371,11 +385,18 @@ function replayFrameAt(position,frames){
   const lerpPosition=(p,q)=>{
     if(!p)return p;
     const out={...p};
-    if(q){out.x=p.x+(q.x-p.x)*factor;out.y=p.y+(q.y-p.y)*factor;}
+    if(q){
+      out.x=p.x+(q.x-p.x)*factor;out.y=p.y+(q.y-p.y)*factor;
+      if(p.tongue && q.tongue && p.tongue.active && q.tongue.active)
+        out.tongue={...p.tongue,elapsed:p.tongue.elapsed+(q.tongue.elapsed-p.tongue.elapsed)*factor};
+    }
     return out;
   };
   const alternate=new Map((b.flies||[]).map(f=>[f.id,f]));
-  return {...a,player:lerpPosition(a.player,b.player),
+  const soloTongue = a.tongue && b.tongue && a.tongue.active && b.tongue.active
+    ? {...a.tongue,elapsed:a.tongue.elapsed+(b.tongue.elapsed-a.tongue.elapsed)*factor}
+    : a.tongue;
+  return {...a,tongue:soloTongue,player:lerpPosition(a.player,b.player),
     players:(a.players||[]).map((p,i)=>lerpPosition(p,b.players?.[i])),
     flies:(a.flies||[]).map(f=>{const next=alternate.get(f.id);return next?
       {...f,x:f.x+(next.x-f.x)*factor,y:f.y+(next.y-f.y)*factor}:f;})};
@@ -431,6 +452,13 @@ function paintRibbitReplayStage(){
     window.RibbitRaceFinalCatchLabelsGone=false;
     // Existing scene engine paints the original fly labels, HUD and slow-mo camera.
     ribbitReplayPreviousDrawScene();
+    if (state.phase === "countdown") {
+      // Gameplay state is deliberately rendered as playing for safety; the
+      // recorded countdown must therefore be overlaid explicitly.
+      game.state = "countdown";
+      drawResumeCountdown();
+      game.state = "playing";
+    }
     if(finalHold){
       const final=data.final,skin=getSelectedSkin();
       ctx.fillStyle="rgba(9,26,34,.82)";ctx.fillRect(103,84,274,78);
@@ -513,7 +541,8 @@ canvas.addEventListener("pointerdown",event=>{
 },true);
 window.RibbitEngineReplay=Object.freeze({
   mime:RIBBIT_ENGINE_REPLAY_MIME,fps:RIBBIT_REPLAY_FPS,
-  tick:ribbitReplayTick,exportCurrent:ribbitReplayExportCurrent,
+  tick:ribbitReplayTick,captureCountdownStart:ribbitReplayCaptureCountdownStart,
+  exportCurrent:ribbitReplayExportCurrent,
   finishCapture:finishRibbitReplayCapture,whenComplete:ribbitReplayWhenComplete,
   play:ribbitReplayBegin,close:ribbitReplayClose,
   seek:ribbitReplaySeek,unavailable:ribbitReplayUnavailable,

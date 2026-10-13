@@ -383,7 +383,9 @@
       // slow motion, without claiming the level has ended.
       if (reachedTarget) return "final";
       if (pvpFlyContestIsClose(player, targetFly)) return "contest";
-      if (buzzerWinningCatch || lastSecondCatch) return "clutch";
+      if (lastSecondCatch) return "clutch";
+      // The buzzer-grace catch is resolved as a regular contested catch; it
+      // must not display CLUTCH unless it happened during the final second.
       return "";
     }
 
@@ -438,7 +440,8 @@
       );
       if (criticalCatchKind) startPvpCriticalCatch(player, targetFly, criticalCatchKind);
       else if (reachedTarget) startPvpCriticalCatch(player, targetFly, "final");
-      else if (buzzerWinningCatch) startPvpCriticalCatch(player, targetFly, "clutch");
+      else if (buzzerWinningCatch && Number(game.pvpTimeRemaining) > 0 && Number(game.pvpTimeRemaining) <= 1)
+        startPvpCriticalCatch(player, targetFly, "clutch");
       if (game.pvpTimerGraceActive) {
         game.targetVocabIndex = null;
         game.spawnQueue = [];

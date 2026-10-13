@@ -137,7 +137,7 @@ test('Buffered sky demonstration faces right toward middle-right; player attempt
   c.setup('pvpBufferedSky');
   assert.equal(c.pvpPlayers[0].dir,-1);
   assert.equal(c.pvpPlayers[0].x,229); // top platform center; facing left
-  assert.equal(c.pvpPlayers[1].x,127); // slightly nearer the left-edge wall
+  assert.equal(c.pvpPlayers[1].x,97); // moved left to match the new arrow reference
   assert.equal(c.pvpPlayers[1].dir,1);
   const demo=section(scene,'function beginPvpDemoMotion','function startPvpDemonstration');
   assert.match(demo,/case "pvpDemoBufferedSky":[\s\S]{0,330}armPvpScriptedBuffer\(1, PARK_PLATFORMS\[6\]\)/);

@@ -128,8 +128,8 @@ function freezeControlledEntity() {
     if (!entity) continue;
     // During voiced dialogue, keep real airborne motion and active bonk
     // recovery so a rapid text advance cannot skip the flip-back animation.
-    const keepFlight = tutorial.kind === "pvp" && tutorial.dialogueOpen &&
-      game.state === "playing" && (!entity.grounded || entity.bonked);
+    const keepFlight = game.state === "playing" && !tutorial.resetPending &&
+      (!entity.grounded || entity.bonked || entity.stunTimer > 0);
     if (!keepFlight) { entity.vx = 0; entity.vy = 0; }
     entity.charging = false;
     entity.chargeHoldTime = 0;
@@ -535,7 +535,8 @@ function closeDialogue(source = "keyboard") {
   // before advancing to a new stage. Ignore a rushed final-line dismissal.
   if (tutorial.kind === "pvp" && tutorial.dynamicDialogueLines && tutorial.postSuccessAdvance) {
     const recovering = pvpPlayers.some((player) => player && (player.bonked ||
-      (player.stunCountdownStarted && player.stunTimer > 0)));
+      (player.stunCountdownStarted && player.stunTimer > 0) ||
+      (player.recoveryFlipTimer || 0) > 0));
     if (recovering) return true;
   }
   const keepJumpBlockedUntilRelease = source === "space-keydown" && tutorial.blockJumpUntilRelease;

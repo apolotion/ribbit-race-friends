@@ -5,7 +5,7 @@ test("final catch tongue assist calls normal catch candidates",()=>{assert.match
 test("in-engine replay records active gameplay without a parallel video capture",()=>{
   const engine=readFileSync("client/game/133-engine-replay.js","utf8");
   const upload=readFileSync("public/scripts/extended-features.js","utf8");
-  assert.match(engine,/game\.state==="playing"/);
+  assert.match(engine,/game\.state === "playing" \|\| initialCountdown/);
   assert.match(engine,/ribbitReplayCaptureTick/);
   assert.match(upload,/ribbit-solo-finished/);
   assert.match(upload,/api\/replays\/submit/);

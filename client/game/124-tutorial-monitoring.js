@@ -463,11 +463,28 @@ function monitorPvp() {
     // Never inherit a prior tutorial cinematic's permanent label-hiding flag.
     if (!game.pvpCriticalCatchActive && window.RibbitRaceFinalCatchLabelsGone)
       try { window.RibbitRaceResetFinalCatchLabels?.(); } catch (_) {}
+    if (tutorial.pvpFinalMatchStarted && game.state === "playing" &&
+        !game.pvpSuddenDeath && game.pvpTimeLimitSeconds > 0 &&
+        game.pvpTimeRemaining <= 0 &&
+        (Number.isFinite(game.pvpTimeExpiredRealAt) || Number.isFinite(game.pvpTimeExpiredAt))) {
+      if (!Number.isFinite(tutorial.pvpZeroClockObservedAt) || tutorial.pvpZeroClockObservedAt <= 0)
+        tutorial.pvpZeroClockObservedAt = now;
+      if (now - tutorial.pvpZeroClockObservedAt > 2800) {
+        // In an orphaned cinematic/bonk state, the clock must still end the
+        // round. After an ordinary grace period resolve by the actual scores.
+        game.pvpCriticalCatchActive = false;
+        game.pvpTimerGraceActive = false;
+        game.pvpTimedOutcomePending = true;
+        resolvePvpTimedOutcomeAfterJump();
+        tutorial.pvpZeroClockObservedAt = 0;
+      }
+    } else tutorial.pvpZeroClockObservedAt = 0;
     if (tutorial.pvpFinalMatchStarted && game.state === "won") beginPvpTutorialEnding();
     return;
   }
   if (tutorial.passPending) {
-    if (p1?.grounded && !p1.tongue?.active && !game.pvpCriticalCatchActive) finalizePassedStep();
+    if (p1?.grounded && !p1.bonked && !p1.tongue?.active &&
+        !ember?.bonked && !game.pvpCriticalCatchActive) finalizePassedStep();
     return;
   }
   drivePvpPracticeCpu(setup, now);
@@ -781,13 +798,15 @@ function updateTutorial() {
   // Tutorial flies and the English clue must always describe the SAME target,
   // including after chapter navigation, retry poofs, and rebound demo resets.
   // A queued reveal is respected; already-visible flies are never hidden again.
-  if (tutorial.kind === "pvp" && tutorialStep()?.setup !== "pvpFinalMatch" &&
-      !tutorial.dialogueOpen && !tutorial.resetPending && tutorial.pvpFlyRevealAt <= 0) {
-    const authored = flies.filter((fly) => fly?.tutorialAuthored && fly.state === "active" && fly.tutorialArmed);
-    if (authored.length) {
-      if (!authored.some((fly) => fly.vocabIndex === game.targetVocabIndex)) setPrompt(authored[0].vocabIndex);
-      tutorial.promptHidden = false;
+  if (tutorial.kind === "pvp") {
+    // An armed, on-screen fly always has a matching English clue, EVEN while
+    // Ember explains the move or a completed scene is transitioning. This
+    // applies to both authored practice flies and the live final match.
+    const visible = flies.filter((fly) => fly && fly.state !== "eaten" && Number.isInteger(fly.vocabIndex));
+    if (visible.length && !visible.some((fly) => Number(fly.vocabIndex) === game.targetVocabIndex)) {
+      setPrompt(visible[0].vocabIndex);
     }
+    if (visible.length) tutorial.promptHidden = false;
   }
   if (tutorial.pvpDemoActive) {
     updatePvpDemonstration();

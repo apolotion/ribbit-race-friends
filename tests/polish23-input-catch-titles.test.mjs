@@ -156,9 +156,9 @@ test('close contests at the buzzer keep the CLOSE CATCH label', () => {
   const h=catchHarness();h.c.game.pvpTimeRemaining=.5;h.close();assert.equal(h.trigger(),'contest');
   h.c.drawPvpCriticalCatchOverlay();assert.deepEqual(h.labels,['CLOSE CATCH!']);
 });
-test('a tie-breaking buzzer catch is not confused with completing a five-fly goal', () => {
+test('a buzzer-grace catch is NOT mislabeled CLUTCH after time expires', () => {
   const h=catchHarness();h.c.game.pvpTimeRemaining=0;h.c.game.pvpTimerGraceActive=true;
-  assert.equal(h.trigger(),'clutch');h.c.drawPvpCriticalCatchOverlay();assert.deepEqual(h.labels,['CLUTCH CATCH!']);
+  assert.equal(h.trigger(),'');assert.equal(h.c.game.pvpCriticalCatchActive,false);
 });
 test('a real goal completion still wins title priority at the buzzer', () => {
   const h=catchHarness();h.c.game.pvpTimeRemaining=.2;h.c.pvpPlayers[0].score=4;

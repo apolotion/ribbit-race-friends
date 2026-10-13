@@ -19,9 +19,9 @@ function block(start, end) {
 }
 
 test("polish 12 cache marker is wired", () => {
-  assert.match(engine, /2026\.10\.13-friends-polish-45/);
-  assert.match(read("public/index.html"), /game\.bundle\.js\?v=2026\.10\.13-friends-polish-45/);
-  assert.match(read("src/common.js"), /2026\.10\.13-friends-polish-45/);
+  assert.match(engine, /2026\.10\.13-friends-polish-46/);
+  assert.match(read("public/index.html"), /game\.bundle\.js\?v=2026\.10\.13-friends-polish-46/);
+  assert.match(read("src/common.js"), /2026\.10\.13-friends-polish-46/);
 });
 
 test("Ember nameplate is centered in the upper-left of the dialogue panel", () => {

@@ -457,8 +457,12 @@ function passStep() {
   // Techniques such as wall rebounds can succeed in mid-air. Let the real
   // engine finish the landing before Ember freezes the pose for dialogue.
   if ((tutorial.kind === "solo" && (!frog.grounded || tongue.active || game.soloCriticalCatchActive)) ||
-      (tutorial.kind === "pvp" && ["pvpBoostBonk", "pvpReboundCatch", "pvpDinnerSteal"].includes(tutorialStep()?.setup) &&
-       (!pvpPlayers[0].grounded || pvpPlayers[0].tongue.active || game.pvpCriticalCatchActive))) {
+      (tutorial.kind === "pvp" && tutorialStep()?.setup !== "pvpFinalMatch" &&
+       (!pvpPlayers[0].grounded || pvpPlayers[0].bonked ||
+        pvpPlayers[0].tongue?.active || game.pvpCriticalCatchActive ||
+        // A bonked coach must finish dropping; no levitating victim in dialogue.
+        pvpPlayers[1].bonked ||
+        (!pvpPlayers[1].grounded && !tutorialStep()?.demonstration)))) {
     tutorial.passPending = true;
     tutorial.passPendingAt = performance.now();
     clearHeldInput();

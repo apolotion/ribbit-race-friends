@@ -91,6 +91,11 @@
       }
 
       const centeredX = Math.round(anchorX - width / 2);
+      // Tutorial challenge flies sometimes sit near the far edge of the
+      // camera. Keep their entire vocabulary plate legible without shifting
+      // normal game labels or the physical anchor of the fly itself.
+      const readableX = game.tutorialActive && game.mode === "pvp"
+        ? clamp(centeredX, 3, W - width - 3) : centeredX;
       const firstTop = Math.round(anchorY - height - 8);
       const stableLabelObstacles = [];
       for (const [otherKey, placement] of flyLabelPlacementCache.entries()) {
@@ -101,7 +106,7 @@
       let chosen = null;
       for (let row = 0; row < 6; row += 1) {
         const candidate = {
-          x: centeredX,
+          x: readableX,
           y: Math.max(2, firstTop - row * (height + 4)),
           w: width,
           h: height
@@ -111,7 +116,7 @@
           break;
         }
       }
-      if (!chosen) chosen = { x: centeredX, y: Math.max(2, firstTop), w: width, h: height };
+      if (!chosen) chosen = { x: readableX, y: Math.max(2, firstTop), w: width, h: height };
 
       const stableRect = Object.freeze(chosen);
       flyLabelPlacementCache.set(cacheKey, {
@@ -214,7 +219,10 @@
       const height = Math.round(Math.max(17, 8 + layout.lines.length * lineHeight));
       const rect = chooseFlyLabelRect(currentFly, anchor, width, height);
       const sprite = getFlyLabelSprite(currentFly, term, layout, width, height);
-      const appear = clamp(currentFly.spawnAge / CONFIG.flyGrowDuration, 0, 1);
+      // Fly art may be drawn while emerging: the matching term plate must be
+      // visible from that very first frame of an authored Versus exercise.
+      const appear = game.tutorialActive && game.mode === "pvp"
+        ? 1 : clamp(currentFly.spawnAge / CONFIG.flyGrowDuration, 0, 1);
       const cinematic = game.soloCriticalCatchActive || game.pvpCriticalCatchActive;
       const alpha = appear * getCriticalCatchWordFade();
       if (alpha <= 0.01) return;
@@ -862,7 +870,8 @@
     function drawVocabularyPrompt() {
       if (!["playing", "paused", "countdown"].includes(game.state)) return;
       if (game.sandboxMode || game.winPending || !Number.isInteger(game.targetVocabIndex)) return;
-      if (game.tutorialActive && !flies.some((fly) => fly && fly.state === "active" && fly.tutorialArmed !== false)) return;
+      if (game.tutorialActive && !flies.some((fly) => fly &&
+          (game.mode === "pvp" ? fly.state !== "eaten" : fly.state === "active" && fly.tutorialArmed !== false))) return;
 
       const prompt = normalizeVocabularyCellText(getLocalizedClueTerm(VOCABULARY[game.targetVocabIndex]) || "", 80);
       const left = 154;

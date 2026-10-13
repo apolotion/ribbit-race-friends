@@ -518,7 +518,7 @@ function configurePvpStep(index) {
     case "pvpBufferedSky": {
       const leftMiddle = PARK_PLATFORMS[2];
       positionPvpOnPlatform(p1, top, -1);
-      positionPvp(ember, leftMiddle.x-2, CONFIG.groundY-ember.h, 1);
+      positionPvp(ember, leftMiddle.x-32, CONFIG.groundY-ember.h, 1);
       break;
     }
     case "pvpDemoHighGround":
@@ -535,13 +535,14 @@ function configurePvpStep(index) {
     case "pvpDemoRecoveryBonk":
       // A single charged leftward jump bonks P1; the wall, not a scripted
       // direction reversal, must turn Ember around for the second contact.
-      positionPvp(p1, Math.round(W * .25), CONFIG.groundY - p1.h, 1);
-      positionPvp(ember, Math.round(W * .50), CONFIG.groundY - ember.h, -1);
+      positionPvp(p1, 104, CONFIG.groundY - p1.h, 1);
+      positionPvp(ember, 265, CONFIG.groundY - ember.h, -1);
       break;
     case "pvpRecoveryBonk":
-      // Mirror the pictured practice: player RIGHT, Ember LEFT on the ground.
-      positionPvp(p1, 305, CONFIG.groundY - p1.h, -1);
-      positionPvp(ember, 145, CONFIG.groundY - ember.h, 1);
+      // Use the original tutorial starting positions (screenshot reference):
+      // player on the left facing Ember, Ember on the right facing P1.
+      positionPvp(p1, 145, CONFIG.groundY - p1.h, 1);
+      positionPvp(ember, 305, CONFIG.groundY - ember.h, -1);
       break;
     case "pvpDemoBoostBonk":
       // Ember's demonstration starts with player on the left and Ember on the
@@ -575,7 +576,7 @@ function configurePvpStep(index) {
       // the player has released the first jump.
       const center = PARK_PLATFORMS[3];
       positionPvpOnPlatform(p1, PARK_PLATFORMS[2], 1);
-      positionPvp(ember, center.x + 28, CONFIG.groundY - ember.h, -1);
+      positionPvp(ember, center.x + 28, CONFIG.groundY - ember.h, 1);
       break;
     }
     case "pvpDemoAvoidUnder":
@@ -1010,7 +1011,8 @@ function updatePvpDemonstration() {
   // from the original positions instead of scripting a second jump.
 
   if (setup === "pvpDemoBoostBonk" && tutorial.pvpDemoStage >= 1 && tutorial.pvpDemoBonkCount >= 2 &&
-      !tutorial.pvpDemoFollowupStarted && ember.grounded && !ember.charging) {
+      !tutorial.pvpDemoFollowupStarted && !tutorial.pvpTechniqueCatchQualified &&
+      tutorial.pvpPracticeCatchCount <= 0 && ember.grounded && !ember.charging) {
     tutorial.pvpDemoFollowupStarted = true;
     scriptPvpChargedJump(1, .86, null, 120);
     // Let the normal automatic tongue/catch radius collect the high fly.
@@ -1080,7 +1082,7 @@ function updatePvpDemonstration() {
       // Buffer through the middle-left perch on the return so the recovery
       // collision reaches the waiting frog instead of stopping on its ledge.
       armPvpScriptedBuffer(1, PARK_PLATFORMS[1]);
-      scriptPvpChargedJump(1, .75, null, 0);
+      scriptPvpChargedJump(1, .88, -1, 0);
     }
   }
 
@@ -1106,6 +1108,7 @@ function updatePvpDemonstration() {
     const bonkImpactReady = tutorial.pvpDemoBonkAt > 0 && now - tutorial.pvpDemoBonkAt >= 100;
     completed = bonkImpactReady &&
       (setup === "pvpDemoSkyBonk" ? ember.grounded : now - tutorial.pvpDemoBonkAt >= 950) &&
+      (setup !== "pvpDemoBufferedSky" || (p1.grounded && p1.y + p1.h >= CONFIG.groundY - 1)) &&
       (setup !== "pvpDemoHighGround" || (p1.grounded && p1.y + p1.h >= CONFIG.groundY - 1)) &&
       (setup !== "pvpDemoBufferedSky" || ember.grounded);
   } else if (setup === "pvpDemoBonkCatch" || setup === "pvpDemoReboundCatch" || setup === "pvpDemoDinnerSteal") {

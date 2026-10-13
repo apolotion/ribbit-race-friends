@@ -132,7 +132,7 @@ attemptPvpFlyCatch = function(player, targetFly, source = "body", ...rest) {
 // achievement while it is active; only the dedicated completion achievement
 // may pass through when the tutorial itself awards it.
 window.RibbitTutorialShouldHidePvpCatchTitle = () => Boolean(
-  tutorial.active && tutorial.kind === "pvp" && tutorialStep()?.setup !== "pvpFinalMatch"
+  tutorial.active && tutorial.kind === "pvp"
 );
 
 const originalMarkAchievementEarnedForTutorial = markAchievementEarned;
@@ -481,7 +481,23 @@ releasePvpButton = function(index, source = "human", ...rest) {
   const finalCpu = tutorial.active && tutorial.kind === "pvp" &&
     tutorialStep()?.setup === "pvpFinalMatch" && index === getPvpCpuIndex() && source === "cpu";
   if (!finalCpu && tutorialBlocksLiveInput()) return;
-  return originalReleasePvpButtonForTutorial.call(this, index, source, ...rest);
+  const lesson = tutorial.active && tutorial.kind === "pvp" && index === 0 && source === "human"
+    ? tutorialStep()?.setup : "";
+  const quickTapAllowed = new Set([
+    "pvpDropLow", "pvpDropHigh", "pvpAvoidUnder", "pvpReboundThree",
+    // These lessons intentionally require multiple airborne jumps/attempts.
+    "pvpRecoveryBonk", "pvpBoostBonk", "pvpUnderBonkTwo", "pvpFinalMatch"
+  ]);
+  const actor = pvpPlayers[index];
+  const accidentalShortJump = Boolean(lesson && !quickTapAllowed.has(lesson) &&
+    actor?.grounded && actor.charging && actor.chargeHoldTime < 0.16 &&
+    (!getPvpStandingPlatform(actor) || getPvpStandingPlatform(actor)?.ground));
+  const result = originalReleasePvpButtonForTutorial.call(this, index, source, ...rest);
+  if (accidentalShortJump && actor && !actor.grounded &&
+      !tutorial.resetPending && !tutorial.passed) {
+    failAttempt("HOLD JUMP TO CHARGE — A QUICK TAP IS NOT A BONK");
+  }
+  return result;
 };
 
 const originalDrawArcPreviewForTutorial = drawArcPreview;
@@ -574,7 +590,8 @@ update = function(dt, ...rest) {
       for (const player of pvpPlayers) {
         player.inputHeld = false;
         player.charging = false;
-        if (!player.grounded || player.bonked || player.stunTimer > 0 || player.bonkLandingPopTimer > 0) {
+        if (!player.grounded || player.bonked || player.stunTimer > 0 ||
+            player.bonkLandingPopTimer > 0 || player.recoveryFlipTimer > 0) {
           // The recovery countdown and final rotation run even with the frog
           // on the floor and Ember speaking. Input remains blocked.
           updatePvpPlayer(player, dt);

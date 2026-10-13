@@ -88,7 +88,7 @@ test('Fly vocabulary matches live visible targets and blank panel survives retri
 
 test('Real wall rebound controls Ember facing, rebound sparkles affect both frogs', () => {
   assert.match(scenarios,/ember\.wallBouncedThisJump/);
-  assert.match(scenarios,/scriptPvpChargedJump\(1, \.75, null, 0\)/);
+  assert.match(scenarios,/scriptPvpChargedJump\(1, \.88, -1, 0\)/);
   assert.doesNotMatch(scenarios,/scriptPvpChargedJump\(1, \.55, 1, 0\)/);
   assert.match(hooks,/a\.catchSparkleTimer/);
   assert.match(hooks,/b\.catchSparkleTimer/);

@@ -469,6 +469,7 @@
       player.catchSparkleTimer = Math.max(0, player.catchSparkleTimer - dt);
       player.wrongCatchBubbleTimer = Math.max(0, player.wrongCatchBubbleTimer - dt);
       player.landingSquash = Math.max(0, player.landingSquash - dt * 4.5);
+      player.recoveryFlipTimer = Math.max(0, (player.recoveryFlipTimer || 0) - dt);
       player.bonkLandingPopTimer = Math.max(0, (player.bonkLandingPopTimer || 0) - dt);
       player.collisionCooldown = Math.max(0, player.collisionCooldown - dt);
       player.blinkTimer -= dt;
@@ -487,11 +488,17 @@
         if (prevStun > 0 && player.stunTimer === 0) {
           player.stunCountdownStarted = false;
           player.lastStunEndAt = game.pvpElapsed;
+          player.recoveryFlipTimer = .24;
+          player.landingSquash = 0;
+          player.bonkLandingPopTimer = 0;
           if (heldThroughStun) startPvpCharge(player);
         }
         player.charging = player.stunTimer === 0 ? player.charging : false;
         player.vx = 0;
         player.vy = 0;
+        // Stun recovery occurs ON the ground. The previous code flipped
+        // grounded=true without correcting a platform-height Y value.
+        player.y = CONFIG.groundY - player.h;
         player.grounded = true;
         player.openingJumpActive = false;
         return;

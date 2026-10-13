@@ -52,12 +52,12 @@ test('Frog Tags play saved frame data on stage and never construct a video popup
 });
 test('unexpected in-air bonks settle normally while Ember dialogue blocks input',()=>{
   assert.match(hooks,/tutorial\.kind === "pvp" && tutorial\.dialogueOpen/);
-  assert.match(hooks,/player\.stunTimer > 0 \|\| player\.bonkLandingPopTimer > 0/);
+  assert.match(hooks,/player\.stunTimer > 0 \|\|\s*player\.bonkLandingPopTimer > 0/);
   assert.match(hooks,/player\.charging = false/);
   assert.match(hooks,/updatePvpImpactEffects\(dt\)/);
 });
 test('WATCH EMBER caption remains until speech actually begins',()=>{
-  assert.match(captions,/const holdingEmber = tutorial\.pvpCaption === "WATCH EMBER!" && !tutorial\.dialogueOpen/);
-  assert.match(captions,/\(!holdingEmber && performance\.now\(\) > tutorial\.pvpCaptionUntil\)/);
+  assert.match(captions,/const holdUntilDialogue = !tutorial\.dialogueOpen/);
+  assert.match(captions,/\(!holdUntilDialogue && performance\.now\(\) > tutorial\.pvpCaptionUntil\)/);
   assert.match(lessons,/tutorial\.pvpCaption = "WATCH EMBER!";\s*tutorial\.pvpCaptionUntil = performance\.now\(\) \+ 15000/);
 });

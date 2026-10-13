@@ -17,8 +17,8 @@ function block(start, end) {
 }
 
 test("polish-9 cache marker forces the rebuilt tutorial and Versus lesson UI to load", () => {
-  assert.match(engine, /2026\.10\.13-friends-polish-45/);
-  assert.match(index, /game\.bundle\.js\?v=2026\.10\.13-friends-polish-45/);
+  assert.match(engine, /2026\.10\.13-friends-polish-46/);
+  assert.match(index, /game\.bundle\.js\?v=2026\.10\.13-friends-polish-46/);
 });
 
 test("dialogue uses the new reference framing and keeps Ember's full square unobstructed", () => {

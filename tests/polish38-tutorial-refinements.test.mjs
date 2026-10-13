@@ -72,7 +72,7 @@ test('high-ground lesson uses one maximum jump and resets misses', () => {
 test('wait-next-bonk demo uses physical wall rebound and never turns Ember manually', () => {
   assert.match(scenes, /case "pvpDemoRecoveryBonk":[\s\S]{0,350}scriptPvpChargedJump\(1, \.55, -1, 0\)/);
   assert.match(scenes, /if \(ember\.wallBouncedThisJump\) tutorial\.pvpRecoveryWallReboundSeen = true/);
-  assert.match(scenes, /scriptPvpChargedJump\(1, \.75, null, 0\)/);
+  assert.match(scenes, /scriptPvpChargedJump\(1, \.88, -1, 0\)/);
   assert.doesNotMatch(scenes, /scriptPvpChargedJump\(1, \.55, 1, 0\)/);
 });
 

@@ -280,9 +280,12 @@
       const popOffset = player.bonkLandingPopTimer > 0 ? Math.round(Math.sin(popProgress * Math.PI) * 3) : 0;
       const baseY = Math.round(player.y + player.h - popOffset);
       const recoveryWindow = 0.22;
-      const recovering = player.stunCountdownStarted && player.stunTimer > 0 && player.stunTimer <= recoveryWindow;
-      const recoveryProgress = recovering ? clamp(1 - player.stunTimer / recoveryWindow, 0, 1) : 0;
-      const upsideDown = player.bonked || player.stunTimer > 0;
+      const recoveringStun = player.stunCountdownStarted && player.stunTimer > 0 && player.stunTimer <= recoveryWindow;
+      const recoveringFlip = (player.recoveryFlipTimer || 0) > 0;
+      const recovering = recoveringStun || recoveringFlip;
+      const recoveryProgress = recoveringStun ? clamp(1 - player.stunTimer / recoveryWindow, 0, 1)
+        : recoveringFlip ? 1 - player.recoveryFlipTimer / .24 : 0;
+      const upsideDown = player.bonked || player.stunTimer > 0 || recoveringFlip;
       const sx = 1 + player.landingSquash * 0.18 + (player.charging ? player.charge * 0.20 : 0);
       const sy = 1 / Math.sqrt(sx);
       ctx.save();
@@ -1406,7 +1409,8 @@
       }
       // Keep an eaten fly visible while its real tongue retracts during the
       // tutorial slow-motion zoom. The body and word plate travel with it.
-      if (criticalCatch && tutorial.active && tutorial.kind === "pvp") {
+      if (criticalCatch && ((tutorial.active && tutorial.kind === "pvp") ||
+          window.RibbitEngineReplay?.active?.())) {
         const ghost = game.pvpCriticalCatchFlyVisual;
         if (ghost && !flies.some((fly) => fly?.id === ghost.id)) {
           const catcher = pvpPlayers[game.pvpCriticalCatchWinnerIndex];

@@ -1115,6 +1115,8 @@
       game.countdownNumber = 3;
       game.countdownTimer = CONFIG.resumeCountdownStepDuration;
       game.state = "countdown";
+      // Seed the replay BEFORE the first countdown tone, not the first jump.
+      window.RibbitEngineReplay?.captureCountdownStart?.(performance.now());
       if(!OnlineVersus.isActive())playCountdownSound(3);
     }
 
