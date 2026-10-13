@@ -17,8 +17,8 @@ function block(start, end) {
 }
 
 test("polish-9 cache marker forces the rebuilt tutorial and Versus lesson UI to load", () => {
-  assert.match(engine, /2026\.10\.12-friends-polish-23/);
-  assert.match(index, /game\.bundle\.js\?v=2026\.10\.12-friends-polish-23/);
+  assert.match(engine, /2026\.10\.12-friends-polish-25/);
+  assert.match(index, /game\.bundle\.js\?v=2026\.10\.12-friends-polish-25/);
 });
 
 test("dialogue uses the new reference framing and keeps Ember's full square unobstructed", () => {
@@ -34,7 +34,8 @@ test("dialogue uses the new reference framing and keeps Ember's full square unob
 });
 
 test("pause panel renders above an active Ember dialogue", () => {
-  assert.match(engine, /drawSoloPauseOverlay = function[\s\S]{0,180}drawTutorialDialogue\(\)[\s\S]{0,160}originalDrawSoloPauseOverlayForTutorial/);
+  assert.match(engine, /drawSoloPauseOverlay = function[\s\S]{0,90}if \(tutorial\.active\) return/);
+  assert.match(engine, /drawTutorialOverlay\(\)[\s\S]{0,230}drawTutorialPauseOverlay\(\)/);
   assert.match(engine, /if \(game\.state === "paused"\) \{[\s\S]{0,100}drawCurrentGoalHud\(\)/);
 });
 
@@ -75,8 +76,8 @@ test("buffered-drop placement is five pixels left and triple-buffer starts botto
 });
 
 test("Solo tutorial book occupies the former settings slot with settings immediately to its left", () => {
-  assert.match(ui, /settingsButton: Object\.freeze\(\{ id: "settings", x: 358, y: 211, w: 24, h: 24 \}\)/);
-  assert.match(ui, /tutorialButton: Object\.freeze\(\{ id: "tutorial", x: 382, y: 211, w: 24, h: 24 \}\)/);
+  assert.match(ui, /settingsButton: Object\.freeze\(\{ id: "settings", x: 350, y: 211, w: 24, h: 24 \}\)/);
+  assert.match(ui, /tutorialButton: Object\.freeze\(\{ id: "tutorial", x: 378, y: 211, w: 24, h: 24 \}\)/);
   assert.match(ui, /timeButton: Object\.freeze\(\{ x: 406, y: 211, w: 24, h: 24 \}\)/);
 });
 

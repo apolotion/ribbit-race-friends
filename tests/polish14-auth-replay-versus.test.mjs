@@ -54,15 +54,14 @@ test("PvP demonstrations use real charged jumps after a one-second viewing delay
   assert.match(tutorial, /WATCH EMBER!/);
 });
 
-test("PvP practice retries, three bonk layouts, crown Ember, and max-charge boost are wired", () => {
+test("PvP practice keeps authored bonk layouts, crowns Ember, and uses pause-only scene restart", () => {
   assert.match(tutorial, /function positionPvpBonkPracticeLayout/);
   assert.match(tutorial, /next-pvp-bonk/);
   assert.match(tutorial, /Let's see three bonks!/);
   assert.match(tutorial, /hat:"crown"/);
   assert.match(tutorial, /pvpEmberJumpScheduledAt[\s\S]{0,700}scriptPvpChargedJump\(1, \.98, -1, 0\)/);
   assert.doesNotMatch(tutorial, /\["Escape", "KeyR"\]/);
-  assert.match(tutorial, /event\.code === "KeyR"/);
-  assert.match(tutorial, /retryScene\(\)/);
+  assert.doesNotMatch(tutorial, /event\.code === "KeyR"[\s\S]{0,160}retryScene/);
 });
 
 test("lesson scenes suppress stray flies and keep score counters tutorial-safe", () => {

@@ -17,10 +17,10 @@ function block(start, end) {
   return engine.slice(from, to);
 }
 
-test("1.7.12 polished tutorial build and first-boot marker are installed", () => {
-  assert.equal(JSON.parse(read("package.json")).version, "1.7.12");
-  assert.match(read("src/common.js"), /2026\.10\.12-friends-polish-23/);
-  assert.match(engine, /const TUTORIAL_BUILD = "2026\.10\.12-friends-polish-23"/);
+test("1.7.14 polished tutorial build and first-boot marker are installed", () => {
+  assert.equal(JSON.parse(read("package.json")).version, "1.7.14");
+  assert.match(read("src/common.js"), /2026\.10\.12-friends-polish-25/);
+  assert.match(engine, /const TUTORIAL_BUILD = "2026\.10\.12-friends-polish-25"/);
   assert.match(engine, /rrFriendsEngineTutorialSoloSeenV8/);
 });
 
@@ -213,8 +213,8 @@ test("tutorial terms blank only their value while goals remain live", () => {
 });
 
 test("pause provides retry and skip, and resuming tutorial bypasses the countdown", () => {
-  assert.match(engine, /"RESTART SCENE"/);
-  assert.match(engine, /"EXIT TUTORIAL"/);
+  assert.match(render, /"RESTART SCENE"/);
+  assert.match(render, /"EXIT TUTORIAL"/);
   assert.match(engine, /const originalResumePausedGameForTutorial = resumePausedGame/);
   assert.match(engine, /if \(tutorial\.active && game\.state === "paused"\)[\s\S]{0,260}game\.state = "playing"/);
   assert.match(engine, /game\.countdownNumber = 0/);

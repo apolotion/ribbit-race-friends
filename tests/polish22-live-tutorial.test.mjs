@@ -39,17 +39,21 @@ test('second bonk target is centered under middle-left; third swaps the player i
  c.positionPvpBonkPracticeLayout(2);assert.equal(c.pvpPlayers[0].x+c.pvpPlayers[0].w/2,164);assert.equal(c.pvpPlayers[0].y,200);
  assert.deepEqual([c.pvpPlayers[1].x+c.pvpPlayers[1].w/2,c.pvpPlayers[1].y+c.pvpPlayers[1].h],[316,126]);
 });
-test('high drop swaps roles in the same ground-left lane',()=>{
- const c=geometry();c.setup('pvpDemoDropHigh');const positions=c.pvpPlayers.map(p=>[p.x,p.y,p.dir]);assert.deepEqual(positions,[[178,200,1],[248,56,-1]]);
- c.setup('pvpDropHigh');assert.deepEqual(c.pvpPlayers.map(p=>[p.x,p.y,p.dir]),positions.reverse());
+test('high drop mirrors the player turn onto the right-side landing lane',()=>{
+ const s=read('client/game/122-tutorial-scenarios.js');
+ assert.match(s,/case "pvpDropHigh"[\s\S]{0,220}positionPvpOnPlatform\(p1, top, 1, 4\)/);
+ assert.match(s,/case "pvpDropHigh"[\s\S]{0,260}positionPvp\(ember, PARK_PLATFORMS\[3\]\.x \+ PARK_PLATFORMS\[3\]\.w \+ 4, CONFIG\.groundY - ember\.h, -1\)/);
 });
-test('buffered-bonk roles share a target exactly centered under lower-middle',()=>{
- const c=geometry();c.setup('pvpBufferedBonk');assert.deepEqual(c.pvpPlayers.map(p=>[p.x,p.y,p.dir]),[[105,200,1],[229,200,-1]]);
- c.setup('pvpDemoBufferedBonk');assert.deepEqual(c.pvpPlayers.map(p=>[p.x,p.y,p.dir]),[[229,200,-1],[105,200,1]]);
+test('buffered-bonk demo mirrors Ember from the right side of the stage',()=>{
+ const s=read('client/game/122-tutorial-scenarios.js');
+ assert.match(s,/case "pvpDemoBufferedBonk"[\s\S]{0,200}positionPvpOnPlatform\(p1, PARK_PLATFORMS\[3\], 1\)/);
+ assert.match(s,/case "pvpDemoBufferedBonk"[\s\S]{0,200}positionPvp\(ember, 365, CONFIG\.groundY - ember\.h, -1\)/);
 });
-test('knock-off demo places Ember lower-middle and player top-center',()=>{
- const c=geometry();c.setup('pvpDemoHighGround');assert.deepEqual(c.pvpPlayers.map(p=>[p.x,p.y]),[[229,56],[229,162]]);
- assert.match(section(scene,'function updatePvpDemonstration','function startPvpFinalMatch'),/p1\.grounded && p1\.y \+ p1\.h >= CONFIG\.groundY - 1/);
+test('knock-off demo now uses the lower-right platform and one jump',()=>{
+ const s=read('client/game/122-tutorial-scenarios.js');
+ assert.match(s,/case "pvpDemoHighGround"[\s\S]{0,400}positionPvpOnPlatform\(p1, PARK_PLATFORMS\[6\], 1\)/);
+ assert.match(s,/case "pvpDemoHighGround"[\s\S]{0,500}positionPvp\(ember, PARK_PLATFORMS\[6\]\.x \+ PARK_PLATFORMS\[6\]\.w - ember\.w - 2, CONFIG\.groundY - ember\.h, -1\)/);
+ assert.match(s,/case "pvpDemoHighGround"[\s\S]{0,1200}scriptPvpChargedJump\(1, \.84, -1, 0\)/);
 });
 test('layout mirroring cannot overwrite airborne facing',()=>{
  const s=read('client/game/127-tutorial-refinements.js');const runtime=section(s,'function polish19PvpRuntimeCorrection','const polish19OriginalUpdateTutorial');

@@ -24,7 +24,7 @@ function between(text, start, end) {
 
 test("polish 18 build marker is wired through client and Worker", () => {
   for (const text of [tutorial, common, read("client/game/90-extended-features.js"), read("client/game/110-online-mobile-polish.js"), read("public/scripts/cloud-client.js")]) {
-    assert.match(text, /2026\.10\.12-friends-polish-23/);
+    assert.match(text, /2026\.10\.12-friends-polish-25/);
   }
 });
 
@@ -102,8 +102,8 @@ test("main menu has canvas-native account and device windows and keyboard focus"
 });
 
 test("single-player tutorial and settings utility buttons are swapped", () => {
-  assert.match(nav, /settingsButton: Object\.freeze\(\{ id: "settings", x: 358/);
-  assert.match(nav, /tutorialButton: Object\.freeze\(\{ id: "tutorial", x: 382/);
+  assert.match(nav, /settingsButton: Object\.freeze\(\{ id: "settings", x: 350/);
+  assert.match(nav, /tutorialButton: Object\.freeze\(\{ id: "tutorial", x: 378/);
 });
 
 test("achievement and standard page navigation wrap consistently", () => {

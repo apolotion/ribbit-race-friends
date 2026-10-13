@@ -64,7 +64,7 @@ function startRibbitRaceGame() {
     const canvas = document.getElementById("game");
     const gameFrame = document.getElementById("game-frame");
     const friendsGameInputLocked = () => window.RibbitFriendsGameInputLocked?.() === true;
-    const RIBBIT_DISPLAY_VERSION = "VERSION 1.7.12";
+    const RIBBIT_DISPLAY_VERSION = "VERSION 1.7.14";
     const RIBBIT_CREDIT_TEXT = "MADE BY NICK M.";
     const RIBBIT_CREDIT_Y = 228;
     const rgbValueEditor = document.getElementById("rgb-value-editor");
@@ -4435,8 +4435,8 @@ function startRibbitRaceGame() {
       soloButton: Object.freeze({ id: "solo", x: 140, y: 80, w: 200, h: 30 }),
       pvpButton: Object.freeze({ id: "pvp", x: 140, y: 115, w: 200, h: 30 }),
       frogButton: Object.freeze({ id: "frog", x: 140, y: 150, w: 200, h: 30 }),
-      profileButton: Object.freeze({ id: "profile", x: 47, y: 211, w: 24, h: 24 }),
-      deviceButton: Object.freeze({ id: "device", x: 71, y: 211, w: 24, h: 24 }),
+      profileButton: Object.freeze({ id: "profile", x: 45, y: 211, w: 24, h: 24 }),
+      deviceButton: Object.freeze({ id: "device", x: 75, y: 211, w: 24, h: 24 }),
       achievementsButton: Object.freeze({ id: "achievements", x: 385, y: 211, w: 24, h: 24 }),
       statsButton: Object.freeze({ id: "stats", x: 409, y: 211, w: 24, h: 24 })
     });
@@ -4452,8 +4452,8 @@ function startRibbitRaceGame() {
       customizeButton: Object.freeze({ x: 72, y: 176, w: 120, h: 27 }), // legacy geometry
       randomButton: Object.freeze({ id: "random", x: 188, y: 154, w: 104, h: 17 }),
       backButton: Object.freeze({ id: "back", x: 180, y: 181, w: 120, h: 24 }),
-      settingsButton: Object.freeze({ id: "settings", x: 358, y: 211, w: 24, h: 24 }),
-      tutorialButton: Object.freeze({ id: "tutorial", x: 382, y: 211, w: 24, h: 24 }),
+      settingsButton: Object.freeze({ id: "settings", x: 350, y: 211, w: 24, h: 24 }),
+      tutorialButton: Object.freeze({ id: "tutorial", x: 378, y: 211, w: 24, h: 24 }),
       levelButtons: Object.freeze([
         Object.freeze({ id: "park",   x: 72,  y: 101, w: 104, h: 21 }),
         Object.freeze({ id: "swamp",  x: 188, y: 101, w: 104, h: 21 }),
@@ -4561,12 +4561,12 @@ function startRibbitRaceGame() {
       p2Selector: Object.freeze({ x: 284, y: 160, w: 84, h: 48 }),
       vsButton: Object.freeze({ x: 223, y: 174, w: 34, h: 21 }),
       cpuDifficultyButton: Object.freeze({ x: 284, y: 210, w: 84, h: 15 }),
-      wifiButton: Object.freeze({ x: 34, y: 225, w: 24, h: 24 }),
-      tutorialButton: Object.freeze({ x: 58, y: 225, w: 24, h: 24 }),
+      wifiButton: Object.freeze({ x: 30, y: 225, w: 24, h: 24 }),
+      tutorialButton: Object.freeze({ x: 60, y: 225, w: 24, h: 24 }),
       startButton: Object.freeze({ x: 132, y: 228, w: 100, h: 23 }),
       backButton: Object.freeze({ x: 248, y: 228, w: 100, h: 23 }),
-      settingsButton: Object.freeze({ x: 398, y: 225, w: 24, h: 24 }),
-      timeButton: Object.freeze({ x: 422, y: 225, w: 24, h: 24 })
+      settingsButton: Object.freeze({ x: 392, y: 225, w: 24, h: 24 }),
+      timeButton: Object.freeze({ x: 420, y: 225, w: 24, h: 24 })
     });
     const PVP_SETTINGS_UI = Object.freeze({
       rows: Object.freeze([
@@ -11007,6 +11007,34 @@ function startRibbitRaceGame() {
       }
       return best;
     }
+    function drawPvpOffscreenIndicator(player) {
+      if (!player || player.y + player.h >= 0 || !["playing", "paused", "countdown"].includes(game.state)) return;
+      const centerX = Math.round(clamp(player.x + player.w / 2, 12, W - 12));
+      const overlapsLeftHud = centerX < 92;
+      const overlapsRightHud = centerX > W - 72;
+      const top = overlapsLeftHud || overlapsRightHud ? 30 : 4;
+      const pulse = 0.88 + Math.sin(game.visualTime * 8) * 0.12;
+      const palette = getPvpSkinPalette(player.skinId, player.index === 0 ? "azure" : "crimson", player.index);
+      ctx.save();
+      ctx.globalAlpha = pulse;
+      ctx.fillStyle = "rgba(38,54,61,0.45)";
+      ctx.fillRect(centerX - 7, top + 2, 16, 14);
+      ctx.fillStyle = COLORS.ink;
+      ctx.fillRect(centerX - 7, top + 1, 14, 15);
+      ctx.fillRect(centerX - 9, top + 4, 18, 9);
+      ctx.fillStyle = COLORS.white;
+      ctx.fillRect(centerX - 5, top + 3, 10, 11);
+      ctx.fillRect(centerX - 7, top + 5, 14, 7);
+      ctx.fillStyle = palette.dark;
+      ctx.fillRect(centerX - 1, top + 6, 3, 6);
+      ctx.fillRect(centerX - 4, top + 6, 9, 2);
+      ctx.fillRect(centerX - 3, top + 4, 7, 2);
+      ctx.fillRect(centerX - 2, top + 3, 5, 2);
+      ctx.fillStyle = palette.light;
+      ctx.fillRect(centerX, top + 5, 1, 6);
+      ctx.fillRect(centerX - 2, top + 6, 5, 1);
+      ctx.restore();
+    }
     function drawPvpSpeechBubble(player) {
       if (OnlineVersus.isActive() && player.index !== OnlineVersus.localIndex()) return;
       if (player.firstJumpMade || game.state !== "playing") return;
@@ -11752,6 +11780,7 @@ function startRibbitRaceGame() {
       const p2X = 336;
       const p1Palette = getPvpSkinPalette(pvpPlayers[0].skinId, "azure", 0);
       const p2Palette = getPvpSkinPalette(pvpPlayers[1].skinId, "crimson", 1);
+      const showRoundCrowns = !(tutorial.active && tutorial.kind === "pvp" && tutorialStep?.()?.setup !== "pvpFinalMatch");
       const roundsToWin = getPvpRoundsToWin();
       const crownScale = 1.55;
       const crownStep = 19;
@@ -11761,11 +11790,13 @@ function startRibbitRaceGame() {
       const leftStart = Math.round(W / 2 - totalWidth / 2);
       const rightStart = Math.round(W / 2 + crownGap / 2);
       const crownY = panel.y + 60;
-      for (let slot = 0; slot < roundsToWin; slot += 1) {
-        drawPvpCrown(leftStart + slot * crownStep, crownY, game.pvpRoundWins[0] > slot, p1Palette, crownScale);
-        drawPvpCrown(rightStart + slot * crownStep, crownY, game.pvpRoundWins[1] > slot, p2Palette, crownScale);
+      if (showRoundCrowns) {
+        for (let slot = 0; slot < roundsToWin; slot += 1) {
+          drawPvpCrown(leftStart + slot * crownStep, crownY, game.pvpRoundWins[0] > slot, p1Palette, crownScale);
+          drawPvpCrown(rightStart + slot * crownStep, crownY, game.pvpRoundWins[1] > slot, p2Palette, crownScale);
+        }
+        drawBitmapText("-", W / 2, crownY + 5, 1.25, "center", "#48555a");
       }
-      drawBitmapText("-", W / 2, crownY + 5, 1.25, "center", "#48555a");
       const frogGround = panel.y + 116;
       const resultFrogScale = 1.78;
       if (winner.index === 0) {
@@ -11886,7 +11917,10 @@ function startRibbitRaceGame() {
       } else {
         pvpPlayers.forEach(p => drawEntity(p, drawPvpPlayer));
       }
-      if (!['pvpCelebration', 'won'].includes(game.state)) pvpPlayers.forEach(p => drawEntity(p, drawPvpSpeechBubble));
+      if (!['pvpCelebration', 'won'].includes(game.state)) {
+        pvpPlayers.forEach(drawPvpOffscreenIndicator);
+        pvpPlayers.forEach(p => drawEntity(p, drawPvpSpeechBubble));
+      }
       drawPvpImpactEffects();
       ctx.restore();
       drawPvpHud();
@@ -11905,7 +11939,7 @@ function startRibbitRaceGame() {
         drawBitmapText("SUDDEN DEATH", W / 2, 94, 1.65, "center", "#8d2434", "#f3a4af");
         drawBitmapText("FIRST TO 3 • NO TIMER", W / 2, 115, 0.82, "center", "#48555a");
         ctx.restore();
-      } else if (game.state === "paused") {
+      } else if (game.state === "paused" && !tutorial.active) {
         drawOverlayPanel(
           "PAUSED",
           [`BEST OF ${game.pvpBestOf}`, isPvpEndlessMode() ? `${game.pvpTimeLimitSeconds} SECOND ENDLESS` : (game.pvpTimeLimitSeconds ? `${game.pvpTimeLimitSeconds} SECOND LIMIT` : `FIRST TO ${game.pvpFirstTo}`)],
@@ -13711,16 +13745,16 @@ function startRibbitRaceGame() {
       }
     }
     function getFrogPalette() {
-      const skin = getSelectedSkin();
+      const pauseSkin = getSelectedSkin();
       return {
         dark: skin.dark,
-        mid: skin.mid,
-        light: skin.light,
+        mid: pauseSkin.mid,
+        light: pauseSkin.light,
         belly: skin.belly,
-        accents: skin.accents || skin.bump || skin.crest || skin.light,
-        arms: skin.arms || skin.accents || skin.bump || skin.light,
-        crest: skin.crest || skin.accents || skin.light,
-        feet: skin.feet || skin.accents || skin.light,
+        accents: skin.accents || skin.bump || skin.crest || pauseSkin.light,
+        arms: skin.arms || skin.accents || skin.bump || pauseSkin.light,
+        crest: skin.crest || skin.accents || pauseSkin.light,
+        feet: skin.feet || skin.accents || pauseSkin.light,
         hat: skin.hat || "none"
       };
     }
@@ -14152,7 +14186,7 @@ function startRibbitRaceGame() {
         ctx.translate(22, 17);
         ctx.rotate(-0.45);
         ctx.fillStyle = skin.dark; ctx.fillRect(-1, -7, 3, 10); ctx.fillRect(-4, -8, 9, 3);
-        ctx.fillStyle = skin.mid; ctx.fillRect(-5, 3, 11, 4);
+        ctx.fillStyle = pauseSkin.mid; ctx.fillRect(-5, 3, 11, 4);
         ctx.restore();
         drawBitmapText("SANDBOX", 57, 15, 0.72, "center", skin.dark);
       } else {
@@ -14189,30 +14223,37 @@ function startRibbitRaceGame() {
         drawBitmapText(clockLabel, W / 2, 10, 0.68, "center", urgentClock ? "#ffffff" : "#d9edf2", urgentClock ? "#65111b" : null);
       }
       const pause = HUD_UI.pauseButton;
-      const pauseOpacity = game.state === "paused" ? 0.84 : game.sandboxMode ? 0.66 : 0.56;
+      const pauseOpacity = game.state === "paused" ? 0.92 : game.sandboxMode ? 0.74 : 0.66;
+      const pauseSkin = getSelectedSkin();
       ctx.save();
       ctx.globalAlpha *= pauseOpacity;
-      ctx.fillStyle = "rgba(38,54,61,0.45)";
-      ctx.fillRect(pause.x + 2, pause.y + 2, pause.w, pause.h);
-      ctx.fillStyle = COLORS.ink;
-      ctx.fillRect(pause.x, pause.y, pause.w, pause.h);
-      ctx.fillStyle = game.state === "paused" ? getSelectedSkin().mid : getSelectedSkin().belly;
-      ctx.fillRect(pause.x + 2, pause.y + 2, pause.w - 4, pause.h - 4);
-      ctx.fillStyle = game.state === "paused" ? COLORS.white : getSelectedSkin().dark;
       if (game.sandboxMode) {
-        ctx.fillRect(pause.x + 7, pause.y + 5, 3, 3);
-        ctx.fillRect(pause.x + 10, pause.y + 8, 3, 3);
-        ctx.fillRect(pause.x + 13, pause.y + 11, 3, 3);
-        ctx.fillRect(pause.x + 16, pause.y + 5, 3, 3);
-        ctx.fillRect(pause.x + 13, pause.y + 8, 3, 3);
-        ctx.fillRect(pause.x + 10, pause.y + 11, 3, 3);
+        const dotColor = game.state === "paused" ? COLORS.white : pauseSkin.light;
+        ctx.fillStyle = COLORS.ink;
+        for (const [dx, dy] of [[7,5],[10,8],[13,11],[16,5],[13,8],[10,11]]) {
+          ctx.fillRect(pause.x + dx - 1, pause.y + dy - 1, 4, 4);
+          ctx.fillStyle = dotColor;
+          ctx.fillRect(pause.x + dx, pause.y + dy, 2, 2);
+          ctx.fillStyle = COLORS.ink;
+        }
       } else if (game.state === "paused") {
-        ctx.fillRect(pause.x + 9, pause.y + 5, 3, 9);
-        ctx.fillRect(pause.x + 12, pause.y + 7, 3, 5);
-        ctx.fillRect(pause.x + 15, pause.y + 9, 2, 1);
+        const accent = COLORS.white;
+        ctx.fillStyle = COLORS.ink;
+        ctx.fillRect(pause.x + 8, pause.y + 4, 5, 12);
+        ctx.fillRect(pause.x + 13, pause.y + 7, 4, 6);
+        ctx.fillRect(pause.x + 17, pause.y + 9, 2, 2);
+        ctx.fillStyle = accent;
+        ctx.fillRect(pause.x + 9, pause.y + 5, 3, 10);
+        ctx.fillRect(pause.x + 14, pause.y + 8, 2, 4);
       } else {
-        ctx.fillRect(pause.x + 7, pause.y + 5, 4, 9);
-        ctx.fillRect(pause.x + 15, pause.y + 5, 4, 9);
+        for (const dx of [7, 15]) {
+          ctx.fillStyle = COLORS.ink;
+          ctx.fillRect(pause.x + dx - 1, pause.y + 4, 6, 14);
+          ctx.fillStyle = pauseSkin.light;
+          ctx.fillRect(pause.x + dx, pause.y + 5, 4, 12);
+          ctx.fillStyle = pauseSkin.mid;
+          ctx.fillRect(pause.x + dx, pause.y + 14, 4, 3);
+        }
       }
       ctx.restore();
     }
@@ -17102,7 +17143,7 @@ function startRibbitRaceGame() {
         game.pauseHoveredSelection === "restart",
         game.pausePressedSelection === "restart",
         { dark: "#6b4c21", mid: "#b78634", light: "#f2cf70" },
-        "RESTART",
+        tutorial.active && game.state === "paused" ? "RESTART SCENE" : "RESTART",
         (full) => drawMiniRestartIcon(restartButton.x + 8, restartButton.y + 3, full ? COLORS.white : "#7a5a2a"),
         restartButton.x + restartButton.w / 2 + 10
       );
@@ -17112,7 +17153,7 @@ function startRibbitRaceGame() {
         game.pauseHoveredSelection === "home",
         game.pausePressedSelection === "home",
         { dark: "#4b565b", mid: "#7d8a90", light: "#d8e1e4" },
-        "HOME MENU",
+        tutorial.active && game.state === "paused" ? "EXIT TUTORIAL" : "HOME MENU",
         () => drawMiniHouseIcon(home.x + 7, home.y + 3),
         home.x + home.w / 2 + 10
       );
@@ -19539,8 +19580,8 @@ function startRibbitRaceGame() {
     requestAnimationFrame(frame);
 
     /* ===== client/game/90-extended-features.js ===== */
-const RIBBIT_FRIENDS_DISPLAY_VERSION = "1.7.12";
-const RIBBIT_FRIENDS_BUILD = "2026.10.12-friends-polish-23";
+const RIBBIT_FRIENDS_DISPLAY_VERSION = "1.7.14";
+const RIBBIT_FRIENDS_BUILD = "2026.10.12-friends-polish-25";
 function rr14Number(value, fallback = 0) {
   const parsed = Number(value);
   return Number.isFinite(parsed) ? parsed : fallback;
@@ -20019,10 +20060,10 @@ window.RibbitRaceMobileDiagnostics = () => ({
  */
 (() => {
   "use strict";
-  const BUILD = "2026.10.12-friends-polish-23";
+  const BUILD = "2026.10.12-friends-polish-25";
   const RR_V160_CANDIDATES = {"catchFly":["attemptFlyCatch","attemptPvpFlyCatch","catchSandboxFly","getPvpImminentCatchFly","recordFlyEaten","scheduleFlyReplacementFromCatch"],"jumpSound":["playJumpSound"],"beep":["playCountdownGoSound","playCountdownSound"],"replayUpload":["saveRecordDate"],"restart":["resetGame","resetPvpGame","resetPvpPlayer","resetRoundLifecycle","resetRoundNetwork","restartCurrentLevel"],"drop":[],"render":["drawPvpScene","drawScene"],"worldRecord":[],"fullscreen":["getFullscreenElement","hideFullscreenFallback","showFullscreenFallback","syncFullscreenButton","toggleRibbitFullscreen"],"onlineSubmit":[],"leaderboard":["isSoloEndlessLeaderboardEligible","savePvpMatchWinsForLeaderboard"]};
   const RR_V160_VARS = {"onlineSelect":[],"achievementSelect":["activeAchievementIndex","hoveredAchievementCard"],"backRect":[]};
-  const VERSION = "1.7.12";
+  const VERSION = "1.7.14";
   const V = {
     menuTouch: new Map(), chargeTouch: new Map(), achievementPinned: -1,
     finalCatchStarted: 0, finalCatchLabelsGone: false,
@@ -20314,7 +20355,7 @@ window.RibbitRaceMobileDiagnostics = () => ({
   }
   const deepTick=async(now)=>{
     finalCatchTongueAssist();
-    fsButton.style.display=/paused/i.test(stateName())?"block":"none";
+    fsButton.style.display="none";
     const active=runLooksActive();
     if(active&&!observedRun){observedRun=true;window.RibbitRecordReplay.start();}
     if(!active&&observedRun){observedRun=false;const q=qualifiesAsRecord();const blob=await window.RibbitRecordReplay.finish(q);if(q)await uploadReplayBlob(blob);}
@@ -20866,7 +20907,7 @@ window.RibbitRaceMobileDiagnostics = () => ({
 "use strict";
 const SOLO_SEEN_KEY = "rrFriendsEngineTutorialSoloSeenV8";
 const PVP_SEEN_KEY = "rrFriendsEngineTutorialPvpSeenV8";
-const TUTORIAL_BUILD = "2026.10.12-friends-polish-23";
+const TUTORIAL_BUILD = "2026.10.12-friends-polish-25";
 const TUTORIAL_ACHIEVEMENT_ID = "tutorial-graduate";
 const PVP_TUTORIAL_ACHIEVEMENT_ID = "versus-tutorial-graduate";
 const TYPEWRITER_MS_PER_CHARACTER = 28;
@@ -21770,8 +21811,8 @@ const PVP_STEPS = Object.freeze([
     ],
     "dialogue": [
       "Now let's see how much bounce you can borrow from me.",
-      "One second after this message closes, I'll start a maximum-charge jump.",
-      "Time your leap to land on me as I spring upward."
+      "I plan on charging a max jump.",
+      "Try and time your bonk just as I release it!"
     ],
     "successDialogue": [
       "There you go!",
@@ -23124,14 +23165,13 @@ function configurePvpStep(index) {
       break;
     }
     case "pvpDropHigh": {
-      const offset = top.w - p1.w - 4;
-      positionPvpOnPlatform(p1, top, -1, offset);
-      positionPvp(ember, PARK_PLATFORMS[3].x - ember.w - 4, CONFIG.groundY - ember.h, 1);
+      positionPvpOnPlatform(p1, top, 1, 4);
+      positionPvp(ember, PARK_PLATFORMS[3].x + PARK_PLATFORMS[3].w + 4, CONFIG.groundY - ember.h, -1);
       break;
     }
     case "pvpDemoBufferedBonk":
-      positionPvp(p1, PARK_PLATFORMS[3].x + (PARK_PLATFORMS[3].w - p1.w) / 2, CONFIG.groundY - p1.h, -1);
-      positionPvp(ember, 105, CONFIG.groundY - ember.h, 1);
+      positionPvpOnPlatform(p1, PARK_PLATFORMS[3], 1);
+      positionPvp(ember, 365, CONFIG.groundY - ember.h, -1);
       break;
     case "pvpBufferedBonk":
       positionPvp(p1, 105, CONFIG.groundY - p1.h, 1);
@@ -23146,28 +23186,28 @@ function configurePvpStep(index) {
       positionPvpOnPlatform(ember, PARK_PLATFORMS[6], -1);
       break;
     case "pvpDemoBufferedSky":
-      positionPvpOnPlatform(ember, top, 1, 4);
-      positionPvp(p1, PARK_PLATFORMS[6].x + 13, CONFIG.groundY - p1.h, -1);
+      positionPvpOnPlatform(ember, top, -1, top.w - ember.w - 4);
+      positionPvp(p1, PARK_PLATFORMS[6].x + 6, CONFIG.groundY - p1.h, 1);
       break;
     case "pvpBufferedSky":
-      positionPvpOnPlatform(p1, top, 1, 4);
-      positionPvp(ember, PARK_PLATFORMS[6].x + 13, CONFIG.groundY - ember.h, -1);
+      positionPvpOnPlatform(p1, top, -1, top.w - p1.w - 4);
+      positionPvp(ember, PARK_PLATFORMS[6].x + 6, CONFIG.groundY - ember.h, 1);
       break;
     case "pvpDemoHighGround":
-      positionPvpOnPlatform(p1, top, -1);
-      positionPvpOnPlatform(ember, PARK_PLATFORMS[3], 1);
+      positionPvpOnPlatform(p1, PARK_PLATFORMS[6], 1);
+      positionPvp(ember, PARK_PLATFORMS[6].x + PARK_PLATFORMS[6].w - ember.w - 2, CONFIG.groundY - ember.h, -1);
       break;
     case "pvpHighGround":
-      positionPvpOnPlatform(p1, PARK_PLATFORMS[3], 1);
-      positionPvpOnPlatform(ember, top, -1);
+      positionPvp(ember, PARK_PLATFORMS[6].x + PARK_PLATFORMS[6].w - ember.w - 2, CONFIG.groundY - ember.h, -1);
+      positionPvpOnPlatform(p1, PARK_PLATFORMS[6], 1);
       break;
     case "pvpDemoRecoveryBonk":
       positionPvp(ember, 320, CONFIG.groundY - ember.h, 1);
       positionPvp(p1, 405, CONFIG.groundY - p1.h, -1);
       break;
     case "pvpRecoveryBonk":
-      positionPvp(p1, 320, CONFIG.groundY - p1.h, 1);
-      positionPvp(ember, 404, CONFIG.groundY - ember.h, 1);
+      positionPvp(p1, Math.round(W * 0.25), CONFIG.groundY - p1.h, 1);
+      positionPvp(ember, Math.round(W * 0.50), CONFIG.groundY - ember.h, -1);
       break;
     case "pvpDemoBoostBonk":
       positionPvp(p1, 305, CONFIG.groundY - p1.h, -1);
@@ -23178,20 +23218,20 @@ function configurePvpStep(index) {
       positionPvp(ember, middleLeft.x + 38, CONFIG.groundY - ember.h, -1);
       break;
     case "pvpDemoUnderBonk":
-      positionPvpOnPlatform(ember, middleLeft, -1);
-      positionPvp(p1, 80, CONFIG.groundY - p1.h, 1);
+      positionPvpOnPlatform(ember, middleRight, -1);
+      positionPvpOnPlatform(p1, PARK_PLATFORMS[3], 1);
       break;
     case "pvpUnderBonkTwo":
-      positionPvpOnPlatform(p1, middleLeft, 1);
-      positionPvp(ember, 80, CONFIG.groundY - ember.h, 1);
+      positionPvpOnPlatform(p1, PARK_PLATFORMS[3], 1);
+      positionPvp(ember, PARK_PLATFORMS[3].x + 8, CONFIG.groundY - ember.h, 1);
       break;
     case "pvpDemoAvoidUnder":
-      positionPvpOnPlatform(p1, middleLeft, 1);
-      positionPvp(ember, middleLeft.x - 45, CONFIG.groundY - ember.h, 1);
+      positionPvpOnPlatform(p1, PARK_PLATFORMS[3], 1);
+      positionPvp(ember, PARK_PLATFORMS[3].x + PARK_PLATFORMS[3].w + 8, CONFIG.groundY - ember.h, -1);
       break;
     case "pvpAvoidUnder":
-      positionPvpOnPlatform(ember, middleLeft, -1);
-      positionPvp(p1, middleLeft.x - 45, CONFIG.groundY - p1.h, 1);
+      positionPvpOnPlatform(ember, PARK_PLATFORMS[3], -1);
+      positionPvp(p1, PARK_PLATFORMS[3].x + PARK_PLATFORMS[3].w + 8, CONFIG.groundY - p1.h, -1);
       break;
     case "pvpDemoRebound":
     case "pvpReboundThree":
@@ -23199,14 +23239,14 @@ function configurePvpStep(index) {
       positionPvp(ember, 300, CONFIG.groundY - ember.h, -1);
       break;
     case "pvpDemoReboundCatch":
-      positionPvpOnPlatform(p1, middleRight, -1);
+      positionPvpOnPlatform(p1, middleRight, 1);
       positionPvp(ember, 390, CONFIG.groundY - ember.h, -1);
-      addPvpTutorialFly(440, 130, 0, 0);
+      addPvpTutorialFly(Math.round(PARK_PLATFORMS[6].x + PARK_PLATFORMS[6].w / 2), 118, 0, 0);
       break;
     case "pvpReboundCatch":
-      positionPvpOnPlatform(ember, middleRight, -1);
+      positionPvpOnPlatform(ember, middleRight, 1);
       positionPvp(p1, 390, CONFIG.groundY - p1.h, -1);
-      addPvpTutorialFly(440, 145, 0, 0);
+      addPvpTutorialFly(Math.round(PARK_PLATFORMS[6].x + PARK_PLATFORMS[6].w / 2), 118, 0, 0);
       break;
     case "pvpDemoIntercept":
       positionPvp(p1, 118, CONFIG.groundY - p1.h, 1);
@@ -23381,7 +23421,7 @@ function beginPvpDemoMotion(setup) {
       break;
     case "pvpDemoBufferedBonk":
       armPvpScriptedBuffer(1, PARK_PLATFORMS[3]);
-      scriptPvpChargedJump(1, .62, 1, 0);
+      scriptPvpChargedJump(1, .62, -1, 0);
       break;
     case "pvpDemoSkyBonk":
       scriptPvpChargedJump(1, .92, 1, 0);
@@ -23391,7 +23431,7 @@ function beginPvpDemoMotion(setup) {
       scriptPvpChargedJump(1, .95, 1, 0);
       break;
     case "pvpDemoHighGround":
-      scriptPvpChargedJump(1, 1, 1, 0);
+      scriptPvpChargedJump(1, .84, -1, 0);
       break;
     case "pvpDemoRecoveryBonk":
       scriptPvpChargedJump(1, .55, 1, 0);
@@ -23407,8 +23447,8 @@ function beginPvpDemoMotion(setup) {
       scriptPvpChargedJump(1, .10, 1, 0);
       break;
     case "pvpDemoRebound":
-      scriptPvpChargedJump(0, .58, 1, 0);
-      scriptPvpChargedJump(1, .58, -1, 0);
+      scriptPvpChargedJump(0, .50, 1, 0);
+      scriptPvpChargedJump(1, .50, -1, 0);
       break;
     case "pvpDemoReboundCatch":
       scriptPvpChargedJump(1, .92, -1, 0);
@@ -23492,8 +23532,9 @@ function updatePvpDemonstration() {
     scriptPvpChargedJump(1, 1, null, 220);
   }
   if (setup === "pvpDemoAvoidUnder" && ember.firstJumpMade && ember.grounded &&
-      !ember.charging && tutorial.pvpScriptActions.length === 0 && ember.x <= PARK_PLATFORMS[2].x + PARK_PLATFORMS[2].w + 18) {
-    scriptPvpChargedJump(1, .10, null, 100);
+      !ember.charging && tutorial.pvpScriptActions.length === 0 && ember.x <= PARK_PLATFORMS[3].x + PARK_PLATFORMS[3].w + 18) {
+    tutorial.pvpDemoStage = Number(tutorial.pvpDemoStage || 0) + 1;
+    if (tutorial.pvpDemoStage < 3) scriptPvpChargedJump(1, .10, null, 100);
   }
   if (setup === "pvpDemoBoostBonk" && tutorial.pvpDemoStage === 0 && tutorial.pvpDemoBonkCount >= 1 && elapsed >= 3.0 && pvpTutorialSettled()) {
     tutorial.pvpDemoStage = 1;
@@ -23558,7 +23599,10 @@ function updatePvpDemonstration() {
 function startPvpFinalMatch() {
   tutorial.pvpFinalMatchStarted = true;
   tutorial.pvpFinalOutcome = null;
+  tutorial.pvpDemoActive = false;
+  tutorial.pvpPlayerScriptLocked = false;
   tutorial.pvpCaption = "";
+  clearPvpScriptActions();
   game.mode = "pvp";
   game.onlineMode = false;
   game.pvpCpuEnabled = true;
@@ -23576,6 +23620,12 @@ function startPvpFinalMatch() {
   resetPvpGame();
   pvpPlayers[0].skinId = String(tutorial.pvpPlayerSkinId || game.pvpSetupSkinIds?.[0] || game.skinId || "azure");
   pvpPlayers[1].skinId = "ember";
+  pvpPlayers[0].cpu = false;
+  pvpPlayers[1].cpu = true;
+  pvpPlayers[0].isCpu = false;
+  pvpPlayers[1].isCpu = true;
+  pvpPlayers[0].firstJumpMade = false;
+  pvpPlayers[1].firstJumpMade = false;
   game.pvpSetupSkinIds[0] = pvpPlayers[0].skinId;
   game.pvpSetupSkinIds[1] = "ember";
   tutorial.scoreStart = 0;
@@ -24486,7 +24536,7 @@ function drivePvpPracticeCpu(setup, now) {
       if (tutorial.pvpUnderBonks > 0 && Math.abs(ember.x - 80) > 2) {
         beginPoofTransition({ reason:"under-bonk-return", showFailure:false,
           preserveExistingFlies:true, armFlies:false, pvpPoofPlayers:[1],
-          action:() => { positionPvp(ember,80,CONFIG.groundY-ember.h,1); tutorial.pvpLastPracticeEventAt=performance.now(); }
+          action:() => { positionPvp(ember,PARK_PLATFORMS[3].x + 8,CONFIG.groundY-ember.h,1); tutorial.pvpLastPracticeEventAt=performance.now(); }
         });
       } else scriptPvpChargedJump(1, .78, ember.dir, 0);
     }
@@ -24632,7 +24682,8 @@ function monitorPvp() {
     return;
   }
   if (setup === "pvpRecoveryBonk") {
-    if (tutorial.pvpBonks >= 2 && pvpPracticeEventReady(1000, now)) passStep();
+    const recoveryWindowHit = tutorial.pvpBonks >= 2 && tutorial.pvpLastPracticeEventAt > 0 && now - tutorial.pvpLastPracticeEventAt <= 1000;
+    if (recoveryWindowHit && pvpPracticeEventReady(300, now)) passStep();
     else if (playerLanded && tutorial.pvpBonks === 0 && now - tutorial.enteredAt > 500) failAttempt("BONK EMBER, TURN AT THE WALL, THEN RETURN");
     return;
   }
@@ -24651,7 +24702,7 @@ function monitorPvp() {
     if (p1.bonked || p1.stunTimer > 0) {
       failAttempt("USE A QUICK TAP TO STAY LOW");
     } else {
-      const platform = PARK_PLATFORMS[2];
+      const platform = PARK_PLATFORMS[3];
       if (p1.x > platform.x + platform.w + 18 && pvpTutorialSettled()) passStep();
     }
     return;
@@ -24663,16 +24714,18 @@ function monitorPvp() {
     }
     if (tutorial.pvpReboundCount > tutorial.pvpPracticeCount && pvpTutorialSettled() && !tutorial.resetPending) {
       tutorial.pvpPracticeCount = tutorial.pvpReboundCount;
-      const layouts = [[110,300],[285,140],[150,315]];
-      const layout = layouts[Math.min(layouts.length - 1, tutorial.pvpReboundCount)] || layouts[0];
       beginPoofTransition({
         reason: "next-pvp-rebound",
         showFailure: false,
         preserveExistingFlies: true,
         action: () => {
-          const playerDirection = layout[0] < layout[1] ? 1 : -1;
-          positionPvp(p1, layout[0], CONFIG.groundY - p1.h, playerDirection);
-          positionPvp(ember, layout[1], CONFIG.groundY - ember.h, -playerDirection);
+          if (tutorial.pvpReboundCount === 1) {
+            positionPvpOnPlatform(p1, PARK_PLATFORMS[5], 1);
+            positionPvpOnPlatform(ember, PARK_PLATFORMS[5], -1, 2);
+          } else {
+            positionPvpOnPlatform(p1, PARK_PLATFORMS[4], 1, 4);
+            positionPvpOnPlatform(ember, PARK_PLATFORMS[4], -1, PARK_PLATFORMS[4].w - ember.w - 4);
+          }
           tutorial.pvpMirrorWasHeld = false;
         }
       });
@@ -24689,7 +24742,7 @@ function monitorPvp() {
   if (setup === "pvpIntercept") {
     if (tutorial.pvpPracticeCatchCount > 0 && !tutorial.pvpInterceptSeen) failAttempt("REBOUND EMBER BEFORE SHE REACHES THE FLY");
     else if (tutorial.pvpInterceptSeen && pvpTutorialSettled()) passStep();
-    else if (ember.grounded && tutorial.pvpEmberLaunchStarted && now - tutorial.pvpEmberJumpScheduledAt > 2600 && !tutorial.pvpInterceptSeen) failAttempt("INTERCEPT EMBER BEFORE THE FLY");
+    else if (ember.grounded && tutorial.pvpEmberLaunchStarted && !tutorial.pvpInterceptSeen) failAttempt("INTERCEPT EMBER BEFORE THE FLY");
     return;
   }
   if (setup === "pvpDinnerSteal") {
@@ -25705,8 +25758,9 @@ function tutorialSceneCatalog() {
 }
 function getTutorialPauseChapterRects() {
   return {
-    previous:{ x:126, y:75, w:24, h:20 },
-    next:{ x:330, y:75, w:24, h:20 }
+    previous:{ x:125, y:89, w:24, h:20 },
+    next:{ x:331, y:89, w:24, h:20 },
+    scroll:{ x:120, y:74, w:240, h:55 }
   };
 }
 function selectTutorialChapter(delta) {
@@ -25721,11 +25775,6 @@ function selectTutorialChapter(delta) {
   const nextIndex = (baseIndex + Math.sign(delta || 0) + catalog.length) % catalog.length;
   tutorial.pauseChapterPreviewIndex = nextIndex;
   tutorial.chapterNavigationPending = true;
-  tutorial.dialogueOpen = false;
-  tutorial.dialogueHeldLineText = "";
-  tutorial.dialogueHeldPortraitKey = "";
-  resetDialogueSpaceHold();
-  clearHeldInput();
   tone(440, .04, .010, delta < 0 ? -30 : 30);
   return true;
 }
@@ -25789,6 +25838,7 @@ function drawTutorialPauseOverlay() {
   drawOverlayPanel(
     "PAUSED",
     [],
+    "",
     true,
     { x:75, y:28, w:330, h:204, titleOffset:17, lineStartOffset:58, lineGap:15, footerOffset:169 }
   );
@@ -25800,12 +25850,25 @@ function drawTutorialPauseOverlay() {
     : currentIndex;
   const entry = catalog[previewIndex] || { title:"TUTORIAL", scene:1 };
   const rects = getTutorialPauseChapterRects();
+  const skin = getSelectedSkin();
+  drawBitmapText("TUTORIAL CHAPTERS", W / 2, 76, .59, "center", "#68787e");
+  ctx.fillStyle = COLORS.ink;
+  ctx.fillRect(154, 87, 172, 29);
+  ctx.fillStyle = "#e7f4f6";
+  ctx.fillRect(156, 89, 168, 25);
+  ctx.fillStyle = skin.mid;
+  ctx.fillRect(158, 91, 164, 2);
+  drawBitmapText(`CHAPTER ${previewIndex + 1} / ${catalog.length}`, W / 2, 94, .71, "center", skin.dark);
+  const title = entry.title.toUpperCase();
+  const titleScale = Math.min(.67, 158 / Math.max(1, measureBitmapText(title, 1)));
+  drawBitmapText(title, W / 2, 104, titleScale, "center", "#48555a");
   drawTutorialPauseArrow(rects.previous, "previous", false);
   drawTutorialPauseArrow(rects.next, "next", false);
-  drawBitmapText("TUTORIAL", W / 2, 80, 1.05, "center", "#34484f");
-  const titleScale = Math.min(.58, 214 / Math.max(1, measureBitmapText(entry.title, 1)));
-  drawBitmapText(entry.title.toUpperCase(), W / 2, 105, titleScale, "center", "#48555a");
-  drawBitmapText(`CHAPTER ${previewIndex + 1} / ${catalog.length}`, W / 2, 118, .42, "center", "#68787e");
+  ctx.fillStyle = "#d6e7e9";
+  ctx.fillRect(155, 119, 170, 3);
+  ctx.fillStyle = skin.mid;
+  ctx.fillRect(155, 119, Math.round(170 * (previewIndex + 1) / Math.max(1, catalog.length)), 3);
+  drawBitmapText("ARROWS OR SCROLL TO BROWSE", W / 2, 124, .40, "center", "#68787e");
   drawPauseControls();
   drawBitmapText(RIBBIT_CREDIT_TEXT, W / 2, 216, 1, "center", "#48555a");
 }
@@ -26226,37 +26289,8 @@ drawSpeechBubble = function(...args) {
 };
 const originalDrawSoloPauseOverlayForTutorial = drawSoloPauseOverlay;
 drawSoloPauseOverlay = function(...args) {
-  if (tutorial.active && tutorial.dialogueOpen) drawTutorialDialogue();
+  if (tutorial.active) return;
   return originalDrawSoloPauseOverlayForTutorial.apply(this, args);
-};
-const originalDrawPauseControlsForTutorial = drawPauseControls;
-drawPauseControls = function(...args) {
-  const result = originalDrawPauseControlsForTutorial.apply(this, args);
-  if (!tutorial.active || game.state !== "paused") return result;
-  const skin = getSelectedSkin();
-  const restartButton = PAUSE_UI.restartButton;
-  const homeButton = PAUSE_UI.homeButton;
-  drawSelectablePauseButton(
-    restartButton,
-    game.pauseFocusVisible && game.pauseSelection === "restart",
-    game.pauseHoveredSelection === "restart",
-    game.pausePressedSelection === "restart",
-    { dark: "#6b4c21", mid: "#b78634", light: "#f2cf70" },
-    "RESTART SCENE",
-    (full) => drawMiniRestartIcon(restartButton.x + 8, restartButton.y + 3, full ? COLORS.white : "#7a5a2a"),
-    restartButton.x + restartButton.w / 2 + 10
-  );
-  drawSelectablePauseButton(
-    homeButton,
-    game.pauseFocusVisible && game.pauseSelection === "home",
-    game.pauseHoveredSelection === "home",
-    game.pausePressedSelection === "home",
-    { dark: skin.dark, mid: "#d76b31", light: "#ffb45f" },
-    "EXIT TUTORIAL",
-    () => drawMiniHouseIcon(homeButton.x + 7, homeButton.y + 3),
-    homeButton.x + homeButton.w / 2 + 10
-  );
-  return result;
 };
 const originalResumePausedGameForTutorial = resumePausedGame;
 resumePausedGame = function(...args) {
@@ -26278,10 +26312,14 @@ activatePauseSelection = function(...args) {
     return originalActivatePauseSelectionForTutorial.apply(this, args);
   }
   if (game.pauseSelection === "home") {
+    tutorial.pauseChapterPreviewIndex = null;
+    tutorial.chapterNavigationPending = false;
     finish(false);
     return;
   }
   if (game.pauseSelection === "restart") {
+    tutorial.pauseChapterPreviewIndex = null;
+    tutorial.chapterNavigationPending = false;
     game.state = "playing";
     game.pauseHelpOpen = false;
     game.pauseChargeSnapshot = null;
@@ -26436,14 +26474,7 @@ window.addEventListener("keydown", (event) => {
     event.stopImmediatePropagation();
     return;
   }
-  if (tutorial.active && event.code === "KeyR" &&
-      game.state !== "paused" && !tutorial.completeScreen) {
-    event.preventDefault();
-    event.stopImmediatePropagation();
-    if (!event.repeat) window.RibbitRaceTutorialEngine?.retryScene?.();
-    return;
-  }
-  if (tutorial.active && game.state === "paused" && !event.repeat &&
+  if (tutorial.active && game.state === "paused" && !game.pauseHelpOpen && !event.repeat &&
       ["ArrowLeft", "ArrowRight"].includes(event.code)) {
     event.preventDefault();
     event.stopImmediatePropagation();
@@ -26510,7 +26541,7 @@ window.addEventListener("keyup", (event) => {
   if (heldFor < DIALOGUE_SPACE_HOLD_THRESHOLD_MS) closeDialogue("space");
 }, { capture:true, passive:false });
 canvas.addEventListener("pointerdown", (event) => {
-  if (tutorial.active && game.state === "paused") {
+  if (tutorial.active && game.state === "paused" && !game.pauseHelpOpen) {
     const point = getCanvasPoint(event);
     const chapterRects = getTutorialPauseChapterRects();
     if (pointInsideRect(point, chapterRects.previous) || pointInsideRect(point, chapterRects.next)) {
@@ -26527,8 +26558,19 @@ canvas.addEventListener("pointerdown", (event) => {
     tutorial.dialoguePointerId = event.pointerId;
   }
 }, { capture:true, passive:false });
+let tutorialPauseLastWheelAt = 0;
+canvas.addEventListener("wheel", (event) => {
+  if (!tutorial.active || game.state !== "paused" || game.pauseHelpOpen || !event.deltaY) return;
+  if (!pointInsideRect(getCanvasPoint(event), getTutorialPauseChapterRects().scroll)) return;
+  event.preventDefault();
+  event.stopImmediatePropagation();
+  const now = performance.now();
+  if (now - tutorialPauseLastWheelAt < 125) return;
+  tutorialPauseLastWheelAt = now;
+  selectTutorialChapter(event.deltaY > 0 ? 1 : -1);
+}, { capture:true, passive:false });
 canvas.addEventListener("pointermove", (event) => {
-  if (tutorial.active && game.state === "paused") {
+  if (tutorial.active && game.state === "paused" && !game.pauseHelpOpen) {
     const point = getCanvasPoint(event);
     const chapterRects = getTutorialPauseChapterRects();
     tutorial.pauseChapterHover = pointInsideRect(point, chapterRects.previous)
@@ -26642,8 +26684,6 @@ window.RibbitRaceTutorialEngine = Object.freeze({
     if (!catalog.length) return null;
     tutorial.pauseChapterPreviewIndex = (Number(index) + catalog.length) % catalog.length;
     tutorial.chapterNavigationPending = true;
-    tutorial.dialogueOpen = false;
-    clearHeldInput();
     return tutorial.pauseChapterPreviewIndex;
   },
   applyChapterPreview(){ return applyTutorialChapterPreview(); },
@@ -28408,7 +28448,7 @@ window.RibbitRaceTutorialEngine = Object.freeze({
     return result;
   };
   if(typeof drawPvpHud==="function"){const priorHud19=drawPvpHud;drawPvpHud=function(...args){const e=engine(),active=!!(e?.active&&e.kindPolish19==="pvp");if(!active)return priorHud19.apply(this,args);const oldMode=game.pvpRoundGoalMode,oldFirst=game.pvpFirstTo,oldTarget=game.pvpRoundTarget;game.pvpRoundGoalMode="endless";game.pvpFirstTo=0;game.pvpRoundTarget=0;const out=priorHud19.apply(this,args);game.pvpRoundGoalMode=oldMode;game.pvpFirstTo=oldFirst;game.pvpRoundTarget=oldTarget;return out;};}
-  const priorDrawScenePrompt19=drawScene;drawScene=function(...args){const out=priorDrawScenePrompt19.apply(this,args),e=engine();if(e?.active&&e.kindPolish19==="pvp"&&flies.length===0&&!/final|race|match/i.test(String(e.stepTitlePolish19||""))){try{drawBlankTutorialVocabularyPrompt();}catch(_){ctx.fillStyle="#f7fdff";ctx.fillRect(158,246,164,17);}}return out;};
+  const priorDrawScenePrompt19=drawScene;drawScene=function(...args){const out=priorDrawScenePrompt19.apply(this,args),e=engine();if(e?.active&&game.state==="playing"&&e.kindPolish19==="pvp"&&flies.length===0&&!/final|race|match/i.test(String(e.stepTitlePolish19||""))){try{drawBlankTutorialVocabularyPrompt();}catch(_){ctx.fillStyle="#f7fdff";ctx.fillRect(158,246,164,17);}}return out;};
   window.RibbitTutorialShouldHideFinalCatchTitle=()=>{const e=engine();return !!(e?.active&&e.polish19Setup!=="normalRound");};
 })();
 (() => {

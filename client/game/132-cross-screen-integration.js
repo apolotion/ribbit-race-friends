@@ -41,7 +41,7 @@
   };
   // PvP tutorial prompt/HUD refinements.
   if(typeof drawPvpHud==="function"){const priorHud19=drawPvpHud;drawPvpHud=function(...args){const e=engine(),active=!!(e?.active&&e.kindPolish19==="pvp");if(!active)return priorHud19.apply(this,args);const oldMode=game.pvpRoundGoalMode,oldFirst=game.pvpFirstTo,oldTarget=game.pvpRoundTarget;game.pvpRoundGoalMode="endless";game.pvpFirstTo=0;game.pvpRoundTarget=0;const out=priorHud19.apply(this,args);game.pvpRoundGoalMode=oldMode;game.pvpFirstTo=oldFirst;game.pvpRoundTarget=oldTarget;return out;};}
-  const priorDrawScenePrompt19=drawScene;drawScene=function(...args){const out=priorDrawScenePrompt19.apply(this,args),e=engine();if(e?.active&&e.kindPolish19==="pvp"&&flies.length===0&&!/final|race|match/i.test(String(e.stepTitlePolish19||""))){try{drawBlankTutorialVocabularyPrompt();}catch(_){ctx.fillStyle="#f7fdff";ctx.fillRect(158,246,164,17);}}return out;};
+  const priorDrawScenePrompt19=drawScene;drawScene=function(...args){const out=priorDrawScenePrompt19.apply(this,args),e=engine();if(e?.active&&game.state==="playing"&&e.kindPolish19==="pvp"&&flies.length===0&&!/final|race|match/i.test(String(e.stepTitlePolish19||""))){try{drawBlankTutorialVocabularyPrompt();}catch(_){ctx.fillStyle="#f7fdff";ctx.fillRect(158,246,164,17);}}return out;};
   // Do not draw FINAL CATCH title during tutorial cinematics except the final normal-round fly.
   window.RibbitTutorialShouldHideFinalCatchTitle=()=>{const e=engine();return !!(e?.active&&e.polish19Setup!=="normalRound");};
 })();

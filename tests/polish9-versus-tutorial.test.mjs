@@ -18,8 +18,8 @@ function block(start, end) {
 }
 
 test("polish-9 cache marker and tutorial seen key are synchronized", () => {
-  assert.match(engine, /TUTORIAL_BUILD = "2026\.10\.12-friends-polish-23"/);
-  assert.match(index, /game\.bundle\.js\?v=2026\.10\.12-friends-polish-23/);
+  assert.match(engine, /TUTORIAL_BUILD = "2026\.10\.12-friends-polish-25"/);
+  assert.match(index, /game\.bundle\.js\?v=2026\.10\.12-friends-polish-25/);
   assert.match(engine, /rrFriendsEngineTutorialSoloSeenV8/);
   assert.match(read("public/scripts/tutorial-preboot.js"), /rrFriendsEngineTutorialSoloSeenV8/);
 });
@@ -52,7 +52,7 @@ test("Ember portrait fills its square and the centered nameplate sits in the tex
 test("goal card survives pause and flies remain animated through poofs", () => {
   assert.match(engine, /if \(game\.state === "paused"\) \{\s*drawCurrentGoalHud\(\)/);
   assert.match(engine, /updateTutorialAmbient\(dt, \{ animateFlies: true \}\)/);
-  assert.match(engine, /drawSoloPauseOverlay = function[\s\S]{0,220}drawTutorialDialogue\(\)[\s\S]{0,180}originalDrawSoloPauseOverlayForTutorial/);
+  assert.match(engine, /drawSoloPauseOverlay = function[\s\S]{0,100}if \(tutorial\.active\) return/);
 });
 
 test("tongue and multi-fly lessons use the requested positioning and cinematic", () => {

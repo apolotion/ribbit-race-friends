@@ -4,7 +4,7 @@ import {readFileSync,existsSync} from "node:fs";
 import { readGameModuleGroup } from "./source-reader.mjs";
 const read=p=>readFileSync(new URL(`../${p}`,import.meta.url),"utf8");
 
-test("v1.7.12 engine tutorial project additions exist",()=>{
+test("v1.7.14 engine tutorial project additions exist",()=>{
   for(const p of [
     "client/game/115-v170-hooks.js",
     "client/game/120-tutorial-config.js",
@@ -17,7 +17,7 @@ test("v1.7.12 engine tutorial project additions exist",()=>{
     "public/tutorial/ember-laughing.png",
     "public/tutorial/ember-thinking.png"
   ])assert.ok(existsSync(new URL(`../${p}`,import.meta.url)),p);
-  assert.equal(JSON.parse(read("package.json")).version,"1.7.12");
+  assert.equal(JSON.parse(read("package.json")).version,"1.7.14");
 });
 
 test("tutorial uses the real Park engine instead of a popup practice canvas",()=>{
@@ -69,7 +69,7 @@ test("tutorial hides legacy floating controls and preserves cloud progress",()=>
   assert.match(css,/display:\s*none\s*!important/);
 });
 
-test("1.7.12 tutorial uses Ember dialogue, checked engine scenes, and a working pause menu",()=>{
+test("1.7.14 tutorial uses Ember dialogue, checked engine scenes, and a working pause menu",()=>{
   const engine=readGameModuleGroup(120, 139);
   for(const word of [
     'FROG_SKINS.ember',
@@ -79,9 +79,10 @@ test("1.7.12 tutorial uses Ember dialogue, checked engine scenes, and a working 
     'FINAL_TUTORIAL_DIALOGUE',
     'TUTORIAL COMPLETE!',
     'tutorial-graduate',
-    'RESTART SCENE',
-    'EXIT TUTORIAL'
+    'drawTutorialPauseOverlay',
+    'getTutorialPauseChapterRects'
   ]) assert.match(engine,new RegExp(word.replace(/[.*+?^${}()|[\]\\]/g,"\\$&")));
+  assert.match(read("client/game/73-rendering-menus-overlays.js"), /"RESTART SCENE"[\s\S]*?"EXIT TUTORIAL"/);
   assert.doesNotMatch(engine,/COMPLETE THE SCENARIO|THE TUTORIAL CANNOT BE PAUSED/);
 });
 

@@ -1,0 +1,11 @@
+Ribbit Race Friends — Polish 24 / 1.7.13 — 2026.10.12-friends-polish-24
+
+- Pause in either tutorial now uses one shared Versus-style pause panel and controls, not the doubled pause screens previously drawn over each other.
+- Its match details area becomes a compact chapter chooser (arrow buttons, keyboard Left/Right, mouse wheel, chapter title, progress). Preview persists behind the menu; Continue starts the selected chapter.
+- Tutorial dialogue is drawn before the pause UI, so the pause card always covers any overlapping Ember dialogue.
+- Restart Scene and Exit Tutorial labels remain tutorial-specific, but use the same buttons/chrome as regular Versus.
+- Help overlay is above chapter selector and chapter input is disabled while help is open.
+- Removed a second redundant HTML fullscreen control that floated over EXIT TUTORIAL. The existing pixel-art fullscreen icon remains functional.
+- Restart Scene/Exit Tutorial cancel any uncommitted chapter preview.
+- Regular Solo and Versus pause rendering remains unchanged.
+- No server-side code, Cloudflare bindings, or data migrations required.

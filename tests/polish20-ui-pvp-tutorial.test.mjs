@@ -19,7 +19,7 @@ function block(source, start, end) {
 
 test("Polish 21 cache marker is wired through the Worker, client, and asset URLs", () => {
   for (const source of [tutorial, common, index, read("public/scripts/cloud-client.js")]) {
-    assert.match(source, /2026\.10\.12-friends-polish-23/);
+    assert.match(source, /2026\.10\.12-friends-polish-25/);
   }
 });
 
@@ -40,11 +40,11 @@ test("keyboard focus gives profile and device icons the same themed halo as util
   assert.match(nav, /Object\.freeze\(\["profile", "device", "achievements", "stats"\]\)/);
 });
 
-test("adjacent icon groups are contiguous and Tutorial hover suppresses Random highlight", () => {
-  assert.match(nav, /profileButton: Object\.freeze\(\{ id: "profile", x: 47, y: 211, w: 24, h: 24 \}\)/);
-  assert.match(nav, /deviceButton: Object\.freeze\(\{ id: "device", x: 71, y: 211, w: 24, h: 24 \}\)/);
-  assert.match(nav, /settingsButton: Object\.freeze\(\{ id: "settings", x: 358, y: 211, w: 24, h: 24 \}\)/);
-  assert.match(nav, /tutorialButton: Object\.freeze\(\{ id: "tutorial", x: 382, y: 211, w: 24, h: 24 \}\)/);
+test("adjacent icon groups keep breathing room and Tutorial hover suppresses Random highlight", () => {
+  assert.match(nav, /profileButton: Object\.freeze\(\{ id: "profile", x: 45, y: 211, w: 24, h: 24 \}\)/);
+  assert.match(nav, /deviceButton: Object\.freeze\(\{ id: "device", x: 75, y: 211, w: 24, h: 24 \}\)/);
+  assert.match(nav, /settingsButton: Object\.freeze\(\{ id: "settings", x: 350, y: 211, w: 24, h: 24 \}\)/);
+  assert.match(nav, /tutorialButton: Object\.freeze\(\{ id: "tutorial", x: 378, y: 211, w: 24, h: 24 \}\)/);
   assert.match(nav, /timeButton: Object\.freeze\(\{ x: 406, y: 211, w: 24, h: 24 \}\)/);
   assert.match(rendering, /anotherControlHovered[\s\S]{0,220}game\.homeTutorialButtonHovered/);
 });
@@ -68,7 +68,7 @@ test("Undo and Redo arrows stay inside their boxes and no longer show helper bub
 test("PvP chapter navigation previews while paused and applies only on resume", () => {
   const select = block(tutorial, "function selectTutorialChapter", "function applyTutorialChapterPreview");
   assert.match(select, /tutorial\.pauseChapterPreviewIndex = nextIndex/);
-  assert.match(select, /tutorial\.dialogueOpen = false/);
+  assert.doesNotMatch(select, /tutorial\.dialogueOpen = false/);
   assert.doesNotMatch(select, /configurePvpStep|configureSoloStep/);
   assert.match(tutorial, /if \(Number\.isInteger\(tutorial\.pauseChapterPreviewIndex\)\) applyTutorialChapterPreview\(\)/);
   assert.match(tutorial, /function polish19ApplyChapterPreview\(\)[\s\S]{0,100}return applyTutorialChapterPreview\(\)/);
@@ -102,8 +102,8 @@ test("high and low drop-bonk layouts use mirrored clear lanes and correct facing
   assert.match(tutorial, /case "pvpDropLow"[\s\S]{0,360}positionPvpOnPlatform\(p1, lowerMiddle, 1, playerOffset\)/);
   assert.match(tutorial, /case "pvpDemoDropHigh"[\s\S]{0,360}positionPvpOnPlatform\(ember, top, -1, offset\)/);
   assert.match(tutorial, /case "pvpDemoDropHigh"[\s\S]{0,420}positionPvp\(p1, PARK_PLATFORMS\[3\]\.x - p1\.w - 4, CONFIG\.groundY - p1\.h, 1\)/);
-  assert.match(tutorial, /case "pvpDropHigh"[\s\S]{0,360}positionPvpOnPlatform\(p1, top, -1, offset\)/);
-  assert.match(tutorial, /case "pvpDropHigh"[\s\S]{0,420}positionPvp\(ember, PARK_PLATFORMS\[3\]\.x - ember\.w - 4, CONFIG\.groundY - ember\.h, 1\)/);
+  assert.match(tutorial, /case "pvpDropHigh"[\s\S]{0,360}positionPvpOnPlatform\(p1, top, 1, 4\)/);
+  assert.match(tutorial, /case "pvpDropHigh"[\s\S]{0,420}positionPvp\(ember, PARK_PLATFORMS\[3\]\.x \+ PARK_PLATFORMS\[3\]\.w \+ 4, CONFIG\.groundY - ember\.h, -1\)/);
 });
 
 test("scripted player jumps and poof transitions cannot be canceled by live input", () => {

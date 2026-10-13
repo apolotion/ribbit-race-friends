@@ -82,8 +82,7 @@ window.RibbitRaceTutorialEngine = Object.freeze({
     if (!catalog.length) return null;
     tutorial.pauseChapterPreviewIndex = (Number(index) + catalog.length) % catalog.length;
     tutorial.chapterNavigationPending = true;
-    tutorial.dialogueOpen = false;
-    clearHeldInput();
+    // Preview leaves the current dialogue intact until Continue.
     return tutorial.pauseChapterPreviewIndex;
   },
   applyChapterPreview(){ return applyTutorialChapterPreview(); },

@@ -320,43 +320,13 @@ drawSpeechBubble = function(...args) {
   return originalDrawSpeechBubble.apply(this, args);
 };
 
+// Both tutorials share the exact same pause chrome as regular Versus.
+// Defer the stock Solo panel so the tutorial dialogue and goal render behind
+// a single final pause panel. Drawing a second panel caused ghosted headings.
 const originalDrawSoloPauseOverlayForTutorial = drawSoloPauseOverlay;
 drawSoloPauseOverlay = function(...args) {
-  if (tutorial.active && tutorial.dialogueOpen) drawTutorialDialogue();
+  if (tutorial.active) return;
   return originalDrawSoloPauseOverlayForTutorial.apply(this, args);
-};
-
-// Keep the normal pause flow available during the tutorial. The two lower
-// buttons are repainted and repurposed as Retry Scene and Skip Tutorial.
-const originalDrawPauseControlsForTutorial = drawPauseControls;
-drawPauseControls = function(...args) {
-  const result = originalDrawPauseControlsForTutorial.apply(this, args);
-  if (!tutorial.active || game.state !== "paused") return result;
-
-  const skin = getSelectedSkin();
-  const restartButton = PAUSE_UI.restartButton;
-  const homeButton = PAUSE_UI.homeButton;
-  drawSelectablePauseButton(
-    restartButton,
-    game.pauseFocusVisible && game.pauseSelection === "restart",
-    game.pauseHoveredSelection === "restart",
-    game.pausePressedSelection === "restart",
-    { dark: "#6b4c21", mid: "#b78634", light: "#f2cf70" },
-    "RESTART SCENE",
-    (full) => drawMiniRestartIcon(restartButton.x + 8, restartButton.y + 3, full ? COLORS.white : "#7a5a2a"),
-    restartButton.x + restartButton.w / 2 + 10
-  );
-  drawSelectablePauseButton(
-    homeButton,
-    game.pauseFocusVisible && game.pauseSelection === "home",
-    game.pauseHoveredSelection === "home",
-    game.pausePressedSelection === "home",
-    { dark: skin.dark, mid: "#d76b31", light: "#ffb45f" },
-    "EXIT TUTORIAL",
-    () => drawMiniHouseIcon(homeButton.x + 7, homeButton.y + 3),
-    homeButton.x + homeButton.w / 2 + 10
-  );
-  return result;
 };
 
 const originalResumePausedGameForTutorial = resumePausedGame;
@@ -380,10 +350,15 @@ activatePauseSelection = function(...args) {
     return originalActivatePauseSelectionForTutorial.apply(this, args);
   }
   if (game.pauseSelection === "home") {
+    tutorial.pauseChapterPreviewIndex = null;
+    tutorial.chapterNavigationPending = false;
     finish(false);
     return;
   }
   if (game.pauseSelection === "restart") {
+    // Restart Scene resets the active chapter, not any uncommitted preview.
+    tutorial.pauseChapterPreviewIndex = null;
+    tutorial.chapterNavigationPending = false;
     game.state = "playing";
     game.pauseHelpOpen = false;
     game.pauseChargeSnapshot = null;
@@ -568,17 +543,12 @@ window.addEventListener("keydown", (event) => {
     return;
   }
 
-  if (tutorial.active && event.code === "KeyR" &&
-      game.state !== "paused" && !tutorial.completeScreen) {
-    event.preventDefault();
-    event.stopImmediatePropagation();
-    if (!event.repeat) window.RibbitRaceTutorialEngine?.retryScene?.();
-    return;
-  }
+  // R only restarts a tutorial scene from the pause menu. Live gameplay no
+  // longer binds a hidden instant-retry shortcut.
 
   // Escape uses the game's ordinary pause flow, exactly like P. It must never
   // reset a tutorial attempt or skip the current demonstration.
-  if (tutorial.active && game.state === "paused" && !event.repeat &&
+  if (tutorial.active && game.state === "paused" && !game.pauseHelpOpen && !event.repeat &&
       ["ArrowLeft", "ArrowRight"].includes(event.code)) {
     event.preventDefault();
     event.stopImmediatePropagation();
@@ -658,7 +628,7 @@ window.addEventListener("keyup", (event) => {
 }, { capture:true, passive:false });
 
 canvas.addEventListener("pointerdown", (event) => {
-  if (tutorial.active && game.state === "paused") {
+  if (tutorial.active && game.state === "paused" && !game.pauseHelpOpen) {
     const point = getCanvasPoint(event);
     const chapterRects = getTutorialPauseChapterRects();
     if (pointInsideRect(point, chapterRects.previous) || pointInsideRect(point, chapterRects.next)) {
@@ -676,8 +646,20 @@ canvas.addEventListener("pointerdown", (event) => {
   }
 }, { capture:true, passive:false });
 
+let tutorialPauseLastWheelAt = 0;
+canvas.addEventListener("wheel", (event) => {
+  if (!tutorial.active || game.state !== "paused" || game.pauseHelpOpen || !event.deltaY) return;
+  if (!pointInsideRect(getCanvasPoint(event), getTutorialPauseChapterRects().scroll)) return;
+  event.preventDefault();
+  event.stopImmediatePropagation();
+  const now = performance.now();
+  if (now - tutorialPauseLastWheelAt < 125) return;
+  tutorialPauseLastWheelAt = now;
+  selectTutorialChapter(event.deltaY > 0 ? 1 : -1);
+}, { capture:true, passive:false });
+
 canvas.addEventListener("pointermove", (event) => {
-  if (tutorial.active && game.state === "paused") {
+  if (tutorial.active && game.state === "paused" && !game.pauseHelpOpen) {
     const point = getCanvasPoint(event);
     const chapterRects = getTutorialPauseChapterRects();
     tutorial.pauseChapterHover = pointInsideRect(point, chapterRects.previous)

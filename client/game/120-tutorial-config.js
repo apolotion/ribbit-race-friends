@@ -3,7 +3,7 @@
 
 const SOLO_SEEN_KEY = "rrFriendsEngineTutorialSoloSeenV8";
 const PVP_SEEN_KEY = "rrFriendsEngineTutorialPvpSeenV8";
-const TUTORIAL_BUILD = "2026.10.12-friends-polish-23";
+const TUTORIAL_BUILD = "2026.10.12-friends-polish-25";
 const TUTORIAL_ACHIEVEMENT_ID = "tutorial-graduate";
 const PVP_TUTORIAL_ACHIEVEMENT_ID = "versus-tutorial-graduate";
 const TYPEWRITER_MS_PER_CHARACTER = 28;
@@ -915,8 +915,8 @@ const PVP_STEPS = Object.freeze([
     ],
     "dialogue": [
       "Now let's see how much bounce you can borrow from me.",
-      "One second after this message closes, I'll start a maximum-charge jump.",
-      "Time your leap to land on me as I spring upward."
+      "I plan on charging a max jump.",
+      "Try and time your bonk just as I release it!"
     ],
     "successDialogue": [
       "There you go!",

@@ -29,8 +29,8 @@
       soloButton: Object.freeze({ id: "solo", x: 140, y: 80, w: 200, h: 30 }),
       pvpButton: Object.freeze({ id: "pvp", x: 140, y: 115, w: 200, h: 30 }),
       frogButton: Object.freeze({ id: "frog", x: 140, y: 150, w: 200, h: 30 }),
-      profileButton: Object.freeze({ id: "profile", x: 47, y: 211, w: 24, h: 24 }),
-      deviceButton: Object.freeze({ id: "device", x: 71, y: 211, w: 24, h: 24 }),
+      profileButton: Object.freeze({ id: "profile", x: 45, y: 211, w: 24, h: 24 }),
+      deviceButton: Object.freeze({ id: "device", x: 75, y: 211, w: 24, h: 24 }),
       achievementsButton: Object.freeze({ id: "achievements", x: 385, y: 211, w: 24, h: 24 }),
       statsButton: Object.freeze({ id: "stats", x: 409, y: 211, w: 24, h: 24 })
     });
@@ -48,8 +48,8 @@
       customizeButton: Object.freeze({ x: 72, y: 176, w: 120, h: 27 }), // legacy geometry
       randomButton: Object.freeze({ id: "random", x: 188, y: 154, w: 104, h: 17 }),
       backButton: Object.freeze({ id: "back", x: 180, y: 181, w: 120, h: 24 }),
-      settingsButton: Object.freeze({ id: "settings", x: 358, y: 211, w: 24, h: 24 }),
-      tutorialButton: Object.freeze({ id: "tutorial", x: 382, y: 211, w: 24, h: 24 }),
+      settingsButton: Object.freeze({ id: "settings", x: 350, y: 211, w: 24, h: 24 }),
+      tutorialButton: Object.freeze({ id: "tutorial", x: 378, y: 211, w: 24, h: 24 }),
       levelButtons: Object.freeze([
         Object.freeze({ id: "park",   x: 72,  y: 101, w: 104, h: 21 }),
         Object.freeze({ id: "swamp",  x: 188, y: 101, w: 104, h: 21 }),
@@ -170,12 +170,12 @@
       p2Selector: Object.freeze({ x: 284, y: 160, w: 84, h: 48 }),
       vsButton: Object.freeze({ x: 223, y: 174, w: 34, h: 21 }),
       cpuDifficultyButton: Object.freeze({ x: 284, y: 210, w: 84, h: 15 }),
-      wifiButton: Object.freeze({ x: 34, y: 225, w: 24, h: 24 }),
-      tutorialButton: Object.freeze({ x: 58, y: 225, w: 24, h: 24 }),
+      wifiButton: Object.freeze({ x: 30, y: 225, w: 24, h: 24 }),
+      tutorialButton: Object.freeze({ x: 60, y: 225, w: 24, h: 24 }),
       startButton: Object.freeze({ x: 132, y: 228, w: 100, h: 23 }),
       backButton: Object.freeze({ x: 248, y: 228, w: 100, h: 23 }),
-      settingsButton: Object.freeze({ x: 398, y: 225, w: 24, h: 24 }),
-      timeButton: Object.freeze({ x: 422, y: 225, w: 24, h: 24 })
+      settingsButton: Object.freeze({ x: 392, y: 225, w: 24, h: 24 }),
+      timeButton: Object.freeze({ x: 420, y: 225, w: 24, h: 24 })
     });
 
     const PVP_SETTINGS_UI = Object.freeze({

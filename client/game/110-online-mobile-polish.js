@@ -5,11 +5,11 @@
  */
 (() => {
   "use strict";
-  const BUILD = "2026.10.12-friends-polish-23";
+  const BUILD = "2026.10.12-friends-polish-25";
   const RR_V160_CANDIDATES = {"catchFly":["attemptFlyCatch","attemptPvpFlyCatch","catchSandboxFly","getPvpImminentCatchFly","recordFlyEaten","scheduleFlyReplacementFromCatch"],"jumpSound":["playJumpSound"],"beep":["playCountdownGoSound","playCountdownSound"],"replayUpload":["saveRecordDate"],"restart":["resetGame","resetPvpGame","resetPvpPlayer","resetRoundLifecycle","resetRoundNetwork","restartCurrentLevel"],"drop":[],"render":["drawPvpScene","drawScene"],"worldRecord":[],"fullscreen":["getFullscreenElement","hideFullscreenFallback","showFullscreenFallback","syncFullscreenButton","toggleRibbitFullscreen"],"onlineSubmit":[],"leaderboard":["isSoloEndlessLeaderboardEligible","savePvpMatchWinsForLeaderboard"]};
   const RR_V160_VARS = {"onlineSelect":[],"achievementSelect":["activeAchievementIndex","hoveredAchievementCard"],"backRect":[]};
 
-  const VERSION = "1.7.12";
+  const VERSION = "1.7.14";
   const V = {
     menuTouch: new Map(), chargeTouch: new Map(), achievementPinned: -1,
     finalCatchStarted: 0, finalCatchLabelsGone: false,
@@ -362,7 +362,9 @@
   // Enrich the existing per-frame monitor.
   const deepTick=async(now)=>{
     finalCatchTongueAssist();
-    fsButton.style.display=/paused/i.test(stateName())?"block":"none";
+    // Canvas pause chrome already has a working fullscreen icon. Do not
+    // display this legacy DOM button on top of the tutorial/Versus panel.
+    fsButton.style.display="none";
     const active=runLooksActive();
     if(active&&!observedRun){observedRun=true;window.RibbitRecordReplay.start();}
     if(!active&&observedRun){observedRun=false;const q=qualifiesAsRecord();const blob=await window.RibbitRecordReplay.finish(q);if(q)await uploadReplayBlob(blob);}

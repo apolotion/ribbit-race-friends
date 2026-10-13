@@ -347,7 +347,7 @@ function drivePvpPracticeCpu(setup, now) {
         // completed under-bonk count remain untouched.
         beginPoofTransition({ reason:"under-bonk-return", showFailure:false,
           preserveExistingFlies:true, armFlies:false, pvpPoofPlayers:[1],
-          action:() => { positionPvp(ember,80,CONFIG.groundY-ember.h,1); tutorial.pvpLastPracticeEventAt=performance.now(); }
+          action:() => { positionPvp(ember,PARK_PLATFORMS[3].x + 8,CONFIG.groundY-ember.h,1); tutorial.pvpLastPracticeEventAt=performance.now(); }
         });
       } else scriptPvpChargedJump(1, .78, ember.dir, 0);
     }
@@ -507,7 +507,8 @@ function monitorPvp() {
   }
 
   if (setup === "pvpRecoveryBonk") {
-    if (tutorial.pvpBonks >= 2 && pvpPracticeEventReady(1000, now)) passStep();
+    const recoveryWindowHit = tutorial.pvpBonks >= 2 && tutorial.pvpLastPracticeEventAt > 0 && now - tutorial.pvpLastPracticeEventAt <= 1000;
+    if (recoveryWindowHit && pvpPracticeEventReady(300, now)) passStep();
     else if (playerLanded && tutorial.pvpBonks === 0 && now - tutorial.enteredAt > 500) failAttempt("BONK EMBER, TURN AT THE WALL, THEN RETURN");
     return;
   }
@@ -529,7 +530,7 @@ function monitorPvp() {
     if (p1.bonked || p1.stunTimer > 0) {
       failAttempt("USE A QUICK TAP TO STAY LOW");
     } else {
-      const platform = PARK_PLATFORMS[2];
+      const platform = PARK_PLATFORMS[3];
       if (p1.x > platform.x + platform.w + 18 && pvpTutorialSettled()) passStep();
     }
     return;
@@ -542,16 +543,18 @@ function monitorPvp() {
     }
     if (tutorial.pvpReboundCount > tutorial.pvpPracticeCount && pvpTutorialSettled() && !tutorial.resetPending) {
       tutorial.pvpPracticeCount = tutorial.pvpReboundCount;
-      const layouts = [[110,300],[285,140],[150,315]];
-      const layout = layouts[Math.min(layouts.length - 1, tutorial.pvpReboundCount)] || layouts[0];
       beginPoofTransition({
         reason: "next-pvp-rebound",
         showFailure: false,
         preserveExistingFlies: true,
         action: () => {
-          const playerDirection = layout[0] < layout[1] ? 1 : -1;
-          positionPvp(p1, layout[0], CONFIG.groundY - p1.h, playerDirection);
-          positionPvp(ember, layout[1], CONFIG.groundY - ember.h, -playerDirection);
+          if (tutorial.pvpReboundCount === 1) {
+            positionPvpOnPlatform(p1, PARK_PLATFORMS[5], 1);
+            positionPvpOnPlatform(ember, PARK_PLATFORMS[5], -1, 2);
+          } else {
+            positionPvpOnPlatform(p1, PARK_PLATFORMS[4], 1, 4);
+            positionPvpOnPlatform(ember, PARK_PLATFORMS[4], -1, PARK_PLATFORMS[4].w - ember.w - 4);
+          }
           tutorial.pvpMirrorWasHeld = false;
         }
       });
@@ -570,7 +573,7 @@ function monitorPvp() {
   if (setup === "pvpIntercept") {
     if (tutorial.pvpPracticeCatchCount > 0 && !tutorial.pvpInterceptSeen) failAttempt("REBOUND EMBER BEFORE SHE REACHES THE FLY");
     else if (tutorial.pvpInterceptSeen && pvpTutorialSettled()) passStep();
-    else if (ember.grounded && tutorial.pvpEmberLaunchStarted && now - tutorial.pvpEmberJumpScheduledAt > 2600 && !tutorial.pvpInterceptSeen) failAttempt("INTERCEPT EMBER BEFORE THE FLY");
+    else if (ember.grounded && tutorial.pvpEmberLaunchStarted && !tutorial.pvpInterceptSeen) failAttempt("INTERCEPT EMBER BEFORE THE FLY");
     return;
   }
 

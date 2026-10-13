@@ -375,16 +375,16 @@
     }
 
     function getFrogPalette() {
-      const skin = getSelectedSkin();
+      const pauseSkin = getSelectedSkin();
       return {
         dark: skin.dark,
-        mid: skin.mid,
-        light: skin.light,
+        mid: pauseSkin.mid,
+        light: pauseSkin.light,
         belly: skin.belly,
-        accents: skin.accents || skin.bump || skin.crest || skin.light,
-        arms: skin.arms || skin.accents || skin.bump || skin.light,
-        crest: skin.crest || skin.accents || skin.light,
-        feet: skin.feet || skin.accents || skin.light,
+        accents: skin.accents || skin.bump || skin.crest || pauseSkin.light,
+        arms: skin.arms || skin.accents || skin.bump || pauseSkin.light,
+        crest: skin.crest || skin.accents || pauseSkin.light,
+        feet: skin.feet || skin.accents || pauseSkin.light,
         hat: skin.hat || "none"
       };
     }
@@ -885,7 +885,7 @@
         ctx.translate(22, 17);
         ctx.rotate(-0.45);
         ctx.fillStyle = skin.dark; ctx.fillRect(-1, -7, 3, 10); ctx.fillRect(-4, -8, 9, 3);
-        ctx.fillStyle = skin.mid; ctx.fillRect(-5, 3, 11, 4);
+        ctx.fillStyle = pauseSkin.mid; ctx.fillRect(-5, 3, 11, 4);
         ctx.restore();
         drawBitmapText("SANDBOX", 57, 15, 0.72, "center", skin.dark);
       } else {
@@ -924,33 +924,39 @@
       }
 
       const pause = HUD_UI.pauseButton;
-      // Keep the control usable without hiding a centered fly label underneath it.
-      // The paused state is slightly stronger because the world is already frozen.
-      const pauseOpacity = game.state === "paused" ? 0.84 : game.sandboxMode ? 0.66 : 0.56;
+      // Keep the control readable without the old white button tile.
+      // The solo HUD now matches the transparent Versus pause treatment.
+      const pauseOpacity = game.state === "paused" ? 0.92 : game.sandboxMode ? 0.74 : 0.66;
+      const pauseSkin = getSelectedSkin();
       ctx.save();
       ctx.globalAlpha *= pauseOpacity;
-      ctx.fillStyle = "rgba(38,54,61,0.45)";
-      ctx.fillRect(pause.x + 2, pause.y + 2, pause.w, pause.h);
-      ctx.fillStyle = COLORS.ink;
-      ctx.fillRect(pause.x, pause.y, pause.w, pause.h);
-      ctx.fillStyle = game.state === "paused" ? getSelectedSkin().mid : getSelectedSkin().belly;
-      ctx.fillRect(pause.x + 2, pause.y + 2, pause.w - 4, pause.h - 4);
-      ctx.fillStyle = game.state === "paused" ? COLORS.white : getSelectedSkin().dark;
-
       if (game.sandboxMode) {
-        ctx.fillRect(pause.x + 7, pause.y + 5, 3, 3);
-        ctx.fillRect(pause.x + 10, pause.y + 8, 3, 3);
-        ctx.fillRect(pause.x + 13, pause.y + 11, 3, 3);
-        ctx.fillRect(pause.x + 16, pause.y + 5, 3, 3);
-        ctx.fillRect(pause.x + 13, pause.y + 8, 3, 3);
-        ctx.fillRect(pause.x + 10, pause.y + 11, 3, 3);
+        const dotColor = game.state === "paused" ? COLORS.white : pauseSkin.light;
+        ctx.fillStyle = COLORS.ink;
+        for (const [dx, dy] of [[7,5],[10,8],[13,11],[16,5],[13,8],[10,11]]) {
+          ctx.fillRect(pause.x + dx - 1, pause.y + dy - 1, 4, 4);
+          ctx.fillStyle = dotColor;
+          ctx.fillRect(pause.x + dx, pause.y + dy, 2, 2);
+          ctx.fillStyle = COLORS.ink;
+        }
       } else if (game.state === "paused") {
-        ctx.fillRect(pause.x + 9, pause.y + 5, 3, 9);
-        ctx.fillRect(pause.x + 12, pause.y + 7, 3, 5);
-        ctx.fillRect(pause.x + 15, pause.y + 9, 2, 1);
+        const accent = COLORS.white;
+        ctx.fillStyle = COLORS.ink;
+        ctx.fillRect(pause.x + 8, pause.y + 4, 5, 12);
+        ctx.fillRect(pause.x + 13, pause.y + 7, 4, 6);
+        ctx.fillRect(pause.x + 17, pause.y + 9, 2, 2);
+        ctx.fillStyle = accent;
+        ctx.fillRect(pause.x + 9, pause.y + 5, 3, 10);
+        ctx.fillRect(pause.x + 14, pause.y + 8, 2, 4);
       } else {
-        ctx.fillRect(pause.x + 7, pause.y + 5, 4, 9);
-        ctx.fillRect(pause.x + 15, pause.y + 5, 4, 9);
+        for (const dx of [7, 15]) {
+          ctx.fillStyle = COLORS.ink;
+          ctx.fillRect(pause.x + dx - 1, pause.y + 4, 6, 14);
+          ctx.fillStyle = pauseSkin.light;
+          ctx.fillRect(pause.x + dx, pause.y + 5, 4, 12);
+          ctx.fillStyle = pauseSkin.mid;
+          ctx.fillRect(pause.x + dx, pause.y + 14, 4, 3);
+        }
       }
       ctx.restore();
     }

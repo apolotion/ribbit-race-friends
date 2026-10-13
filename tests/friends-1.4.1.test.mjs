@@ -22,7 +22,7 @@ function extractFunctionSource(source,name){
   throw new Error(`Unclosed ${name}`);
 }
 
-test("1.7.12 keeps a right-edge Lake word plate exactly centered over its fly",()=>{
+test("1.7.14 keeps a right-edge Lake word plate exactly centered over its fly",()=>{
   const names=["flyLabelCacheKey","overlapArea","chooseFlyLabelRect"];
   const source=names.map(name=>extractFunctionSource(rendering,name)).join("\n");
   const make=new Function("game",`${source}\nconst flyLabelPlacementCache=new Map();return {chooseFlyLabelRect};`);
@@ -35,7 +35,7 @@ test("1.7.12 keeps a right-edge Lake word plate exactly centered over its fly",(
 });
 
 test("running pause button is deliberately translucent",()=>{
-  assert.match(rendering,/const pauseOpacity = game\.state === "paused" \? 0\.84 : game\.sandboxMode \? 0\.66 : 0\.56;/);
+  assert.match(rendering,/const pauseOpacity = game\.state === "paused" \? 0\.92 : game\.sandboxMode \? 0\.74 : 0\.66;/);
   assert.match(rendering,/ctx\.globalAlpha \*= pauseOpacity;/);
   assert.match(rendering,/ctx\.restore\(\);\s*\n\s*\}/);
 });

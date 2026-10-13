@@ -1000,8 +1000,10 @@ function tutorialSceneCatalog() {
 
 function getTutorialPauseChapterRects() {
   return {
-    previous:{ x:126, y:75, w:24, h:20 },
-    next:{ x:330, y:75, w:24, h:20 }
+    previous:{ x:125, y:89, w:24, h:20 },
+    next:{ x:331, y:89, w:24, h:20 },
+    // A mouse wheel or touchpad scroll over this lane browses chapters.
+    scroll:{ x:120, y:74, w:240, h:55 }
   };
 }
 
@@ -1017,11 +1019,8 @@ function selectTutorialChapter(delta) {
   const nextIndex = (baseIndex + Math.sign(delta || 0) + catalog.length) % catalog.length;
   tutorial.pauseChapterPreviewIndex = nextIndex;
   tutorial.chapterNavigationPending = true;
-  tutorial.dialogueOpen = false;
-  tutorial.dialogueHeldLineText = "";
-  tutorial.dialogueHeldPortraitKey = "";
-  resetDialogueSpaceHold();
-  clearHeldInput();
+  // Browsing is only a preview; keep Ember's current dialogue visible behind
+  // the pause panel until Continue actually activates the chosen chapter.
   tone(440, .04, .010, delta < 0 ? -30 : 30);
   return true;
 }
@@ -1087,9 +1086,12 @@ function drawTutorialPauseArrow(rect, direction, disabled = false) {
 
 function drawTutorialPauseOverlay() {
   if (!tutorial.active || game.state !== "paused") return;
+  // Use the *same* panel and controls as the ordinary Versus pause menu. The
+  // former double-rendered stock + tutorial panels, leaving stacked titles.
   drawOverlayPanel(
     "PAUSED",
     [],
+    "",
     true,
     { x:75, y:28, w:330, h:204, titleOffset:17, lineStartOffset:58, lineGap:15, footerOffset:169 }
   );
@@ -1101,12 +1103,29 @@ function drawTutorialPauseOverlay() {
     : currentIndex;
   const entry = catalog[previewIndex] || { title:"TUTORIAL", scene:1 };
   const rects = getTutorialPauseChapterRects();
+  const skin = getSelectedSkin();
+
+  // Replace the standard pause panel's mode/score details with one compact,
+  // bordered chapter scroller. Keep its entire footprint above audio controls.
+  drawBitmapText("TUTORIAL CHAPTERS", W / 2, 76, .59, "center", "#68787e");
+  ctx.fillStyle = COLORS.ink;
+  ctx.fillRect(154, 87, 172, 29);
+  ctx.fillStyle = "#e7f4f6";
+  ctx.fillRect(156, 89, 168, 25);
+  ctx.fillStyle = skin.mid;
+  ctx.fillRect(158, 91, 164, 2);
+  drawBitmapText(`CHAPTER ${previewIndex + 1} / ${catalog.length}`, W / 2, 94, .71, "center", skin.dark);
+  const title = entry.title.toUpperCase();
+  const titleScale = Math.min(.67, 158 / Math.max(1, measureBitmapText(title, 1)));
+  drawBitmapText(title, W / 2, 104, titleScale, "center", "#48555a");
   drawTutorialPauseArrow(rects.previous, "previous", false);
   drawTutorialPauseArrow(rects.next, "next", false);
-  drawBitmapText("TUTORIAL", W / 2, 80, 1.05, "center", "#34484f");
-  const titleScale = Math.min(.58, 214 / Math.max(1, measureBitmapText(entry.title, 1)));
-  drawBitmapText(entry.title.toUpperCase(), W / 2, 105, titleScale, "center", "#48555a");
-  drawBitmapText(`CHAPTER ${previewIndex + 1} / ${catalog.length}`, W / 2, 118, .42, "center", "#68787e");
+
+  ctx.fillStyle = "#d6e7e9";
+  ctx.fillRect(155, 119, 170, 3);
+  ctx.fillStyle = skin.mid;
+  ctx.fillRect(155, 119, Math.round(170 * (previewIndex + 1) / Math.max(1, catalog.length)), 3);
+  drawBitmapText("ARROWS OR SCROLL TO BROWSE", W / 2, 124, .40, "center", "#68787e");
   drawPauseControls();
   drawBitmapText(RIBBIT_CREDIT_TEXT, W / 2, 216, 1, "center", "#48555a");
 }

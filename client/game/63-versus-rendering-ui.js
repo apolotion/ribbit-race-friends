@@ -371,6 +371,36 @@
       return best;
     }
 
+    function drawPvpOffscreenIndicator(player) {
+      if (!player || player.y + player.h >= 0 || !["playing", "paused", "countdown"].includes(game.state)) return;
+      const centerX = Math.round(clamp(player.x + player.w / 2, 12, W - 12));
+      const overlapsLeftHud = centerX < 92;
+      const overlapsRightHud = centerX > W - 72;
+      const top = overlapsLeftHud || overlapsRightHud ? 30 : 4;
+      const pulse = 0.88 + Math.sin(game.visualTime * 8) * 0.12;
+      const palette = getPvpSkinPalette(player.skinId, player.index === 0 ? "azure" : "crimson", player.index);
+
+      ctx.save();
+      ctx.globalAlpha = pulse;
+      ctx.fillStyle = "rgba(38,54,61,0.45)";
+      ctx.fillRect(centerX - 7, top + 2, 16, 14);
+      ctx.fillStyle = COLORS.ink;
+      ctx.fillRect(centerX - 7, top + 1, 14, 15);
+      ctx.fillRect(centerX - 9, top + 4, 18, 9);
+      ctx.fillStyle = COLORS.white;
+      ctx.fillRect(centerX - 5, top + 3, 10, 11);
+      ctx.fillRect(centerX - 7, top + 5, 14, 7);
+      ctx.fillStyle = palette.dark;
+      ctx.fillRect(centerX - 1, top + 6, 3, 6);
+      ctx.fillRect(centerX - 4, top + 6, 9, 2);
+      ctx.fillRect(centerX - 3, top + 4, 7, 2);
+      ctx.fillRect(centerX - 2, top + 3, 5, 2);
+      ctx.fillStyle = palette.light;
+      ctx.fillRect(centerX, top + 5, 1, 6);
+      ctx.fillRect(centerX - 2, top + 6, 5, 1);
+      ctx.restore();
+    }
+
     function drawPvpSpeechBubble(player) {
       if (OnlineVersus.isActive() && player.index !== OnlineVersus.localIndex()) return;
       if (player.firstJumpMade || game.state !== "playing") return;
@@ -1170,6 +1200,7 @@
       const p2X = 336;
       const p1Palette = getPvpSkinPalette(pvpPlayers[0].skinId, "azure", 0);
       const p2Palette = getPvpSkinPalette(pvpPlayers[1].skinId, "crimson", 1);
+      const showRoundCrowns = !(tutorial.active && tutorial.kind === "pvp" && tutorialStep?.()?.setup !== "pvpFinalMatch");
       const roundsToWin = getPvpRoundsToWin();
       const crownScale = 1.55;
       const crownStep = 19;
@@ -1179,11 +1210,13 @@
       const leftStart = Math.round(W / 2 - totalWidth / 2);
       const rightStart = Math.round(W / 2 + crownGap / 2);
       const crownY = panel.y + 60;
-      for (let slot = 0; slot < roundsToWin; slot += 1) {
-        drawPvpCrown(leftStart + slot * crownStep, crownY, game.pvpRoundWins[0] > slot, p1Palette, crownScale);
-        drawPvpCrown(rightStart + slot * crownStep, crownY, game.pvpRoundWins[1] > slot, p2Palette, crownScale);
+      if (showRoundCrowns) {
+        for (let slot = 0; slot < roundsToWin; slot += 1) {
+          drawPvpCrown(leftStart + slot * crownStep, crownY, game.pvpRoundWins[0] > slot, p1Palette, crownScale);
+          drawPvpCrown(rightStart + slot * crownStep, crownY, game.pvpRoundWins[1] > slot, p2Palette, crownScale);
+        }
+        drawBitmapText("-", W / 2, crownY + 5, 1.25, "center", "#48555a");
       }
-      drawBitmapText("-", W / 2, crownY + 5, 1.25, "center", "#48555a");
 
       const frogGround = panel.y + 116;
       const resultFrogScale = 1.78;
@@ -1311,7 +1344,10 @@
       } else {
         pvpPlayers.forEach(p => drawEntity(p, drawPvpPlayer));
       }
-      if (!['pvpCelebration', 'won'].includes(game.state)) pvpPlayers.forEach(p => drawEntity(p, drawPvpSpeechBubble));
+      if (!['pvpCelebration', 'won'].includes(game.state)) {
+        pvpPlayers.forEach(drawPvpOffscreenIndicator);
+        pvpPlayers.forEach(p => drawEntity(p, drawPvpSpeechBubble));
+      }
       drawPvpImpactEffects();
       ctx.restore();
       drawPvpHud();
@@ -1330,7 +1366,7 @@
         drawBitmapText("SUDDEN DEATH", W / 2, 94, 1.65, "center", "#8d2434", "#f3a4af");
         drawBitmapText("FIRST TO 3 • NO TIMER", W / 2, 115, 0.82, "center", "#48555a");
         ctx.restore();
-      } else if (game.state === "paused") {
+      } else if (game.state === "paused" && !tutorial.active) {
         drawOverlayPanel(
           "PAUSED",
           [`BEST OF ${game.pvpBestOf}`, isPvpEndlessMode() ? `${game.pvpTimeLimitSeconds} SECOND ENDLESS` : (game.pvpTimeLimitSeconds ? `${game.pvpTimeLimitSeconds} SECOND LIMIT` : `FIRST TO ${game.pvpFirstTo}`)],

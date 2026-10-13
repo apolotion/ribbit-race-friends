@@ -446,15 +446,15 @@ function configurePvpStep(index) {
       break;
     }
     case "pvpDropHigh": {
-      // Reverse the roles while retaining the same clear drop lane.
-      const offset = top.w - p1.w - 4;
-      positionPvpOnPlatform(p1, top, -1, offset);
-      positionPvp(ember, PARK_PLATFORMS[3].x - ember.w - 4, CONFIG.groundY - ember.h, 1);
+      // Mirror the setup for the player: face right from the left side of the
+      // top platform and drop onto Ember waiting to the right of the lane.
+      positionPvpOnPlatform(p1, top, 1, 4);
+      positionPvp(ember, PARK_PLATFORMS[3].x + PARK_PLATFORMS[3].w + 4, CONFIG.groundY - ember.h, -1);
       break;
     }
     case "pvpDemoBufferedBonk":
-      positionPvp(p1, PARK_PLATFORMS[3].x + (PARK_PLATFORMS[3].w - p1.w) / 2, CONFIG.groundY - p1.h, -1);
-      positionPvp(ember, 105, CONFIG.groundY - ember.h, 1);
+      positionPvpOnPlatform(p1, PARK_PLATFORMS[3], 1);
+      positionPvp(ember, 365, CONFIG.groundY - ember.h, -1);
       break;
     case "pvpBufferedBonk":
       positionPvp(p1, 105, CONFIG.groundY - p1.h, 1);
@@ -469,28 +469,28 @@ function configurePvpStep(index) {
       positionPvpOnPlatform(ember, PARK_PLATFORMS[6], -1);
       break;
     case "pvpDemoBufferedSky":
-      positionPvpOnPlatform(ember, top, 1, 4);
-      positionPvp(p1, PARK_PLATFORMS[6].x + 13, CONFIG.groundY - p1.h, -1);
+      positionPvpOnPlatform(ember, top, -1, top.w - ember.w - 4);
+      positionPvp(p1, PARK_PLATFORMS[6].x + 6, CONFIG.groundY - p1.h, 1);
       break;
     case "pvpBufferedSky":
-      positionPvpOnPlatform(p1, top, 1, 4);
-      positionPvp(ember, PARK_PLATFORMS[6].x + 13, CONFIG.groundY - ember.h, -1);
+      positionPvpOnPlatform(p1, top, -1, top.w - p1.w - 4);
+      positionPvp(ember, PARK_PLATFORMS[6].x + 6, CONFIG.groundY - ember.h, 1);
       break;
     case "pvpDemoHighGround":
-      positionPvpOnPlatform(p1, top, -1);
-      positionPvpOnPlatform(ember, PARK_PLATFORMS[3], 1);
+      positionPvpOnPlatform(p1, PARK_PLATFORMS[6], 1);
+      positionPvp(ember, PARK_PLATFORMS[6].x + PARK_PLATFORMS[6].w - ember.w - 2, CONFIG.groundY - ember.h, -1);
       break;
     case "pvpHighGround":
-      positionPvpOnPlatform(p1, PARK_PLATFORMS[3], 1);
-      positionPvpOnPlatform(ember, top, -1);
+      positionPvp(ember, PARK_PLATFORMS[6].x + PARK_PLATFORMS[6].w - ember.w - 2, CONFIG.groundY - ember.h, -1);
+      positionPvpOnPlatform(p1, PARK_PLATFORMS[6], 1);
       break;
     case "pvpDemoRecoveryBonk":
       positionPvp(ember, 320, CONFIG.groundY - ember.h, 1);
       positionPvp(p1, 405, CONFIG.groundY - p1.h, -1);
       break;
     case "pvpRecoveryBonk":
-      positionPvp(p1, 320, CONFIG.groundY - p1.h, 1);
-      positionPvp(ember, 404, CONFIG.groundY - ember.h, 1);
+      positionPvp(p1, Math.round(W * 0.25), CONFIG.groundY - p1.h, 1);
+      positionPvp(ember, Math.round(W * 0.50), CONFIG.groundY - ember.h, -1);
       break;
     case "pvpDemoBoostBonk":
       positionPvp(p1, 305, CONFIG.groundY - p1.h, -1);
@@ -501,20 +501,20 @@ function configurePvpStep(index) {
       positionPvp(ember, middleLeft.x + 38, CONFIG.groundY - ember.h, -1);
       break;
     case "pvpDemoUnderBonk":
-      positionPvpOnPlatform(ember, middleLeft, -1);
-      positionPvp(p1, 80, CONFIG.groundY - p1.h, 1);
+      positionPvpOnPlatform(ember, middleRight, -1);
+      positionPvpOnPlatform(p1, PARK_PLATFORMS[3], 1);
       break;
     case "pvpUnderBonkTwo":
-      positionPvpOnPlatform(p1, middleLeft, 1);
-      positionPvp(ember, 80, CONFIG.groundY - ember.h, 1);
+      positionPvpOnPlatform(p1, PARK_PLATFORMS[3], 1);
+      positionPvp(ember, PARK_PLATFORMS[3].x + 8, CONFIG.groundY - ember.h, 1);
       break;
     case "pvpDemoAvoidUnder":
-      positionPvpOnPlatform(p1, middleLeft, 1);
-      positionPvp(ember, middleLeft.x - 45, CONFIG.groundY - ember.h, 1);
+      positionPvpOnPlatform(p1, PARK_PLATFORMS[3], 1);
+      positionPvp(ember, PARK_PLATFORMS[3].x + PARK_PLATFORMS[3].w + 8, CONFIG.groundY - ember.h, -1);
       break;
     case "pvpAvoidUnder":
-      positionPvpOnPlatform(ember, middleLeft, -1);
-      positionPvp(p1, middleLeft.x - 45, CONFIG.groundY - p1.h, 1);
+      positionPvpOnPlatform(ember, PARK_PLATFORMS[3], -1);
+      positionPvp(p1, PARK_PLATFORMS[3].x + PARK_PLATFORMS[3].w + 8, CONFIG.groundY - p1.h, -1);
       break;
     case "pvpDemoRebound":
     case "pvpReboundThree":
@@ -522,14 +522,14 @@ function configurePvpStep(index) {
       positionPvp(ember, 300, CONFIG.groundY - ember.h, -1);
       break;
     case "pvpDemoReboundCatch":
-      positionPvpOnPlatform(p1, middleRight, -1);
+      positionPvpOnPlatform(p1, middleRight, 1);
       positionPvp(ember, 390, CONFIG.groundY - ember.h, -1);
-      addPvpTutorialFly(440, 130, 0, 0);
+      addPvpTutorialFly(Math.round(PARK_PLATFORMS[6].x + PARK_PLATFORMS[6].w / 2), 118, 0, 0);
       break;
     case "pvpReboundCatch":
-      positionPvpOnPlatform(ember, middleRight, -1);
+      positionPvpOnPlatform(ember, middleRight, 1);
       positionPvp(p1, 390, CONFIG.groundY - p1.h, -1);
-      addPvpTutorialFly(440, 145, 0, 0);
+      addPvpTutorialFly(Math.round(PARK_PLATFORMS[6].x + PARK_PLATFORMS[6].w / 2), 118, 0, 0);
       break;
     case "pvpDemoIntercept":
       positionPvp(p1, 118, CONFIG.groundY - p1.h, 1);
@@ -720,7 +720,7 @@ function beginPvpDemoMotion(setup) {
       break;
     case "pvpDemoBufferedBonk":
       armPvpScriptedBuffer(1, PARK_PLATFORMS[3]);
-      scriptPvpChargedJump(1, .62, 1, 0);
+      scriptPvpChargedJump(1, .62, -1, 0);
       break;
     case "pvpDemoSkyBonk":
       // Start from the top platform and perform the same strong charged leap a
@@ -732,9 +732,9 @@ function beginPvpDemoMotion(setup) {
       scriptPvpChargedJump(1, .95, 1, 0);
       break;
     case "pvpDemoHighGround":
-      // From the lower-middle center, one full jump reaches the right wall
-      // and lower-right platform. A second full jump comes back onto the top.
-      scriptPvpChargedJump(1, 1, 1, 0);
+      // A single strong jump is enough here: knock the waiting frog off the
+      // platform and claim the perch in one motion.
+      scriptPvpChargedJump(1, .84, -1, 0);
       break;
     case "pvpDemoRecoveryBonk":
       scriptPvpChargedJump(1, .55, 1, 0);
@@ -752,8 +752,8 @@ function beginPvpDemoMotion(setup) {
       scriptPvpChargedJump(1, .10, 1, 0);
       break;
     case "pvpDemoRebound":
-      scriptPvpChargedJump(0, .58, 1, 0);
-      scriptPvpChargedJump(1, .58, -1, 0);
+      scriptPvpChargedJump(0, .50, 1, 0);
+      scriptPvpChargedJump(1, .50, -1, 0);
       break;
     case "pvpDemoReboundCatch":
       scriptPvpChargedJump(1, .92, -1, 0);
@@ -848,8 +848,9 @@ function updatePvpDemonstration() {
   }
 
   if (setup === "pvpDemoAvoidUnder" && ember.firstJumpMade && ember.grounded &&
-      !ember.charging && tutorial.pvpScriptActions.length === 0 && ember.x <= PARK_PLATFORMS[2].x + PARK_PLATFORMS[2].w + 18) {
-    scriptPvpChargedJump(1, .10, null, 100);
+      !ember.charging && tutorial.pvpScriptActions.length === 0 && ember.x <= PARK_PLATFORMS[3].x + PARK_PLATFORMS[3].w + 18) {
+    tutorial.pvpDemoStage = Number(tutorial.pvpDemoStage || 0) + 1;
+    if (tutorial.pvpDemoStage < 3) scriptPvpChargedJump(1, .10, null, 100);
   }
 
   // In the recovery demonstration the real wall bounce brings Ember back
@@ -934,7 +935,10 @@ function updatePvpDemonstration() {
 function startPvpFinalMatch() {
   tutorial.pvpFinalMatchStarted = true;
   tutorial.pvpFinalOutcome = null;
+  tutorial.pvpDemoActive = false;
+  tutorial.pvpPlayerScriptLocked = false;
   tutorial.pvpCaption = "";
+  clearPvpScriptActions();
   game.mode = "pvp";
   game.onlineMode = false;
   game.pvpCpuEnabled = true;
@@ -952,6 +956,12 @@ function startPvpFinalMatch() {
   resetPvpGame();
   pvpPlayers[0].skinId = String(tutorial.pvpPlayerSkinId || game.pvpSetupSkinIds?.[0] || game.skinId || "azure");
   pvpPlayers[1].skinId = "ember";
+  pvpPlayers[0].cpu = false;
+  pvpPlayers[1].cpu = true;
+  pvpPlayers[0].isCpu = false;
+  pvpPlayers[1].isCpu = true;
+  pvpPlayers[0].firstJumpMade = false;
+  pvpPlayers[1].firstJumpMade = false;
   game.pvpSetupSkinIds[0] = pvpPlayers[0].skinId;
   game.pvpSetupSkinIds[1] = "ember";
   tutorial.scoreStart = 0;

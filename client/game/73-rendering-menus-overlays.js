@@ -1522,7 +1522,7 @@
         game.pauseHoveredSelection === "restart",
         game.pausePressedSelection === "restart",
         { dark: "#6b4c21", mid: "#b78634", light: "#f2cf70" },
-        "RESTART",
+        tutorial.active && game.state === "paused" ? "RESTART SCENE" : "RESTART",
         (full) => drawMiniRestartIcon(restartButton.x + 8, restartButton.y + 3, full ? COLORS.white : "#7a5a2a"),
         restartButton.x + restartButton.w / 2 + 10
       );
@@ -1533,7 +1533,7 @@
         game.pauseHoveredSelection === "home",
         game.pausePressedSelection === "home",
         { dark: "#4b565b", mid: "#7d8a90", light: "#d8e1e4" },
-        "HOME MENU",
+        tutorial.active && game.state === "paused" ? "EXIT TUTORIAL" : "HOME MENU",
         () => drawMiniHouseIcon(home.x + 7, home.y + 3),
         home.x + home.w / 2 + 10
       );
