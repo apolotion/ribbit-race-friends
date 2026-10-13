@@ -85,14 +85,14 @@
     ...row, x:91, y:78+index*30, w:298, h:26
   })));
   const FLASHCARD_BUTTON_RECTS = Object.freeze({
-    previous:Object.freeze({id:"previous",x:72,y:187,w:56,h:23}),
-    flip:Object.freeze({id:"flip",x:136,y:187,w:142,h:23}),
-    next:Object.freeze({id:"next",x:286,y:187,w:56,h:23}),
-    shuffle:Object.freeze({id:"shuffle",x:350,y:187,w:58,h:23}),
-    starred:Object.freeze({id:"starred",x:89,y:214,w:144,h:18}),
-    back:Object.freeze({id:"back",x:247,y:214,w:112,h:18}),
-    help:Object.freeze({id:"help",x:380,y:214,w:22,h:18}),
-    star:Object.freeze({id:"star",x:240,y:82,w:24,h:16})
+    previous:Object.freeze({id:"previous",x:72,y:187,w:96,h:23}),
+    flip:Object.freeze({id:"flip",x:175,y:187,w:130,h:23}),
+    next:Object.freeze({id:"next",x:312,y:187,w:96,h:23}),
+    shuffle:Object.freeze({id:"shuffle",x:74,y:214,w:102,h:18}),
+    starred:Object.freeze({id:"starred",x:181,y:214,w:118,h:18}),
+    back:Object.freeze({id:"back",x:304,y:214,w:102,h:18}),
+    help:Object.freeze({id:"help",x:80,y:88,w:24,h:21}),
+    star:Object.freeze({id:"star",x:373,y:88,w:24,h:21})
   });
   const FLASHCARD_BUTTON_ORDER = Object.freeze(Object.values(FLASHCARD_BUTTON_RECTS));
   const FLASHCARD_STARS_KEY = "ribbitRaceFlashcardStarsV1";
@@ -200,9 +200,8 @@
     ctx.fillStyle = selected ? COLORS.ink : "#9aa9ae"; ctx.fillRect(rect.x,rect.y,rect.w,rect.h);
     ctx.fillStyle = selected ? mixHexColors(skin.belly,"#ffffff",.12) : "#f7fdff"; ctx.fillRect(rect.x+2,rect.y+2,rect.w-4,rect.h-4);
     ctx.fillStyle = selected ? skin.light : "#ffffff"; ctx.fillRect(rect.x+6,rect.y+4,rect.w-12,2);
-    const baseline = Math.round(rect.y + rect.h / 2 - 4);
-    drawBitmapText(label,rect.x+rect.w/2-(value?22:0),baseline,.58,"center",selected?skin.dark:"#34484f");
-    if(value) drawBitmapText(value,rect.x+rect.w-10,baseline,.52,"right",selected?skin.dark:"#59666b");
+    drawBitmapText(label,rect.x+12,rect.y+7,.58,"left",selected?skin.dark:"#34484f");
+    if(value) drawBitmapText(value,rect.x+rect.w-10,rect.y+7,.52,"right",selected?skin.dark:"#59666b");
   }
 
   function drawProfileOptionIcon(kind,cx,cy,color="#48555a") {
@@ -225,13 +224,12 @@
       ctx.fillRect(rect.x+2,rect.y+2,rect.w-4,rect.h-4);
       const stripes={language:skin.light,flashcards:"#f3d171",manage:"#7ee0cf",signout:"#ed9eaa",back:"#b4c7ce"};
       ctx.fillStyle=stripes[rect.id];ctx.fillRect(rect.x+5,rect.y+4,rect.w-10,2);
-      drawProfileOptionIcon(rect.id,rect.x+22,rect.y+rect.h/2,selected?skin.dark:"#48555a");
+      drawProfileOptionIcon(rect.id,rect.x+17,rect.y+rect.h/2,selected?skin.dark:"#48555a");
       const value=rect.id==="language"?(getLanguageMode()==="es-en"?"ES > EN":"EN > ES"):
         rect.id==="flashcards"?`${getFlashcardVocabulary().length} CARDS`:"";
       const labelScale=Math.min(.69,195/Math.max(1,measureBitmapText(rect.label,1)));
-      const rowBaseline=Math.round(rect.y+rect.h/2-4);
-      drawBitmapText(rect.label,rect.x+rect.w/2-(value?18:0),rowBaseline,labelScale,"center",selected?skin.dark:"#48555a");
-      if(value)drawBitmapText(value,rect.x+rect.w-10,rowBaseline,.42,"right",selected?skin.dark:"#59666b");
+      drawBitmapText(rect.label,rect.x+rect.w/2-(value?18:0),rect.y+9,labelScale,"center",selected?skin.dark:"#48555a");
+      if(value)drawBitmapText(value,rect.x+rect.w-10,rect.y+10,.42,"right",selected?skin.dark:"#59666b");
     });
   }
   function drawCardButton(rect,title,hint="",selected=false){
@@ -241,28 +239,9 @@
     ctx.fillStyle=selected?mixHexColors(skin.belly,"#ffffff",.16):"#f7fdff";
     ctx.fillRect(rect.x+2,rect.y+2,rect.w-4,rect.h-4);
     if(selected){ctx.fillStyle=skin.light;ctx.fillRect(rect.x+5,rect.y+4,rect.w-10,2);}
-    const mid=rect.x+rect.w/2;
-    const ink=selected?skin.dark:"#48555a";
-    if(title==="ICON_PREV"||title==="ICON_NEXT"){
-      drawLeaderboardArrow(mid,Math.round(rect.y+rect.h/2),title==="ICON_NEXT"?1:-1,selected);
-      return;
-    }
-    if(title==="ICON_BACK"){
-      ctx.fillStyle=ink;
-      const cy=Math.round(rect.y+rect.h/2);
-      ctx.fillRect(mid-3,cy-1,8,2);ctx.fillRect(mid-5,cy-3,2,6);ctx.fillRect(mid-7,cy-1,2,2);
-      return;
-    }
-    if(title==="ICON_SHUFFLE"){
-      ctx.fillStyle=ink;
-      ctx.fillRect(mid-11,rect.y+8,10,2);ctx.fillRect(mid-3,rect.y+6,2,2);ctx.fillRect(mid-1,rect.y+4,2,2);ctx.fillRect(mid+1,rect.y+2,2,2);
-      ctx.fillRect(mid+3,rect.y+2,6,2);ctx.fillRect(mid+7,rect.y+4,2,2);ctx.fillRect(mid+5,rect.y+6,2,2);
-      ctx.fillRect(mid-11,rect.y+14,10,2);ctx.fillRect(mid-3,rect.y+16,2,2);ctx.fillRect(mid-1,rect.y+18,2,2);
-      ctx.fillRect(mid+1,rect.y+14,2,2);ctx.fillRect(mid+3,rect.y+12,2,2);ctx.fillRect(mid+5,rect.y+10,2,2);ctx.fillRect(mid+7,rect.y+8,2,2);
-      return;
-    }
     const titleScale=Math.min(rect.h>20?.75:.55,(rect.w-10)/Math.max(1,measureBitmapText(title,1)));
-    drawBitmapText(title,mid,rect.y+(hint?5:rect.h>20?9:6),titleScale,"center",ink);
+    const mid=rect.x+rect.w/2;
+    drawBitmapText(title,mid,rect.y+(hint?5:rect.h>20?9:6),titleScale,"center",selected?skin.dark:"#48555a");
     if(hint)drawBitmapText(hint,mid,rect.y+16,.49,"center",selected?skin.dark:"#59666b");
   }
   function drawFlashcardStar(cx,cy,isStarred=false){
@@ -339,21 +318,22 @@
     ctx.restore();
     if(entry&&!polish.flashcardComplete){
       const r=FLASHCARD_BUTTON_RECTS.star;
-      drawFlashcardStar(r.x+r.w/2,r.y+8,starred);
+      ctx.fillStyle=starred?"#fff4c7":"#f7fdff";ctx.fillRect(r.x,r.y,r.w,r.h);
+      ctx.fillStyle=starred?"#be8000":COLORS.ink;ctx.fillRect(r.x+1,r.y+1,r.w-2,r.h-2);
+      ctx.fillStyle=starred?"#ffe0a6":"#f7fdff";ctx.fillRect(r.x+3,r.y+3,r.w-6,r.h-6);
+      drawFlashcardStar(r.x+r.w/2,r.y+10,starred);
       const h=FLASHCARD_BUTTON_RECTS.help;
-      const helpActive=polish.flashcardHoverKey==="help";
-      ctx.fillStyle=helpActive?COLORS.ink:"#9aa9ae";ctx.fillRect(h.x,h.y,h.w,h.h);
-      ctx.fillStyle=helpActive?mixHexColors(skin.belly,"#ffffff",.16):"#f7fdff";ctx.fillRect(h.x+2,h.y+2,h.w-4,h.h-4);
-      ctx.fillStyle=helpActive?skin.dark:"#48555a";
-      ctx.fillRect(h.x+8,h.y+4,6,2);ctx.fillRect(h.x+14,h.y+6,2,2);ctx.fillRect(h.x+10,h.y+8,4,2);ctx.fillRect(h.x+10,h.y+10,2,2);ctx.fillRect(h.x+10,h.y+14,2,2);
-      ctx.strokeStyle='';
+      const bookTheme=getPauseBookTheme(polish.flashcardHoverKey==="help");
+      ctx.fillStyle=bookTheme.frame;ctx.fillRect(h.x,h.y,h.w,h.h);
+      ctx.fillStyle=bookTheme.buttonFill;ctx.fillRect(h.x+2,h.y+2,h.w-4,h.h-4);
+      drawMiniBookIcon(h.x+h.w/2,h.y+h.h/2,bookTheme);
     }
     const selected=id=>polish.flashcardHoverKey===id;
     const buttons=[
-      ["previous",polish.flashcardComplete?"RESTART DECK":"ICON_PREV",""],
+      ["previous",polish.flashcardComplete?"RESTART DECK":"PREVIOUS",""],
       ["flip",polish.flashcardComplete?"VIEW STARRED":"FLIP CARD",""],
-      ["next",polish.flashcardComplete?"ALL CARDS":"ICON_NEXT",""],
-      ["shuffle","ICON_SHUFFLE",""],["starred",polish.flashcardOnlyStarred?"ALL CARDS":"STARRED TERMS",""],["back","ICON_BACK",""],
+      ["next",polish.flashcardComplete?"ALL CARDS":"NEXT",""],
+      ["shuffle","SHUFFLE",""],["starred",polish.flashcardOnlyStarred?"ALL CARDS":"STARRED TERMS",""],["back","BACK",""],
     ];
     buttons.forEach(([id,title,hint])=>{
       drawCardButton(FLASHCARD_BUTTON_RECTS[id],title,hint,selected(id));
@@ -458,7 +438,7 @@
       polish.flashcardFlipTo=polish.flashcardFace==="english"?"spanish":"english";
       polish.flashcardFlipAt=now;
     }else if(id==="previous"){
-      if(count){polish.flashcardIndex=Math.max(0,polish.flashcardIndex-1);resetFlashcardFace();}
+      if(count){polish.flashcardIndex=(polish.flashcardIndex-1+count)%count;resetFlashcardFace();}
     }else if(id==="next"){
       if(count){
         if(polish.flashcardIndex>=count-1)polish.flashcardComplete=true;
@@ -859,19 +839,31 @@
   }
 
   function drawReplayIcon(cx, cy, active = false) {
-    const body = active ? getSelectedSkin().dark : "#48555a";
-    const slate = active ? mixHexColors(getSelectedSkin().mid,"#ffffff",.2) : "#9aa9ae";
-    const white = "#f7fdff";
+    const outline = active ? getSelectedSkin().dark : "#1d2140";
+    const body = active ? mixHexColors(getSelectedSkin().mid,"#7c82ae",.35) : "#5e638f";
+    const reel = active ? mixHexColors(getSelectedSkin().belly,"#9d7796",.35) : "#9d7796";
+    const light = "#f7fdff";
+    ctx.fillStyle = outline;
+    ctx.fillRect(cx-9,cy-1,18,10);
+    ctx.fillRect(cx-3,cy-7,6,3);
+    ctx.fillRect(cx+9,cy+1,4,6);
+    ctx.fillRect(cx-13,cy+2,4,4);
+    ctx.fillStyle = reel;
+    ctx.fillRect(cx-7,cy-10,6,6);
+    ctx.fillRect(cx,cy-10,6,6);
+    ctx.fillStyle = light;
+    ctx.fillRect(cx-5,cy-8,2,2);ctx.fillRect(cx-3,cy-6,2,2);ctx.fillRect(cx-7,cy-6,2,2);
+    ctx.fillRect(cx+2,cy-8,2,2);ctx.fillRect(cx,cy-6,2,2);ctx.fillRect(cx+4,cy-6,2,2);
     ctx.fillStyle = body;
-    ctx.fillRect(cx-7,cy-2,14,9);
-    ctx.fillRect(cx-3,cy-6,8,4);
-    ctx.fillStyle = slate;
-    ctx.fillRect(cx-2,cy-5,2,2);ctx.fillRect(cx+1,cy-5,2,2);ctx.fillRect(cx+4,cy-5,1,2);
-    ctx.fillRect(cx-5,cy-3,2,2);ctx.fillRect(cx-2,cy-3,2,2);ctx.fillRect(cx+1,cy-3,2,2);
-    ctx.fillStyle = white;
-    ctx.fillRect(cx-4,cy+1,8,4);
-    ctx.fillStyle = slate;
-    ctx.fillRect(cx-1,cy+2,2,2);
+    ctx.fillRect(cx-8,cy,16,8);
+    ctx.fillRect(cx+10,cy+2,3,4);
+    ctx.fillRect(cx-12,cy+3,3,2);
+    ctx.fillStyle = outline;
+    ctx.fillRect(cx-2,cy+2,8,4);
+    ctx.fillStyle = body;
+    ctx.fillRect(cx-1,cy+3,6,2);
+    ctx.fillStyle = light;
+    ctx.fillRect(cx-4,cy+7,2,2);ctx.fillRect(cx,cy+7,2,2);
   }
 
   function bestRecordValue(entry, metric) {
@@ -965,11 +957,11 @@
   }
 
   function drawLeaderboardRefreshIcon(cx, cy, active = false) {
-    const color = active ? getSelectedSkin().dark : "#48555a";
+    const color = active ? getSelectedSkin().dark : "#26363d";
     ctx.fillStyle = color;
-    ctx.fillRect(cx-6,cy-3,2,7);ctx.fillRect(cx-4,cy-5,6,2);ctx.fillRect(cx+2,cy-3,2,2);ctx.fillRect(cx+4,cy-1,2,2);
-    ctx.fillRect(cx+3,cy+1,2,3);ctx.fillRect(cx-4,cy+4,7,2);ctx.fillRect(cx-6,cy+1,2,3);
-    ctx.fillRect(cx-7,cy-4,2,2);ctx.fillRect(cx-8,cy-2,2,2);
+    ctx.fillRect(cx-5,cy-4,9,2);ctx.fillRect(cx-7,cy-2,2,6);ctx.fillRect(cx-5,cy+4,7,2);ctx.fillRect(cx+2,cy+1,2,3);
+    ctx.fillRect(cx+2,cy-6,5,2);ctx.fillRect(cx+5,cy-4,2,2);ctx.fillRect(cx+4,cy-3,2,2);
+    ctx.fillRect(cx-6,cy+2,4,2);ctx.fillRect(cx-5,cy+1,2,2);
   }
 
   function drawLeaderboardDropdown(rect, label, value, open, key) {
@@ -979,9 +971,9 @@
     const headerH = 5;
     ctx.fillStyle = open ? "#b3d6db" : "#dce5e8";
     ctx.fillRect(rect.x + 2, rect.y + 2, rect.w - 4, headerH);
-    drawBitmapText(label, rect.x + 8, Math.round(rect.y + rect.h/2 - 7), .31, "left", "#59666b");
+    drawBitmapText(label, rect.x + rect.w / 2, rect.y + 2, .31, "center", "#59666b");
     const isLevel = key === "level" && polish.leaderboardLevel !== "any";
-    const textScale = Math.min(.54, (rect.w - 46) / Math.max(1, measureBitmapText(value, 1)));
+    const textScale = Math.min(.54, (rect.w - 33) / Math.max(1, measureBitmapText(value, 1)));
     if (isLevel) drawLevelUnlockIcon(polish.leaderboardLevel, rect.x + rect.w / 2 - Math.max(24, measureBitmapText(value, textScale) / 2) - 10, rect.y + 10, getSelectedSkin(), .47);
     drawBitmapText(value, rect.x + rect.w / 2 + (isLevel ? 10 : 0), rect.y + 12, textScale, "center", "#26363d");
     ctx.fillStyle = "#26363d";
@@ -1086,8 +1078,8 @@
         const nameScale = Math.min(.50, 100 / Math.max(1, measureBitmapText(row.name.toUpperCase(), 1)));
         drawBitmapText(row.name.toUpperCase(), table.x + 66, y + 6, nameScale, "left", nameHover ? rowPalette.dark : "#26363d");
         polish.leaderboardNameRects.push(nameRect);
-        if(String(row.level||"ALL").toLowerCase()!=="all") drawLevelUnlockIcon(String(row.level||"park").toLowerCase(), columns.level-14, y+3, skin, .42);
-        drawBitmapText(row.level, columns.level+2, y + 6, .48, "center", "#26363d");
+        if(String(row.level||"ALL").toLowerCase()!=="all") drawLevelUnlockIcon(String(row.level||"park").toLowerCase(), columns.level-20, y+3, skin, .42);
+        drawBitmapText(row.level, columns.level+10, y + 6, .48, "center", "#26363d");
         drawBitmapText(formatLeaderboardValue(row), columns.result, y + 6, .50, "center", "#26363d");
         if (row.replayId) {
           const replayRect = { x: columns.replay - 13, y: y + 1, w: 26, h: 15, row };
@@ -1167,22 +1159,15 @@
     ctx.fillStyle=skin.dark;ctx.fillRect(panel.x+12,panel.y+9,panel.w-24,36);
     ctx.fillStyle=skin.mid;ctx.fillRect(panel.x+14,panel.y+11,panel.w-28,31);
     ctx.fillStyle=skin.light;ctx.fillRect(panel.x+17,panel.y+13,panel.w-34,4);
-    const titleBand = { x: panel.x + 12, y: panel.y + 9, w: panel.w - 24, h: 36 };
-    const closeInnerLeft = close.x + 2;
-    const headerAvailLeft = titleBand.x + 12;
-    const headerAvailRight = closeInnerLeft - 8;
-    const frogCx = Math.round(headerAvailLeft + 18);
-    drawMiniFrogSwatchFacing(frogCx,panel.y+20,skin,.80,1);
+    drawMiniFrogSwatchFacing(panel.x+42,panel.y+18,skin,.80,1);
     const name = String(row.name || "FROG").toUpperCase();
-    const textLeft = frogCx + 18;
-    const textRight = headerAvailRight;
-    const titleCenter=Math.round((textLeft + textRight) / 2);
-    const nameScale = Math.min(1.45,Math.max(.70,(textRight-textLeft-6) / Math.max(1,measureBitmapText(name,1))));
-    drawBitmapText(name,titleCenter,Math.round(titleBand.y + titleBand.h/2 - 4),nameScale,"center",COLORS.white,skin.dark);
+    const titleCenter=(panel.x+78+close.x)/2;
+    const nameScale = Math.min(1.45,Math.max(.70,250 / Math.max(1,measureBitmapText(name,1))));
+    drawBitmapText(name,titleCenter,panel.y+18,nameScale,"center",COLORS.white,skin.dark);
     ctx.fillStyle=COLORS.ink;ctx.fillRect(close.x,close.y,close.w,close.h);
     ctx.fillStyle="#f7fdff";ctx.fillRect(close.x+2,close.y+2,close.w-4,close.h-4);
     ctx.fillStyle="#48555a";
-    for(let i=0;i<8;i++){ctx.fillRect(close.x+6+i,close.y+5+i,2,2);ctx.fillRect(close.x+13-i,close.y+5+i,2,2);}
+    for(let i=0;i<8;i++){ctx.fillRect(close.x+5+i,close.y+5+i,2,2);ctx.fillRect(close.x+12-i,close.y+5+i,2,2);}
     const allMetrics=leaderboardPlayerMetrics(row);
     const pageCount=Math.max(1,Math.ceil(allMetrics.length/STATS_UI.itemsPerPage));
     const page=Math.max(0,Math.min(polish.leaderboardStatsPage,pageCount-1));

@@ -116,8 +116,9 @@ export class FriendsHub extends DurableObject {
   const time=Number(payload.time),jumps=Math.floor(Number(payload.jumps));
   const mime=String(payload.mime||'video/webm').toLowerCase();
   const data=String(payload.data||'').trim();
+  const validMime=/^video\/(?:webm|mp4)(?:;|$)/.test(mime);
   if(!level||!Number.isFinite(time)||time<=0||time>3600||!Number.isFinite(jumps)||jumps<0||jumps>100000)return json(error('INVALID_REPLAY','Replay timing or level data is invalid.'),400);
-  if(!/^video\/webm(?:;|$)/.test(mime)||data.length<32||data.length>3_900_000||!/^[A-Za-z0-9+/=]+$/.test(data))return json(error('INVALID_REPLAY','Replay video data is invalid or too large.'),400);
+  if(!validMime||data.length<32||data.length>3_900_000||!/^[A-Za-z0-9+/=]+$/.test(data))return json(error('INVALID_REPLAY','Replay video data is invalid or too large.'),400);
   const now=Date.now(),stored=[];
   const saveMetric=(metric,value)=>{
    const previous=this.one('SELECT value FROM record_replays WHERE uid=? AND level=? AND metric=?',user.id,level,metric);

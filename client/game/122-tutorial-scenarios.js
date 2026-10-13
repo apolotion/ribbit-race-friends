@@ -480,13 +480,17 @@ function configurePvpStep(index) {
       break;
     }
     case "pvpDemoBufferedBonk": {
-      positionPvp(p1, Math.round(W / 2 - p1.w / 2), CONFIG.groundY - p1.h, -1);
-      positionPvpOnPlatform(ember, top, -1, Math.round((top.w - ember.w) / 2));
+      // Both frogs start centered BELOW the corresponding low platform:
+      // P1 under lower-left, Ember under lower-right, facing toward P1.
+      const lowLeft = PARK_PLATFORMS[1], lowRight = PARK_PLATFORMS[6];
+      positionPvp(p1, lowLeft.x + (lowLeft.w - p1.w) / 2, CONFIG.groundY - p1.h, 1);
+      positionPvp(ember, lowRight.x + (lowRight.w - ember.w) / 2, CONFIG.groundY - ember.h, -1);
       break;
     }
     case "pvpBufferedBonk": {
-      positionPvpOnPlatform(p1, top, -1, Math.round((top.w - p1.w) / 2));
-      positionPvp(ember, Math.round(W / 2 - ember.w / 2), CONFIG.groundY - ember.h, 1);
+      const lowLeft = PARK_PLATFORMS[1], lowRight = PARK_PLATFORMS[6];
+      positionPvp(p1, lowLeft.x + (lowLeft.w - p1.w) / 2, CONFIG.groundY - p1.h, 1);
+      positionPvp(ember, lowRight.x + (lowRight.w - ember.w) / 2, CONFIG.groundY - ember.h, -1);
       break;
     }
     case "pvpDemoSkyBonk":
@@ -501,13 +505,16 @@ function configurePvpStep(index) {
       break;
     case "pvpDemoBufferedSky": {
       const rightMiddle = PARK_PLATFORMS[5];
-      positionPvpOnPlatform(ember, top, -1, Math.round((top.w - ember.w) / 2));
-      positionPvp(p1, rightMiddle.x + 6, CONFIG.groundY - p1.h, -1);
+      // Ember faces RIGHT from the right edge of the upper platform before
+      // charging; P1 waits beneath the far-right edge of the mid-height perch.
+      positionPvpOnPlatform(ember, top, 1);
+      positionPvp(p1, rightMiddle.x + rightMiddle.w - p1.w + 2, CONFIG.groundY - p1.h, -1);
       break;
     }
     case "pvpBufferedSky": {
       const leftMiddle = PARK_PLATFORMS[2];
-      positionPvpOnPlatform(p1, top, -1, Math.round((top.w - p1.w) / 2));
+      // Mirror every position and facing direction for the player's attempt.
+      positionPvpOnPlatform(p1, top, -1);
       positionPvp(ember, leftMiddle.x - 2, CONFIG.groundY - ember.h, 1);
       break;
     }

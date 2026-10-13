@@ -683,14 +683,14 @@ function drawTutorialDialogue() {
     // Draw the complete source square without cropping. The supplied Ember
     // portraits are square, so this contain fit fills the entire image well
     // while keeping every edge of the artwork visible.
-    const [sourceX, sourceY, sourceW, sourceH] =
-      EMBER_PORTRAIT_FRAMES[portraitKey] || EMBER_PORTRAIT_FRAMES.confident;
+    const sourceW = portraitImage.naturalWidth;
+    const sourceH = portraitImage.naturalHeight;
     const fit = Math.min(imageSize / sourceW, imageSize / sourceH);
     const drawW = Math.round(sourceW * fit);
     const drawH = Math.round(sourceH * fit);
     const drawX = imageX + Math.round((imageSize - drawW) / 2);
     const drawY = imageY + Math.round((imageSize - drawH) / 2);
-    ctx.drawImage(portraitImage, sourceX, sourceY, sourceW, sourceH, drawX, drawY, drawW, drawH);
+    ctx.drawImage(portraitImage, 0, 0, sourceW, sourceH, drawX, drawY, drawW, drawH);
     ctx.imageSmoothingEnabled = oldSmoothing;
   } else {
     ctx.fillStyle = EMBER_SKIN.dark;
@@ -820,7 +820,7 @@ function drawTutorialReferenceHighlights() {
 }
 
 function drawTutorialProgress() {
-  if (!tutorial.active || tutorial.kind !== "pvp") return;
+  if (!tutorial.active || tutorial.kind === "pvp") return;
   const scene = Number(tutorialStep()?.scene || (tutorial.step + 1));
   const total = tutorial.kind === "pvp"
     ? PVP_STEPS.reduce((max, step) => Math.max(max, Number(step?.scene || 0)), 0)
@@ -848,7 +848,7 @@ function getTutorialGoalRect() {
   // Match the vocabulary card's y-level and the normal TIME/JUMPS/BEST width.
   // The two-pixel gutter after x=326 prevents either black outline from
   // painting over the other.
-  return { x:tutorial.kind === "pvp" ? 324 : 328, y:234, w:tutorial.kind === "pvp" ? 152 : 150, h:33 };
+  return { x:328, y:234, w:tutorial.kind === "pvp" ? 116 : 150, h:33 };
 }
 
 function currentGoalHowToLines() {

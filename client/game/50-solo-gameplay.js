@@ -1,5 +1,4 @@
     function resetGame(startImmediately = false) {
-      game.replayRunId = (game.replayRunId || 0) + 1;
       clearSoloPhysicalInputState(false);
       clearPvpPhysicalShiftState(false);
       applyPendingVocabulary();

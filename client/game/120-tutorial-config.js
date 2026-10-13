@@ -3,7 +3,7 @@
 
 const SOLO_SEEN_KEY = "rrFriendsEngineTutorialSoloSeenV8";
 const PVP_SEEN_KEY = "rrFriendsEngineTutorialPvpSeenV8";
-const TUTORIAL_BUILD = "2026.10.13-friends-polish-40";
+const TUTORIAL_BUILD = "2026.10.13-friends-polish-38";
 const TUTORIAL_ACHIEVEMENT_ID = "tutorial-graduate";
 const PVP_TUTORIAL_ACHIEVEMENT_ID = "versus-tutorial-graduate";
 const TYPEWRITER_MS_PER_CHARACTER = 28;
@@ -36,127 +36,42 @@ const FINAL_TUTORIAL_DIALOGUE = Object.freeze([
   "Come find me in Versus when you want a challenge."
 ]);
 const EMBER_SKIN = Object.freeze({ ...FROG_SKINS.ember, hat: "none" });
-// One lossless atlas, 12 original 190x190 paintings; aliases share frame data.
-// Frames preserve every original RGBA pixel, including transparent pixels.
-const EMBER_PORTRAIT_FRAMES = Object.freeze({
-  "amazed": [
-    0,
-    0,
-    190,
-    190
-  ],
-  "annoyed": [
-    190,
-    0,
-    190,
-    190
-  ],
-  "confused": [
-    380,
-    0,
-    190,
-    190
-  ],
-  "dazed": [
-    570,
-    0,
-    190,
-    190
-  ],
-  "determined": [
-    0,
-    190,
-    190,
-    190
-  ],
-  "happy": [
-    190,
-    190,
-    190,
-    190
-  ],
-  "laughing": [
-    380,
-    190,
-    190,
-    190
-  ],
-  "peace": [
-    570,
-    190,
-    190,
-    190
-  ],
-  "questioning": [
-    0,
-    380,
-    190,
-    190
-  ],
-  "sad": [
-    190,
-    380,
-    190,
-    190
-  ],
-  "shocked": [
-    380,
-    380,
-    190,
-    190
-  ],
-  "thumbsup": [
-    570,
-    380,
-    190,
-    190
-  ],
-  "confident": [
-    0,
-    190,
-    190,
-    190
-  ],
-  "smile": [
-    190,
-    190,
-    190,
-    190
-  ],
-  "cool": [
-    570,
-    190,
-    190,
-    190
-  ],
-  "thinking": [
-    0,
-    380,
-    190,
-    190
-  ]
+const EMBER_PORTRAIT_SOURCES = Object.freeze({
+  amazed: "/tutorial/ember-amazed.png",
+  annoyed: "/tutorial/ember-annoyed.png",
+  confused: "/tutorial/ember-confused.png",
+  dazed: "/tutorial/ember-dazed.png",
+  determined: "/tutorial/ember-determined.png",
+  happy: "/tutorial/ember-happy.png",
+  laughing: "/tutorial/ember-laughing.png",
+  peace: "/tutorial/ember-peace.png",
+  questioning: "/tutorial/ember-questioning.png",
+  sad: "/tutorial/ember-sad.png",
+  shocked: "/tutorial/ember-shocked.png",
+  thumbsup: "/tutorial/ember-thumbsup.png",
+  confident: "/tutorial/ember-determined.png",
+  smile: "/tutorial/ember-happy.png",
+  cool: "/tutorial/ember-peace.png",
+  thinking: "/tutorial/ember-questioning.png"
 });
-const EMBER_ATLAS_SOURCE = "/tutorial/ember-portraits.webp";
-const EMBER_PORTRAIT_SOURCES = Object.freeze(Object.fromEntries(
-  Object.keys(EMBER_PORTRAIT_FRAMES).map(key => [key, EMBER_ATLAS_SOURCE])
-));
-const emberPortraitAtlas = typeof Image === "undefined" ? null : new Image();
-if (emberPortraitAtlas) {
-  emberPortraitAtlas.decoding = "async";
-  emberPortraitAtlas.src = EMBER_ATLAS_SOURCE;
-}
-const EMBER_PORTRAITS = Object.freeze(Object.fromEntries(
-  Object.keys(EMBER_PORTRAIT_FRAMES).map(key => [key, emberPortraitAtlas])
-));
-let emberPortraitsReady = !emberPortraitAtlas;
-const EMBER_PORTRAITS_READY = new Promise(resolve => {
-  if (!emberPortraitAtlas || (emberPortraitAtlas.complete && emberPortraitAtlas.naturalWidth > 0)) {
-    emberPortraitsReady = true; resolve(true); return;
-  }
-  const done = () => { emberPortraitsReady = true; resolve(true); };
-  emberPortraitAtlas.addEventListener("load", done, {once:true});
-  emberPortraitAtlas.addEventListener("error", done, {once:true});
-});
+const EMBER_PORTRAITS = Object.fromEntries(
+  Object.entries(EMBER_PORTRAIT_SOURCES).map(([key, source]) => {
+    if (typeof Image === "undefined") return [key, null];
+    const image = new Image();
+    image.decoding = "async";
+    image.src = source;
+    return [key, image];
+  })
+);
+let emberPortraitsReady = typeof Image === "undefined";
+const EMBER_PORTRAITS_READY = Promise.all(
+  Object.values(EMBER_PORTRAITS).filter(Boolean).map((image) => new Promise((resolve) => {
+    if (image.complete && image.naturalWidth > 0) { resolve(true); return; }
+    const finish = () => resolve(true);
+    image.addEventListener("load", finish, { once:true });
+    image.addEventListener("error", finish, { once:true });
+  }))
+).then(() => { emberPortraitsReady = true; return true; }, () => { emberPortraitsReady = true; return true; });
 
 const tutorial = {
   active: false,
