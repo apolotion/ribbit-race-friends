@@ -29,8 +29,8 @@
       soloButton: Object.freeze({ id: "solo", x: 140, y: 80, w: 200, h: 30 }),
       pvpButton: Object.freeze({ id: "pvp", x: 140, y: 115, w: 200, h: 30 }),
       frogButton: Object.freeze({ id: "frog", x: 140, y: 150, w: 200, h: 30 }),
-      profileButton: Object.freeze({ id: "profile", x: 45, y: 211, w: 24, h: 24 }),
-      deviceButton: Object.freeze({ id: "device", x: 75, y: 211, w: 24, h: 24 }),
+      profileButton: Object.freeze({ id: "profile", x: 48, y: 211, w: 24, h: 24 }),
+      deviceButton: Object.freeze({ id: "device", x: 78, y: 211, w: 24, h: 24 }),
       achievementsButton: Object.freeze({ id: "achievements", x: 379, y: 211, w: 24, h: 24 }),
       statsButton: Object.freeze({ id: "stats", x: 409, y: 211, w: 24, h: 24 })
     });

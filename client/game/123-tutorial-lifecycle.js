@@ -50,7 +50,7 @@ function configureStep(showDialogue = true, options = {}) {
   // new height/perch. The text begins one second after both frogs reappear.
   const prePoofBeforeDialogue = Boolean(
     showDialogue && tutorial.kind === "pvp" &&
-    ["pvpBonkThree", "pvpBonkCatch", "pvpDemoDropLow", "pvpDemoDropHigh", "pvpDemoBufferedBonk", "pvpDemoHighGround"].includes(tutorialStep()?.setup)
+    ["pvpBonkThree", "pvpBonkCatch", "pvpDemoDropLow", "pvpDropLow", "pvpDemoDropHigh", "pvpDropHigh", "pvpDemoBufferedBonk", "pvpDemoHighGround", "pvpSkyBonk"].includes(tutorialStep()?.setup)
   );
   if (prePoofBeforeDialogue && preservedPvpVisualPoses && pvpAtIntendedPositions(tutorial.pendingPvpTargetPoses)) {
     // The authored start and displayed pose are identical. Show the first
@@ -62,7 +62,7 @@ function configureStep(showDialogue = true, options = {}) {
   } else if (prePoofBeforeDialogue && preservedPvpVisualPoses) {
     tutorial.dialogueOpen = true;
     tutorial.scenePositionedDuringDialogue = false;
-    beginDialogueLine(0, { delayMs:POOF_TRANSITION_MS + 1000, holdPreviousText:false });
+    beginDialogueLine(0, { delayMs:POOF_TRANSITION_MS + (tutorialStep()?.setup === "pvpSkyBonk" ? 500 : 300), holdPreviousText:false });
     tutorial.transitionHeldLineText = "";
     tutorial.transitionHeldPortraitKey = "";
     tutorial.dialogueHeldLineText = "";
@@ -437,7 +437,8 @@ function finalizePassedStep() {
   if (!tutorial.successDialogueShown && Array.isArray(step?.successDialogue) && step.successDialogue.length) {
     tutorial.successDialogueShown = true;
     freezeControlledEntity();
-    openDynamicDialogue(step.successDialogue, step.portrait || "thumbsup", true);
+    openDynamicDialogue(step.successDialogue,
+      step.setup === "pvpDropHigh" ? "dazed" : (step.portrait || "thumbsup"), true);
     tone(620, .07, .018, 85);
     return;
   }

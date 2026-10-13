@@ -1139,7 +1139,7 @@
       }
 
       const onlineIdentity={sessionGeneration:-1,name:'',loaded:false,loading:null,draft:'',message:'',error:false,saving:false,returnScreen:'entry',tag:''};
-      const battleView={entries:[],page:0,loading:false,error:'',guest:false,tag:'',generation:0};
+      const battleView={entries:[],page:0,loading:false,error:'',guest:false,tag:'',generation:0,sort:'recent',search:'',searchOpen:false};
       // Keep the original ONLINE card geometry while using the requested order:
       // Quickplay/Spectate, Host/Join, Customizer/Frog Tags.
       const ONLINE_HUB=[
@@ -1194,7 +1194,7 @@
       }
       async function openBattleTags(){
         if(state.connected||state.active)return;
-        state.screen='battleTags';state.focus='back';game.state='onlineConnect';battleView.loading=true;battleView.error='';battleView.page=0;
+        state.screen='battleTags';state.focus='back';game.state='onlineConnect';battleView.loading=true;battleView.error='';battleView.page=0;battleView.sort='recent';battleView.search='';battleView.searchOpen=false;
         battleView.entries=[];
         const gen=++battleView.generation;
         try{const r=await RibbitCloud.battleTags();if(gen!==battleView.generation)return;if(!r?.ok)throw new Error(r?.message||'Frog Tags unavailable.');
@@ -1211,6 +1211,7 @@
         else if(kind==='tags'){rect(-7,-5,6,10);rect(1,-3,6,10);rect(-5,-3,2,2,'#f7fdff');rect(3,-1,2,2,'#f7fdff');rect(-5,-8,1,4);rect(3,-6,1,4);}
         else if(kind==='palette'){rect(-6,-4,12,8);rect(-4,-6,8,12);rect(2,2,4,4,'#f7fdff');rect(-3,-3,2,2,'#ef7582');rect(1,-3,2,2,'#d1d951');rect(-3,1,2,2,'#5ce5e8');}
         else if(kind==='home'){rect(-6,-1,12,8);rect(-4,-4,8,3);rect(-2,-6,4,2);rect(-2,2,4,5,'#f7fdff');}
+        else if(kind==='search'){rect(-5,-5,9,2);rect(-7,-3,2,7);rect(4,-3,2,7);rect(-5,4,9,2);rect(6,5,2,3);rect(8,7,2,2);}
         else if(kind==='play'){rect(-4,-6,3,12);rect(-1,-4,3,8);rect(2,-2,3,4);}
         else if(kind==='cancel'){for(let i=-4;i<=4;i+=2){rect(i,i,2,2);rect(i,-i,2,2);}}
         else if(kind==='save'){rect(-6,-6,12,12);rect(-3,-4,6,3,'#f7fdff');rect(-3,1,6,5,'#f7fdff');}
@@ -1259,7 +1260,7 @@
         if(state.screen==='quickQueue')return [spec('quickMinimize','PLAY WHILE WAITING',QUICK_UI.minimize,'play','#7fe3ae','Keep searching while you play solo or customize frogs.','DEVICE CHECK PASSED - PARTNER LINK NOT YET TESTED'),spec('quickCancel','CANCEL',QUICK_UI.cancel,'cancel','#ef7582','Leave the queue.')];
         if(state.screen==='quickConnecting')return [spec('back','CANCEL',ENTRY.back,'back','#bac8cf','Cancel this connection.')];
         if(state.screen==='profile')return [spec('name','',PROFILE_UI.name,null,'#ef9ebc','Type a display name, up to 20 characters.'),spec('nameSave',onlineIdentity.saving?'SAVING':'SAVE',PROFILE_UI.save,'save','#7fe3ae','Save this online name without changing your Friends account.'),spec('nameBack','BACK',PROFILE_UI.back,'back','#bac8cf','Return to Online.')];
-        if(state.screen==='battleTags')return [spec('battlePrev','',{x:354,y:231,w:23,h:23},'previous','#eac65b','Previous opponents.'),spec('battleNext','',{x:384,y:231,w:23,h:23},'next','#eac65b','More opponents.'),spec('back','BACK',{x:184,y:231,w:112,h:23},'back','#bac8cf','Return to Online.')];
+        if(state.screen==='battleTags')return [spec('battleSearch','',{x:391,y:65,w:22,h:20},'search','#eac65b','Search for an opponent.'),spec('battlePrev','',{x:354,y:231,w:23,h:23},'previous','#eac65b','Previous opponents.'),spec('battleNext','',{x:384,y:231,w:23,h:23},'next','#eac65b','More opponents.'),spec('back','BACK',{x:184,y:231,w:112,h:23},'back','#bac8cf','Return to Online.')];
         if(state.screen==='spectateList')return watch.rooms.slice(0,4).map((r,i)=>spec('watch:'+i,`${(r.names||[]).join(' VS ')} - ${r.roomCode}`,{x:65,y:88+i*24,w:348,h:21},'eye','#a68be5','Watch a delayed, read-only recording.')).concat([
           spec('watchCode','',WATCH_UI.code,null,'#a68be5','Type a five-character room ID.'),spec('watchGo','WATCH',WATCH_UI.go,'eye','#a68be5','Open this room recording.'),spec('back','BACK',WATCH_UI.back,'back','#bac8cf','Return to Online.')]);
         if(state.screen==='room'){
@@ -1303,7 +1304,8 @@
         else if(id==='code'||id==='name'||id==='watchCode')focusOnlineButton(id);
         else if(id==='connect')joinRoom();else if(id==='quickEnter')enterQuickplay();else if(id==='quickCancel')cancelQuickplay();else if(id==='quickMinimize')minimizeQueue();
         else if(id==='nameSave')saveOnlineCustomizer();else if(id==='nameBack')closeOnlineCustomizer();
-        else if(id==='battlePrev'||id==='battleNext'){const pages=Math.max(1,Math.ceil(battleView.entries.length/6));battleView.page=(battleView.page+(id==='battlePrev'?-1:1)+pages)%pages;}
+        else if(id==='battleSearch'){battleView.searchOpen=!battleView.searchOpen;state.focus='battleSearch';}
+        else if(id==='battlePrev'||id==='battleNext'){const pages=Math.max(1,Math.ceil(sortedBattleEntries().length/6));battleView.page=(battleView.page+(id==='battlePrev'?-1:1)+pages)%pages;}
         else if(id.startsWith('watch:'))startSpectating(watch.rooms[Number(id.split(':')[1])]?.roomCode);
         else if(id==='watchGo')startSpectating(watch.code);
         else if(id==='myFrog')cycleSkin(1);else if(id==='ready')setReady();else if(id==='leave')leaveRoom();
@@ -1349,6 +1351,7 @@
       }
       const battleReplayRects=[];
       const battleStatsRects=[];
+      const battleHeaderRects=[];
       function recentBattleArchive(opponent) {
         const name=String(opponent||"").trim().toLowerCase();
         const records=window.RibbitFrogTags?.against?.(opponent)||[];
@@ -1373,16 +1376,44 @@
           window.RibbitRaceOpenPlayerStats?.(statsRow);
         }catch(error){console.warn("Frog Tags stats unavailable",error);}
       }
+      function sortedBattleEntries(){
+        const needle=String(battleView.search||'').trim().toLowerCase();
+        const list=(battleView.entries||[]).filter(row=>!needle||String(row.name||'').toLowerCase().includes(needle));
+        const latestAt=row=>Number(recentBattleArchive(row?.name)?.[0]?.at||row?.updatedAt||0);
+        const winRatio=row=>Number(row?.wins||0)/Math.max(1,Number(row?.wins||0)+Number(row?.losses||0));
+        list.sort((a,b)=>battleView.sort==='name'
+          ? String(a.name||'').localeCompare(String(b.name||''))
+          : battleView.sort==='ratio'
+            ? winRatio(b)-winRatio(a)||Number(b.wins||0)-Number(a.wins||0)
+            : latestAt(b)-latestAt(a));
+        return list;
+      }
+      function setBattleSort(sort){
+        battleView.sort=sort;
+        battleView.page=0;
+        tone(460,.04,.009,22);
+      }
       function drawBattleTags(){
         drawPanel('FROG TAGS');
         fitText(battleView.loading?'LOADING MATCH RECORDS':battleView.error||'YOUR QUICKPLAY HEAD-TO-HEAD RECORDS',240,67,376,.70,battleView.error?'#96334c':'#07516a');
-        drawBitmapText('OPPONENT',110,88,.57,'left','#59666b');
-        drawBitmapText('W - L',260,88,.57,'center','#59666b');
-        drawBitmapText('LAST PLAYED',333,88,.53,'center','#59666b');
-        drawBitmapText('REPLAY',392,88,.51,'center','#59666b');
+        const headerColor=key=>battleView.sort===key?'#07516a':'#59666b';
+        const headers=[
+          {sort:'name',x:100,y:83,w:119,h:11},
+          {sort:'ratio',x:235,y:83,w:50,h:11},
+          {sort:'recent',x:295,y:83,w:76,h:11}
+        ];
+        battleHeaderRects.length=0;
+        battleHeaderRects.push(...headers);
+        drawBitmapText('OPPONENT',110,88,.57,'left',headerColor('name'));
+        drawBitmapText('W - L',260,88,.57,'center',headerColor('ratio'));
+        drawBitmapText('LAST PLAYED',333,88,.53,'center',headerColor('recent'));
+        drawBitmapText('REPLAY',393,88,.51,'center','#59666b');
         battleReplayRects.length=0;
         battleStatsRects.length=0;
-        const entries=battleView.entries.slice(battleView.page*6,battleView.page*6+6);
+        const allEntries=sortedBattleEntries();
+        const pageCount=Math.max(1,Math.ceil(allEntries.length/6));
+        battleView.page=Math.min(battleView.page,pageCount-1);
+        const entries=allEntries.slice(battleView.page*6,battleView.page*6+6);
         entries.forEach((r,i)=>{
           const y=102+i*18;
           ctx.fillStyle=i%2?'#e6f3f3':'#f0f7f8';ctx.fillRect(68,y-3,344,17);
@@ -1409,9 +1440,18 @@
           }
         });
         if(!entries.length&&!battleView.loading&&!battleView.error)fitText('NO COMPLETED QUICKPLAY MATCHES YET',240,146,350,.78);
-        fitText(battleView.guest?'GUEST RECORDS ARE TEMPORARY':"",240,216,374,.53);
+        fitText(battleView.search?`FILTER: ${battleView.search.toUpperCase()}`:(battleView.guest?'GUEST RECORDS ARE TEMPORARY':''),240,216,374,.53);
         for(const b of onlineButtons())drawOnlineAction(b,state.focus===b.id);
-        fitText(`${battleView.page+1}/${Math.max(1,Math.ceil(battleView.entries.length/6))}`,337,240,29,.6);
+        if(battleView.searchOpen){
+          const bar={x:272,y:63,w:116,h:22};
+          ctx.fillStyle=COLORS.ink;ctx.fillRect(bar.x,bar.y,bar.w,bar.h);
+          ctx.fillStyle='#f7fdff';ctx.fillRect(bar.x+2,bar.y+2,bar.w-4,bar.h-4);
+          const text=String(battleView.search||'').toUpperCase()||'TYPE TO SEARCH';
+          const scale=Math.min(.58,(bar.w-10)/Math.max(1,measureBitmapText(text,1)));
+          drawBitmapText(text,bar.x+6,bar.y+8,scale,'left',battleView.search?'#07516a':'#617177');
+          if(Math.floor(performance.now()/450)%2===0){ctx.fillStyle='#0a5262';ctx.fillRect(bar.x+bar.w-6,bar.y+5,1,11);}
+        }
+        fitText(`${battleView.page+1}/${pageCount}`,337,240,29,.6);
       }
       function drawOnlineEntry(){
         if(state.screen==='directBlocked'){drawDirectBlocked();return;}
@@ -1437,6 +1477,15 @@
           return false;
         }
         e.preventDefault();e.stopImmediatePropagation();const k=e.code;
+        if(state.screen==='battleTags'&&battleView.searchOpen){
+          if(k==='Escape'||k==='Enter'||k==='NumpadEnter'){battleView.searchOpen=false;return true;}
+          if(k==='Backspace'){battleView.search=battleView.search.slice(0,-1);battleView.page=0;return true;}
+          if(k==='Delete'){battleView.search='';battleView.page=0;return true;}
+          if(e.key?.length===1&&/^[a-zÀ-ÖØ-öø-ÿ0-9 _-]$/i.test(e.key)){
+            battleView.search=(battleView.search+e.key).slice(0,20);battleView.page=0;
+          }
+          return true;
+        }
         if(k==='Escape'){
           if(e.repeat)return true;
           if(state.screen==='settings')closeSettings();else if(state.screen==='room')leaveRoom();else if(state.screen==='quickQueue')minimizeQueue();
@@ -1479,6 +1528,8 @@
           else if(pointInsideRect(p,PVP_SETTINGS_UI.backButton))closeSettings();return true;
         }
         if(state.screen==='battleTags'){
+          const headerHit=battleHeaderRects.find(hit=>pointInsideRect(p,hit));
+          if(headerHit){setBattleSort(headerHit.sort);return true;}
           const statsHit=battleStatsRects.find(hit=>pointInsideRect(p,hit));
           if(statsHit){openBattleStats(statsHit.row);return true;}
           const replayHit=battleReplayRects.find(hit=>pointInsideRect(p,hit));
@@ -1495,6 +1546,8 @@
         const p=getCanvasPoint(e);e.stopImmediatePropagation();state.keyboardFocus=false;
         if(state.screen==='settings'){const i=PVP_SETTINGS_UI.rows.findIndex(r=>pointInsideRect(p,r));if(i>=0)game.pvpSettingsFocusIndex=i;else if(pointInsideRect(p,PVP_SETTINGS_UI.backButton))game.pvpSettingsFocusIndex=4;return true;}
         if(state.screen==='battleTags'){
+          const headerHit=battleHeaderRects.find(hit=>pointInsideRect(p,hit));
+          if(headerHit){state.hoverId='tagsort:'+headerHit.sort;try{canvas.style.setProperty('cursor','pointer','important');}catch(_){}return true;}
           const statsIndex=battleStatsRects.findIndex(hit=>pointInsideRect(p,hit));
           if(statsIndex>=0){state.hoverId=`tagstats:${statsIndex}`;try{canvas.style.setProperty('cursor','pointer','important');}catch(_){} return true;}
           if(battleReplayRects.some(hit=>pointInsideRect(p,hit))){state.hoverId='tagreplay';try{canvas.style.setProperty('cursor','pointer','important');}catch(_){} return true;}

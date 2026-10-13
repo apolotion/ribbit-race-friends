@@ -848,7 +848,7 @@ function getTutorialGoalRect() {
   // Match the vocabulary card's y-level and the normal TIME/JUMPS/BEST width.
   // The two-pixel gutter after x=326 prevents either black outline from
   // painting over the other.
-  return { x:328, y:234, w:tutorial.kind === "pvp" ? 116 : 150, h:33 };
+  return { x:328, y:234, w:152, h:33 };
 }
 
 function currentGoalHowToLines() {

@@ -544,17 +544,14 @@ function monitorPvp() {
     } else if (tutorial.pvpBonks >= 1) {
       failAttempt("BUFFER THROUGH THE PLATFORM BEFORE THE BONK");
     } else if (playerLanded && now - tutorial.enteredAt > 500) {
-      // The mirrored left/right ground starts require an approach jump before
-      // the buffered finishing jump. Do not reset after the first landing.
-      tutorial.pvpBufferedApproachCount = (tutorial.pvpBufferedApproachCount || 0) + 1;
-      if (tutorial.pvpBufferedApproachCount >= 4) failAttempt("CHARGE, BUFFER THROUGH, THEN BONK EMBER");
+      failAttempt("ONE JUMP: BUFFER THROUGH, THEN BONK EMBER");
     }
     return;
   }
 
   if (setup === "pvpSkyBonk") {
     if (tutorial.pvpSkyBonkSeen) {
-      if (pvpPracticeEventReady(1000, now) && pvpTutorialSettled()) passStep();
+      if (p1.grounded && pvpPracticeEventReady(100, now)) passStep();
     } else if (tutorial.pvpBonks >= 1) {
       failAttempt("JUMP HIGH ABOVE THE MAP BEFORE THE BONK");
     } else if (playerLanded && now - tutorial.enteredAt > 600) {
