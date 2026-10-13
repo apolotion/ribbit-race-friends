@@ -19,7 +19,7 @@ function block(source, start, end) {
 
 test("Polish 21 cache marker is wired through the Worker, client, and asset URLs", () => {
   for (const source of [tutorial, common, index, read("public/scripts/cloud-client.js")]) {
-    assert.match(source, /2026\.10\.13-friends-polish-44/);
+    assert.match(source, /2026\.10\.13-friends-polish-45/);
   }
 });
 
@@ -27,7 +27,7 @@ test("Account and device windows reuse the main-menu frame and have themed heade
   const frame = block(tutorial, "function drawUtilityWindowFrame", "function drawUtilityRow");
   assert.match(frame, /const panel = \{ x:38, y:15, w:404, h:228 \}/);
   assert.match(frame, /drawBackground\(previewLevelId\)/);
-  assert.match(frame, /const header = \{ x:52, y:25, w:376, h:29 \}/);
+  assert.match(frame, /const header = \{ x:panel\.x\+14, y:panel\.y\+10, w:panel\.w-28, h:34 \}/);
   assert.match(tutorial, /drawUtilityWindowFrame\("ACCOUNT & LANGUAGE", "PLAYER SETTINGS"\)/);
   assert.match(tutorial, /drawUtilityWindowFrame\("COMPUTER \/ MOBILE MODE", "CHOOSE AN INPUT STYLE"\)/);
 });

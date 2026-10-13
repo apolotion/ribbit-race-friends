@@ -64,7 +64,7 @@ function startRibbitRaceGame() {
     const canvas = document.getElementById("game");
     const gameFrame = document.getElementById("game-frame");
     const friendsGameInputLocked = () => window.RibbitFriendsGameInputLocked?.() === true;
-    const RIBBIT_DISPLAY_VERSION = "VERSION 1.7.32";
+    const RIBBIT_DISPLAY_VERSION = "VERSION 1.7.33";
     const RIBBIT_CREDIT_TEXT = "MADE BY NICK M.";
     const RIBBIT_CREDIT_Y = 228;
     const rgbValueEditor = document.getElementById("rgb-value-editor");
@@ -6958,6 +6958,7 @@ function startRibbitRaceGame() {
     }
     function tone(frequency, duration = 0.08, volume = 0.035, slide = 0, delay = 0) {
       if (game.muted || game.volume <= 0.001) return;
+      window.RibbitReplaySoundCapture?.(frequency,duration,volume,slide,delay);
       ensureAudio();
       if (!audioContext) return;
       const start = audioContext.currentTime + delay;
@@ -19795,8 +19796,8 @@ function startRibbitRaceGame() {
     requestAnimationFrame(frame);
 
     /* ===== client/game/90-extended-features.js ===== */
-const RIBBIT_FRIENDS_DISPLAY_VERSION = "1.7.32";
-const RIBBIT_FRIENDS_BUILD = "2026.10.13-friends-polish-44";
+const RIBBIT_FRIENDS_DISPLAY_VERSION = "1.7.33";
+const RIBBIT_FRIENDS_BUILD = "2026.10.13-friends-polish-45";
 function rr14Number(value, fallback = 0) {
   const parsed = Number(value);
   return Number.isFinite(parsed) ? parsed : fallback;
@@ -20275,10 +20276,10 @@ window.RibbitRaceMobileDiagnostics = () => ({
  */
 (() => {
   "use strict";
-  const BUILD = "2026.10.13-friends-polish-44";
+  const BUILD = "2026.10.13-friends-polish-45";
   const RR_V160_CANDIDATES = {"catchFly":["attemptFlyCatch","attemptPvpFlyCatch","catchSandboxFly","getPvpImminentCatchFly","recordFlyEaten","scheduleFlyReplacementFromCatch"],"jumpSound":["playJumpSound"],"beep":["playCountdownGoSound","playCountdownSound"],"replayUpload":["saveRecordDate"],"restart":["resetGame","resetPvpGame","resetPvpPlayer","resetRoundLifecycle","resetRoundNetwork","restartCurrentLevel"],"drop":[],"render":["drawPvpScene","drawScene"],"worldRecord":[],"fullscreen":["getFullscreenElement","hideFullscreenFallback","showFullscreenFallback","syncFullscreenButton","toggleRibbitFullscreen"],"onlineSubmit":[],"leaderboard":["isSoloEndlessLeaderboardEligible","savePvpMatchWinsForLeaderboard"]};
   const RR_V160_VARS = {"onlineSelect":[],"achievementSelect":["activeAchievementIndex","hoveredAchievementCard"],"backRect":[]};
-  const VERSION = "1.7.32";
+  const VERSION = "1.7.33";
   const V = {
     menuTouch: new Map(), chargeTouch: new Map(), achievementPinned: -1,
     finalCatchStarted: 0, finalCatchLabelsGone: false,
@@ -21151,7 +21152,7 @@ window.RibbitRaceMobileDiagnostics = () => ({
 "use strict";
 const SOLO_SEEN_KEY = "rrFriendsEngineTutorialSoloSeenV8";
 const PVP_SEEN_KEY = "rrFriendsEngineTutorialPvpSeenV8";
-const TUTORIAL_BUILD = "2026.10.13-friends-polish-44";
+const TUTORIAL_BUILD = "2026.10.13-friends-polish-45";
 const TUTORIAL_ACHIEVEMENT_ID = "tutorial-graduate";
 const PVP_TUTORIAL_ACHIEVEMENT_ID = "versus-tutorial-graduate";
 const TYPEWRITER_MS_PER_CHARACTER = 28;
@@ -27568,7 +27569,11 @@ window.RibbitRaceTutorialEngine = Object.freeze({
     flashcardSlideFromFace: "english",
     flashcardSlideDirection: 0,
     pauseFullscreenHovered: false,
-    flashcardHelpOpen: false
+    flashcardHelpOpen: false,
+    flashcardCompletionSelection: "all",
+    languagePickerOpen: "",
+    languagePickerSelection: 0,
+    languagePickerHover: -1
   };
   const LANGUAGE_KEY = "ribbitRaceLanguageModeV1";
   const HAT_PROGRESS_KEY = "ribbitRaceHatProgressV2";
@@ -27601,12 +27606,27 @@ window.RibbitRaceTutorialEngine = Object.freeze({
   const LANGUAGE_MENU_ROWS = Object.freeze([
     Object.freeze({ id:"spoken", label:"I SPEAK..." }),
     Object.freeze({ id:"learning", label:"I'M LEARNING..." }),
-    Object.freeze({ id:"swap", label:"SWAP LANGUAGES" }),
     Object.freeze({ id:"back", label:"BACK" })
   ]);
-  const LANGUAGE_MENU_RECTS = Object.freeze(LANGUAGE_MENU_ROWS.map((row, index) => Object.freeze({
-    ...row, x:91, y:92+index*33, w:298, h:28
-  })));
+  const LANGUAGE_MENU_RECTS = Object.freeze([
+    Object.freeze({ ...LANGUAGE_MENU_ROWS[0], x:91, y:92, w:298, h:35 }),
+    Object.freeze({ ...LANGUAGE_MENU_ROWS[1], x:91, y:154, w:298, h:35 }),
+    Object.freeze({ ...LANGUAGE_MENU_ROWS[2], x:91, y:207, w:298, h:26 })
+  ]);
+  const LANGUAGE_SWAP_RECT = Object.freeze({x:227,y:129,w:26,h:23});
+  const LANGUAGE_OPTIONS = Object.freeze([
+    Object.freeze({code:"en", name:"ENGLISH"}),
+    Object.freeze({code:"es", name:"ESPAÑOL"})
+  ]);
+  const LANGUAGE_PICKER_PANEL = Object.freeze({x:98,y:75,w:284,h:148});
+  const LANGUAGE_PICKER_CLOSE = Object.freeze({x:351,y:81,w:22,h:21});
+  function getLanguagePickerRects(){
+    return LANGUAGE_OPTIONS.map((item,i)=>({...item,x:113,y:114+i*42,w:254,h:34}));
+  }
+  const FLASHCARD_COMPLETION_RECTS = Object.freeze({
+    all:Object.freeze({id:"complete-all",x:90,y:105,w:300,h:31}),
+    starred:Object.freeze({id:"complete-starred",x:90,y:144,w:300,h:31})
+  });
   const FLASHCARD_BUTTON_RECTS = Object.freeze({
     previous:Object.freeze({id:"previous",x:76,y:187,w:54,h:23}),
     flip:Object.freeze({id:"flip",x:138,y:187,w:141,h:23}),
@@ -27623,6 +27643,10 @@ window.RibbitRaceTutorialEngine = Object.freeze({
   function readFlashcardStars() {
     try {const data=JSON.parse(localStorage.getItem(FLASHCARD_STARS_KEY)||"[]");return Array.isArray(data)?data:[];}
     catch(_){return [];}
+  }
+  function availableStarredFlashcardCount() {
+    const marked=new Set(polish.flashcardStars);
+    return getFlashcardVocabulary().filter(entry=>marked.has(flashcardKey(entry))).length;
   }
   function flashcardEntries() {
     const words = getFlashcardVocabulary();
@@ -27657,6 +27681,7 @@ window.RibbitRaceTutorialEngine = Object.freeze({
     if(shuffle)for(let i=order.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[order[i],order[j]]=[order[j],order[i]];}
     polish.flashcardOrder=order;polish.flashcardIndex=0;polish.flashcardComplete=false;
     polish.flashcardSlideAt=0; polish.flashcardSlideDirection=0;
+    polish.flashcardCompletionSelection=starredOnly||!availableStarredFlashcardCount()?"all":"starred";
     resetFlashcardFace();
   }
   const DEVICE_MENU_RECTS = Object.freeze({
@@ -27706,15 +27731,15 @@ window.RibbitRaceTutorialEngine = Object.freeze({
     ctx.fillStyle = "#f7fdff";
     ctx.fillRect(panel.x + 7, panel.y + 4, panel.w - 14, panel.h - 8);
     ctx.fillRect(panel.x + 4, panel.y + 8, panel.w - 8, panel.h - 16);
-    const header = { x:52, y:25, w:376, h:29 };
+    const header = { x:panel.x+14, y:panel.y+10, w:panel.w-28, h:34 };
     ctx.fillStyle = skin.dark;
-    ctx.fillRect(header.x, header.y, header.w, header.h);
+    ctx.fillRect(header.x,header.y,header.w,header.h);
     ctx.fillStyle = skin.mid;
-    ctx.fillRect(header.x + 2, header.y + 2, header.w - 4, header.h - 4);
+    ctx.fillRect(header.x+2,header.y+2,header.w-4,29);
     ctx.fillStyle = skin.light;
-    ctx.fillRect(header.x + 5, header.y + 4, header.w - 10, 3);
-    const titleScale = Math.min(1.12, (header.w - 28) / Math.max(1, measureBitmapText(title, 1)));
-    drawBitmapText(title, W / 2, header.y + 9, titleScale, "center", COLORS.white, skin.dark);
+    ctx.fillRect(header.x+5,header.y+4,header.w-10,4);
+    const titleScale = Math.min(1.55, (header.w-28)/Math.max(1,measureBitmapText(title,1)));
+    drawBitmapText(title,W/2,header.y+Math.round((header.h-7*titleScale)/2),titleScale,"center",COLORS.white,skin.dark);
     if (subtitle) drawBitmapText(subtitle, W / 2, 58, .48, "center", "#59666b");
     return { panel, header };
   }
@@ -27735,7 +27760,7 @@ window.RibbitRaceTutorialEngine = Object.freeze({
     else if(kind==="signout") {r(-7,-6,8,12);r(-5,-4,4,8,"#f7fdff");r(0,-1,7,2);r(4,-4,3,3);r(4,1,3,3);}
     else {r(-1,-2,8,4);r(-3,-4,3,8);r(-6,-1,3,2);}
   }
-  function languageName(code) { return code === "es" ? "ESPAÑOL" : "ENGLISH"; }
+  function languageName(code) { return LANGUAGE_OPTIONS.find(item=>item.code===code)?.name || "ENGLISH"; }
   function getSpokenLanguage() {
     try { return window.RibbitLanguagePreferences?.getSpoken?.() || localStorage.getItem("ribbitRaceSpokenLanguageV1") || (getLanguageMode()==="es-en"?"es":"en"); }
     catch (_) { return getLanguageMode()==="es-en" ? "es" : "en"; }
@@ -27762,9 +27787,10 @@ window.RibbitRaceTutorialEngine = Object.freeze({
     }
   }
   function drawLanguageValue(rect, code, selected) {
-    const label = languageName(code);
-    drawBitmapText(label, rect.x + rect.w - 45, rect.y + 9, .38, "right", selected ? getSelectedSkin().dark : "#59666b");
-    drawPixelFlag(code, rect.x + rect.w - 34, rect.y + 6, 1);
+    const label=languageName(code);
+    const centerY=rect.y+(rect.h+7)/2;
+    drawBitmapText(label,rect.x+rect.w-45,Math.round(centerY-7*.43/2),.43,"right",selected?getSelectedSkin().dark:"#59666b");
+    drawPixelFlag(code,rect.x+rect.w-34,Math.round(centerY-7),1);
   }
   function drawProfileMenu() {
     drawUtilityWindowFrame("ACCOUNT & LANGUAGE", "PLAYER SETTINGS");
@@ -27786,30 +27812,71 @@ window.RibbitRaceTutorialEngine = Object.freeze({
       else if(rect.id==="flashcards") drawBitmapText(`${getFlashcardVocabulary().length} CARDS`,rect.x+rect.w-9,baseline+1,.38,"right",selected?skin.dark:"#59666b");
     });
   }
+  function drawLanguageSwapArrow(selected=false) {
+    const rect=LANGUAGE_SWAP_RECT,skin=getSelectedSkin();
+    ctx.fillStyle="rgba(25,43,52,.25)";ctx.fillRect(rect.x+2,rect.y+2,rect.w,rect.h);
+    ctx.fillStyle=selected?skin.dark:COLORS.ink;ctx.fillRect(rect.x,rect.y,rect.w,rect.h);
+    ctx.fillStyle=selected?mixHexColors(skin.belly,"#ffffff",.10):"#f7fdff";
+    ctx.fillRect(rect.x+2,rect.y+2,rect.w-4,rect.h-4);
+    const color=selected?skin.dark:"#48555a";
+    ctx.fillStyle=color;
+    ctx.fillRect(rect.x+7,rect.y+7,11,2);ctx.fillRect(rect.x+15,rect.y+5,2,6);
+    ctx.fillRect(rect.x+8,rect.y+14,11,2);ctx.fillRect(rect.x+8,rect.y+12,2,6);
+  }
+  function drawLanguagePicker() {
+    const skin=getSelectedSkin(),panel=LANGUAGE_PICKER_PANEL;
+    ctx.fillStyle="rgba(8,18,26,.68)";ctx.fillRect(38,15,404,228);
+    ctx.fillStyle="rgba(8,18,26,.3)";ctx.fillRect(panel.x+4,panel.y+4,panel.w,panel.h);
+    ctx.fillStyle=COLORS.ink;ctx.fillRect(panel.x,panel.y,panel.w,panel.h);
+    ctx.fillStyle="#f7fdff";ctx.fillRect(panel.x+3,panel.y+3,panel.w-6,panel.h-6);
+    ctx.fillStyle=skin.mid;ctx.fillRect(panel.x+5,panel.y+5,panel.w-10,30);
+    ctx.fillStyle=skin.light;ctx.fillRect(panel.x+9,panel.y+8,panel.w-18,3);
+    drawBitmapText(polish.languagePickerOpen==="spoken"?"I SPEAK...":"I'M LEARNING...",
+      panel.x+panel.w/2,panel.y+14,.82,"center",COLORS.white,skin.dark);
+    const close=LANGUAGE_PICKER_CLOSE;
+    ctx.fillStyle=COLORS.ink;ctx.fillRect(close.x,close.y,close.w,close.h);
+    ctx.fillStyle="#f7fdff";ctx.fillRect(close.x+2,close.y+2,close.w-4,close.h-4);
+    ctx.fillStyle=skin.dark;
+    for(let i=0;i<7;i++){ctx.fillRect(close.x+6+i,close.y+5+i,2,2);ctx.fillRect(close.x+12-i,close.y+5+i,2,2);}
+    const current=polish.languagePickerOpen==="spoken"?getSpokenLanguage():getLearningLanguage();
+    for(const [index,rect] of getLanguagePickerRects().entries()){
+      const selected=index===polish.languagePickerSelection;
+      ctx.fillStyle=selected?COLORS.ink:"#9aa9ae";ctx.fillRect(rect.x,rect.y,rect.w,rect.h);
+      ctx.fillStyle=selected?mixHexColors(skin.belly,"#ffffff",.12):"#f7fdff";
+      ctx.fillRect(rect.x+2,rect.y+2,rect.w-4,rect.h-4);
+      ctx.fillStyle=selected?skin.light:"#b7c8cd";ctx.fillRect(rect.x+6,rect.y+5,rect.w-12,3);
+      const textY=Math.round(rect.y+(rect.h+8)/2-7*.78/2);
+      drawBitmapText(rect.name,rect.x+95,textY,.78,"center",selected?skin.dark:"#48555a");
+      drawPixelFlag(rect.code,rect.x+15,rect.y+11,1);
+      if(rect.code===current){
+        ctx.fillStyle=skin.dark;
+        ctx.fillRect(rect.x+rect.w-27,rect.y+18,4,3);
+        ctx.fillRect(rect.x+rect.w-23,rect.y+21,4,3);
+        ctx.fillRect(rect.x+rect.w-19,rect.y+18,4,3);
+        ctx.fillRect(rect.x+rect.w-15,rect.y+15,4,3);
+      }
+    }
+    drawBitmapText("MORE LANGUAGES COMING SOON",W/2,panel.y+132,.46,"center","#59666b");
+  }
   function drawLanguageMenu() {
     drawUtilityWindowFrame("LANGUAGE MODE", "SET YOUR LANGUAGES");
-    const skin = getSelectedSkin();
-    const spoken = getSpokenLanguage();
-    const learning = getLearningLanguage();
-    LANGUAGE_MENU_RECTS.forEach((rect, index) => {
-      const selected = index === polish.languageSelection;
+    const skin=getSelectedSkin(),spoken=getSpokenLanguage(),learning=getLearningLanguage();
+    LANGUAGE_MENU_RECTS.forEach((rect,index)=>{
+      const selected=index===polish.languageSelection;
       ctx.fillStyle="rgba(25,43,52,.20)";ctx.fillRect(rect.x+2,rect.y+2,rect.w,rect.h);
       ctx.fillStyle=selected?COLORS.ink:"#9aa9ae";ctx.fillRect(rect.x,rect.y,rect.w,rect.h);
-      ctx.fillStyle=selected?mixHexColors(skin.belly,"#ffffff",.12):"#f7fdff";ctx.fillRect(rect.x+2,rect.y+2,rect.w-4,rect.h-4);
-      const stripe = rect.id === "spoken" ? "#f3d171" : rect.id === "learning" ? "#7ee0cf" : rect.id === "swap" ? "#ed9eaa" : "#b4c7ce";
+      ctx.fillStyle=selected?mixHexColors(skin.belly,"#ffffff",.12):"#f7fdff";
+      ctx.fillRect(rect.x+2,rect.y+2,rect.w-4,rect.h-4);
+      const stripe=rect.id==="spoken"?"#f3d171":rect.id==="learning"?"#7ee0cf":"#b4c7ce";
       ctx.fillStyle=stripe;ctx.fillRect(rect.x+5,rect.y+4,rect.w-10,2);
-      const labelScale=Math.min(.62,180/Math.max(1,measureBitmapText(rect.label,1)));
-      drawBitmapText(rect.label, rect.x+rect.w/2, rect.y+10, labelScale, "center", selected?skin.dark:"#48555a");
-      if(rect.id === "spoken") drawLanguageValue(rect, spoken, selected);
-      else if(rect.id === "learning") drawLanguageValue(rect, learning, selected);
-      else if(rect.id === "swap") {
-        drawPixelFlag(spoken, rect.x+rect.w-56, rect.y+7, .9);
-        ctx.fillStyle = selected?skin.dark:"#59666b";
-        ctx.fillRect(rect.x+rect.w-29, rect.y+13, 10, 2); ctx.fillRect(rect.x+rect.w-22, rect.y+11, 2, 6);
-        drawPixelFlag(learning, rect.x+rect.w-18, rect.y+7, .9);
-      }
+      const labelScale=Math.min(.69,190/Math.max(1,measureBitmapText(rect.label,1)));
+      const innerCenter=rect.y+(rect.h+7)/2;
+      drawBitmapText(rect.label,rect.x+rect.w/2,Math.round(innerCenter-7*labelScale/2),labelScale,"center",selected?skin.dark:"#48555a");
+      if(rect.id==="spoken")drawLanguageValue(rect,spoken,selected);
+      else if(rect.id==="learning")drawLanguageValue(rect,learning,selected);
     });
-    drawBitmapText(`${languageName(spoken)}  •  ${languageName(learning)}`, W/2, 224, .48, "center", "#59666b");
+    drawLanguageSwapArrow(polish.languageSelection===-1);
+    if(polish.languagePickerOpen)drawLanguagePicker();
   }
   function drawCardButton(rect,title,hint="",selected=false){
     const skin=getSelectedSkin();
@@ -27901,7 +27968,7 @@ window.RibbitRaceTutorialEngine = Object.freeze({
     ctx.fillStyle="#48555a";
     for(let i=0;i<7;i++){ctx.fillRect(close.x+5+i,close.y+5+i,2,2);ctx.fillRect(close.x+11-i,close.y+5+i,2,2);}
     const rows=[
-      ["LEFT / A","PREVIOUS CARD"],["SPACE / ENTER","FLIP CARD"],["RIGHT / D","NEXT CARD"],
+      ["LEFT / A","PREVIOUS CARD"],["SPACE / ENTER","FLIP / NEXT STEPS"],["RIGHT / D","NEXT CARD"],
       ["S / ?","STAR OR UNSTAR CARD"],["H","SHUFFLE DECK"],["V","SHOW STARRED / ALL CARDS"],["BACKSPACE / ESC","BACK"]
     ];
     rows.forEach((row,index)=>{const y=panel.y+35+index*12;drawBitmapText(row[0],panel.x+18,y,.50,"left",skin.dark);drawBitmapText(row[1],panel.x+148,y,.50,"left","#59666b");});
@@ -27930,11 +27997,10 @@ window.RibbitRaceTutorialEngine = Object.freeze({
         const label=secondary?"ESPAÑOL":"ENGLISH";
         const value=String(secondary?entry.spanish||"":entry.english||"").trim().toUpperCase();
         const fit=Math.min(1.20,(card.w-36)/Math.max(1,measureBitmapText(value,1)));
-        drawBitmapText(`${index+1} / ${count}`,card.x+card.w-50,card.y+12,.53,"right",skin.dark);
-        drawBitmapText(label,W/2,card.y+15,.70,"center",skin.dark);
+        drawBitmapText(`${index+1} / ${count}`,card.x+14,card.y+85,.53,"left",skin.dark);
+        drawBitmapText(label,W/2,card.y+85,.70,"center",skin.dark);
         ctx.save();ctx.beginPath();ctx.rect(card.x+12,card.y+30,card.w-24,45);ctx.clip();
         drawBitmapText(value,W/2,card.y+46,fit,"center",COLORS.ink);ctx.restore();
-        drawBitmapText(secondary?"TARGET LANGUAGE":"ENGLISH FRONT",W/2,card.y+85,.48,"center","#59666b");
         const starButton=FLASHCARD_BUTTON_RECTS.star;
         drawFlashcardStar(starButton.x+starButton.w/2,starButton.y+starButton.h/2,starred);
       }else{
@@ -27949,8 +28015,21 @@ window.RibbitRaceTutorialEngine = Object.freeze({
     if(polish.flashcardComplete){
       ctx.fillStyle=mixHexColors(skin.belly,"#ffffff",.18);
       ctx.fillRect(card.x+3,card.y+3,card.w-6,card.h-6);
-      drawBitmapText("DECK COMPLETE!",W/2,card.y+34,1.07,"center",skin.dark);
-      drawBitmapText(polish.flashcardStars.length ? "PRESS SPACE TO STUDY STARRED" : "PRESS SPACE TO RESTART",W/2,card.y+63,.57,"center","#59666b");
+      const hasStarred=availableStarredFlashcardCount()>0&&!polish.flashcardOnlyStarred;
+      drawBitmapText("NEXT STEPS",W/2,card.y+10,.81,"center",skin.dark);
+      const options=hasStarred?["all","starred"]:["all"];
+      const rects=hasStarred?FLASHCARD_COMPLETION_RECTS:{all:{...FLASHCARD_COMPLETION_RECTS.all,y:card.y+45}};
+      for(const id of options){
+        const rect=rects[id],chosen=polish.flashcardCompletionSelection===id;
+        ctx.fillStyle=chosen?skin.dark:"#9aa9ae";ctx.fillRect(rect.x,rect.y,rect.w,rect.h);
+        ctx.fillStyle=chosen?mixHexColors(skin.belly,"#ffffff",.12):"#f7fdff";
+        ctx.fillRect(rect.x+2,rect.y+2,rect.w-4,rect.h-4);
+        ctx.fillStyle=id==="starred"?"#7ee0cf":"#f3d171";
+        ctx.fillRect(rect.x+5,rect.y+4,rect.w-10,2);
+        drawBitmapText(id==="starred"?"STUDY STARRED TERMS":"RESTART ALL TERMS",rect.x+12,rect.y+9,.66,"left",chosen?skin.dark:"#48555a");
+        drawBitmapText(id==="starred"?`${availableStarredFlashcardCount()} SAVED TERMS`:`ALL ${getFlashcardVocabulary().length} TERMS`,rect.x+12,rect.y+21,.40,"left","#59666b");
+        if(chosen)drawBitmapText(">",rect.x+rect.w-15,rect.y+12,.65,"center",skin.dark);
+      }
     }else if(polish.flashcardSlideAt){
       const ease=1-Math.pow(1-slideT,3);
       const direction=polish.flashcardSlideDirection;
@@ -27976,9 +28055,9 @@ window.RibbitRaceTutorialEngine = Object.freeze({
     ctx.fillRect(hcx-1,hcy+4,2,2);ctx.fillRect(hcx-1,hcy+7,2,2);
     const selected=id=>polish.flashcardHoverKey===id;
     const buttons=[
-      ["previous",polish.flashcardComplete?"RESTART DECK":"ICON_PREV",""],
-      ["flip",polish.flashcardComplete?(polish.flashcardStars.length?"VIEW STARRED":"RESTART DECK"):"FLIP CARD",""],
-      ["next",polish.flashcardComplete?"ALL CARDS":"ICON_NEXT",""],
+      ["previous",polish.flashcardComplete?"ALL TERMS":"ICON_PREV",""],
+      ["flip",polish.flashcardComplete?"CONTINUE":"FLIP CARD",""],
+      ["next",polish.flashcardComplete?"CONTINUE":"ICON_NEXT",""],
       ["shuffle","ICON_SHUFFLE",""],
       ["starred",polish.flashcardOnlyStarred?"ALL CARDS":"STARRED TERMS",""],
       ["back","BACK",""]
@@ -28019,7 +28098,10 @@ window.RibbitRaceTutorialEngine = Object.freeze({
     tone(520,.04,.009,25);
     safeCall(drawScene);
   }
-  function openLanguageMenu() { polish.languageSelection = 0; game.state = "rrLanguageMenu"; clearHeldInput(); tone(520,.04,.009,25); }
+  function openLanguageMenu() {
+    polish.languageSelection=0;polish.languagePickerOpen="";
+    game.state="rrLanguageMenu";clearHeldInput();tone(520,.04,.009,25);
+  }
   function openFlashcardsMenu() {
     polish.flashcardStars=readFlashcardStars();
     polish.flashcardShuffled=false;
@@ -28062,13 +28144,37 @@ window.RibbitRaceTutorialEngine = Object.freeze({
     if (result) return result;
     return setLanguagePreferences(getLearningLanguage(), getSpokenLanguage());
   }
-  function activateLanguageRow(index = polish.languageSelection) {
-    const row = LANGUAGE_MENU_ROWS[index] || LANGUAGE_MENU_ROWS[0];
-    if (row.id === "spoken") setLanguagePreferences(getSpokenLanguage() === "en" ? "es" : "en", getLearningLanguage());
-    else if (row.id === "learning") setLanguagePreferences(getSpokenLanguage(), getLearningLanguage() === "en" ? "es" : "en");
-    else if (row.id === "swap") swapLanguagePreferences();
-    else if (row.id === "back") { game.state = "rrProfileMenu"; tone(330,.04,.009,-30); }
-    tone(360,.03,.008,6);
+  function openLanguagePicker(which){
+    polish.languagePickerOpen=which;
+    const code=which==="spoken"?getSpokenLanguage():getLearningLanguage();
+    polish.languagePickerSelection=Math.max(0,LANGUAGE_OPTIONS.findIndex(item=>item.code===code));
+    tone(520,.04,.009,20);
+  }
+  function selectLanguagePickerOption(index=polish.languagePickerSelection){
+    const choice=LANGUAGE_OPTIONS[index];if(!choice)return;
+    const spoken=getSpokenLanguage(), learning=getLearningLanguage();
+    if(polish.languagePickerOpen==="spoken") {
+      setLanguagePreferences(choice.code,choice.code===learning?spoken:learning);
+    }else if(polish.languagePickerOpen==="learning"){
+      setLanguagePreferences(choice.code===spoken?learning:spoken,choice.code);
+    }
+    polish.languagePickerOpen="";
+    tone(620,.04,.01,20);
+  }
+  function activateLanguageRow(index=polish.languageSelection){
+    if(polish.languagePickerOpen){selectLanguagePickerOption();return;}
+    if(index===-1){swapLanguagePreferences();tone(640,.04,.009,25);return;}
+    const row=LANGUAGE_MENU_ROWS[index]||LANGUAGE_MENU_ROWS[0];
+    if(row.id==="spoken"||row.id==="learning")openLanguagePicker(row.id);
+    else if(row.id==="back"){game.state="rrProfileMenu";tone(330,.04,.009,-30);}
+  }
+  function completeFlashcardSession(destination=polish.flashcardCompletionSelection){
+    if(destination==="starred"&&!polish.flashcardOnlyStarred&&availableStarredFlashcardCount()){
+      rebuildFlashcardDeck(true,false);
+    }else{
+      polish.flashcardShuffled=false;
+      rebuildFlashcardDeck(false,false);
+    }
   }
   function activateFlashcardButton(index = polish.flashcardSelection) {
     const deck=flashcardEntries(),count=deck.length;
@@ -28090,18 +28196,9 @@ window.RibbitRaceTutorialEngine = Object.freeze({
       if(marked.has(key))marked.delete(key);else marked.add(key);
       polish.flashcardStars=[...marked];
       try{localStorage.setItem(FLASHCARD_STARS_KEY,JSON.stringify(polish.flashcardStars));}catch(_){}
-      if(polish.flashcardOnlyStarred&&!marked.has(key)){
-        const oldIndex=polish.flashcardIndex;
-        rebuildFlashcardDeck(true,false);
-        polish.flashcardIndex=Math.min(oldIndex,Math.max(0,polish.flashcardOrder.length-1));
-      }
     }else if(polish.flashcardComplete){
-      if(id==="previous")rebuildFlashcardDeck(polish.flashcardOnlyStarred,polish.flashcardShuffled);
-      else if(id==="flip"){
-        if(polish.flashcardStars.length)rebuildFlashcardDeck(true,false);
-        else rebuildFlashcardDeck(false,polish.flashcardShuffled);
-      }
-      else if(id==="next")rebuildFlashcardDeck(false,false);
+      if(id==="previous")completeFlashcardSession("all");
+      else if(id==="flip"||id==="next")completeFlashcardSession();
     }else if(id==="flip"){
       if(!count)return;
       const now=performance.now();
@@ -28114,8 +28211,13 @@ window.RibbitRaceTutorialEngine = Object.freeze({
     }else if(id==="next"){
       if(count){
         if(polish.flashcardIndex>=count-1){
-          polish.flashcardComplete=true;polish.flashcardSlideAt=0;
-          resetFlashcardFace();
+          if(polish.flashcardOnlyStarred){
+            completeFlashcardSession("all");
+          }else{
+            polish.flashcardComplete=true;polish.flashcardSlideAt=0;
+            polish.flashcardCompletionSelection=!availableStarredFlashcardCount()?"all":"starred";
+            resetFlashcardFace();
+          }
         }else moveToFlashcard(polish.flashcardIndex+1,1,count);
       }
     }
@@ -29459,8 +29561,8 @@ window.RibbitRaceTutorialEngine = Object.freeze({
         ...(polish.customBaseOpen ? getCustomBaseOptionRects() : [])]);
     }
     if (game.state === "rrProfileMenu") return insideAny(PROFILE_MENU_RECTS);
-    if (game.state === "rrLanguageMenu") return insideAny(LANGUAGE_MENU_RECTS);
-    if (game.state === "rrFlashcards") return insideAny(FLASHCARD_BUTTON_ORDER);
+    if(game.state==="rrLanguageMenu")return insideAny(polish.languagePickerOpen?[LANGUAGE_PICKER_CLOSE,...getLanguagePickerRects()]:[...LANGUAGE_MENU_RECTS,LANGUAGE_SWAP_RECT]);
+    if(game.state==="rrFlashcards")return insideAny([...FLASHCARD_BUTTON_ORDER,...(polish.flashcardComplete?Object.values(FLASHCARD_COMPLETION_RECTS):[])]);
     if (game.state === "rrDeviceMenu") return insideAny(Object.values(DEVICE_MENU_RECTS));
     if (game.state === "achievements") {
       return insideAny([LEADERBOARD_BUTTON, ACHIEVEMENTS_UI.backButton, ACHIEVEMENTS_UI.pagePrevButton, ACHIEVEMENTS_UI.pageNextButton]);
@@ -29506,11 +29608,16 @@ window.RibbitRaceTutorialEngine = Object.freeze({
       const index = PROFILE_MENU_RECTS.findIndex((rect) => pointIn(point, rect));
       if (index >= 0) polish.profileSelection = index;
     } else if (game.state === "rrLanguageMenu") {
-      const index = LANGUAGE_MENU_RECTS.findIndex((rect) => pointIn(point, rect));
-      if (index >= 0) polish.languageSelection = index;
+      if(polish.languagePickerOpen){
+        const index=getLanguagePickerRects().findIndex(rect=>pointIn(point,rect));
+        if(index>=0)polish.languagePickerSelection=index;
+      }else if(pointIn(point,LANGUAGE_SWAP_RECT))polish.languageSelection=-1;
+      else {const index=LANGUAGE_MENU_RECTS.findIndex(rect=>pointIn(point,rect));if(index>=0)polish.languageSelection=index;}
     } else if (game.state === "rrFlashcards") {
-      const hovered = FLASHCARD_BUTTON_ORDER.find((rect) => pointIn(point, rect));
-      polish.flashcardHoverKey = hovered?.id || "";
+      const completion=polish.flashcardComplete&&Object.values(FLASHCARD_COMPLETION_RECTS).find(rect=>pointIn(point,rect));
+      if(completion)polish.flashcardCompletionSelection=completion.id==="complete-starred"?"starred":"all";
+      const hovered=FLASHCARD_BUTTON_ORDER.find(rect=>pointIn(point,rect));
+      polish.flashcardHoverKey=hovered?.id||"";
     } else if (game.state === "rrDeviceMenu") {
       if (pointIn(point, DEVICE_MENU_RECTS.computer)) polish.deviceSelection = 0;
       else if (pointIn(point, DEVICE_MENU_RECTS.mobile)) polish.deviceSelection = 1;
@@ -29571,15 +29678,27 @@ window.RibbitRaceTutorialEngine = Object.freeze({
       if (index >= 0) { event.preventDefault(); event.stopImmediatePropagation(); polish.profileSelection=index; activateProfileRow(index); }
       return;
     }
-    if (game.state === "rrLanguageMenu") {
-      const index = LANGUAGE_MENU_RECTS.findIndex((rect) => pointIn(point, rect));
-      if (index >= 0) { event.preventDefault(); event.stopImmediatePropagation(); polish.languageSelection=index; activateLanguageRow(index); }
+    if(game.state==="rrLanguageMenu"){
+      event.preventDefault();event.stopImmediatePropagation();
+      if(polish.languagePickerOpen){
+        if(pointIn(point,LANGUAGE_PICKER_CLOSE)){polish.languagePickerOpen="";return;}
+        const index=getLanguagePickerRects().findIndex(rect=>pointIn(point,rect));
+        if(index>=0){polish.languagePickerSelection=index;selectLanguagePickerOption(index);}
+        else polish.languagePickerOpen="";
+      }else if(pointIn(point,LANGUAGE_SWAP_RECT))activateLanguageRow(-1);
+      else {const index=LANGUAGE_MENU_RECTS.findIndex(rect=>pointIn(point,rect));if(index>=0){polish.languageSelection=index;activateLanguageRow(index);}}
       return;
     }
-    if (game.state === "rrFlashcards") {
-      const index = FLASHCARD_BUTTON_ORDER.findIndex((rect) => pointIn(point, rect));
-      if (index >= 0) { event.preventDefault(); event.stopImmediatePropagation(); polish.flashcardSelection = index; activateFlashcardButton(index); }
-      else if(polish.flashcardHelpOpen){ event.preventDefault(); event.stopImmediatePropagation(); polish.flashcardHelpOpen=false; }
+    if(game.state==="rrFlashcards"){
+      if(polish.flashcardComplete){
+        const option=Object.values(FLASHCARD_COMPLETION_RECTS).find(rect=>pointIn(point,rect));
+        if(option&&(option.id==="complete-all"||(!polish.flashcardOnlyStarred&&availableStarredFlashcardCount()))){
+          event.preventDefault();event.stopImmediatePropagation();completeFlashcardSession(option.id==="complete-starred"?"starred":"all");return;
+        }
+      }
+      const index=FLASHCARD_BUTTON_ORDER.findIndex(rect=>pointIn(point,rect));
+      if(index>=0){event.preventDefault();event.stopImmediatePropagation();polish.flashcardSelection=index;activateFlashcardButton(index);}
+      else if(polish.flashcardHelpOpen){event.preventDefault();event.stopImmediatePropagation();polish.flashcardHelpOpen=false;}
       return;
     }
     if (game.state === "rrDeviceMenu") {
@@ -29729,14 +29848,20 @@ window.RibbitRaceTutorialEngine = Object.freeze({
       }
       return;
     }
-    if (game.state === "rrLanguageMenu") {
-      if (["ArrowUp","ArrowDown","ArrowLeft","ArrowRight","KeyW","KeyS","KeyA","KeyD","Enter","NumpadEnter","Space","Escape","Backspace"].includes(event.code)) {
-        event.preventDefault(); event.stopImmediatePropagation();
-        if (event.repeat && !["ArrowUp","ArrowDown","ArrowLeft","ArrowRight","KeyW","KeyS","KeyA","KeyD"].includes(event.code)) return;
-        if (["Escape","Backspace"].includes(event.code)) { game.state = "rrProfileMenu"; tone(330,.04,.009,-30); }
-        else if (["ArrowUp","KeyW"].includes(event.code)) polish.languageSelection=(polish.languageSelection-1+LANGUAGE_MENU_ROWS.length)%LANGUAGE_MENU_ROWS.length;
-        else if (["ArrowDown","KeyS"].includes(event.code)) polish.languageSelection=(polish.languageSelection+1)%LANGUAGE_MENU_ROWS.length;
-        else if (["ArrowLeft","ArrowRight","KeyA","KeyD","Enter","NumpadEnter","Space"].includes(event.code)) activateLanguageRow();
+    if(game.state==="rrLanguageMenu"){
+      if(["ArrowUp","ArrowDown","ArrowLeft","ArrowRight","KeyW","KeyS","KeyA","KeyD","Enter","NumpadEnter","Space","Escape","Backspace"].includes(event.code)){
+        event.preventDefault();event.stopImmediatePropagation();
+        if(event.repeat&&!["ArrowUp","ArrowDown","KeyW","KeyS"].includes(event.code))return;
+        if(polish.languagePickerOpen){
+          if(["Escape","Backspace"].includes(event.code))polish.languagePickerOpen="";
+          else if(["ArrowUp","KeyW","ArrowLeft","KeyA"].includes(event.code))polish.languagePickerSelection=(polish.languagePickerSelection-1+LANGUAGE_OPTIONS.length)%LANGUAGE_OPTIONS.length;
+          else if(["ArrowDown","KeyS","ArrowRight","KeyD"].includes(event.code))polish.languagePickerSelection=(polish.languagePickerSelection+1)%LANGUAGE_OPTIONS.length;
+          else if(["Enter","NumpadEnter","Space"].includes(event.code))selectLanguagePickerOption();
+        }else if(["Escape","Backspace"].includes(event.code)){game.state="rrProfileMenu";tone(330,.04,.009,-30);}
+        else if(["ArrowUp","KeyW"].includes(event.code))polish.languageSelection=(polish.languageSelection-1+LANGUAGE_MENU_ROWS.length)%LANGUAGE_MENU_ROWS.length;
+        else if(["ArrowDown","KeyS"].includes(event.code))polish.languageSelection=(polish.languageSelection+1)%LANGUAGE_MENU_ROWS.length;
+        else if(["ArrowLeft","ArrowRight","KeyA","KeyD"].includes(event.code))activateLanguageRow(-1);
+        else activateLanguageRow();
       }
       return;
     }
@@ -29749,6 +29874,9 @@ window.RibbitRaceTutorialEngine = Object.freeze({
         else if(["ArrowLeft","KeyA"].includes(event.code))activateFlashcardButton(0);
         else if(["ArrowRight","KeyD"].includes(event.code))activateFlashcardButton(2);
         else if(["Space","Enter","NumpadEnter"].includes(event.code))activateFlashcardButton(1);
+        else if(polish.flashcardComplete&&["ArrowUp","ArrowDown"].includes(event.code)&&!polish.flashcardOnlyStarred&&availableStarredFlashcardCount()){
+          polish.flashcardCompletionSelection=polish.flashcardCompletionSelection==="starred"?"all":"starred";
+        }
         else if(["KeyS","Slash"].includes(event.code))activateFlashcardButton(FLASHCARD_BUTTON_ORDER.findIndex(b=>b.id==="star"));
         else if(event.code==="KeyH")activateFlashcardButton(FLASHCARD_BUTTON_ORDER.findIndex(b=>b.id==="shuffle"));
         else if(event.code==="KeyV")activateFlashcardButton(FLASHCARD_BUTTON_ORDER.findIndex(b=>b.id==="starred"));
@@ -29982,78 +30110,98 @@ window.RibbitRaceTutorialEngine = Object.freeze({
 
     /* ===== client/game/133-engine-replay.js ===== */
 const RIBBIT_ENGINE_REPLAY_MIME = "application/vnd.ribbit-race.frames+json";
+const RIBBIT_REPLAY_FPS = 60;
+const RIBBIT_REPLAY_FRAME_INTERVAL = 1000/RIBBIT_REPLAY_FPS;
+const RIBBIT_REPLAY_MAX_FRAMES = 12000;
+const RIBBIT_REPLAY_DANCE_MILLIS = 3000;
+const RIBBIT_REPLAY_RESULT_HOLD = 2400;
 const RIBBIT_REPLAY_SNAPSHOT_FIELDS = [
-  "x","y","vx","vy","dir","grounded","charging","charge","landingSquash",
+  "x","y","w","h","vx","vy","dir","grounded","charging","charge","landingSquash",
   "blinkTimer","blinking","score","skinId","bonked","stunTimer","bonkLandingPopTimer",
-  "collisionCooldown","firstJumpMade","airTime","catchSparkleTimer","wrongCatchBubbleTimer"
+  "collisionCooldown","firstJumpMade","airTime","catchSparkleTimer","wrongCatchBubbleTimer","danceTime",
+  "jumpStreakTimer"
 ];
 const RIBBIT_REPLAY_GAME_FIELDS = [
   "mode","state","selectedLevelId","timeOfDay","moonPhaseIndex","worldTime","visualTime",
   "score","jumps","elapsed","targetVocabIndex","skinId","pvpRoundNumber","pvpTimeRemaining",
   "pvpElapsed","pvpTimeLimitSeconds","pvpFirstTo","pvpRoundGoalMode","pvpBestOf",
   "pvpRoundWins","pvpSuddenDeath","onlineMode","pvpCpuEnabled","sandboxMode",
-  "soloCriticalCatchActive","pvpCriticalCatchActive","winPending","pvpWinPendingIndex",
-  "tutorialActive","pvpImpactEffects","messageTimer"
+  "soloCriticalCatchActive","soloCriticalCatchElapsed","soloCriticalCatchDuration",
+  "soloCriticalCatchX","soloCriticalCatchY","soloCriticalCatchScreenX","soloCriticalCatchScreenY",
+  "pvpCriticalCatchActive","pvpCriticalCatchElapsed","pvpCriticalCatchDuration",
+  "pvpCriticalCatchWinnerIndex","pvpCriticalCatchKind","pvpCriticalCatchX","pvpCriticalCatchY",
+  "pvpCriticalCatchScreenX","pvpCriticalCatchScreenY","pvpCriticalCatchFlyVisual",
+  "winPending","pvpWinPendingIndex","finishTime","soloTimeRemaining","soloTimeLimitSeconds","soloTimedOut",
+  "pvpCelebrationWinnerIndex","pvpWinnerIndex","pvpMatchWinnerIndex","messageTimer",
+  "tutorialActive","pvpImpactEffects","newBestTime","newFewestJumps"
 ];
 let ribbitReplayCapture = null;
 let ribbitReplayLastCapture = null;
 let ribbitReplayView = null;
-function captureRibbitReplayPlayer(player) {
-  if (!player) return null;
-  const state = {};
-  for (const field of RIBBIT_REPLAY_SNAPSHOT_FIELDS) {
-    const value = player[field];
-    if (["number","string","boolean"].includes(typeof value)) state[field] = value;
+const ribbitReplayCompletionWaiters = [];
+function captureRibbitReplayPlayer(player){
+  if(!player)return null;
+  const state={};
+  for(const field of RIBBIT_REPLAY_SNAPSHOT_FIELDS){
+    const value=player[field];
+    if(["number","string","boolean"].includes(typeof value))state[field]=value;
   }
-  state.tongue = player.tongue ? {
-    active: !!player.tongue.active,
-    elapsed: Number(player.tongue.elapsed)||0,
-    duration: Number(player.tongue.duration)||.24,
-    targetX: Number(player.tongue.targetX)||0,
-    targetY: Number(player.tongue.targetY)||0,
-    targetFlyId:player.tongue.targetFlyId ?? null,
-    captured:!!player.tongue.captured
-  } : undefined;
+  if(player.tongue){
+    const t=player.tongue;
+    state.tongue={active:!!t.active,elapsed:Number(t.elapsed)||0,duration:Number(t.duration)||.24,
+      targetX:Number(t.targetX)||0,targetY:Number(t.targetY)||0,
+      targetFlyId:t.targetFlyId??null,captured:!!t.captured};
+  }
+  if(Array.isArray(player.afterimages))state.afterimages=player.afterimages.slice(-20).map(image=>({...image}));
   return state;
 }
-function captureRibbitReplayFly(fly) {
+function captureRibbitReplayFly(fly){
   return {
-    id:fly.id, x:fly.x, y:fly.y, baseX:fly.baseX, baseY:fly.baseY,
-    phase:fly.phase, spawnAge:fly.spawnAge, spawnIndex:fly.spawnIndex,
-    vocabIndex:fly.vocabIndex, state:fly.state, touchLocked:fly.touchLocked,
-    blockedPromptSerial:fly.blockedPromptSerial, pvpBlockedPromptSerials:fly.pvpBlockedPromptSerials
+    id:fly.id,x:fly.x,y:fly.y,baseX:fly.baseX,baseY:fly.baseY,
+    phase:fly.phase,spawnAge:fly.spawnAge,spawnIndex:fly.spawnIndex,
+    vocabIndex:fly.vocabIndex,state:fly.state,touchLocked:fly.touchLocked,
+    blockedPromptSerial:fly.blockedPromptSerial,pvpBlockedPromptSerials:fly.pvpBlockedPromptSerials
   };
 }
-function captureRibbitReplaySnapshot(now) {
-  const mode = game.mode === "pvp" ? "pvp" : "solo";
-  const capture = ribbitReplayCapture;
+function captureRibbitReplaySnapshot(now){
+  const capture=ribbitReplayCapture;
+  const mode=game.mode==="pvp"?"pvp":"solo";
+  const visual={};
+  for(const field of RIBBIT_REPLAY_GAME_FIELDS){
+    const value=game[field];
+    if(["number","string","boolean"].includes(typeof value) || value===null) visual[field]=value;
+  }
+  if(Array.isArray(game.pvpRoundWins))visual.pvpRoundWins=[...game.pvpRoundWins];
+  if(game.pvpCriticalCatchFlyVisual)visual.pvpCriticalCatchFlyVisual={...game.pvpCriticalCatchFlyVisual};
   return {
-    t: Math.max(0, Math.round(now-capture.startedAt-capture.pausedMillis)),
-    clock:game.elapsed, world:game.worldTime, visual:game.visualTime,
-    target:game.targetVocabIndex, score:game.score, jumps:game.jumps,
-    round:game.pvpRoundNumber, roundTime:game.pvpTimeRemaining,
+    t:Math.max(0,Math.round(now-capture.startedAt-capture.pausedMillis)),
+    clock:game.elapsed,world:game.worldTime,visual:game.visualTime,
+    target:game.targetVocabIndex,score:game.score,jumps:game.jumps,
+    round:game.pvpRoundNumber,roundTime:game.pvpTimeRemaining,
     roundWins:Array.isArray(game.pvpRoundWins)?[...game.pvpRoundWins]:[],
-    pvpElapsed:game.pvpElapsed,
+    pvpElapsed:game.pvpElapsed,phase:game.state,gameState:visual,
     player:captureRibbitReplayPlayer(frog),
-    players:mode === "pvp" ? pvpPlayers.map(captureRibbitReplayPlayer) : [],
-    flies:flies.filter(fly=>fly && fly.state !== "eaten").map(captureRibbitReplayFly)
+    tongue:{...tongue},
+    players:mode==="pvp"?pvpPlayers.map(captureRibbitReplayPlayer):[],
+    flies:flies.filter(fly=>fly&&fly.state!=="eaten").map(captureRibbitReplayFly)
   };
 }
-function finishRibbitReplayCapture() {
-  if (!ribbitReplayCapture) return ribbitReplayLastCapture;
-  if (ribbitReplayCapture.frames.length) ribbitReplayLastCapture = ribbitReplayCapture;
-  ribbitReplayCapture = null;
+function finishRibbitReplayCapture(){
+  if(!ribbitReplayCapture)return ribbitReplayLastCapture;
+  if(ribbitReplayCapture.frames.length)ribbitReplayLastCapture=ribbitReplayCapture;
+  ribbitReplayCapture=null;
+  for(const resolve of ribbitReplayCompletionWaiters.splice(0))resolve();
   return ribbitReplayLastCapture;
 }
-function ribbitReplayCaptureTick(now = performance.now()) {
-  if (ribbitReplayView) return;
-  const normalGame = game.state === "playing" && ["solo","pvp"].includes(game.mode) &&
-    !tutorial.active && !game.tutorialActive && !game.sandboxMode &&
-    !OnlineVersus.isSpectating();
-  if (!normalGame) {
+function ribbitReplayCaptureTick(now=performance.now()){
+  if(ribbitReplayView)return;
+  const isSoloDance=!!(ribbitReplayCapture?.mode==="solo" && game.mode==="solo" && game.state==="won");
+  const normalGame=game.state==="playing" && ["solo","pvp"].includes(game.mode) &&
+    !tutorial.active && !game.tutorialActive && !game.sandboxMode && !OnlineVersus.isSpectating();
+  if(!normalGame&&!isSoloDance){
     const betweenRounds=ribbitReplayCapture?.mode==="pvp" &&
       ["pvpCelebration","pvpSuddenDeathAlert"].includes(game.state);
-    if (ribbitReplayCapture && (["paused","countdown"].includes(game.state) || betweenRounds)) {
+    if(ribbitReplayCapture && (["paused","countdown"].includes(game.state)||betweenRounds)){
       if(!ribbitReplayCapture.pausedAt)ribbitReplayCapture.pausedAt=now;
     }else if(ribbitReplayCapture)finishRibbitReplayCapture();
     return;
@@ -30062,114 +30210,276 @@ function ribbitReplayCaptureTick(now = performance.now()) {
     ribbitReplayCapture.pausedMillis+=Math.max(0,now-ribbitReplayCapture.pausedAt);
     ribbitReplayCapture.pausedAt=0;
   }
-  const mode = game.mode;
-  const level = String(game.selectedLevelId||"park").toLowerCase();
-  const changed = !ribbitReplayCapture || ribbitReplayCapture.mode !== mode ||
-    ribbitReplayCapture.level !== level ||
-    (mode !== "pvp" && Number(game.elapsed||0) < Number(ribbitReplayCapture.lastGameTime||0)-.15);
-  if (changed) {
-    if(ribbitReplayCapture) finishRibbitReplayCapture();
-    ribbitReplayCapture = {
-      v:1,kind:"ribbit-engine-frames",mode,level,
-      timeOfDay:game.timeOfDay,moonPhaseIndex:game.moonPhaseIndex,skinId:game.skinId,
-      pvpTimeLimitSeconds:game.pvpTimeLimitSeconds,pvpFirstTo:game.pvpFirstTo,
-      pvpRoundGoalMode:game.pvpRoundGoalMode,pvpBestOf:game.pvpBestOf,
-      vocab:VOCABULARY.map(e=>({english:e.english,spanish:e.spanish})),
-      startedAt:now,lastAt:-Infinity,lastGameTime:0,pausedAt:0,pausedMillis:0,frames:[]
-    };
+  if(isSoloDance){
+    if(!ribbitReplayCapture.victoryAt){
+      ribbitReplayCapture.victoryAt=now;
+      ribbitReplayCapture.final={
+        time:Number(game.finishTime??game.elapsed)||0,
+        jumps:Number(game.jumps)||0,
+        score:Number(game.score)||0,
+        danceMs:RIBBIT_REPLAY_DANCE_MILLIS
+      };
+    }
+  }else{
+    const mode=game.mode,level=String(game.selectedLevelId||"park").toLowerCase();
+    const changed=!ribbitReplayCapture || ribbitReplayCapture.mode!==mode ||
+      ribbitReplayCapture.level!==level ||
+      (mode!=="pvp"&&Number(game.elapsed||0)<Number(ribbitReplayCapture.lastGameTime||0)-.15);
+    if(changed){
+      if(ribbitReplayCapture)finishRibbitReplayCapture();
+      ribbitReplayCapture={
+        v:2,kind:"ribbit-engine-frames",fps:RIBBIT_REPLAY_FPS,mode,level,
+        timeOfDay:game.timeOfDay,moonPhaseIndex:game.moonPhaseIndex,skinId:game.skinId,
+        pvpTimeLimitSeconds:game.pvpTimeLimitSeconds,pvpFirstTo:game.pvpFirstTo,
+        pvpRoundGoalMode:game.pvpRoundGoalMode,pvpBestOf:game.pvpBestOf,
+        vocab:VOCABULARY.map(e=>({english:e.english,spanish:e.spanish})),
+        startedAt:now,lastAt:-Infinity,lastGameTime:0,pausedAt:0,pausedMillis:0,
+        victoryAt:0,final:null,frames:[],sounds:[]
+      };
+    }
   }
-  if(now-ribbitReplayCapture.lastAt<75 || ribbitReplayCapture.frames.length>=8500) return;
-  ribbitReplayCapture.lastAt=now;
-  ribbitReplayCapture.lastGameTime=Number(game.elapsed)||0;
-  ribbitReplayCapture.frames.push(captureRibbitReplaySnapshot(now));
+  const capture=ribbitReplayCapture;
+  if(now-capture.lastAt>=RIBBIT_REPLAY_FRAME_INTERVAL-.6 && capture.frames.length<RIBBIT_REPLAY_MAX_FRAMES){
+    capture.lastAt=now;
+    capture.lastGameTime=Number(game.elapsed)||0;
+    capture.frames.push(captureRibbitReplaySnapshot(now));
+  }
+  if(isSoloDance && now-capture.victoryAt>=RIBBIT_REPLAY_DANCE_MILLIS){
+    if(capture.frames.length && capture.frames.at(-1).phase!=="won")capture.frames.push(captureRibbitReplaySnapshot(now));
+    finishRibbitReplayCapture();
+  }
+  if(capture.frames.length>=RIBBIT_REPLAY_MAX_FRAMES)finishRibbitReplayCapture();
 }
-function ribbitReplayExportCurrent() {
-  const capture = ribbitReplayCapture?.frames.length ? ribbitReplayCapture : ribbitReplayLastCapture;
-  if (!capture || capture.frames.length<2) return null;
-  const frames = capture.frames;
+function ribbitReplayRecordTone(frequency,duration,volume,slide,delay){
+  const capture=ribbitReplayCapture;
+  if(!capture || capture.pausedAt || ribbitReplayView || capture.sounds.length>=10000)return;
+  const at=performance.now()-capture.startedAt-capture.pausedMillis+Math.max(0,Number(delay)||0)*1000;
+  const safe=[frequency,duration,volume,slide].every(value=>Number.isFinite(Number(value)));
+  if(!safe||at<0)return;
+  capture.sounds.push({t:Math.round(at),f:+frequency,d:+duration,v:+volume,s:+slide});
+}
+window.RibbitReplaySoundCapture=ribbitReplayRecordTone;
+function ribbitReplayExportCurrent(){
+  const capture=ribbitReplayCapture?.frames.length?ribbitReplayCapture:ribbitReplayLastCapture;
+  if(!capture||capture.frames.length<2)return null;
+  const frames=capture.frames;
+  const duration=frames[frames.length-1].t+(capture.final?RIBBIT_REPLAY_RESULT_HOLD:0);
   return {
-    version:1,kind:"ribbit-engine-frames",mode:capture.mode,level:capture.level,
-    timeOfDay:capture.timeOfDay,moonPhaseIndex:capture.moonPhaseIndex,
-    skinId:capture.skinId,vocab:capture.vocab,
+    version:1,kind:"ribbit-engine-frames",fps:capture.fps||13,
+    mode:capture.mode,level:capture.level,timeOfDay:capture.timeOfDay,
+    moonPhaseIndex:capture.moonPhaseIndex,skinId:capture.skinId,vocab:capture.vocab,
     pvpTimeLimitSeconds:capture.pvpTimeLimitSeconds,pvpFirstTo:capture.pvpFirstTo,
     pvpRoundGoalMode:capture.pvpRoundGoalMode,pvpBestOf:capture.pvpBestOf,
-    duration:frames[frames.length-1].t,frames
+    duration,final:capture.final||undefined,
+    sounds:[...(capture.sounds||[])].sort((a,b)=>a.t-b.t),frames
   };
 }
-function validateRibbitReplayData(data) {
-  if(!data || data.kind!=="ribbit-engine-frames" || data.version!==1 ||
-    !["solo","pvp"].includes(data.mode) || !LEVELS[String(data.level||"").toLowerCase()] ||
-    !Array.isArray(data.frames) || data.frames.length<2 || data.frames.length>8500) return false;
+function ribbitReplayWhenComplete(){
+  if(!ribbitReplayCapture || ribbitReplayCapture.mode!=="solo" || game.state!=="won")return Promise.resolve();
+  return new Promise(resolve=>{
+    const done=()=>{clearTimeout(timeout);resolve();};
+    ribbitReplayCompletionWaiters.push(done);
+    const timeout=setTimeout(()=>{
+      const index=ribbitReplayCompletionWaiters.indexOf(done);
+      if(index>=0)ribbitReplayCompletionWaiters.splice(index,1);
+      resolve();
+    },4400);
+  });
+}
+function validateRibbitReplayData(data){
+  if(!data||data.kind!=="ribbit-engine-frames"||data.version!==1||
+    !["solo","pvp"].includes(data.mode)||!LEVELS[String(data.level||"").toLowerCase()]||
+    !Array.isArray(data.frames)||data.frames.length<2||data.frames.length>RIBBIT_REPLAY_MAX_FRAMES)return false;
   let last=-1;
   for(const frame of data.frames){
-    if(!frame || !Number.isFinite(Number(frame.t)) || frame.t<last || frame.t>3600000 ||
-      !Array.isArray(frame.flies) || frame.flies.length>16 ||
-      !frame.player || !Number.isFinite(frame.player.x) || !Number.isFinite(frame.player.y)) return false;
+    if(!frame||!Number.isFinite(Number(frame.t))||frame.t<last||frame.t>3600000||
+      !Array.isArray(frame.flies)||frame.flies.length>16||
+      !frame.player||!Number.isFinite(frame.player.x)||!Number.isFinite(frame.player.y))return false;
     last=frame.t;
   }
+  if(!Number.isFinite(data.duration)||data.duration<last||data.duration>3600000)return false;
+  if(data.sounds && (!Array.isArray(data.sounds)||data.sounds.length>10000))return false;
   return true;
 }
-function ribbitReplayBegin(data, caption = "REPLAY") {
-  if(!validateRibbitReplayData(data)) return ribbitReplayUnavailable("REPLAY UNAVAILABLE","THIS RECORD HAS NO PLAYABLE GAME-STATE DATA");
-  ribbitReplayView = {
+let ribbitReplayControls=null;
+function ribbitReplayCreateControls(){
+  if(ribbitReplayControls)return ribbitReplayControls;
+  const host=document.getElementById("game-frame");
+  if(!host)return null;
+  const header=document.createElement("header");
+  header.id="rr-spectator-header";
+  header.innerHTML='<span class="rr-spectator-caption"></span><span class="rr-spectator-badge">SPECTATOR REPLAY <small>60 FPS</small></span>';
+  const footer=document.createElement("nav");
+  footer.id="rr-spectator-toolbar";
+  footer.setAttribute("aria-label","Replay playback controls");
+  footer.innerHTML=`
+    <button type="button" data-replay-action="play" aria-label="Pause or play">PAUSE</button>
+    <button type="button" data-replay-action="speed" aria-label="Change playback speed">1X</button>
+    <label class="rr-replay-progress" aria-label="Timeline">
+      <input type="range" min="0" max="10000" step="1" value="0" aria-label="Seek replay timeline" />
+    </label>
+    <span class="rr-replay-time" aria-live="off">0:00 / 0:00</span>
+    <button type="button" data-replay-action="fullscreen" title="Fullscreen (F)">⛶</button>
+    <button type="button" data-replay-action="exit">EXIT</button>`;
+  host.append(header,footer);
+  const seek=footer.querySelector("input");
+  const startScrub=event=>{
+    const view=ribbitReplayView;if(!view?.data)return;
+    event.stopPropagation();
+    view.scrubbing=true;view.wasPaused=view.paused;view.paused=true;
+    try{seek.setPointerCapture(event.pointerId);}catch(_){}
+  };
+  const endScrub=()=>{
+    const view=ribbitReplayView;
+    if(view?.scrubbing){view.scrubbing=false;view.paused=view.wasPaused;view.lastTick=performance.now();}
+  };
+  seek.addEventListener("pointerdown",startScrub);
+  seek.addEventListener("pointerup",endScrub);
+  seek.addEventListener("pointercancel",endScrub);
+  window.addEventListener("pointerup",endScrub);
+  seek.addEventListener("input",event=>{
+    if(!ribbitReplayView?.data)return;
+    ribbitReplaySeek((Number(event.target.value)/10000)*(ribbitReplayView.data.duration||0)/1000);
+  });
+  footer.addEventListener("click",event=>{
+    const action=event.target.closest("button")?.dataset.replayAction;
+    if(!action||!ribbitReplayView)return;
+    event.stopPropagation();
+    if(action==="exit")ribbitReplayClose();
+    else if(action==="play")ribbitReplayView.paused=!ribbitReplayView.paused;
+    else if(action==="speed"){
+      const rates=[.25,.5,.75,1,1.25,1.5,1.75,2,4];
+      const index=rates.findIndex(n=>n===ribbitReplayView.rate);
+      ribbitReplayView.rate=rates[(index+1)%rates.length];
+    }else if(action==="fullscreen")toggleRibbitFullscreen();
+  });
+  ribbitReplayControls={host,header,footer,seek,
+    caption:header.querySelector(".rr-spectator-caption"),
+    badge:header.querySelector(".rr-spectator-badge small"),
+    play:footer.querySelector('[data-replay-action="play"]'),
+    speed:footer.querySelector('[data-replay-action="speed"]'),
+    time:footer.querySelector(".rr-replay-time")};
+  return ribbitReplayControls;
+}
+function ribbitReplayShowControls(){
+  const controls=ribbitReplayCreateControls();
+  if(!controls)return;
+  controls.host.classList.add("rr-replay-layout");
+  controls.caption.textContent=ribbitReplayView?.caption||"REPLAY";
+  controls.badge.textContent=ribbitReplayView?.data?.fps===60?"60 FPS":"ARCHIVED FRAMES";
+  ribbitReplayUpdateControls();
+}
+function ribbitReplayUpdateControls(){
+  const controls=ribbitReplayControls,view=ribbitReplayView;
+  if(!controls||!view)return;
+  const duration=view.data?.duration||0;
+  const format=ms=>{
+    const value=Math.max(0,Math.floor(ms/1000));
+    return `${Math.floor(value/60)}:${String(value%60).padStart(2,"0")}`;
+  };
+  controls.play.textContent=view.paused?"PLAY":"PAUSE";
+  controls.speed.textContent=`${view.rate}X`;
+  controls.time.textContent=`${format(view.position)} / ${format(duration)}`;
+  if(!view.scrubbing){
+    const progress=duration?view.position/duration:0;
+    controls.seek.value=String(Math.round(10000*progress));
+    controls.seek.style.setProperty("--rr-replay-progress",`${(progress*100).toFixed(2)}%`);
+  }
+}
+function ribbitReplayBegin(data,caption="REPLAY"){
+  if(!validateRibbitReplayData(data))return ribbitReplayUnavailable("REPLAY UNAVAILABLE","THIS RECORD HAS NO PLAYABLE GAME-STATE DATA");
+  if(ribbitReplayCapture)finishRibbitReplayCapture();
+  ribbitReplayView={
     data,caption:String(caption||"REPLAY").toUpperCase().slice(0,65),
     position:0,lastTick:performance.now(),paused:false,rate:1,
-    restore:{state:game.state, mode:game.mode},error:""
+    scrubbing:false,wasPaused:false,soundIndex:0,
+    restore:{state:game.state,mode:game.mode},error:""
   };
   game.state="rrEngineReplay";
   document.body.classList.add("rr-engine-replay-active");
+  ribbitReplayShowControls();
   clearHeldInput();
   return true;
 }
-function ribbitReplayUnavailable(title, reason) {
-  ribbitReplayView = {
+function ribbitReplayUnavailable(title,reason){
+  if(ribbitReplayCapture)finishRibbitReplayCapture();
+  ribbitReplayView={
     data:null,caption:String(title).toUpperCase(),error:String(reason).toUpperCase(),
     position:0,lastTick:performance.now(),paused:true,rate:1,
+    scrubbing:false,wasPaused:true,soundIndex:0,
     restore:{state:game.state,mode:game.mode}
   };
   game.state="rrEngineReplay";
   document.body.classList.add("rr-engine-replay-active");
+  ribbitReplayShowControls();
   clearHeldInput();
   return false;
 }
-function ribbitReplayClose() {
-  if(!ribbitReplayView) return false;
+function ribbitReplayClose(){
+  if(!ribbitReplayView)return false;
   const restore=ribbitReplayView.restore;
   ribbitReplayView=null;
   document.body.classList.remove("rr-engine-replay-active");
+  ribbitReplayControls?.host?.classList.remove("rr-replay-layout");
   game.state=restore?.state||"main";
   game.mode=restore?.mode||"solo";
   clearHeldInput();
   return true;
 }
-function ribbitReplaySeek(seconds) {
-  if(!ribbitReplayView?.data) return;
-  ribbitReplayView.position=clamp(seconds*1000,0,ribbitReplayView.data.duration||0);
-  ribbitReplayView.lastTick=performance.now();
+function ribbitReplaySoundAtOrAfter(time,sounds){
+  let lo=0,hi=sounds.length;
+  while(lo<hi){const mid=(lo+hi)>>1;if(sounds[mid].t<time)lo=mid+1;else hi=mid;}
+  return lo;
+}
+function ribbitReplaySeek(seconds){
+  if(!ribbitReplayView?.data)return;
+  const view=ribbitReplayView;
+  view.position=clamp(seconds*1000,0,view.data.duration||0);
+  view.soundIndex=ribbitReplaySoundAtOrAfter(view.position+1,view.data.sounds||[]);
+  view.lastTick=performance.now();
+  ribbitReplayUpdateControls();
 }
 function ribbitReplayTick(now=performance.now()){
   if(!ribbitReplayView){ribbitReplayCaptureTick(now);return;}
-  const view=ribbitReplayView, dt=Math.max(0,Math.min(now-view.lastTick,120));
+  const view=ribbitReplayView,dt=Math.max(0,Math.min(now-view.lastTick,120));
   view.lastTick=now;
-  if(view.data && !view.paused){
-    view.position=clamp(view.position+dt*view.rate,0,view.data.duration);
-    if(view.position>=view.data.duration) view.paused=true;
+  if(view.data&&!view.paused&&!view.scrubbing){
+    const prior=view.position;
+    view.position=clamp(prior+dt*view.rate,0,view.data.duration);
+    const sounds=view.data.sounds||[];
+    while(view.soundIndex<sounds.length && sounds[view.soundIndex].t<=view.position){
+      const sound=sounds[view.soundIndex++];
+      if(sound.t<prior||sound.t>view.data.duration)continue;
+      if(Number.isFinite(sound.f)&&sound.f>=45&&sound.f<=20000&&
+        Number.isFinite(sound.d)&&sound.d>0&&sound.d<=3&&
+        Number.isFinite(sound.v)&&sound.v>=0&&sound.v<=.5){
+        tone(sound.f,sound.d,sound.v,Number(sound.s)||0);
+      }
+    }
+    if(view.position>=view.data.duration)view.paused=true;
   }
+  ribbitReplayUpdateControls();
 }
-function replayFrameAt(position, frames) {
+function replayFrameAt(position,frames){
   let low=0,high=frames.length-1;
   while(low<high){const mid=(low+high+1)>>1;if(frames[mid].t<=position)low=mid;else high=mid-1;}
   const a=frames[low],b=frames[Math.min(low+1,frames.length-1)];
   const factor=clamp((position-a.t)/Math.max(1,b.t-a.t),0,1);
-  const lerpPosition=(p,q)=>{if(!p)return p;const out={...p};if(q){out.x=p.x+(q.x-p.x)*factor;out.y=p.y+(q.y-p.y)*factor;}return out;};
+  const lerpPosition=(p,q)=>{
+    if(!p)return p;
+    const out={...p};
+    if(q){out.x=p.x+(q.x-p.x)*factor;out.y=p.y+(q.y-p.y)*factor;}
+    return out;
+  };
   const alternate=new Map((b.flies||[]).map(f=>[f.id,f]));
-  const result={...a,player:lerpPosition(a.player,b.player),players:(a.players||[]).map((p,i)=>lerpPosition(p,b.players?.[i])),
-    flies:(a.flies||[]).map(f=>{const next=alternate.get(f.id);return next?{...f,x:f.x+(next.x-f.x)*factor,y:f.y+(next.y-f.y)*factor}:f;})};
-  return result;
+  return {...a,player:lerpPosition(a.player,b.player),
+    players:(a.players||[]).map((p,i)=>lerpPosition(p,b.players?.[i])),
+    flies:(a.flies||[]).map(f=>{const next=alternate.get(f.id);return next?
+      {...f,x:f.x+(next.x-f.x)*factor,y:f.y+(next.y-f.y)*factor}:f;})};
 }
-function paintRibbitReplayStage() {
-  const view=ribbitReplayView, data=view?.data;
-  if(!data) {
+function paintRibbitReplayStage(){
+  const view=ribbitReplayView,data=view?.data;
+  if(!data){
     ctx.fillStyle="#102a39";ctx.fillRect(0,0,W,H);
     drawBitmapText("IN-GAME REPLAY",W/2,65,1.65,"center","#f7fdff");
     drawBitmapText(view?.caption||"REPLAY UNAVAILABLE",W/2,115,.77,"center","#eac873");
@@ -30178,14 +30488,15 @@ function paintRibbitReplayStage() {
   }
   const state=replayFrameAt(view.position,data.frames);
   const gameOld={};for(const field of RIBBIT_REPLAY_GAME_FIELDS)gameOld[field]=game[field];
-  const frogOld={...frog};
-  const tongueOld={...tongue};
+  const frogOld={...frog},tongueOld={...tongue};
   const tutorialOld={active:tutorial.active,completeScreen:tutorial.completeScreen,dialogueOpen:tutorial.dialogueOpen};
   const pvpOld=pvpPlayers.map(p=>({...p,tongue:{...p.tongue}}));
   const fliesOld=flies.slice();
   const platformsOld=platforms,flySpawnsOld=flySpawns,vocabularyOld=VOCABULARY;
-  try {
-    game.state="playing";
+  const labelsOld=window.RibbitRaceFinalCatchLabelsGone;
+  const finalHold=!!data.final && view.position>=data.frames[data.frames.length-1].t;
+  try{
+    game.state=state.phase==="won"?"won":"playing";
     game.mode=data.mode;game.selectedLevelId=data.level;game.timeOfDay=data.timeOfDay;
     game.moonPhaseIndex=data.moonPhaseIndex;game.skinId=data.skinId;
     game.worldTime=state.world;game.visualTime=state.visual;game.elapsed=state.clock;
@@ -30201,43 +30512,45 @@ function paintRibbitReplayStage() {
     tutorial.active=false;tutorial.completeScreen=false;tutorial.dialogueOpen=false;
     game.winPending=false;game.pvpWinPendingIndex=null;game.pvpImpactEffects=[];
     if(data.vocab?.length)VOCABULARY=normalizeVocabularyEntries(data.vocab);
+    if(state.gameState)Object.assign(game,state.gameState);
+    game.state=state.phase==="won"?"won":"playing";
+    game.onlineMode=false;game.tutorialActive=false;game.sandboxMode=false;
     platforms=LEVELS[data.level].platforms;flySpawns=LEVELS[data.level].flySpawns;
     Object.assign(frog,state.player);
-    Object.assign(tongue,state.player.tongue||{active:false});
-    if(data.mode==="pvp")state.players.forEach((player,i)=>{if(pvpPlayers[i])Object.assign(pvpPlayers[i],player,{tongue:player.tongue||{active:false}});});
+    Object.assign(tongue,state.tongue||state.player.tongue||{active:false});
+    if(data.mode==="pvp")state.players.forEach((player,i)=>{
+      if(pvpPlayers[i])Object.assign(pvpPlayers[i],player,{tongue:player.tongue||{active:false}});
+    });
     flies.splice(0,flies.length,...state.flies.map(f=>({...f,spawnAge:f.spawnAge||5})));
+    window.RibbitRaceFinalCatchLabelsGone=false;
     ribbitReplayPreviousDrawScene();
-  } finally {
+    if(finalHold){
+      const final=data.final,skin=getSelectedSkin();
+      ctx.fillStyle="rgba(9,26,34,.82)";ctx.fillRect(103,84,274,78);
+      ctx.fillStyle=COLORS.ink;ctx.fillRect(106,86,268,73);
+      ctx.fillStyle="#f7fdff";ctx.fillRect(110,90,260,65);
+      ctx.fillStyle=skin.mid;ctx.fillRect(112,92,256,22);
+      ctx.fillStyle=skin.light;ctx.fillRect(116,95,248,3);
+      drawBitmapText("REPLAY COMPLETE!",W/2,99,1.15,"center",COLORS.white,skin.dark);
+      const fmt=typeof formatTime==="function"?formatTime(final.time):`${Number(final.time).toFixed(2)}S`;
+      drawBitmapText(`FINAL TIME ${fmt}`,W/2,122,.86,"center","#34484f");
+      drawBitmapText(`${final.jumps} JUMPS  •  ${final.score} FLIES`,W/2,140,.78,"center","#34484f");
+    }
+  }finally{
     Object.assign(game,gameOld);Object.assign(frog,frogOld);Object.assign(tongue,tongueOld);
     Object.assign(tutorial,tutorialOld);
     pvpOld.forEach((player,i)=>Object.assign(pvpPlayers[i],player));
     flies.splice(0,flies.length,...fliesOld);
     platforms=platformsOld;flySpawns=flySpawnsOld;VOCABULARY=vocabularyOld;
+    window.RibbitRaceFinalCatchLabelsGone=labelsOld;
   }
 }
-function paintRibbitReplayChrome() {
-  const view=ribbitReplayView, data=view.data;
-  ctx.save();
-  ctx.fillStyle="#071721";ctx.fillRect(0,0,W,22);
-  drawBitmapText(view.caption,9,7,.55,"left","#ffffff");
-  drawBitmapText("SPECTATOR REPLAY",W-10,7,.50,"right","#a9edff");
-  ctx.fillStyle="#071721";ctx.fillRect(0,230,W,40);
-  const y=238;
-  ctx.fillStyle="#e8f4f7";ctx.fillRect(9,y,38,24);ctx.fillRect(52,y,37,24);
-  ctx.fillStyle="#253b45";ctx.fillRect(11,y+2,34,20);ctx.fillRect(54,y+2,33,20);
-  drawBitmapText(view.paused?"PLAY":"PAUSE",28,y+9,.49,"center","#ffffff");
-  drawBitmapText(`${view.rate}X`,70,y+9,.54,"center","#ffffff");
-  ctx.fillStyle="#536f77";ctx.fillRect(98,y+9,284,6);
-  const progress=data?.duration?clamp(view.position/data.duration,0,1):0;
-  ctx.fillStyle="#49dce9";ctx.fillRect(98,y+9,Math.round(progress*284),6);
-  ctx.fillStyle="#f3f9fc";ctx.fillRect(97+Math.round(progress*284),y+7,3,10);
-  ctx.fillStyle="#e8f4f7";ctx.fillRect(402,y,69,24);
-  ctx.fillStyle="#253b45";ctx.fillRect(404,y+2,65,20);
-  drawBitmapText("EXIT",436,y+9,.67,"center","#ffffff");
-  const seconds=Math.floor(view.position/1000), total=Math.floor((data?.duration||0)/1000);
-  drawBitmapText(`${Math.floor(seconds/60)}:${String(seconds%60).padStart(2,"0")} / ${Math.floor(total/60)}:${String(total%60).padStart(2,"0")}`,W/2,224,.53,"center","#f7fdff","#182f3c");
-  ctx.restore();
-}
+const ribbitReplayPreviousDrawVictoryScreen=drawVictoryScreen;
+drawVictoryScreen=function(...args){
+  if(ribbitReplayView?.data)return;
+  return ribbitReplayPreviousDrawVictoryScreen.apply(this,args);
+};
+function paintRibbitReplayChrome(){ribbitReplayUpdateControls();}
 function drawRibbitReplayView(){
   paintRibbitReplayStage();
   paintRibbitReplayChrome();
@@ -30247,42 +30560,53 @@ drawScene=function(...args){
   if(ribbitReplayView){drawRibbitReplayView();return;}
   return ribbitReplayPreviousDrawScene.apply(this,args);
 };
+function ribbitReplayAdjustRate(step){
+  if(!ribbitReplayView)return;
+  ribbitReplayView.rate=clamp(Math.round((ribbitReplayView.rate+step)*4)/4,.25,2);
+}
 function handleRibbitReplayKey(event){
   if(!ribbitReplayView)return;
   const key=event.code;
-  if(!["Escape","Backspace","Space","ArrowLeft","ArrowRight","ArrowUp","ArrowDown","Equal","Minus","KeyR","Home","End"].includes(key)){
+  const supported=["Escape","Backspace","Space","ArrowLeft","ArrowRight","ArrowUp","ArrowDown",
+    "Equal","Minus","KeyF","KeyJ","KeyL","KeyR","Home","End","Comma","Period",
+    ...Array.from({length:10},(_,i)=>`Digit${i}`),...Array.from({length:10},(_,i)=>`Numpad${i}`)];
+  if(!supported.includes(key)){
     event.preventDefault();event.stopImmediatePropagation();return;
   }
   event.preventDefault();event.stopImmediatePropagation();
-  if(event.repeat && !["ArrowLeft","ArrowRight"].includes(key))return;
+  if(event.repeat && !["ArrowLeft","ArrowRight","KeyJ","KeyL","Comma","Period"].includes(key))return;
+  const view=ribbitReplayView;
   if(key==="Escape"||key==="Backspace")ribbitReplayClose();
-  else if(key==="Space")ribbitReplayView.paused=!ribbitReplayView.paused;
-  else if(key==="ArrowLeft")ribbitReplaySeek((ribbitReplayView.position/1000)-5);
-  else if(key==="ArrowRight")ribbitReplaySeek((ribbitReplayView.position/1000)+5);
-  else if(key==="KeyR"||key==="Home")ribbitReplaySeek(0);
-  else if(key==="End")ribbitReplaySeek(ribbitReplayView.data?.duration/1000||0);
-  else if(["ArrowUp","Equal"].includes(key))ribbitReplayView.rate=Math.min(4,ribbitReplayView.rate*2);
-  else if(["ArrowDown","Minus"].includes(key))ribbitReplayView.rate=Math.max(.25,ribbitReplayView.rate/2);
+  else if(key==="Space")view.paused=!view.paused;
+  else if(key==="ArrowLeft")ribbitReplaySeek(view.position/1000-5);
+  else if(key==="ArrowRight")ribbitReplaySeek(view.position/1000+5);
+  else if(key==="KeyJ")ribbitReplaySeek(view.position/1000-10);
+  else if(key==="KeyL")ribbitReplaySeek(view.position/1000+10);
+  else if(key==="KeyF")toggleRibbitFullscreen();
+  else if(key==="KeyR")view.rate=view.rate===4?1:4;
+  else if(key==="Home")ribbitReplaySeek(0);
+  else if(key==="End")ribbitReplaySeek(view.data?.duration/1000||0);
+  else if(key==="Comma"&&event.shiftKey||key==="ArrowDown"||key==="Minus")ribbitReplayAdjustRate(-.25);
+  else if(key==="Period"&&event.shiftKey||key==="ArrowUp"||key==="Equal")ribbitReplayAdjustRate(.25);
+  else if(key==="Comma")ribbitReplaySeek((view.position+(1000/RIBBIT_REPLAY_FPS))/1000);
+  else if(key==="Period")ribbitReplaySeek((view.position-(1000/RIBBIT_REPLAY_FPS))/1000);
+  else if(/^Digit[0-9]$/.test(key)||/^Numpad[0-9]$/.test(key)){
+    const tenth=Number(key.slice(-1));
+    ribbitReplaySeek(tenth*(view.data?.duration||0)/10000);
+  }
+  ribbitReplayUpdateControls();
 }
 window.addEventListener("keydown",handleRibbitReplayKey,true);
 canvas.addEventListener("pointerdown",event=>{
   if(!ribbitReplayView)return;
   event.preventDefault();event.stopImmediatePropagation();
-  const p=getCanvasPoint(event);
-  if(p.y<235)return;
-  if(p.x>=400)ribbitReplayClose();
-  else if(p.x<50)ribbitReplayView.paused=!ribbitReplayView.paused;
-  else if(p.x<91)ribbitReplayView.rate=ribbitReplayView.rate===1?2:ribbitReplayView.rate===2?4:ribbitReplayView.rate===4?.5:1;
-  else if(p.x>=98&&p.x<=383)ribbitReplaySeek(((p.x-98)/284)*(ribbitReplayView.data?.duration||0)/1000);
 },true);
 window.RibbitEngineReplay=Object.freeze({
-  mime:RIBBIT_ENGINE_REPLAY_MIME,
-  tick:ribbitReplayTick,
-  exportCurrent:ribbitReplayExportCurrent,
-  finishCapture:finishRibbitReplayCapture,
-  play:ribbitReplayBegin,
-  close:ribbitReplayClose,
-  unavailable:ribbitReplayUnavailable,
+  mime:RIBBIT_ENGINE_REPLAY_MIME,fps:RIBBIT_REPLAY_FPS,
+  tick:ribbitReplayTick,exportCurrent:ribbitReplayExportCurrent,
+  finishCapture:finishRibbitReplayCapture,whenComplete:ribbitReplayWhenComplete,
+  play:ribbitReplayBegin,close:ribbitReplayClose,
+  seek:ribbitReplaySeek,unavailable:ribbitReplayUnavailable,
   active:()=>!!ribbitReplayView
 });
 

@@ -1,0 +1,44 @@
+RIBBIT RACE — FRIENDS EDITION
+Polish 45 · Version 1.7.33
+Build: 2026.10.13-friends-polish-45
+
+WHAT CHANGED
+
+FLASH CARDS
+• Card position counter (for example, 1 / 15) moved to bottom-left INSIDE the card.
+• ENGLISH and ESPAÑOL now occupy the bottom center of each side of the card, replacing the old English Front / Target Language descriptors.
+• After reviewing the full set, NEXT STEPS offers Restart All Terms and (when any current terms are starred) Study Starred Terms. Space/Next defaults to the starred review; Up/Down or clicking the options changes the choice.
+• Finishing the starred pass returns directly to the complete deck.
+• Unstarring while inside the starred-only pass removes the gold star immediately but leaves the card in this pass until the pass ends. On the next starred review, only currently starred terms appear.
+
+ACCOUNT & LANGUAGE
+• ACCOUNT & LANGUAGE and LANGUAGE MODE title bars now match the main menu's title-bar height.
+• The language menu contains I SPEAK..., an in-between clickable swap arrow, I'M LEARNING..., and Back (no separate Swap Languages row).
+• Clicking either language opens a themed in-game language picker. English and Español are the current choices; the language-options list is ready for future additions.
+• Text and flags align vertically in each row's region BELOW its accent stripe.
+
+REPLAYS
+• New in-engine replays record game state at 60 FPS (60 Hz), instead of the older low-frequency sampler; old replay recordings remain compatible at their original recorded rate.
+• The spectator title and playback toolbar are separate HTML grid rows OUTSIDE the game canvas. This keeps vocabulary instructions and flies/signs visible.
+• Mouse and touch timeline scrubbing pauses playback while the pointer is held and resumes its previous play/pause state on release.
+• Recording now saves the game's square-wave synthesizer sound-event parameters, the solo tongue animation, afterimage trails, fly positions and labels, critical-catch slow-motion camera state, and the 3-second victory dance.
+• After the victory dance, replay displays the final time, jump total, and flies caught.
+• New replay hotkeys:
+  J / L     back / forward 10 seconds
+  0–9       jump to 0/10–9/10 of the full replay
+  , / .     step one frame forward / backward (1/60 second)
+  < / >     speed down / up 0.25x; range 0.25x to 2x
+  R         toggle 4x and 1x
+  F         fullscreen
+  Space     play/pause
+  Left/Right  back/forward 5 seconds
+  Esc       exit replay
+
+DEPLOYMENT
+• This is the complete Friends Edition source repository ZIP, not only the HTML page.
+• Extract all contents at your GitHub project root, commit and push, then deploy or allow your configured GitHub→Cloudflare Workers deployment to run.
+• Cloudflare Worker source, Durable Objects, cloud saves and replay API are included.
+• No code.gs changes are required; Friends Edition uses Cloudflare Workers.
+• The Worker database migration is unchanged; the existing replay MIME and API remain compatible.
+• npm run check validates browser/Worker sources. npm test runs all automated regression tests.
+• New audio data covers synthesized in-game sound effects; it does not record device audio or microphone input.

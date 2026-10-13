@@ -55,7 +55,11 @@
     flashcardSlideFromFace: "english",
     flashcardSlideDirection: 0,
     pauseFullscreenHovered: false,
-    flashcardHelpOpen: false
+    flashcardHelpOpen: false,
+    flashcardCompletionSelection: "all",
+    languagePickerOpen: "",
+    languagePickerSelection: 0,
+    languagePickerHover: -1
   };
 
   const LANGUAGE_KEY = "ribbitRaceLanguageModeV1";
@@ -92,12 +96,28 @@
   const LANGUAGE_MENU_ROWS = Object.freeze([
     Object.freeze({ id:"spoken", label:"I SPEAK..." }),
     Object.freeze({ id:"learning", label:"I'M LEARNING..." }),
-    Object.freeze({ id:"swap", label:"SWAP LANGUAGES" }),
     Object.freeze({ id:"back", label:"BACK" })
   ]);
-  const LANGUAGE_MENU_RECTS = Object.freeze(LANGUAGE_MENU_ROWS.map((row, index) => Object.freeze({
-    ...row, x:91, y:92+index*33, w:298, h:28
-  })));
+  const LANGUAGE_MENU_RECTS = Object.freeze([
+    Object.freeze({ ...LANGUAGE_MENU_ROWS[0], x:91, y:92, w:298, h:35 }),
+    Object.freeze({ ...LANGUAGE_MENU_ROWS[1], x:91, y:154, w:298, h:35 }),
+    Object.freeze({ ...LANGUAGE_MENU_ROWS[2], x:91, y:207, w:298, h:26 })
+  ]);
+  const LANGUAGE_SWAP_RECT = Object.freeze({x:227,y:129,w:26,h:23});
+  // Add new supported languages here when their vocabulary/translations become available.
+  const LANGUAGE_OPTIONS = Object.freeze([
+    Object.freeze({code:"en", name:"ENGLISH"}),
+    Object.freeze({code:"es", name:"ESPAÑOL"})
+  ]);
+  const LANGUAGE_PICKER_PANEL = Object.freeze({x:98,y:75,w:284,h:148});
+  const LANGUAGE_PICKER_CLOSE = Object.freeze({x:351,y:81,w:22,h:21});
+  function getLanguagePickerRects(){
+    return LANGUAGE_OPTIONS.map((item,i)=>({...item,x:113,y:114+i*42,w:254,h:34}));
+  }
+  const FLASHCARD_COMPLETION_RECTS = Object.freeze({
+    all:Object.freeze({id:"complete-all",x:90,y:105,w:300,h:31}),
+    starred:Object.freeze({id:"complete-starred",x:90,y:144,w:300,h:31})
+  });
   const FLASHCARD_BUTTON_RECTS = Object.freeze({
     previous:Object.freeze({id:"previous",x:76,y:187,w:54,h:23}),
     flip:Object.freeze({id:"flip",x:138,y:187,w:141,h:23}),
@@ -114,6 +134,10 @@
   function readFlashcardStars() {
     try {const data=JSON.parse(localStorage.getItem(FLASHCARD_STARS_KEY)||"[]");return Array.isArray(data)?data:[];}
     catch(_){return [];}
+  }
+  function availableStarredFlashcardCount() {
+    const marked=new Set(polish.flashcardStars);
+    return getFlashcardVocabulary().filter(entry=>marked.has(flashcardKey(entry))).length;
   }
   function flashcardEntries() {
     const words = getFlashcardVocabulary();
@@ -149,6 +173,7 @@
     if(shuffle)for(let i=order.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[order[i],order[j]]=[order[j],order[i]];}
     polish.flashcardOrder=order;polish.flashcardIndex=0;polish.flashcardComplete=false;
     polish.flashcardSlideAt=0; polish.flashcardSlideDirection=0;
+    polish.flashcardCompletionSelection=starredOnly||!availableStarredFlashcardCount()?"all":"starred";
     resetFlashcardFace();
   }
   const DEVICE_MENU_RECTS = Object.freeze({
@@ -209,15 +234,16 @@
     ctx.fillRect(panel.x + 7, panel.y + 4, panel.w - 14, panel.h - 8);
     ctx.fillRect(panel.x + 4, panel.y + 8, panel.w - 8, panel.h - 16);
 
-    const header = { x:52, y:25, w:376, h:29 };
+    // Same 34px title bar/29px inner fill as the original RIBBIT RACE main menu.
+    const header = { x:panel.x+14, y:panel.y+10, w:panel.w-28, h:34 };
     ctx.fillStyle = skin.dark;
-    ctx.fillRect(header.x, header.y, header.w, header.h);
+    ctx.fillRect(header.x,header.y,header.w,header.h);
     ctx.fillStyle = skin.mid;
-    ctx.fillRect(header.x + 2, header.y + 2, header.w - 4, header.h - 4);
+    ctx.fillRect(header.x+2,header.y+2,header.w-4,29);
     ctx.fillStyle = skin.light;
-    ctx.fillRect(header.x + 5, header.y + 4, header.w - 10, 3);
-    const titleScale = Math.min(1.12, (header.w - 28) / Math.max(1, measureBitmapText(title, 1)));
-    drawBitmapText(title, W / 2, header.y + 9, titleScale, "center", COLORS.white, skin.dark);
+    ctx.fillRect(header.x+5,header.y+4,header.w-10,4);
+    const titleScale = Math.min(1.55, (header.w-28)/Math.max(1,measureBitmapText(title,1)));
+    drawBitmapText(title,W/2,header.y+Math.round((header.h-7*titleScale)/2),titleScale,"center",COLORS.white,skin.dark);
     if (subtitle) drawBitmapText(subtitle, W / 2, 58, .48, "center", "#59666b");
     return { panel, header };
   }
@@ -240,7 +266,7 @@
     else if(kind==="signout") {r(-7,-6,8,12);r(-5,-4,4,8,"#f7fdff");r(0,-1,7,2);r(4,-4,3,3);r(4,1,3,3);}
     else {r(-1,-2,8,4);r(-3,-4,3,8);r(-6,-1,3,2);}
   }
-  function languageName(code) { return code === "es" ? "ESPAÑOL" : "ENGLISH"; }
+  function languageName(code) { return LANGUAGE_OPTIONS.find(item=>item.code===code)?.name || "ENGLISH"; }
   function getSpokenLanguage() {
     try { return window.RibbitLanguagePreferences?.getSpoken?.() || localStorage.getItem("ribbitRaceSpokenLanguageV1") || (getLanguageMode()==="es-en"?"es":"en"); }
     catch (_) { return getLanguageMode()==="es-en" ? "es" : "en"; }
@@ -267,9 +293,12 @@
     }
   }
   function drawLanguageValue(rect, code, selected) {
-    const label = languageName(code);
-    drawBitmapText(label, rect.x + rect.w - 45, rect.y + 9, .38, "right", selected ? getSelectedSkin().dark : "#59666b");
-    drawPixelFlag(code, rect.x + rect.w - 34, rect.y + 6, 1);
+    const label=languageName(code);
+    // Align the words and flag within the content below the accent stripe,
+    // rather than centering against the row border.
+    const centerY=rect.y+(rect.h+7)/2;
+    drawBitmapText(label,rect.x+rect.w-45,Math.round(centerY-7*.43/2),.43,"right",selected?getSelectedSkin().dark:"#59666b");
+    drawPixelFlag(code,rect.x+rect.w-34,Math.round(centerY-7),1);
   }
   function drawProfileMenu() {
     drawUtilityWindowFrame("ACCOUNT & LANGUAGE", "PLAYER SETTINGS");
@@ -291,30 +320,73 @@
       else if(rect.id==="flashcards") drawBitmapText(`${getFlashcardVocabulary().length} CARDS`,rect.x+rect.w-9,baseline+1,.38,"right",selected?skin.dark:"#59666b");
     });
   }
+  function drawLanguageSwapArrow(selected=false) {
+    const rect=LANGUAGE_SWAP_RECT,skin=getSelectedSkin();
+    ctx.fillStyle="rgba(25,43,52,.25)";ctx.fillRect(rect.x+2,rect.y+2,rect.w,rect.h);
+    ctx.fillStyle=selected?skin.dark:COLORS.ink;ctx.fillRect(rect.x,rect.y,rect.w,rect.h);
+    ctx.fillStyle=selected?mixHexColors(skin.belly,"#ffffff",.10):"#f7fdff";
+    ctx.fillRect(rect.x+2,rect.y+2,rect.w-4,rect.h-4);
+    // Two opposing arrows show the result before the swap is clicked.
+    const color=selected?skin.dark:"#48555a";
+    ctx.fillStyle=color;
+    ctx.fillRect(rect.x+7,rect.y+7,11,2);ctx.fillRect(rect.x+15,rect.y+5,2,6);
+    ctx.fillRect(rect.x+8,rect.y+14,11,2);ctx.fillRect(rect.x+8,rect.y+12,2,6);
+  }
+  function drawLanguagePicker() {
+    const skin=getSelectedSkin(),panel=LANGUAGE_PICKER_PANEL;
+    ctx.fillStyle="rgba(8,18,26,.68)";ctx.fillRect(38,15,404,228);
+    ctx.fillStyle="rgba(8,18,26,.3)";ctx.fillRect(panel.x+4,panel.y+4,panel.w,panel.h);
+    ctx.fillStyle=COLORS.ink;ctx.fillRect(panel.x,panel.y,panel.w,panel.h);
+    ctx.fillStyle="#f7fdff";ctx.fillRect(panel.x+3,panel.y+3,panel.w-6,panel.h-6);
+    ctx.fillStyle=skin.mid;ctx.fillRect(panel.x+5,panel.y+5,panel.w-10,30);
+    ctx.fillStyle=skin.light;ctx.fillRect(panel.x+9,panel.y+8,panel.w-18,3);
+    drawBitmapText(polish.languagePickerOpen==="spoken"?"I SPEAK...":"I'M LEARNING...",
+      panel.x+panel.w/2,panel.y+14,.82,"center",COLORS.white,skin.dark);
+    const close=LANGUAGE_PICKER_CLOSE;
+    ctx.fillStyle=COLORS.ink;ctx.fillRect(close.x,close.y,close.w,close.h);
+    ctx.fillStyle="#f7fdff";ctx.fillRect(close.x+2,close.y+2,close.w-4,close.h-4);
+    ctx.fillStyle=skin.dark;
+    for(let i=0;i<7;i++){ctx.fillRect(close.x+6+i,close.y+5+i,2,2);ctx.fillRect(close.x+12-i,close.y+5+i,2,2);}
+    const current=polish.languagePickerOpen==="spoken"?getSpokenLanguage():getLearningLanguage();
+    for(const [index,rect] of getLanguagePickerRects().entries()){
+      const selected=index===polish.languagePickerSelection;
+      ctx.fillStyle=selected?COLORS.ink:"#9aa9ae";ctx.fillRect(rect.x,rect.y,rect.w,rect.h);
+      ctx.fillStyle=selected?mixHexColors(skin.belly,"#ffffff",.12):"#f7fdff";
+      ctx.fillRect(rect.x+2,rect.y+2,rect.w-4,rect.h-4);
+      ctx.fillStyle=selected?skin.light:"#b7c8cd";ctx.fillRect(rect.x+6,rect.y+5,rect.w-12,3);
+      const textY=Math.round(rect.y+(rect.h+8)/2-7*.78/2);
+      drawBitmapText(rect.name,rect.x+95,textY,.78,"center",selected?skin.dark:"#48555a");
+      drawPixelFlag(rect.code,rect.x+15,rect.y+11,1);
+      if(rect.code===current){
+        // Pixel checkmark is drawn in primitives; the bitmap font has no glyph for ✓.
+        ctx.fillStyle=skin.dark;
+        ctx.fillRect(rect.x+rect.w-27,rect.y+18,4,3);
+        ctx.fillRect(rect.x+rect.w-23,rect.y+21,4,3);
+        ctx.fillRect(rect.x+rect.w-19,rect.y+18,4,3);
+        ctx.fillRect(rect.x+rect.w-15,rect.y+15,4,3);
+      }
+    }
+    drawBitmapText("MORE LANGUAGES COMING SOON",W/2,panel.y+132,.46,"center","#59666b");
+  }
   function drawLanguageMenu() {
     drawUtilityWindowFrame("LANGUAGE MODE", "SET YOUR LANGUAGES");
-    const skin = getSelectedSkin();
-    const spoken = getSpokenLanguage();
-    const learning = getLearningLanguage();
-    LANGUAGE_MENU_RECTS.forEach((rect, index) => {
-      const selected = index === polish.languageSelection;
+    const skin=getSelectedSkin(),spoken=getSpokenLanguage(),learning=getLearningLanguage();
+    LANGUAGE_MENU_RECTS.forEach((rect,index)=>{
+      const selected=index===polish.languageSelection;
       ctx.fillStyle="rgba(25,43,52,.20)";ctx.fillRect(rect.x+2,rect.y+2,rect.w,rect.h);
       ctx.fillStyle=selected?COLORS.ink:"#9aa9ae";ctx.fillRect(rect.x,rect.y,rect.w,rect.h);
-      ctx.fillStyle=selected?mixHexColors(skin.belly,"#ffffff",.12):"#f7fdff";ctx.fillRect(rect.x+2,rect.y+2,rect.w-4,rect.h-4);
-      const stripe = rect.id === "spoken" ? "#f3d171" : rect.id === "learning" ? "#7ee0cf" : rect.id === "swap" ? "#ed9eaa" : "#b4c7ce";
+      ctx.fillStyle=selected?mixHexColors(skin.belly,"#ffffff",.12):"#f7fdff";
+      ctx.fillRect(rect.x+2,rect.y+2,rect.w-4,rect.h-4);
+      const stripe=rect.id==="spoken"?"#f3d171":rect.id==="learning"?"#7ee0cf":"#b4c7ce";
       ctx.fillStyle=stripe;ctx.fillRect(rect.x+5,rect.y+4,rect.w-10,2);
-      const labelScale=Math.min(.62,180/Math.max(1,measureBitmapText(rect.label,1)));
-      drawBitmapText(rect.label, rect.x+rect.w/2, rect.y+10, labelScale, "center", selected?skin.dark:"#48555a");
-      if(rect.id === "spoken") drawLanguageValue(rect, spoken, selected);
-      else if(rect.id === "learning") drawLanguageValue(rect, learning, selected);
-      else if(rect.id === "swap") {
-        drawPixelFlag(spoken, rect.x+rect.w-56, rect.y+7, .9);
-        ctx.fillStyle = selected?skin.dark:"#59666b";
-        ctx.fillRect(rect.x+rect.w-29, rect.y+13, 10, 2); ctx.fillRect(rect.x+rect.w-22, rect.y+11, 2, 6);
-        drawPixelFlag(learning, rect.x+rect.w-18, rect.y+7, .9);
-      }
+      const labelScale=Math.min(.69,190/Math.max(1,measureBitmapText(rect.label,1)));
+      const innerCenter=rect.y+(rect.h+7)/2;
+      drawBitmapText(rect.label,rect.x+rect.w/2,Math.round(innerCenter-7*labelScale/2),labelScale,"center",selected?skin.dark:"#48555a");
+      if(rect.id==="spoken")drawLanguageValue(rect,spoken,selected);
+      else if(rect.id==="learning")drawLanguageValue(rect,learning,selected);
     });
-    drawBitmapText(`${languageName(spoken)}  •  ${languageName(learning)}`, W/2, 224, .48, "center", "#59666b");
+    drawLanguageSwapArrow(polish.languageSelection===-1);
+    if(polish.languagePickerOpen)drawLanguagePicker();
   }
 
   function drawCardButton(rect,title,hint="",selected=false){
@@ -409,7 +481,7 @@
     ctx.fillStyle="#48555a";
     for(let i=0;i<7;i++){ctx.fillRect(close.x+5+i,close.y+5+i,2,2);ctx.fillRect(close.x+11-i,close.y+5+i,2,2);}
     const rows=[
-      ["LEFT / A","PREVIOUS CARD"],["SPACE / ENTER","FLIP CARD"],["RIGHT / D","NEXT CARD"],
+      ["LEFT / A","PREVIOUS CARD"],["SPACE / ENTER","FLIP / NEXT STEPS"],["RIGHT / D","NEXT CARD"],
       ["S / ?","STAR OR UNSTAR CARD"],["H","SHUFFLE DECK"],["V","SHOW STARRED / ALL CARDS"],["BACKSPACE / ESC","BACK"]
     ];
     rows.forEach((row,index)=>{const y=panel.y+35+index*12;drawBitmapText(row[0],panel.x+18,y,.50,"left",skin.dark);drawBitmapText(row[1],panel.x+148,y,.50,"left","#59666b");});
@@ -440,11 +512,10 @@
         const label=secondary?"ESPAÑOL":"ENGLISH";
         const value=String(secondary?entry.spanish||"":entry.english||"").trim().toUpperCase();
         const fit=Math.min(1.20,(card.w-36)/Math.max(1,measureBitmapText(value,1)));
-        drawBitmapText(`${index+1} / ${count}`,card.x+card.w-50,card.y+12,.53,"right",skin.dark);
-        drawBitmapText(label,W/2,card.y+15,.70,"center",skin.dark);
+        drawBitmapText(`${index+1} / ${count}`,card.x+14,card.y+85,.53,"left",skin.dark);
+        drawBitmapText(label,W/2,card.y+85,.70,"center",skin.dark);
         ctx.save();ctx.beginPath();ctx.rect(card.x+12,card.y+30,card.w-24,45);ctx.clip();
         drawBitmapText(value,W/2,card.y+46,fit,"center",COLORS.ink);ctx.restore();
-        drawBitmapText(secondary?"TARGET LANGUAGE":"ENGLISH FRONT",W/2,card.y+85,.48,"center","#59666b");
         // Draw inside BOTH the slide and the flip transform, so the star follows the card.
         const starButton=FLASHCARD_BUTTON_RECTS.star;
         drawFlashcardStar(starButton.x+starButton.w/2,starButton.y+starButton.h/2,starred);
@@ -461,8 +532,21 @@
     if(polish.flashcardComplete){
       ctx.fillStyle=mixHexColors(skin.belly,"#ffffff",.18);
       ctx.fillRect(card.x+3,card.y+3,card.w-6,card.h-6);
-      drawBitmapText("DECK COMPLETE!",W/2,card.y+34,1.07,"center",skin.dark);
-      drawBitmapText(polish.flashcardStars.length ? "PRESS SPACE TO STUDY STARRED" : "PRESS SPACE TO RESTART",W/2,card.y+63,.57,"center","#59666b");
+      const hasStarred=availableStarredFlashcardCount()>0&&!polish.flashcardOnlyStarred;
+      drawBitmapText("NEXT STEPS",W/2,card.y+10,.81,"center",skin.dark);
+      const options=hasStarred?["all","starred"]:["all"];
+      const rects=hasStarred?FLASHCARD_COMPLETION_RECTS:{all:{...FLASHCARD_COMPLETION_RECTS.all,y:card.y+45}};
+      for(const id of options){
+        const rect=rects[id],chosen=polish.flashcardCompletionSelection===id;
+        ctx.fillStyle=chosen?skin.dark:"#9aa9ae";ctx.fillRect(rect.x,rect.y,rect.w,rect.h);
+        ctx.fillStyle=chosen?mixHexColors(skin.belly,"#ffffff",.12):"#f7fdff";
+        ctx.fillRect(rect.x+2,rect.y+2,rect.w-4,rect.h-4);
+        ctx.fillStyle=id==="starred"?"#7ee0cf":"#f3d171";
+        ctx.fillRect(rect.x+5,rect.y+4,rect.w-10,2);
+        drawBitmapText(id==="starred"?"STUDY STARRED TERMS":"RESTART ALL TERMS",rect.x+12,rect.y+9,.66,"left",chosen?skin.dark:"#48555a");
+        drawBitmapText(id==="starred"?`${availableStarredFlashcardCount()} SAVED TERMS`:`ALL ${getFlashcardVocabulary().length} TERMS`,rect.x+12,rect.y+21,.40,"left","#59666b");
+        if(chosen)drawBitmapText(">",rect.x+rect.w-15,rect.y+12,.65,"center",skin.dark);
+      }
     }else if(polish.flashcardSlideAt){
       const ease=1-Math.pow(1-slideT,3);
       const direction=polish.flashcardSlideDirection;
@@ -490,9 +574,9 @@
     ctx.fillRect(hcx-1,hcy+4,2,2);ctx.fillRect(hcx-1,hcy+7,2,2);
     const selected=id=>polish.flashcardHoverKey===id;
     const buttons=[
-      ["previous",polish.flashcardComplete?"RESTART DECK":"ICON_PREV",""],
-      ["flip",polish.flashcardComplete?(polish.flashcardStars.length?"VIEW STARRED":"RESTART DECK"):"FLIP CARD",""],
-      ["next",polish.flashcardComplete?"ALL CARDS":"ICON_NEXT",""],
+      ["previous",polish.flashcardComplete?"ALL TERMS":"ICON_PREV",""],
+      ["flip",polish.flashcardComplete?"CONTINUE":"FLIP CARD",""],
+      ["next",polish.flashcardComplete?"CONTINUE":"ICON_NEXT",""],
       ["shuffle","ICON_SHUFFLE",""],
       ["starred",polish.flashcardOnlyStarred?"ALL CARDS":"STARRED TERMS",""],
       ["back","BACK",""]
@@ -535,7 +619,10 @@
     tone(520,.04,.009,25);
     safeCall(drawScene);
   }
-  function openLanguageMenu() { polish.languageSelection = 0; game.state = "rrLanguageMenu"; clearHeldInput(); tone(520,.04,.009,25); }
+  function openLanguageMenu() {
+    polish.languageSelection=0;polish.languagePickerOpen="";
+    game.state="rrLanguageMenu";clearHeldInput();tone(520,.04,.009,25);
+  }
   function openFlashcardsMenu() {
     polish.flashcardStars=readFlashcardStars();
     polish.flashcardShuffled=false;
@@ -579,13 +666,38 @@
     if (result) return result;
     return setLanguagePreferences(getLearningLanguage(), getSpokenLanguage());
   }
-  function activateLanguageRow(index = polish.languageSelection) {
-    const row = LANGUAGE_MENU_ROWS[index] || LANGUAGE_MENU_ROWS[0];
-    if (row.id === "spoken") setLanguagePreferences(getSpokenLanguage() === "en" ? "es" : "en", getLearningLanguage());
-    else if (row.id === "learning") setLanguagePreferences(getSpokenLanguage(), getLearningLanguage() === "en" ? "es" : "en");
-    else if (row.id === "swap") swapLanguagePreferences();
-    else if (row.id === "back") { game.state = "rrProfileMenu"; tone(330,.04,.009,-30); }
-    tone(360,.03,.008,6);
+  function openLanguagePicker(which){
+    polish.languagePickerOpen=which;
+    const code=which==="spoken"?getSpokenLanguage():getLearningLanguage();
+    polish.languagePickerSelection=Math.max(0,LANGUAGE_OPTIONS.findIndex(item=>item.code===code));
+    tone(520,.04,.009,20);
+  }
+  function selectLanguagePickerOption(index=polish.languagePickerSelection){
+    const choice=LANGUAGE_OPTIONS[index];if(!choice)return;
+    const spoken=getSpokenLanguage(), learning=getLearningLanguage();
+    if(polish.languagePickerOpen==="spoken") {
+      setLanguagePreferences(choice.code,choice.code===learning?spoken:learning);
+    }else if(polish.languagePickerOpen==="learning"){
+      setLanguagePreferences(choice.code===spoken?learning:spoken,choice.code);
+    }
+    polish.languagePickerOpen="";
+    tone(620,.04,.01,20);
+  }
+  function activateLanguageRow(index=polish.languageSelection){
+    if(polish.languagePickerOpen){selectLanguagePickerOption();return;}
+    if(index===-1){swapLanguagePreferences();tone(640,.04,.009,25);return;}
+    const row=LANGUAGE_MENU_ROWS[index]||LANGUAGE_MENU_ROWS[0];
+    if(row.id==="spoken"||row.id==="learning")openLanguagePicker(row.id);
+    else if(row.id==="back"){game.state="rrProfileMenu";tone(330,.04,.009,-30);}
+  }
+  function completeFlashcardSession(destination=polish.flashcardCompletionSelection){
+    if(destination==="starred"&&!polish.flashcardOnlyStarred&&availableStarredFlashcardCount()){
+      rebuildFlashcardDeck(true,false);
+    }else{
+      // After the starred subset finishes, Space/Next always returns to all terms.
+      polish.flashcardShuffled=false;
+      rebuildFlashcardDeck(false,false);
+    }
   }
 
   function activateFlashcardButton(index = polish.flashcardSelection) {
@@ -608,18 +720,11 @@
       if(marked.has(key))marked.delete(key);else marked.add(key);
       polish.flashcardStars=[...marked];
       try{localStorage.setItem(FLASHCARD_STARS_KEY,JSON.stringify(polish.flashcardStars));}catch(_){}
-      if(polish.flashcardOnlyStarred&&!marked.has(key)){
-        const oldIndex=polish.flashcardIndex;
-        rebuildFlashcardDeck(true,false);
-        polish.flashcardIndex=Math.min(oldIndex,Math.max(0,polish.flashcardOrder.length-1));
-      }
+      // Keep the original starred-session snapshot until it is complete.
+      // An unstar changes the golden icon immediately, not the current deck.
     }else if(polish.flashcardComplete){
-      if(id==="previous")rebuildFlashcardDeck(polish.flashcardOnlyStarred,polish.flashcardShuffled);
-      else if(id==="flip"){
-        if(polish.flashcardStars.length)rebuildFlashcardDeck(true,false);
-        else rebuildFlashcardDeck(false,polish.flashcardShuffled);
-      }
-      else if(id==="next")rebuildFlashcardDeck(false,false);
+      if(id==="previous")completeFlashcardSession("all");
+      else if(id==="flip"||id==="next")completeFlashcardSession();
     }else if(id==="flip"){
       if(!count)return;
       const now=performance.now();
@@ -632,8 +737,14 @@
     }else if(id==="next"){
       if(count){
         if(polish.flashcardIndex>=count-1){
-          polish.flashcardComplete=true;polish.flashcardSlideAt=0;
-          resetFlashcardFace();
+          if(polish.flashcardOnlyStarred){
+            // Ending the starred pass immediately returns to the full deck.
+            completeFlashcardSession("all");
+          }else{
+            polish.flashcardComplete=true;polish.flashcardSlideAt=0;
+            polish.flashcardCompletionSelection=!availableStarredFlashcardCount()?"all":"starred";
+            resetFlashcardFace();
+          }
         }else moveToFlashcard(polish.flashcardIndex+1,1,count);
       }
     }
@@ -2111,8 +2222,8 @@
         ...(polish.customBaseOpen ? getCustomBaseOptionRects() : [])]);
     }
     if (game.state === "rrProfileMenu") return insideAny(PROFILE_MENU_RECTS);
-    if (game.state === "rrLanguageMenu") return insideAny(LANGUAGE_MENU_RECTS);
-    if (game.state === "rrFlashcards") return insideAny(FLASHCARD_BUTTON_ORDER);
+    if(game.state==="rrLanguageMenu")return insideAny(polish.languagePickerOpen?[LANGUAGE_PICKER_CLOSE,...getLanguagePickerRects()]:[...LANGUAGE_MENU_RECTS,LANGUAGE_SWAP_RECT]);
+    if(game.state==="rrFlashcards")return insideAny([...FLASHCARD_BUTTON_ORDER,...(polish.flashcardComplete?Object.values(FLASHCARD_COMPLETION_RECTS):[])]);
     if (game.state === "rrDeviceMenu") return insideAny(Object.values(DEVICE_MENU_RECTS));
     if (game.state === "achievements") {
       return insideAny([LEADERBOARD_BUTTON, ACHIEVEMENTS_UI.backButton, ACHIEVEMENTS_UI.pagePrevButton, ACHIEVEMENTS_UI.pageNextButton]);
@@ -2159,11 +2270,16 @@
       const index = PROFILE_MENU_RECTS.findIndex((rect) => pointIn(point, rect));
       if (index >= 0) polish.profileSelection = index;
     } else if (game.state === "rrLanguageMenu") {
-      const index = LANGUAGE_MENU_RECTS.findIndex((rect) => pointIn(point, rect));
-      if (index >= 0) polish.languageSelection = index;
+      if(polish.languagePickerOpen){
+        const index=getLanguagePickerRects().findIndex(rect=>pointIn(point,rect));
+        if(index>=0)polish.languagePickerSelection=index;
+      }else if(pointIn(point,LANGUAGE_SWAP_RECT))polish.languageSelection=-1;
+      else {const index=LANGUAGE_MENU_RECTS.findIndex(rect=>pointIn(point,rect));if(index>=0)polish.languageSelection=index;}
     } else if (game.state === "rrFlashcards") {
-      const hovered = FLASHCARD_BUTTON_ORDER.find((rect) => pointIn(point, rect));
-      polish.flashcardHoverKey = hovered?.id || "";
+      const completion=polish.flashcardComplete&&Object.values(FLASHCARD_COMPLETION_RECTS).find(rect=>pointIn(point,rect));
+      if(completion)polish.flashcardCompletionSelection=completion.id==="complete-starred"?"starred":"all";
+      const hovered=FLASHCARD_BUTTON_ORDER.find(rect=>pointIn(point,rect));
+      polish.flashcardHoverKey=hovered?.id||"";
     } else if (game.state === "rrDeviceMenu") {
       if (pointIn(point, DEVICE_MENU_RECTS.computer)) polish.deviceSelection = 0;
       else if (pointIn(point, DEVICE_MENU_RECTS.mobile)) polish.deviceSelection = 1;
@@ -2226,15 +2342,27 @@
       if (index >= 0) { event.preventDefault(); event.stopImmediatePropagation(); polish.profileSelection=index; activateProfileRow(index); }
       return;
     }
-    if (game.state === "rrLanguageMenu") {
-      const index = LANGUAGE_MENU_RECTS.findIndex((rect) => pointIn(point, rect));
-      if (index >= 0) { event.preventDefault(); event.stopImmediatePropagation(); polish.languageSelection=index; activateLanguageRow(index); }
+    if(game.state==="rrLanguageMenu"){
+      event.preventDefault();event.stopImmediatePropagation();
+      if(polish.languagePickerOpen){
+        if(pointIn(point,LANGUAGE_PICKER_CLOSE)){polish.languagePickerOpen="";return;}
+        const index=getLanguagePickerRects().findIndex(rect=>pointIn(point,rect));
+        if(index>=0){polish.languagePickerSelection=index;selectLanguagePickerOption(index);}
+        else polish.languagePickerOpen="";
+      }else if(pointIn(point,LANGUAGE_SWAP_RECT))activateLanguageRow(-1);
+      else {const index=LANGUAGE_MENU_RECTS.findIndex(rect=>pointIn(point,rect));if(index>=0){polish.languageSelection=index;activateLanguageRow(index);}}
       return;
     }
-    if (game.state === "rrFlashcards") {
-      const index = FLASHCARD_BUTTON_ORDER.findIndex((rect) => pointIn(point, rect));
-      if (index >= 0) { event.preventDefault(); event.stopImmediatePropagation(); polish.flashcardSelection = index; activateFlashcardButton(index); }
-      else if(polish.flashcardHelpOpen){ event.preventDefault(); event.stopImmediatePropagation(); polish.flashcardHelpOpen=false; }
+    if(game.state==="rrFlashcards"){
+      if(polish.flashcardComplete){
+        const option=Object.values(FLASHCARD_COMPLETION_RECTS).find(rect=>pointIn(point,rect));
+        if(option&&(option.id==="complete-all"||(!polish.flashcardOnlyStarred&&availableStarredFlashcardCount()))){
+          event.preventDefault();event.stopImmediatePropagation();completeFlashcardSession(option.id==="complete-starred"?"starred":"all");return;
+        }
+      }
+      const index=FLASHCARD_BUTTON_ORDER.findIndex(rect=>pointIn(point,rect));
+      if(index>=0){event.preventDefault();event.stopImmediatePropagation();polish.flashcardSelection=index;activateFlashcardButton(index);}
+      else if(polish.flashcardHelpOpen){event.preventDefault();event.stopImmediatePropagation();polish.flashcardHelpOpen=false;}
       return;
     }
     if (game.state === "rrDeviceMenu") {
@@ -2386,14 +2514,20 @@
       }
       return;
     }
-    if (game.state === "rrLanguageMenu") {
-      if (["ArrowUp","ArrowDown","ArrowLeft","ArrowRight","KeyW","KeyS","KeyA","KeyD","Enter","NumpadEnter","Space","Escape","Backspace"].includes(event.code)) {
-        event.preventDefault(); event.stopImmediatePropagation();
-        if (event.repeat && !["ArrowUp","ArrowDown","ArrowLeft","ArrowRight","KeyW","KeyS","KeyA","KeyD"].includes(event.code)) return;
-        if (["Escape","Backspace"].includes(event.code)) { game.state = "rrProfileMenu"; tone(330,.04,.009,-30); }
-        else if (["ArrowUp","KeyW"].includes(event.code)) polish.languageSelection=(polish.languageSelection-1+LANGUAGE_MENU_ROWS.length)%LANGUAGE_MENU_ROWS.length;
-        else if (["ArrowDown","KeyS"].includes(event.code)) polish.languageSelection=(polish.languageSelection+1)%LANGUAGE_MENU_ROWS.length;
-        else if (["ArrowLeft","ArrowRight","KeyA","KeyD","Enter","NumpadEnter","Space"].includes(event.code)) activateLanguageRow();
+    if(game.state==="rrLanguageMenu"){
+      if(["ArrowUp","ArrowDown","ArrowLeft","ArrowRight","KeyW","KeyS","KeyA","KeyD","Enter","NumpadEnter","Space","Escape","Backspace"].includes(event.code)){
+        event.preventDefault();event.stopImmediatePropagation();
+        if(event.repeat&&!["ArrowUp","ArrowDown","KeyW","KeyS"].includes(event.code))return;
+        if(polish.languagePickerOpen){
+          if(["Escape","Backspace"].includes(event.code))polish.languagePickerOpen="";
+          else if(["ArrowUp","KeyW","ArrowLeft","KeyA"].includes(event.code))polish.languagePickerSelection=(polish.languagePickerSelection-1+LANGUAGE_OPTIONS.length)%LANGUAGE_OPTIONS.length;
+          else if(["ArrowDown","KeyS","ArrowRight","KeyD"].includes(event.code))polish.languagePickerSelection=(polish.languagePickerSelection+1)%LANGUAGE_OPTIONS.length;
+          else if(["Enter","NumpadEnter","Space"].includes(event.code))selectLanguagePickerOption();
+        }else if(["Escape","Backspace"].includes(event.code)){game.state="rrProfileMenu";tone(330,.04,.009,-30);}
+        else if(["ArrowUp","KeyW"].includes(event.code))polish.languageSelection=(polish.languageSelection-1+LANGUAGE_MENU_ROWS.length)%LANGUAGE_MENU_ROWS.length;
+        else if(["ArrowDown","KeyS"].includes(event.code))polish.languageSelection=(polish.languageSelection+1)%LANGUAGE_MENU_ROWS.length;
+        else if(["ArrowLeft","ArrowRight","KeyA","KeyD"].includes(event.code))activateLanguageRow(-1);
+        else activateLanguageRow();
       }
       return;
     }
@@ -2406,6 +2540,9 @@
         else if(["ArrowLeft","KeyA"].includes(event.code))activateFlashcardButton(0);
         else if(["ArrowRight","KeyD"].includes(event.code))activateFlashcardButton(2);
         else if(["Space","Enter","NumpadEnter"].includes(event.code))activateFlashcardButton(1);
+        else if(polish.flashcardComplete&&["ArrowUp","ArrowDown"].includes(event.code)&&!polish.flashcardOnlyStarred&&availableStarredFlashcardCount()){
+          polish.flashcardCompletionSelection=polish.flashcardCompletionSelection==="starred"?"all":"starred";
+        }
         else if(["KeyS","Slash"].includes(event.code))activateFlashcardButton(FLASHCARD_BUTTON_ORDER.findIndex(b=>b.id==="star"));
         else if(event.code==="KeyH")activateFlashcardButton(FLASHCARD_BUTTON_ORDER.findIndex(b=>b.id==="shuffle"));
         else if(event.code==="KeyV")activateFlashcardButton(FLASHCARD_BUTTON_ORDER.findIndex(b=>b.id==="starred"));

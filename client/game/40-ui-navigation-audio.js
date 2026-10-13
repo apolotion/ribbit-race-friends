@@ -2711,6 +2711,8 @@
 
     function tone(frequency, duration = 0.08, volume = 0.035, slide = 0, delay = 0) {
       if (game.muted || game.volume <= 0.001) return;
+      // Replay stores the actual 8-bit oscillator note, including its delay.
+      window.RibbitReplaySoundCapture?.(frequency,duration,volume,slide,delay);
       ensureAudio();
       if (!audioContext) return;
 

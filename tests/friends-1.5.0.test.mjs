@@ -108,7 +108,7 @@ test("Mobile performance mode reduces render pixels, video recording and catch-u
   assert.match(core,/const RENDER_SCALE = RIBBIT_COARSE_TOUCH_DEVICE \? 2 : 4/);
   // Game-state replay snapshots replace expensive MediaRecorder videos.
   assert.doesNotMatch(extension,/new MediaRecorder/);
-  assert.match(read("client/game/133-engine-replay.js"),/now-ribbitReplayCapture\.lastAt<75/);
+  assert.match(read("client/game/133-engine-replay.js"),/now-capture\.lastAt>=RIBBIT_REPLAY_FRAME_INTERVAL-\.6/);
   assert.match(input,/mobilePerformance \? 8 : 12/);
   assert.match(input,/accumulator = Math\.min\(accumulator, STEP \* 2\)/);
   assert.match(css,/100dvh/);

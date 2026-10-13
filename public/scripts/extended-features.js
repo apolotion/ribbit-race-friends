@@ -84,6 +84,9 @@
       return JSON.parse(new TextDecoder().decode(restored));
     }
     async finish(snap){
+      // Allow all three seconds of frog victory dance to reach the recorder
+      // before serializing and uploading the personal-best stage replay.
+      await window.RibbitEngineReplay?.whenComplete?.();
       const record=window.RibbitEngineReplay?.exportCurrent?.();
       if(!record || record.mode!=="solo" || !record.frames?.length) return;
       try{

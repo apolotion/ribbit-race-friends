@@ -43,7 +43,7 @@ test('new PB state timelines use gzip/json, saved through the authenticated Work
 test('frame sampler stays connected to game RAF and retains past rounds in Versus replays',()=>{
   assert.match(startup,/RibbitEngineReplay\?\.tick/);
   assert.match(engine,/pvpCelebration/);
-  assert.match(engine,/mode !== "pvp" && Number\(game\.elapsed/);
+  assert.match(engine,/mode!=="pvp"&&Number\(game\.elapsed/);
 });
 test('Frog Tags play saved frame data on stage and never construct a video popup',()=>{
   assert.match(online,/RibbitEngineReplay\?\.play\?\.\(row\.record/);

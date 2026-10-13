@@ -52,15 +52,18 @@ test("left and right changes slide the old and new cards in opposite directions"
   assert.match(drawing,/drawCardFace\(polish\.flashcardIndex,"english",direction\*card\.w\*\(1-ease\)\)/);
 });
 
-test("BACK is visibly labelled and Space at the unstarred deck end restarts all cards",()=>{
+test("BACK is visible and the completed deck prioritizes starred review before returning to all cards",()=>{
   const card=source("function drawFlashcardsMenu()","function drawDeviceModeIcon");
   assert.match(card,/\["back","BACK",""\]/);
-  assert.match(card,/polish\.flashcardStars\.length\?"VIEW STARRED":"RESTART DECK"/);
+  assert.match(card,/"NEXT STEPS"/);
+  assert.match(card,/"STUDY STARRED TERMS"/);
+  assert.match(card,/"RESTART ALL TERMS"/);
   const button=source("function drawCardButton","const flashcardStarSprite");
   assert.match(button,/if\(title==="BACK"\)/);
   assert.match(button,/drawBitmapText\("BACK"/);
-  const action=source("function activateFlashcardButton","function setCanvasMobileMode");
-  assert.match(action,/if\(polish\.flashcardStars\.length\)rebuildFlashcardDeck\(true,false\)/);
-  assert.match(action,/else rebuildFlashcardDeck\(false,polish\.flashcardShuffled\)/);
+  const action=source("function completeFlashcardSession","function setCanvasMobileMode");
+  assert.match(action,/if\(destination==="starred"/);
+  assert.match(action,/rebuildFlashcardDeck\(true,false\)/);
+  assert.match(action,/rebuildFlashcardDeck\(false,false\)/);
   assert.match(ui,/\["Space","Enter","NumpadEnter"\]\.includes\(event\.code\)\)activateFlashcardButton\(1\)/);
 });

@@ -1,5 +1,5 @@
 
-/* Ribbit Race Friends 1.7.32 — account modal, mobile touch, tutorials, and UI polish. */
+/* Ribbit Race Friends 1.7.33 — account modal, mobile touch, tutorials, and UI polish. */
 html, body {
   -webkit-touch-callout: none;
   -webkit-user-select: none;
@@ -308,4 +308,90 @@ a[href] {
 #rr170-pause, #rr170-account-icon, #rr170-device-icon {
   display: none !important;
   pointer-events: none !important;
+}
+
+/* Polish 45: spectator replay — the unoccluded 480x270 game stage gets its
+   own grid row. Neither header nor controls draw over HUD, flies or clues. */
+#game-frame.rr-replay-layout {
+  display: grid;
+  grid-template-columns: minmax(0,1fr);
+  grid-template-rows: clamp(24px,7%,35px) minmax(0,1fr) clamp(47px,15%,71px);
+  background: #071721;
+}
+#game-frame.rr-replay-layout canvas#game {
+  grid-column:1;
+  grid-row:2;
+  width:100%;
+  height:100%;
+  min-width:0;
+  min-height:0;
+  max-width:100%;
+  object-fit:contain;
+  background:#071721;
+  image-rendering:pixelated;
+}
+#rr-spectator-header,#rr-spectator-toolbar {display:none;}
+#game-frame.rr-replay-layout #rr-spectator-header {
+  grid-column:1;grid-row:1;display:flex;
+  align-items:center;justify-content:space-between;gap:12px;
+  min-width:0;padding:0 clamp(7px,1.8%,15px);
+  background:#071721;color:#f7fdff;
+  font:700 clamp(9px,1.1vw,17px)/1.1 "Courier New",monospace;
+  text-shadow:1px 1px #34484f;
+}
+.rr-spectator-caption {min-width:0;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;}
+.rr-spectator-badge {flex:none;color:#a9edff;font-size:.78em;white-space:nowrap;}
+.rr-spectator-badge small {font-size:.75em;margin-left:6px;}
+#game-frame.rr-replay-layout #rr-spectator-toolbar {
+  grid-column:1;grid-row:3;display:flex;align-items:center;
+  min-width:0;gap:clamp(3px,.85%,12px);
+  padding:clamp(4px,.8%,9px) clamp(7px,1.8%,16px);
+  background:#071721;color:#f7fdff;
+  font:700 clamp(10px,1.1vw,18px)/1 "Courier New",monospace;
+}
+#rr-spectator-toolbar button {
+  flex:0 0 auto;min-width:0;
+  border:clamp(2px,.32vw,5px) solid #e8f4f7;
+  color:#f7fdff;background:#253b45;
+  padding:clamp(5px,1.4vh,16px) clamp(4px,.85vw,16px);
+  font:inherit;white-space:nowrap;cursor:pointer;
+  touch-action:manipulation;
+}
+#rr-spectator-toolbar button:hover,#rr-spectator-toolbar button:focus-visible {
+  color:#071721;background:#b8f5dc;outline:none;
+}
+#rr-spectator-toolbar .rr-replay-progress {
+  min-width:30px;flex:1 1 auto;display:flex;align-items:center;
+}
+#rr-spectator-toolbar .rr-replay-progress input {
+  display:block;width:100%;min-width:30px;height:clamp(14px,3vh,26px);
+  margin:0;padding:0;border:0;background:transparent;
+  accent-color:#49dce9;appearance:none;-webkit-appearance:none;
+  cursor:ew-resize;touch-action:none;
+}
+#rr-spectator-toolbar input::-webkit-slider-runnable-track {
+  height:clamp(5px,.65vw,10px);
+  background:linear-gradient(to right,#49dce9 var(--rr-replay-progress,0%),#536f77 var(--rr-replay-progress,0%));
+}
+#rr-spectator-toolbar input::-moz-range-track {height:8px;background:#536f77;}
+#rr-spectator-toolbar input::-moz-range-progress {height:8px;background:#49dce9;}
+#rr-spectator-toolbar input::-webkit-slider-thumb {
+  -webkit-appearance:none;appearance:none;width:clamp(9px,.9vw,14px);
+  height:clamp(20px,2.7vw,28px);margin-top:calc((clamp(5px,.65vw,10px) - clamp(20px,2.7vw,28px))/2);
+  border:2px solid #a4dce7;background:#f7fdff;border-radius:0;
+}
+#rr-spectator-toolbar input::-moz-range-thumb {
+  width:10px;height:23px;border:2px solid #a4dce7;background:#f7fdff;border-radius:0;
+}
+#rr-spectator-toolbar .rr-replay-time {flex:0 0 auto;font-size:.8em;white-space:nowrap;}
+#rr-spectator-toolbar [data-replay-action="fullscreen"] {font-size:1.25em;}
+body.rr-engine-replay-active #rr170-overlay-root,
+body.rr-engine-replay-active #corner-controls,
+body.rr-engine-replay-active #cloud-status-pill {display:none!important;}
+@media(max-width:620px){
+  #game-frame.rr-replay-layout{grid-template-rows:21px minmax(0,1fr) 44px;}
+  #game-frame.rr-replay-layout #rr-spectator-toolbar{gap:3px;padding:2px 4px;font-size:9px;}
+  #rr-spectator-toolbar button{padding:5px 3px;}
+  #rr-spectator-toolbar .rr-replay-time{font-size:8px;}
+  #rr-spectator-header .rr-spectator-badge small{display:none;}
 }
