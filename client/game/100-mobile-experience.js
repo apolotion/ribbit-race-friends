@@ -9,7 +9,7 @@ const RR_MOBILE_MENU_UI = Object.freeze({
 const RR_MOBILE_SOLO_METER = Object.freeze({ x: 8, y: 234, w: 140, h: 32 });
 const RR_MOBILE_PVP_METERS = Object.freeze([
   Object.freeze({ x: 8, y: 234, w: 136, h: 32 }),
-  Object.freeze({ x: W - 144, y: 234, w: 136, h: 32 })
+  Object.freeze({ x: W - 144, y: 234, w: 108, h: 32 })
 ]);
 const rrMobileHeldPointers = new Map();
 let rrMobileMenuHover = null;

@@ -1,11 +1,12 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
+import { readGameModuleGroup } from "./source-reader.mjs";
 
 const read = (path) => readFileSync(new URL(`../${path}`, import.meta.url), "utf8");
-const engine = read("client/game/120-engine-tutorial.js");
+const engine = readGameModuleGroup(120, 139);
 const core = read("client/game/10-core-config.js");
-const render = read("client/game/70-rendering.js");
+const render = readGameModuleGroup(70, 79);
 const polish = read("public/scripts/rr-170-polish.js");
 
 function block(start, end) {
@@ -16,10 +17,10 @@ function block(start, end) {
   return engine.slice(from, to);
 }
 
-test("1.7.10 polished tutorial build and first-boot marker are installed", () => {
-  assert.equal(JSON.parse(read("package.json")).version, "1.7.10");
-  assert.match(read("src/common.js"), /2026\.10\.12-friends-polish-20/);
-  assert.match(engine, /const TUTORIAL_BUILD = "2026\.10\.12-friends-polish-20"/);
+test("1.7.11 polished tutorial build and first-boot marker are installed", () => {
+  assert.equal(JSON.parse(read("package.json")).version, "1.7.11");
+  assert.match(read("src/common.js"), /2026\.10\.12-friends-polish-22/);
+  assert.match(engine, /const TUTORIAL_BUILD = "2026\.10\.12-friends-polish-22"/);
   assert.match(engine, /rrFriendsEngineTutorialSoloSeenV8/);
 });
 
@@ -196,7 +197,7 @@ test("successful wall techniques continue physics to landing before freezing", (
 });
 
 test("Current Goal uses the normal stats footprint and the clue shadow stops at its boundary", () => {
-  assert.match(engine, /return \{ x:328, y:234, w:150, h:33 \}/);
+  assert.match(engine, /return \{ x:328, y:234, w:tutorial\.kind === "pvp" \? 116 : 150, h:33 \}/);
   assert.match(engine, /const goalCenterX = x \+ w \/ 2/);
   assert.match(render, /ctx\.fillRect\(left \+ 2, top \+ 2, width - 2, height\)/);
   assert.match(engine, /function currentGoalHowToLines/);

@@ -36,8 +36,8 @@ test("PIN hashing stays within Cloudflare PBKDF2 limit and matches 100000 rounds
 });
 
 test("Friends release exposes the new build marker",()=>{
-  assert.equal(BUILD,"2026.10.12-friends-polish-20");
-  assert.match(browserSource,/2026\.10\.12\-friends\-polish\-20/);
+  assert.equal(BUILD,"2026.10.12-friends-polish-22");
+  assert.match(browserSource,/2026\.10\.12\-friends\-polish\-22/);
 });
 
 test("server vocabulary is exactly the requested 15 entries",()=>{
@@ -77,7 +77,7 @@ test("index is presentation-only and gameplay source is separated by responsibil
   assert.match(indexHtml,/\/scripts\/cloud-client\.js/);
   assert.match(indexHtml,/\/scripts\/game\.bundle\.js/);
   const modules=fs.readdirSync(new URL("../client/game/",import.meta.url)).filter(name=>/^\d+-.+\.js$/.test(name));
-  assert.equal(modules.length,13);
+  assert.equal(modules.length,29);
   assert.match(fs.readFileSync(new URL("../scripts/build-game.mjs",import.meta.url),"utf8"),/class GameBundleBuilder/);
 });
 
@@ -148,7 +148,7 @@ test("single-player fly labels keep persistent placements instead of re-solving 
   assert.match(html,/function chooseFlyLabelRect\(currentFly, anchor, width, height\)/);
   assert.match(html,/if \(cached && cached\.vocabIndex === vocabIndex && cached\.width === width && cached\.height === height\) \{[\s\S]{0,80}return cached\.rect;/);
   assert.match(html,/flyLabelPlacementCache\.set\(cacheKey, \{/);
-  assert.match(html,/function drawScene\(\) \{\s*\/\/ Prune labels only when a fly actually leaves[\s\S]{0,220}pruneFlyLabelPlacementCache\(\);/);
+  assert.match(html,/function drawScene\(\) \{\s*pruneFlyLabelPlacementCache\(\);/);
   assert.doesNotMatch(html,/flyLabelLayoutStamp = game\.visualTime/);
   assert.doesNotMatch(html,/flyLabelRectsThisFrame\.length = 0/);
 });
@@ -323,8 +323,8 @@ test("Friends first-place notice is a world-record notice with hover details",()
   assert.doesNotMatch(indexHtml,/MIGRATE OLD PRIVATE-KEY ACCOUNT/);
 });
 
-test("version 1.7.10 remains in settings and the How To Play book footer",()=>{
-  assert.match(html,/const RIBBIT_DISPLAY_VERSION = "VERSION 1\.7\.10"/);
+test("version 1.7.11 remains in settings and the How To Play book footer",()=>{
+  assert.match(html,/const RIBBIT_DISPLAY_VERSION = "VERSION 1\.7\.11"/);
   assert.match(html,/drawVersionLabel\(panel\.x \+ panel\.w \/ 2, panel\.y \+ panel\.h - 14, "center"/);
   assert.doesNotMatch(html,/drawVersionLabel\(399, 218, "right"\)/);
   assert.match(html,/function getPauseBookTheme/);
@@ -399,7 +399,7 @@ test("achievement toast becomes translucent when a fly or word plate is behind i
 
 test("jungle center trunk no longer draws the decorative snake",()=>{
   assert.doesNotMatch(html,/snakeBaseX|snakeSegments|small snake coils/);
-  assert.match(html,/center trunk is intentionally clear/);
+  assert.match(html,/function drawJungleBackground\(\)[\s\S]*?function bananaLeaf\(/);
 });
 
 test("final-catch word plates stay in camera space and fade with their flies",()=>{

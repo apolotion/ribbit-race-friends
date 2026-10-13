@@ -1,9 +1,10 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import {readFileSync} from "node:fs";
+import { readGameModuleGroup } from "./source-reader.mjs";
 
 const read=(path)=>readFileSync(path,"utf8");
-const rendering=read("client/game/70-rendering.js");
+const rendering=readGameModuleGroup(70, 79);
 
 function extractFunctionSource(source,name){
   const marker=`function ${name}(`;
@@ -21,7 +22,7 @@ function extractFunctionSource(source,name){
   throw new Error(`Unclosed ${name}`);
 }
 
-test("1.7.10 keeps a right-edge Lake word plate exactly centered over its fly",()=>{
+test("1.7.11 keeps a right-edge Lake word plate exactly centered over its fly",()=>{
   const names=["flyLabelCacheKey","overlapArea","chooseFlyLabelRect"];
   const source=names.map(name=>extractFunctionSource(rendering,name)).join("\n");
   const make=new Function("game",`${source}\nconst flyLabelPlacementCache=new Map();return {chooseFlyLabelRect};`);

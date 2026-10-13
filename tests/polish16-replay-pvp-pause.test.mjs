@@ -1,10 +1,11 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { existsSync, readFileSync } from "node:fs";
+import { readGameModuleGroup } from "./source-reader.mjs";
 
 const read = (path) => readFileSync(path, "utf8");
-const tutorial = read("client/game/120-engine-tutorial.js");
-const versus = read("client/game/60-versus-gameplay.js");
+const tutorial = readGameModuleGroup(120, 139);
+const versus = readGameModuleGroup(60, 69);
 const hub = read("src/hub.js");
 const worker = read("src/index.js");
 const replay = read("public/scripts/extended-features.js");
@@ -19,7 +20,7 @@ function block(source, start, end) {
 
 test("Polish 16 is wired and restores the prior packaged app icons", () => {
   for (const source of [tutorial, read("src/common.js"), index, read("public/scripts/cloud-client.js")]) {
-    assert.match(source, /2026\.10\.12-friends-polish-20/);
+    assert.match(source, /2026\.10\.12-friends-polish-22/);
   }
   assert.match(index, /\/icons\/favicon-32\.png/);
   assert.match(index, /\/icons\/ribbit-race-180\.png/);
@@ -69,8 +70,8 @@ test("tutorial pause is topmost and includes chapter navigation", () => {
 });
 
 test("opening bonk is a real right-to-left charged jump from the authored clear lane", () => {
-  assert.match(tutorial, /case "pvpDemoBonk":[\s\S]{0,260}middleLeft\.x \+ 18[\s\S]{0,180}middleLeft\.x \+ 86/);
-  assert.match(tutorial, /case "pvpDemoBonk":[\s\S]{0,120}scriptPvpChargedJump\(1, \.44, -1, 0\)/);
+  assert.match(tutorial, /case "pvpDemoBonk":[\s\S]{0,260}positionPvp\(p1, 145,[\s\S]{0,180}positionPvp\(ember, 305,/);
+  assert.match(tutorial, /case "pvpDemoBonk":[\s\S]{0,120}scriptPvpChargedJump\(1, \.74, -1, 0\)/);
   assert.match(tutorial, /tutorial\.pvpDemoStartedAt = performance\.now\(\) \+ 1000/);
 });
 

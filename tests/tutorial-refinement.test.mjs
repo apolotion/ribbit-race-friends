@@ -1,9 +1,10 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import {readFileSync, existsSync} from "node:fs";
+import { readGameModuleGroup } from "./source-reader.mjs";
 
 const read = path => readFileSync(new URL(`../${path}`, import.meta.url), "utf8");
-const engine = read("client/game/120-engine-tutorial.js");
+const engine = readGameModuleGroup(120, 139);
 const polish = read("public/scripts/rr-170-polish.js");
 const index = read("public/index.html");
 const css = read("public/styles/rr-170.css");
@@ -16,12 +17,12 @@ function block(start, end) {
   return engine.slice(from, to);
 }
 
-test("1.7.10 tutorial-polish build is wired everywhere", () => {
-  assert.equal(JSON.parse(read("package.json")).version, "1.7.10");
-  assert.match(read("src/common.js"), /2026\.10\.12-friends-polish-20/);
-  assert.match(read("client/game/110-online-mobile-polish.js"), /2026\.10\.12-friends-polish-20/);
-  assert.match(read("public/scripts/cloud-client.js"), /2026\.10\.12-friends-polish-20/);
-  assert.match(index, /2026\.10\.12-friends-polish-20/);
+test("1.7.11 tutorial-polish build is wired everywhere", () => {
+  assert.equal(JSON.parse(read("package.json")).version, "1.7.11");
+  assert.match(read("src/common.js"), /2026\.10\.12-friends-polish-22/);
+  assert.match(read("client/game/110-online-mobile-polish.js"), /2026\.10\.12-friends-polish-22/);
+  assert.match(read("public/scripts/cloud-client.js"), /2026\.10\.12-friends-polish-22/);
+  assert.match(index, /2026\.10\.12-friends-polish-22/);
   assert.doesNotMatch(index, /tutorial-scripted-1/);
 });
 
@@ -36,7 +37,7 @@ test("first-boot tutorial waits for auth and suppresses the menu before first pa
     "rr-authenticated"
   ]) assert.ok(polish.includes(phrase), phrase);
   assert.match(index, /<body class="ribbit-auth-locked rr-tutorial-pending">/);
-  assert.match(index, /tutorial-preboot\.js\?v=2026\.10\.12-friends-polish-20/);
+  assert.match(index, /tutorial-preboot\.js\?v=2026\.10\.12-friends-polish-22/);
   assert.match(read("public/scripts/tutorial-preboot.js"), /rrFriendsEngineTutorialSoloSeenV8/);
   assert.match(css, /body\.rr-tutorial-pending:not\(\.ribbit-auth-locked\) #game\s*\{[\s\S]{0,120}visibility:\s*hidden\s*!important/);
   assert.doesNotMatch(polish, /requestAnimationFrame\(\(\) => requestAnimationFrame/);

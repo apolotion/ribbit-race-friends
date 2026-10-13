@@ -128,8 +128,10 @@
       startY: 118
     });
 
+    const SOLO_PAUSE_BUTTON = Object.freeze({ x: W - 34, y: 7, w: 26, h: 19 });
+    const PVP_PAUSE_BUTTON = Object.freeze({ x: W - 32, y: 239, w: 26, h: 24 });
     const HUD_UI = Object.freeze({
-      pauseButton: Object.freeze({ x: W - 34, y: 7, w: 26, h: 19 })
+      get pauseButton() { return game.mode === "pvp" ? PVP_PAUSE_BUTTON : SOLO_PAUSE_BUTTON; }
     });
 
     const PAUSE_UI = Object.freeze({
@@ -2633,7 +2635,7 @@
           chargeDirection: player.chargeDirection,
           chargeHoldTime: player.chargeHoldTime,
           chargeFacingDir: player.chargeFacingDir,
-          held: index === getPvpCpuIndex() && game.pvpCpuEnabled ? Boolean(player.inputHeld) : isPvpPhysicalJumpHeld(index)
+          held: (game.tutorialActive && window.RibbitRaceTutorialEngine?.scriptedInputLocked) || (index === getPvpCpuIndex() && game.pvpCpuEnabled) ? Boolean(player.inputHeld) : isPvpPhysicalJumpHeld(index)
         }))
       };
     }
@@ -2653,7 +2655,8 @@
           player.chargeFacingDir = saved.chargeFacingDir >= 0 ? 1 : -1;
           player.dir = player.chargeFacingDir;
           player.charging = true;
-          const heldNow = index === getPvpCpuIndex() && game.pvpCpuEnabled ? saved.held : isPvpPhysicalJumpHeld(index);
+          const scriptedTutorial = game.tutorialActive && window.RibbitRaceTutorialEngine?.scriptedInputLocked;
+          const heldNow = scriptedTutorial || (index === getPvpCpuIndex() && game.pvpCpuEnabled) ? saved.held : isPvpPhysicalJumpHeld(index);
           player.inputHeld = heldNow;
           if (!heldNow) { player.inputHeld = true; releasePvpButton(index, "system"); }
         });

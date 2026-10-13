@@ -1,10 +1,11 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
+import { readGameModuleGroup } from "./source-reader.mjs";
 
 const read = (path) => readFileSync(path, "utf8");
-const tutorial = read("client/game/120-engine-tutorial.js");
-const rendering = read("client/game/70-rendering.js");
+const tutorial = readGameModuleGroup(120, 139);
+const rendering = readGameModuleGroup(70, 79);
 const nav = read("client/game/40-ui-navigation-audio.js");
 const index = read("public/index.html");
 const common = read("src/common.js");
@@ -16,9 +17,9 @@ function block(source, start, end) {
   return source.slice(from, to);
 }
 
-test("Polish 20 cache marker is wired through the Worker, client, and asset URLs", () => {
+test("Polish 21 cache marker is wired through the Worker, client, and asset URLs", () => {
   for (const source of [tutorial, common, index, read("public/scripts/cloud-client.js")]) {
-    assert.match(source, /2026\.10\.12-friends-polish-20/);
+    assert.match(source, /2026\.10\.12-friends-polish-22/);
   }
 });
 
@@ -89,19 +90,20 @@ test("PvP transitions retain the prior line during authored poofs instead of fla
 
 test("Ember retains her facing unless she hits a wall or performs a side rebound", () => {
   const runtime = block(tutorial, "function polish19PvpRuntimeCorrection", "const polish19OriginalUpdateTutorial");
-  assert.match(runtime, /ember\.wallBouncedThisJump/);
-  assert.match(runtime, /ember\.bouncedOffOpponentThisJump&&ember\.lastOpponentBounceType==="rebound"/);
-  assert.match(runtime, /ember\.dir=locked/);
-  assert.match(runtime, /ember\.chargeFacingDir=locked/);
+  assert.doesNotMatch(runtime, /(?:ember|player)\.dir\s*=/);
+  assert.doesNotMatch(runtime, /(?:ember|player)\.chargeFacingDir\s*=/);
+  const scriptedPress = block(tutorial, "function scriptPvpPress", "function scriptPvpRelease");
+  assert.match(scriptedPress, /player\.grounded &&/);
+
 });
 
 test("high and low drop-bonk layouts use mirrored clear lanes and correct facing", () => {
   assert.match(tutorial, /case "pvpDemoDropLow"[\s\S]{0,420}positionPvpOnPlatform\(ember, lowerMiddle, -1, emberOffset\)/);
   assert.match(tutorial, /case "pvpDropLow"[\s\S]{0,360}positionPvpOnPlatform\(p1, lowerMiddle, 1, playerOffset\)/);
   assert.match(tutorial, /case "pvpDemoDropHigh"[\s\S]{0,360}positionPvpOnPlatform\(ember, top, -1, offset\)/);
-  assert.match(tutorial, /case "pvpDemoDropHigh"[\s\S]{0,420}positionPvp\(p1, dropX - 3, CONFIG\.groundY - p1\.h, 1\)/);
+  assert.match(tutorial, /case "pvpDemoDropHigh"[\s\S]{0,420}positionPvp\(p1, PARK_PLATFORMS\[3\]\.x - p1\.w - 4, CONFIG\.groundY - p1\.h, 1\)/);
   assert.match(tutorial, /case "pvpDropHigh"[\s\S]{0,360}positionPvpOnPlatform\(p1, top, -1, offset\)/);
-  assert.match(tutorial, /case "pvpDropHigh"[\s\S]{0,420}positionPvp\(ember, dropX - 3, CONFIG\.groundY - ember\.h, 1\)/);
+  assert.match(tutorial, /case "pvpDropHigh"[\s\S]{0,420}positionPvp\(ember, PARK_PLATFORMS\[3\]\.x - ember\.w - 4, CONFIG\.groundY - ember\.h, 1\)/);
 });
 
 test("scripted player jumps and poof transitions cannot be canceled by live input", () => {
