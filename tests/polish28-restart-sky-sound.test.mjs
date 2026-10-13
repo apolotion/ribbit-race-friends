@@ -131,13 +131,13 @@ test('Buffered sky demonstration faces right toward middle-right; player attempt
   c.setup('pvpDemoBufferedSky');
   const demoPositions=c.pvpPlayers.map(p=>({x:p.x,y:p.y,dir:p.dir}));
   assert.equal(demoPositions[1].dir,1);
-  assert.equal(demoPositions[1].x,248); // right end of top platform; facing right
-  assert.equal(demoPositions[0].x,337); // just under the far-right edge of x=281..351
+  assert.equal(demoPositions[1].x,229); // top platform center; facing right
+  assert.equal(demoPositions[0].x,331); // nudged slightly left beneath x=281..351
   assert.equal(demoPositions[0].y,200);
   c.setup('pvpBufferedSky');
   assert.equal(c.pvpPlayers[0].dir,-1);
-  assert.equal(c.pvpPlayers[0].x,210); // left of top platform; facing left
-  assert.equal(c.pvpPlayers[1].x,121); // just under the far-left edge of x=129..199
+  assert.equal(c.pvpPlayers[0].x,229); // top platform center; facing left
+  assert.equal(c.pvpPlayers[1].x,127); // slightly nearer the left-edge wall
   assert.equal(c.pvpPlayers[1].dir,1);
   const demo=section(scene,'function beginPvpDemoMotion','function startPvpDemonstration');
   assert.match(demo,/case "pvpDemoBufferedSky":[\s\S]{0,330}armPvpScriptedBuffer\(1, PARK_PLATFORMS\[6\]\)/);

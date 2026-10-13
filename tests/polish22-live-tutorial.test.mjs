@@ -55,7 +55,7 @@ test('knock-off demo now uses the top-vs-lower-right platform setup and one jump
  const s=read('client/game/122-tutorial-scenarios.js');
  assert.match(s,/case "pvpDemoHighGround"[\s\S]{0,500}positionPvpOnPlatform\(p1, top, 1\)/);
  assert.match(s,/case "pvpDemoHighGround"[\s\S]{0,600}positionPvpOnPlatform\(ember, PARK_PLATFORMS\[6\], -1\)/);
- assert.match(s,/case "pvpDemoHighGround"[\s\S]{0,1200}scriptPvpChargedJump\(1, \.84, -1, 0\)/);
+ assert.match(s,/case "pvpDemoHighGround"[\s\S]{0,1200}scriptPvpChargedJump\(1, 1, -1, 0\)/);
 });
 test('layout mirroring cannot overwrite airborne facing',()=>{
  const s=read('client/game/127-tutorial-refinements.js');const runtime=section(s,'function polish19PvpRuntimeCorrection','const polish19OriginalUpdateTutorial');

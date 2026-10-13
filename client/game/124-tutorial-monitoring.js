@@ -115,7 +115,11 @@ function monitorSolo() {
   // A landing can occur on the same frame that the tongue is still carrying
   // the third fly. Keep the attempt alive until that catch resolves instead
   // of treating the landing as a miss and poofing the frog away.
-  if (setup === "comboThree" && attemptEnded && (tongue.active || game.soloCriticalCatchActive)) {
+  if (["comboTwo", "comboThree"].includes(setup) && attemptEnded &&
+      (tongue.active || game.soloCriticalCatchActive)) {
+    // The final fly may still be travelling along the tongue on the very
+    // frame the frog lands. Hold the result until the catch resolves.
+    tutorial.sceneLandingDelayUntil = performance.now() + 180;
     tutorial.attemptEnded = false;
     return;
   }
@@ -123,8 +127,9 @@ function monitorSolo() {
   if (landedThisFrame) {
     tutorial.bufferedJumpWindowOpenedAt = now;
     if (setup === "bufferJumpCharge") {
-      tutorial.bufferedJumpChainCount = game.buttonHeld ? 1 : 0;
-      if (tutorial.jumpAttempts >= 1 && !game.buttonHeld) {
+      tutorial.bufferedJumpChainCount = Math.max(tutorial.bufferedJumpChainCount, game.buttonHeld ? 1 : 0);
+      if (tutorial.jumpAttempts >= 1 && !game.buttonHeld && !tutorial.bufferedJumpReleased &&
+          !tutorial.passPending && tutorial.bufferedJumpChainCount < 1) {
         failAttempt("HOLD JUMP BEFORE YOU LAND TO BUFFER THE NEXT CHARGE");
         tutorial.wasGroundedLastFrame = Boolean(frog.grounded);
         return;
@@ -217,7 +222,10 @@ function monitorSolo() {
 
   if (setup === "comboTwo") {
     if (tongue.active || game.soloCriticalCatchActive) return;
-    if (!attemptEnded) return;
+    const lateLanding = frog.grounded && tutorial.sceneLandingDelayUntil > 0 &&
+      now >= tutorial.sceneLandingDelayUntil;
+    if (!attemptEnded && !lateLanding) return;
+    tutorial.sceneLandingDelayUntil = 0;
     const success = tutorial.maxCatchesOneJump >= 2 &&
       tutorial.catchEvents.length >= 2 &&
       tutorial.catchEvents.slice(0, 2).every(Boolean);
@@ -227,7 +235,10 @@ function monitorSolo() {
   }
 
   if (setup === "comboThree") {
-    if (!attemptEnded) return;
+    const lateLanding = frog.grounded && tutorial.sceneLandingDelayUntil > 0 &&
+      !tongue.active && !game.soloCriticalCatchActive && now >= tutorial.sceneLandingDelayUntil;
+    if (!attemptEnded && !lateLanding) return;
+    tutorial.sceneLandingDelayUntil = 0;
     const success = tutorial.maxCatchesOneJump >= 3 &&
       tutorial.catchEvents.length >= 3 &&
       tutorial.catchEvents.slice(0, 3).every(Boolean);
@@ -354,19 +365,47 @@ function drivePvpPracticeCpu(setup, now) {
   }
 
   if (setup === "pvpUnderBonkTwo") {
-    const platform = getPvpStandingPlatform(p1);
-    if (platform && !platform.ground && ember.grounded && ember.stunTimer <= 0 && !ember.bonked &&
-        now - tutorial.pvpLastPracticeEventAt > 1050 && !ember.charging && !ember.inputHeld) {
-      tutorial.pvpLastPracticeEventAt = now;
-      ember.dir = p1.x + p1.w / 2 >= ember.x + ember.w / 2 ? 1 : -1;
-      if (tutorial.pvpUnderBonks > 0 && Math.abs(ember.x - 80) > 2) {
-        // Only Ember returns to the approach lane; the player's perch and
-        // completed under-bonk count remain untouched.
-        beginPoofTransition({ reason:"under-bonk-return", showFailure:false,
-          preserveExistingFlies:true, armFlies:false, pvpPoofPlayers:[1],
-          action:() => { positionPvp(ember,PARK_PLATFORMS[3].x + 8,CONFIG.groundY-ember.h,1); tutorial.pvpLastPracticeEventAt=performance.now(); }
-        });
-      } else scriptPvpChargedJump(1, .78, ember.dir, 0);
+    // Begin charging *as soon as* P1 releases their first jump from the
+    // left-middle platform. Ember may only launch once P1 lands on the
+    // lower-middle perch; she is never teleported between attempts.
+    const center = PARK_PLATFORMS[3];
+    const playerFlying = !p1.grounded && p1.firstJumpMade && !p1.charging;
+    if (playerFlying) tutorial.pvpUnderBonkAttemptAirborne = true;
+    if (playerFlying && tutorial.pvpUnderBonks === 0 &&
+        !tutorial.pvpUnderBonkChargePrimed && !tutorial.dialogueOpen) {
+      tutorial.pvpUnderBonkChargePrimed = true;
+      scriptPvpPress(1, 1);
+    }
+    const onCenter = p1.grounded && getPvpStandingPlatform(p1) === center;
+    if (!tutorial.pvpUnderBonkAttemptAirborne || !onCenter ||
+        tutorial.pvpUnderBonkPendingSecond || tutorial.dialogueOpen ||
+        tutorial.pvpUnderBonks >= 2 || ember.bonked || ember.stunTimer > 0 ||
+        !ember.grounded || tutorial.pvpScriptActions.length ||
+        (tutorial.pvpUnderBonks > 0 && now - tutorial.pvpLastPracticeEventAt < 900)) return;
+    tutorial.pvpUnderBonkPendingSecond = true;
+    tutorial.pvpUnderBonkEmberAirborne = false;
+    // Target P1's current position, not their initial spawn position. Both
+    // jumps really collide with the underside of the frog, including after
+    // Ember recovers and approaches the opposite direction on the second.
+    const direction = p1.x + p1.w/2 >= ember.x + ember.w/2 ? 1 : -1;
+    ember.dir = direction;
+    if (ember.charging && tutorial.pvpUnderBonkChargePrimed) {
+      tutorial.pvpUnderBonkChargePrimed = false;
+      scriptPvpRelease(1, .55);
+    } else if (!ember.charging && !ember.inputHeld) {
+      if (tutorial.pvpUnderBonks > 0) {
+        // Ember has already recovered directly beneath the player's perch.
+        // A normal second jump with zero horizontal drift strikes the underside
+        // instead of side-rebounding and knocking the player away.
+        scriptPvpPress(1, direction);
+        queuePvpScriptAction(458, () => {
+          if (!ember.grounded || ember.bonked) return;
+          scriptPvpRelease(1, .55);
+          ember.vx = 0;
+        }, "second-under-bonk-straight-up");
+      } else {
+        scriptPvpChargedJump(1, .55, direction, 0);
+      }
     }
     return;
   }
@@ -415,6 +454,9 @@ function monitorPvp() {
   // practice controller here: holdEmberStill() clears CPU charging every
   // frame and makes her plan/sound loop forever without ever jumping.
   if (setup === "pvpFinalMatch") {
+    // Never inherit a prior tutorial cinematic's permanent label-hiding flag.
+    if (!game.pvpCriticalCatchActive && window.RibbitRaceFinalCatchLabelsGone)
+      try { window.RibbitRaceResetFinalCatchLabels?.(); } catch (_) {}
     if (tutorial.pvpFinalMatchStarted && game.state === "won") beginPvpTutorialEnding();
     return;
   }
@@ -533,9 +575,9 @@ function monitorPvp() {
   }
 
   if (setup === "pvpHighGround") {
-    if (tutorial.pvpHighGroundBonkSeen && ember.grounded && ember.y + ember.h >= CONFIG.groundY - 1 && pvpPracticeEventReady(1000, now)) passStep();
-    // The lower-middle start needs a wall approach and a second jump back.
-    // Landing on the way is not a failed attempt; keep the route continuous.
+    if (tutorial.pvpHighGroundBonkSeen && ember.grounded && ember.y + ember.h >= CONFIG.groundY - 1 && pvpPracticeEventReady(900, now)) passStep();
+    else if (playerLanded && !tutorial.pvpHighGroundBonkSeen && now - tutorial.enteredAt > 450)
+      failAttempt("KNOCK EMBER OFF THE TOP IN ONE JUMP");
     return;
   }
 
@@ -547,15 +589,41 @@ function monitorPvp() {
   }
 
   if (setup === "pvpBoostBonk") {
-    if (tutorial.pvpBoostedBonkSeen && pvpPracticeEventReady(1000, now)) passStep();
-    else if (tutorial.pvpEmberLaunchStarted && ember.grounded && now - tutorial.pvpEmberJumpScheduledAt > 2600 && !tutorial.pvpBoostedBonkSeen) {
-      failAttempt("BONK EMBER AS HER MAX-CHARGE JUMP BEGINS");
-    }
+    if (tutorial.pvpBoostedBonkSeen && pvpPracticeEventReady(900, now)) passStep();
+    else if (playerLanded && !tutorial.pvpBoostedBonkSeen && now - tutorial.enteredAt > 450)
+      failAttempt("REBOUND OFF EMBER BEFORE LANDING");
     return;
   }
 
   if (setup === "pvpUnderBonkTwo") {
-    if (tutorial.pvpUnderBonks >= 2 && pvpPracticeEventReady(1000, now)) passStep();
+    const center = PARK_PLATFORMS[3];
+    const landedOnCenter = p1.grounded && getPvpStandingPlatform(p1) === center;
+    if (tutorial.pvpUnderBonks >= 2) {
+      if (pvpPracticeEventReady(800, now) && ember.stunTimer <= 0 && ember.grounded && !ember.bonked) passStep();
+      return;
+    }
+    if (tutorial.pvpUnderBonks === 1 && !tutorial.pvpUnderBonkFirstLineShown &&
+        ember.stunTimer <= 0 && ember.grounded && !ember.bonked) {
+      tutorial.pvpUnderBonkFirstLineShown = true;
+      tutorial.pvpUnderBonkPendingSecond = false;
+      tutorial.pvpUnderBonkEmberAirborne = false;
+      openDynamicDialogue(["Ouch! That first under bonk counted."], "annoyed", false);
+      tutorial.scenePositionedDuringDialogue = true; // no poof after the response
+      tutorial.pvpLastPracticeEventAt = now - 200;
+      return;
+    }
+    if (tutorial.pvpUnderBonkAttemptAirborne && playerLanded && !landedOnCenter && tutorial.pvpUnderBonks === 0) {
+      failAttempt("LAND ON THE LOWER-MIDDLE PLATFORM");
+      return;
+    }
+    // If Ember lands after attempting to jump past P1 without getting under
+    // bonked, the attempt really failed; poof both frogs, keeping no progress.
+    if (tutorial.pvpUnderBonkPendingSecond && ember.firstJumpMade && !ember.grounded)
+      tutorial.pvpUnderBonkEmberAirborne = true;
+    if (tutorial.pvpUnderBonkPendingSecond && tutorial.pvpUnderBonkEmberAirborne && ember.grounded &&
+        !ember.bonked && ember.stunTimer <= 0 && now - tutorial.pvpLastPracticeEventAt > 600) {
+      failAttempt("HOLD YOUR PERCH AND UNDER BONK EMBER");
+    }
     return;
   }
 
@@ -670,19 +738,9 @@ function updateTutorialAmbient(dt, options = {}) {
   frog.catchSparkleTimer = Math.max(0, frog.catchSparkleTimer - safeDt);
   frog.wrongCatchBubbleTimer = Math.max(0, frog.wrongCatchBubbleTimer - safeDt);
   frog.landingSquash = Math.max(0, frog.landingSquash - safeDt * 4.5);
-  if (options.animateFlies !== false) {
-    const frozenCarryovers = flies
-      .filter((currentFly) => currentFly?.tutorialCarryover)
-      .map((currentFly) => ({ currentFly, x:currentFly.baseX, y:currentFly.baseY }));
-    animateFlies(safeDt);
-    for (const frozen of frozenCarryovers) {
-      frozen.currentFly.phase = 0;
-      frozen.currentFly.x = frozen.x;
-      frozen.currentFly.y = frozen.y;
-      frozen.currentFly.baseX = frozen.x;
-      frozen.currentFly.baseY = frozen.y;
-    }
-  }
+  // Even carryover flies remain animated while Ember is speaking after a
+  // spit-out. They are untouchable, but should never appear frozen.
+  if (options.animateFlies !== false) animateFlies(safeDt);
 }
 
 function clearUnrelatedPvpTutorialFlies() {

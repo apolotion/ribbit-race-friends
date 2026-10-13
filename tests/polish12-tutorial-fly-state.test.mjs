@@ -19,9 +19,9 @@ function block(start, end) {
 }
 
 test("polish 12 cache marker is wired", () => {
-  assert.match(engine, /2026\.10\.13-friends-polish-37/);
-  assert.match(read("public/index.html"), /game\.bundle\.js\?v=2026\.10\.13-friends-polish-37/);
-  assert.match(read("src/common.js"), /2026\.10\.13-friends-polish-37/);
+  assert.match(engine, /2026\.10\.13-friends-polish-38/);
+  assert.match(read("public/index.html"), /game\.bundle\.js\?v=2026\.10\.13-friends-polish-38/);
+  assert.match(read("src/common.js"), /2026\.10\.13-friends-polish-38/);
 });
 
 test("Ember nameplate is centered in the upper-left of the dialogue panel", () => {
@@ -39,20 +39,22 @@ test("final-catch label suppression resets between tutorial scenes", () => {
   assert.match(configure, /window\.RibbitRaceResetFinalCatchLabels\?\.\(\)/);
 });
 
-test("spit-out carryover fly remains visible and still until the next poof", () => {
+test("spit-out carryover fly remains visible and animated during Ember dialogue", () => {
   assert.match(engine, /function captureTutorialCarryoverFlies/);
   assert.match(engine, /previousSetup === "comboMixed"/);
   assert.match(engine, /carryover\.tutorialCarryover = true/);
   assert.match(engine, /carryover\.touchLocked = true/);
   assert.match(engine, /function clearTutorialCarryoverFlies/);
   const ambient = block("function updateTutorialAmbient", "function updateTutorial");
-  assert.match(ambient, /tutorialCarryover/);
-  assert.match(ambient, /frozen\.currentFly\.phase = 0/);
+  assert.match(ambient, /Even carryover flies remain animated while Ember is speaking/);
+  assert.match(ambient, /if \(options\.animateFlies !== false\) animateFlies\(safeDt\)/);
+  assert.doesNotMatch(ambient, /frozen\.currentFly\.phase = 0/);
 });
 
 test("three-fly landing waits for an active tongue catch", () => {
   const monitor = block("function monitorSolo", "function monitorPvp");
-  assert.match(monitor, /setup === "comboThree" && attemptEnded && \(tongue\.active \|\| game\.soloCriticalCatchActive\)/);
+  assert.match(monitor, /\["comboTwo", "comboThree"\]\.includes\(setup\) && attemptEnded &&/);
+  assert.match(monitor, /tongue\.active \|\| game\.soloCriticalCatchActive/);
   assert.match(monitor, /tutorial\.attemptEnded = false/);
 });
 

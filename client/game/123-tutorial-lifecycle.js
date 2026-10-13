@@ -15,7 +15,11 @@ function configureStep(showDialogue = true, options = {}) {
   tutorial.preservePromptDuringReset = false;
   tutorial.frogHidden = false;
   tutorial.pvpFrogsHidden = false;
+  tutorial.pvpHiddenPlayerIndex = null;
   tutorial.pvpHiddenPlayerIndices = [];
+  tutorial.pvpDemoActive = false;
+  tutorial.pvpPlayerScriptLocked = false;
+  tutorial.pendingPvpVisualPoses = null;
   tutorial.dialogueHiddenDuringPoof = false;
   tutorial.resetPvpPoofPlayers = [0, 1];
   tutorial.smokeClouds.length = 0;
@@ -79,6 +83,28 @@ function configureStep(showDialogue = true, options = {}) {
         tutorial.enteredAt = performance.now();
       }
     });
+  } else if (showDialogue && tutorial.kind === "solo" && tutorialStep()?.setup === "threeCatches") {
+    // The fly appears with the poof; *then* Ember says dinner is ready.
+    // Chapter navigation and normal progression share this ordering.
+    tutorial.dialogueOpen = true;
+    beginDialogueLine(0, { delayMs: POOF_TRANSITION_MS + FLY_DIALOGUE_REVEAL_HOLD_MS, holdPreviousText:false });
+    game.state = "playing";
+    const targetPose = tutorial.pendingStartPose;
+    if (!beginPoofTransition({
+      reason:"solo-first-fly-before-dinner",
+      showFailure:false,
+      preserveExistingFlies:false,
+      action:() => {
+        applyControlledPose(targetPose);
+        tutorial.pendingStartPose = null;
+        tutorial.scenePositionedDuringDialogue = true;
+        tutorial.enteredAt = performance.now();
+      }
+    })) {
+      applyControlledPose(targetPose);
+      armTutorialFlies();
+      beginDialogueLine(0, {delayMs:FLY_DIALOGUE_REVEAL_HOLD_MS,holdPreviousText:false});
+    }
   } else if (showDialogue) {
     tutorial.transitionHeldLineText = "";
     tutorial.transitionHeldPortraitKey = "";
@@ -618,7 +644,9 @@ function installTutorialCarryoverFlies(snapshots = []) {
     carryover.blockedPromptSerial = Number.MAX_SAFE_INTEGER;
     carryover.state = "active";
     carryover.spawnAge = Math.max(CONFIG.flySpawnEffectDuration + 0.1, CONFIG.flyGrowDuration + 0.1);
-    carryover.phase = 0;
+    // Preserve normal wing/flutter oscillation while Ember narrates the
+    // follow-up; the fly stays present and moves, but cannot be caught.
+    carryover.phase = Math.max(0.25, Number(snapshot.spawnIndex || 0) * 1.37);
     carryover.baseX = carryover.x = snapshot.x;
     carryover.baseY = carryover.y = snapshot.y;
   }

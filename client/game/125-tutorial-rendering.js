@@ -560,6 +560,9 @@ function drawEmberDialogueLine(fullLine, visibleText, x, y, scale, spokenLine = 
     // The accent-color boundary after "my catch" lands directly against the
     // white question mark. Give punctuation one pixel of breathing room.
     if (chunk.startsWith("?") && cursor > 0) drawX += Math.max(1, Math.round(scale * 2));
+    // Word-chunk width calculation trims some trailing bitmap whitespace.
+    // Keep a visible gap between "a" and highlighted "quick tap".
+    if (orangeRange && cursor > 0 && visible[cursor - 1] === " ") drawX += Math.max(1, Math.round(scale * 2));
     drawBitmapText(chunk,drawX,y,scale,"left",orangeRange ? "#ff9b45" : COLORS.white);
     drawX += measureBitmapText(chunk,scale);
     cursor = nextBoundary;
@@ -881,7 +884,7 @@ function currentGoalHowToLines() {
 }
 
 function drawGoalHowToTooltip() {
-  if (!tutorial.active || !tutorial.goalHovered || !tutorialPlayerHasControl() || tutorialStep()?.setup === "normalRound") return;
+  if (!tutorial.active || !tutorial.goalHovered || !tutorialPlayerHasControl() || ["normalRound", "pvpFinalMatch"].includes(tutorialStep()?.setup)) return;
   const lines = currentGoalHowToLines();
   const panel = { x:304, y:183, w:172, h:40 };
   const skin = getSelectedSkin();
@@ -916,7 +919,7 @@ function drawGoalHowToTooltip() {
 }
 
 function drawCurrentGoalHud() {
-  if (!tutorial.active) return;
+  if (!tutorial.active || (tutorial.kind === "pvp" && tutorialStep()?.setup === "pvpFinalMatch")) return;
   const goal = currentGoalLines();
   const { x, y, w, h } = getTutorialGoalRect();
   const now = performance.now();
@@ -1179,7 +1182,7 @@ function drawTutorialOverlay() {
   drawTutorialSmoke();
   drawPvpTutorialCaption();
   drawTutorialReferenceHighlights();
-  drawTutorialProgress();
+  // Chapter navigation belongs in the pause menu; no badge above Find the Match.
   if (!tutorial.dialogueOpen && tutorialStep()?.setup !== "normalRound") drawGoalHowToTooltip();
   if (tutorial.dialogueOpen) drawTutorialDialogue();
 }

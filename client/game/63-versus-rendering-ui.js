@@ -549,11 +549,11 @@
         { player: pvpPlayers[0], x: 12, label: mobileHud
           ? (game.onlineMode ? (OnlineVersus.localIndex() === 0 ? "YOU - TAP METER" : (window.RibbitOpponentName?.() || "OPPONENT")) : game.pvpCpuEnabled ? "TAP METER" : "P1 JUMP")
           : (game.onlineMode ? (OnlineVersus.localIndex() === 0 ? "YOU - SPACE" : (window.RibbitOpponentName?.() || "OPPONENT")) : game.pvpCpuEnabled ? "SPACE" : "LEFT SHIFT"), palette: p1Palette },
-        { player: pvpPlayers[1], x: W - 144, label: mobileHud
+        { player: pvpPlayers[1], x: W - 124, label: tutorialFinalMatch ? "EMBER" : mobileHud
           ? (game.onlineMode ? (OnlineVersus.localIndex() === 1 ? "YOU - TAP METER" : (window.RibbitOpponentName?.() || "OPPONENT")) : game.pvpCpuEnabled ? `CPU LV ${game.pvpCpuDifficulty}` : "P2 JUMP")
           : (game.onlineMode ? (OnlineVersus.localIndex() === 1 ? "YOU - SPACE" : (window.RibbitOpponentName?.() || "OPPONENT")) : game.pvpCpuEnabled ? `CPU LV ${game.pvpCpuDifficulty}` : "RIGHT SHIFT"), palette: p2Palette }
       ].forEach(({ player, x, label, palette }) => {
-        const meterW = player.index === 1 ? 106 : 112;
+        const meterW = 112;
         ctx.fillStyle = COLORS.ink;
         ctx.fillRect(x - 2, meterY - 2, meterW + 4, meterH + 4);
         ctx.fillStyle = palette.belly;

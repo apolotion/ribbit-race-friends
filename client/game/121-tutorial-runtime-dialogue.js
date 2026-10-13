@@ -434,9 +434,8 @@ function prepareDialogueLine(nextIndex) {
   // the previous sentence visible, then waits a clean half-second after the
   // fly appears before announcing that dinner is ready.
   if (setup === "threeCatches" && nextIndex === 1) {
-    beginDialogueScenarioPlacement(nextIndex, {
-      postPoofDelayMs: FLY_DIALOGUE_REVEAL_HOLD_MS
-    });
+    // The fly has already appeared before "Looks like dinner is ready".
+    beginDialogueLine(nextIndex);
     return;
   }
   // These lessons move the frog and reveal every authored fly on the exact
@@ -673,6 +672,11 @@ function clearScenarioState() {
   tutorial.pvpSkyBonkSeen = false;
   tutorial.pvpMaximumBonkSeen = false;
   tutorial.pvpUnderBonks = 0;
+  tutorial.pvpUnderBonkFirstLineShown = false;
+  tutorial.pvpUnderBonkPendingSecond = false;
+  tutorial.pvpUnderBonkAttemptAirborne = false;
+  tutorial.pvpUnderBonkChargePrimed = false;
+  tutorial.pvpUnderBonkEmberAirborne = false;
   tutorial.pvpReboundCount = 0;
   tutorial.pvpInterceptSeen = false;
   tutorial.pvpBoostedBonkSeen = false;

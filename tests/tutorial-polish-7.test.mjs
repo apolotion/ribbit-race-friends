@@ -17,8 +17,8 @@ function block(start, end) {
 }
 
 test("polish-9 cache marker forces the rebuilt tutorial and Versus lesson UI to load", () => {
-  assert.match(engine, /2026\.10\.13-friends-polish-37/);
-  assert.match(index, /game\.bundle\.js\?v=2026\.10\.13-friends-polish-37/);
+  assert.match(engine, /2026\.10\.13-friends-polish-38/);
+  assert.match(index, /game\.bundle\.js\?v=2026\.10\.13-friends-polish-38/);
 });
 
 test("dialogue uses the new reference framing and keeps Ember's full square unobstructed", () => {
@@ -62,7 +62,7 @@ test("wrong-fly pair stays hidden through Ember's explanation and appears with t
 test("buffered jump charge lesson precedes platform-drop buffering", () => {
   assert.match(engine, /title: "BUFFER A JUMP"[\s\S]{0,500}touch the ground/);
   assert.match(engine, /setup: "bufferJumpCharge"/);
-  assert.match(engine, /landedThisFrame[\s\S]{0,240}bufferedJumpChainCount = game\.buttonHeld \? 1 : 0/);
+  assert.match(engine, /landedThisFrame[\s\S]{0,280}bufferedJumpChainCount = Math\.max\(tutorial\.bufferedJumpChainCount, game\.buttonHeld \? 1 : 0\)/);
   assert.match(engine, /bufferedJumpChainCount >= 1 && tutorial\.bufferedJumpReleased/);
   assert.match(engine, /BUFFERED JUMP/);
   assert.match(engine, /All you have to do is TAP jump just before landing\./);

@@ -17,10 +17,10 @@ function block(start, end) {
   return engine.slice(from, to);
 }
 
-test("1.7.25 polished tutorial build and first-boot marker are installed", () => {
-  assert.equal(JSON.parse(read("package.json")).version, "1.7.25");
-  assert.match(read("src/common.js"), /2026\.10\.13-friends-polish-37/);
-  assert.match(engine, /const TUTORIAL_BUILD = "2026\.10\.13-friends-polish-37"/);
+test("1.7.26 polished tutorial build and first-boot marker are installed", () => {
+  assert.equal(JSON.parse(read("package.json")).version, "1.7.26");
+  assert.match(read("src/common.js"), /2026\.10\.13-friends-polish-38/);
+  assert.match(engine, /const TUTORIAL_BUILD = "2026\.10\.13-friends-polish-38"/);
   assert.match(engine, /rrFriendsEngineTutorialSoloSeenV8/);
 });
 
@@ -92,8 +92,10 @@ test("background and armed flies keep animating while dialogue locks only the fr
 test("the dinner fly finishes its poof, then waits half a second before the line", () => {
   const prep = block("function prepareDialogueLine", "function armScenarioAfterDialogue");
   assert.match(prep, /setup === "threeCatches" && nextIndex === 1/);
-  assert.match(prep, /beginDialogueScenarioPlacement\(nextIndex, \{/);
-  assert.match(prep, /postPoofDelayMs: FLY_DIALOGUE_REVEAL_HOLD_MS/);
+  assert.match(prep, /beginDialogueLine\(nextIndex\)/);
+  const sceneStart = block("function configureStep", "function addTutorialPoof");
+  assert.match(sceneStart, /setup === "threeCatches"/);
+  assert.match(sceneStart, /delayMs: POOF_TRANSITION_MS \+ FLY_DIALOGUE_REVEAL_HOLD_MS/);
   assert.match(engine, /FLY_DIALOGUE_REVEAL_HOLD_MS = 500/);
   assert.match(engine, /dialogueHeldLineText/);
   assert.match(engine, /tutorial\.dialogueHeldUntil > now/);

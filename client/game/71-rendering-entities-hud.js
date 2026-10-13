@@ -861,6 +861,7 @@
     function drawVocabularyPrompt() {
       if (!["playing", "paused", "countdown"].includes(game.state)) return;
       if (game.sandboxMode || game.winPending || !Number.isInteger(game.targetVocabIndex)) return;
+      if (game.tutorialActive && !flies.some((fly) => fly && fly.state === "active" && fly.tutorialArmed !== false)) return;
 
       const prompt = normalizeVocabularyCellText(getLocalizedClueTerm(VOCABULARY[game.targetVocabIndex]) || "", 80);
       const left = 154;

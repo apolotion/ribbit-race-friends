@@ -1911,9 +1911,11 @@
       if (game.pvpSetupLevelId === "random") refreshPvpRandomPreview();
       game.pvpSetupLevelIndex = Math.max(0, PVP_STAGE_ORDER.indexOf(game.pvpSetupLevelId));
       const persistedSkins = readLastPvpSkinSelections();
-      const storedP1 = normalizePvpSkinId(persistedSkins?.[0] || game.pvpSetupSkinIds?.[0], "azure");
+      // Versus always opens with the Solo-selected frog for Player 1. Only
+      // Player 2 remembers their previous Versus-only choice.
+      const soloSelectedSkin = normalizePvpSkinId(game.skinId || "azure", "azure");
       const storedP2 = normalizePvpSkinId(persistedSkins?.[1] || game.pvpSetupSkinIds?.[1], "crimson");
-      let p1 = isPvpSkinAvailable(storedP1) ? storedP1 : "azure";
+      let p1 = isPvpSkinAvailable(soloSelectedSkin) ? soloSelectedSkin : "azure";
       let p2 = isPvpSkinAvailable(storedP2) ? storedP2 : "crimson";
       if (p1 === p2) p2 = getFirstAvailablePvpSkin(p1, "crimson");
       game.pvpSetupSkinIds = [p1, p2];

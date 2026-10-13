@@ -263,6 +263,11 @@ function configureSoloStep(index) {
       resetGame(true);
       restoreExactParkStage();
       game.state = "playing";
+      // The final round is a real five-fly Park round, including its English
+      // clue and every fly's matching vocabulary label after a retry/skip.
+      setPrompt(Number.isInteger(game.targetVocabIndex) ? game.targetVocabIndex : 0);
+      tutorial.promptHidden = false;
+      try { window.RibbitRaceResetFinalCatchLabels?.(); } catch (_) {}
       break;
 
     default:
@@ -502,15 +507,15 @@ function configurePvpStep(index) {
       const rightMiddle = PARK_PLATFORMS[5];
       // Ember faces RIGHT from the right edge of the upper platform before
       // charging; P1 waits beneath the far-right edge of the mid-height perch.
-      positionPvpOnPlatform(ember, top, 1, top.w - ember.w - 4);
-      positionPvp(p1, rightMiddle.x + rightMiddle.w - p1.w + 8, CONFIG.groundY - p1.h, -1);
+      positionPvpOnPlatform(ember, top, 1);
+      positionPvp(p1, rightMiddle.x + rightMiddle.w - p1.w + 2, CONFIG.groundY - p1.h, -1);
       break;
     }
     case "pvpBufferedSky": {
       const leftMiddle = PARK_PLATFORMS[2];
       // Mirror every position and facing direction for the player's attempt.
-      positionPvpOnPlatform(p1, top, -1, 4);
-      positionPvp(ember, leftMiddle.x - 8, CONFIG.groundY - ember.h, 1);
+      positionPvpOnPlatform(p1, top, -1);
+      positionPvp(ember, leftMiddle.x - 2, CONFIG.groundY - ember.h, 1);
       break;
     }
     case "pvpDemoHighGround":
@@ -520,10 +525,10 @@ function configurePvpStep(index) {
       positionPvpOnPlatform(ember, PARK_PLATFORMS[6], -1);
       break;
     case "pvpHighGround":
-      // Mirror the lesson: Ember holds the top platform and the player starts
-      // from the lower-right perch before taking the wall route back in.
+      // Swap roles on the same two platforms. A single player jump must knock
+      // Ember down; a miss poofs the original positions back into place.
       positionPvpOnPlatform(ember, top, -1);
-      positionPvpOnPlatform(p1, PARK_PLATFORMS[6], 1);
+      positionPvpOnPlatform(p1, PARK_PLATFORMS[6], -1);
       break;
     case "pvpDemoRecoveryBonk":
       // Match the requested lane from the reference image.
@@ -539,14 +544,14 @@ function configurePvpStep(index) {
       // right. The user's own turn retains its established start positions.
       positionPvp(p1, 145, CONFIG.groundY - p1.h, 1);
       positionPvp(ember, 305, CONFIG.groundY - ember.h, -1);
-      addPvpTutorialFly(Math.round(PARK_PLATFORMS[1].x + PARK_PLATFORMS[1].w / 2), 118, game.targetVocabIndex, 0);
+      addPvpTutorialFly(Math.round(PARK_PLATFORMS[1].x + PARK_PLATFORMS[1].w / 2), 84, game.targetVocabIndex, 0);
       break;
     case "pvpBoostBonk":
       // The player's setup stays unchanged, with the vocabulary fly moved
       // across the stage from Ember's demonstration (left -> right).
       positionPvp(p1, 145, CONFIG.groundY - p1.h, 1);
       positionPvp(ember, 305, CONFIG.groundY - ember.h, -1);
-      addPvpTutorialFly(Math.round(PARK_PLATFORMS[6].x + PARK_PLATFORMS[6].w / 2), 118, game.targetVocabIndex, 0);
+      addPvpTutorialFly(Math.round(PARK_PLATFORMS[6].x + PARK_PLATFORMS[6].w / 2), 84, game.targetVocabIndex, 0);
       break;
     case "pvpDemoUnderBonk": {
       // The lower frog waits one frog-width before the target under the center
@@ -560,10 +565,15 @@ function configurePvpStep(index) {
       positionPvpOnPlatform(ember, middleRight, -1, middleRight.w - ember.w - 2);
       break;
     }
-    case "pvpUnderBonkTwo":
-      positionPvpOnPlatform(p1, PARK_PLATFORMS[3], 1);
-      positionPvp(ember, PARK_PLATFORMS[3].x + 8, CONFIG.groundY - ember.h, 1);
+    case "pvpUnderBonkTwo": {
+      // The player follows Ember's example: leap from the left-mid perch to
+      // the center-lower perch. Ember waits below, then charges only once
+      // the player has released the first jump.
+      const center = PARK_PLATFORMS[3];
+      positionPvpOnPlatform(p1, PARK_PLATFORMS[2], 1);
+      positionPvp(ember, center.x + 28, CONFIG.groundY - ember.h, 1);
       break;
+    }
     case "pvpDemoAvoidUnder":
       // Mirror the requested player-practice lane: Ember demonstrates from the
       // right, slipping under the player waiting on the center platform.
@@ -820,9 +830,9 @@ function beginPvpDemoMotion(setup) {
       scriptPvpChargedJump(1, 1, 1, 0);
       break;
     case "pvpDemoHighGround":
-      // A single strong jump is enough here: knock the waiting frog off the
-      // platform and claim the perch in one motion.
-      scriptPvpChargedJump(1, .84, -1, 0);
+      // Reach the frog standing in the middle of the top perch in ONE jump.
+      // No follow-up wall jump is needed to demonstrate the knock-off.
+      scriptPvpChargedJump(1, 1, -1, 0);
       break;
     case "pvpDemoRecoveryBonk":
       scriptPvpChargedJump(1, .55, -1, 0);
@@ -994,22 +1004,16 @@ function updatePvpDemonstration() {
     scriptPvpChargedJump(1, .88, -1, 120);
   }
 
-  if (setup === "pvpDemoHighGround" && tutorial.pvpDemoStage === 0 &&
-      ember.firstJumpMade && ember.grounded && !ember.charging && tutorial.pvpDemoBonkAt <= 0) {
-    tutorial.pvpDemoStage = 1;
-    scriptPvpChargedJump(1, 1, null, 220);
-  }
+  // High-ground knock-off is one charged jump; missing the target retries
+  // from the original positions instead of scripting a second jump.
 
   if (setup === "pvpDemoBoostBonk" && tutorial.pvpDemoStage >= 1 && tutorial.pvpDemoBonkCount >= 2 &&
       !tutorial.pvpDemoFollowupStarted && ember.grounded && !ember.charging) {
     tutorial.pvpDemoFollowupStarted = true;
     scriptPvpChargedJump(1, .86, null, 120);
-    queuePvpScriptAction(330, () => {
-      const targetFly = flies.find((fly) => fly && fly.state === "active" && fly.tutorialAuthored);
-      if (!targetFly || !pvpPlayers[1]) return;
-      beginPvpTongue(pvpPlayers[1], targetFly);
-      try { startPvpCriticalCatch(pvpPlayers[1], targetFly, "final"); } catch (_) {}
-    }, "boost-bonk-fly-catch");
+    // Let the normal automatic tongue/catch radius collect the high fly.
+    // A forced tongue here used to reach across the map after Ember had
+    // already passed her fly and played a misleading slow-motion catch.
   }
 
   if (setup === "pvpDemoUnderBonk" && tutorial.pvpDemoStage === 0 && ember.firstJumpMade &&
@@ -1054,6 +1058,23 @@ function updatePvpDemonstration() {
     scriptPvpChargedJump(0, .95, 1, 825);
   }
 
+  // Recovery timing: first cross toward the waiting frog, then show that
+  // another attempted bonk during the real stun does not score again. Every
+  // change in position comes from an actual jump, not a tutorial teleport.
+  if (setup === "pvpDemoRecoveryBonk") {
+    const lowerCenter = PARK_PLATFORMS[3];
+    if (tutorial.pvpDemoStage === 0 && ember.firstJumpMade && ember.grounded &&
+        getPvpStandingPlatform(ember) === lowerCenter && !ember.charging &&
+        !tutorial.pvpScriptActions.length) {
+      tutorial.pvpDemoStage = 1;
+      scriptPvpChargedJump(1, .42, -1, 120);
+    } else if (tutorial.pvpDemoStage === 1 && tutorial.pvpDemoBonkCount >= 1 &&
+        ember.grounded && !ember.charging && !tutorial.pvpScriptActions.length) {
+      tutorial.pvpDemoStage = 2;
+      scriptPvpChargedJump(1, .55, 1, 0);
+    }
+  }
+
   // Dinner Steal intentionally has NO follow-up jump: rebound and catch
   // must occur before the very first leap ends for each frog.
 
@@ -1088,7 +1109,11 @@ function updatePvpDemonstration() {
   } else if (setup === "pvpDemoRecoveryBonk") {
     completed = tutorial.pvpDemoBlockedBonkAt > 0 && !p1.bonked && p1.stunTimer <= 0 && pvpTutorialSettled();
   } else if (setup === "pvpDemoBoostBonk") {
-    completed = tutorial.pvpDemoStage >= 1 && tutorial.pvpDemoBonkCount >= 2 && now - tutorial.pvpDemoBonkAt >= 1000 && pvpTutorialSettled();
+    // The higher fly must actually be eaten at normal range; bonking alone
+    // cannot finish the demo and trigger a fictional long-distance catch.
+    completed = tutorial.pvpDemoStage >= 1 && tutorial.pvpDemoBonkCount >= 2 &&
+      tutorial.pvpPracticeCatchCount > 0 && now - tutorial.pvpDemoBonkAt >= 1000 &&
+      !game.pvpCriticalCatchActive && pvpTutorialSettled();
   } else if (setup === "pvpDemoUnderBonk") {
     completed = tutorial.pvpDemoUnderBonkAt > 0 && now - tutorial.pvpDemoUnderBonkAt >= 1000 && p1.grounded;
   } else if (setup === "pvpDemoAvoidUnder") {
@@ -1113,6 +1138,7 @@ function updatePvpDemonstration() {
 
 function startPvpFinalMatch() {
   tutorial.pvpFinalMatchStarted = true;
+  try { window.RibbitRaceResetFinalCatchLabels?.(); } catch (_) {}
   tutorial.pvpFinalOutcome = null;
   tutorial.pvpDemoActive = false;
   tutorial.pvpPlayerScriptLocked = false;
@@ -1139,6 +1165,11 @@ function startPvpFinalMatch() {
   game.pvpSetupSkinIds[1] = "ember";
   applySelectedLevel();
   resetPvpGame();
+  if (!Number.isInteger(game.targetVocabIndex)) setPrompt(0);
+  for (const fly of flies) {
+    if (fly && fly.state === "active" && !Number.isInteger(fly.vocabIndex))
+      fly.vocabIndex = game.targetVocabIndex;
+  }
   pvpPlayers[0].skinId = String(tutorial.pvpPlayerSkinId || game.pvpSetupSkinIds?.[0] || game.skinId || "azure");
   pvpPlayers[1].skinId = "ember";
   pvpPlayers[0].cpu = false;

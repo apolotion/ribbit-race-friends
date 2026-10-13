@@ -21,7 +21,7 @@ function block(source, start, end) {
 
 test("Polish 16 cache marker is wired", () => {
   for (const source of [tutorial, read("src/common.js"), read("public/index.html"), read("public/scripts/cloud-client.js")]) {
-    assert.match(source, /2026\.10\.13-friends-polish-37/);
+    assert.match(source, /2026\.10\.13-friends-polish-38/);
   }
 });
 
@@ -101,7 +101,7 @@ test("wrong-fly carryover continues normal animation", () => {
 
 test("single buffer start is five pixels left and closing rivalry line is present", () => {
   assert.match(tutorial, /platforms\[2\]\.x \+ Math\.round\(\(platforms\[2\]\.w - frog\.w\) \/ 2\) - 5/);
-  assert.match(tutorial, /If you really want a challenge, come face me in Versus\. I'll be waiting!/);
+  assert.match(tutorial, /Come find me in Versus when you want a challenge\./);
 });
 
 test("time-based hats unlock at the win boundary but do not show victory cards", () => {

@@ -24,10 +24,10 @@ function geometry(){
 test('Borrow My Bounce demo swaps the frogs while player turn remains unchanged',()=>{
  const c=geometry();c.setup('pvpDemoBoostBonk');
  assert.deepEqual(c.pvpPlayers.map(p=>[p.x,p.y,p.dir]),[[145,200,1],[305,200,-1]]);
- assert.deepEqual(c.flies.map(f=>[f.x,f.y,f.vocabIndex]),[[72,118,4]]);
+ assert.deepEqual(c.flies.map(f=>[f.x,f.y,f.vocabIndex]),[[72,84,4]]);
  c.flies.length=0;c.setup('pvpBoostBonk');
  assert.deepEqual(c.pvpPlayers.map(p=>[p.x,p.y,p.dir]),[[145,200,1],[305,200,-1]]);
- assert.deepEqual(c.flies.map(f=>[f.x,f.y,f.vocabIndex]),[[408,118,4]]);
+ assert.deepEqual(c.flies.map(f=>[f.x,f.y,f.vocabIndex]),[[408,84,4]]);
 });
 test('Under-bonk demonstration reaches center platform through a real charged jump, never teleport',()=>{
  const demo=section(scene,'function beginPvpDemoMotion','function startPvpDemonstration');

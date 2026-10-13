@@ -85,6 +85,10 @@ attemptPvpFlyCatch = function(player, targetFly, source = "body", ...rest) {
     const qualified = reboundCatchSetups.includes(setup) && player.index === catchingIndex &&
       !player.grounded && Boolean(player.bouncedOffOpponentThisJump) &&
       player.lastOpponentBounceType === "rebound" && tutorial.pvpReboundAt > 0;
+    if (setup === "pvpDemoBoostBonk" && player.index === 1 && tutorial.pvpDemoBonkCount >= 1 &&
+        !game.pvpCriticalCatchActive) startPvpCriticalCatch(player, targetFly, "contest");
+    if (setup === "pvpBoostBonk" && player.index === 0 && tutorial.pvpBoostedBonkSeen &&
+        !game.pvpCriticalCatchActive) startPvpCriticalCatch(player, targetFly, "contest");
     if (qualified) {
       tutorial.pvpTechniqueCatchQualified = true;
       tutorial.pvpTechniqueCatchPlayerIndex = player.index;

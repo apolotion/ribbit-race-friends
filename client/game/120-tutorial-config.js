@@ -3,7 +3,7 @@
 
 const SOLO_SEEN_KEY = "rrFriendsEngineTutorialSoloSeenV8";
 const PVP_SEEN_KEY = "rrFriendsEngineTutorialPvpSeenV8";
-const TUTORIAL_BUILD = "2026.10.13-friends-polish-37";
+const TUTORIAL_BUILD = "2026.10.13-friends-polish-38";
 const TUTORIAL_ACHIEVEMENT_ID = "tutorial-graduate";
 const PVP_TUTORIAL_ACHIEVEMENT_ID = "versus-tutorial-graduate";
 const TYPEWRITER_MS_PER_CHARACTER = 28;
@@ -33,8 +33,7 @@ const TUTORIAL_SMOKE_OFFSETS = Object.freeze([
 
 const FINAL_TUTORIAL_DIALOGUE = Object.freeze([
   "You did it, tadpole! You're officially Ribbit Ready!",
-      "Enjoy Versus with the other frogs in the pond—and come find me whenever you want real competition!",
-  "If you really want a challenge, come face me in Versus. I'll be waiting!"
+  "Come find me in Versus when you want a challenge."
 ]);
 const EMBER_SKIN = Object.freeze({ ...FROG_SKINS.ember, hat: "none" });
 const EMBER_PORTRAIT_SOURCES = Object.freeze({
@@ -178,6 +177,7 @@ const tutorial = {
   bufferedJumpChainCount: 0,
   bufferedJumpWindowOpenedAt: 0,
   bufferedJumpReleased: false,
+  bufferedJumpConfirmed: false,
   wasGroundedLastFrame: true,
   revealPromptOnLanding: false,
   pvpScoreStart: 0,
@@ -209,6 +209,11 @@ const tutorial = {
   pvpSkyBonkSeen: false,
   pvpMaximumBonkSeen: false,
   pvpUnderBonks: 0,
+  pvpUnderBonkFirstLineShown: false,
+  pvpUnderBonkPendingSecond: false,
+  pvpUnderBonkAttemptAirborne: false,
+  pvpUnderBonkChargePrimed: false,
+  pvpUnderBonkEmberAirborne: false,
   pvpReboundCount: 0,
   pvpInterceptSeen: false,
   pvpBoostedBonkSeen: false,
@@ -298,7 +303,8 @@ const SOLO_STEPS = Object.freeze([
     dialogue: [
       "Let's put those frog legs to work!",
       "Hold the jump button to charge, then release to leap.",
-      "The more you charge, the farther you'll go - but timing is everything!",
+      "The more you charge, the farther you'll go.",
+      "But timing is everything!",
       "Hold too long, and you'll lose some of that distance.",
       "Try releasing just as your charge gets close to full.",
       "Show me three long jumps in a row!"
@@ -831,7 +837,7 @@ const PVP_STEPS = Object.freeze([
       "Don't get too comfortable!",
       "A bonk can knock you off a platform all the way to the ground.",
       "That fall can add more stun time—and make you give up your spot.",
-      "First, a full jump toward the wall. Then another full jump back toward the top!"
+      "Watch me knock you down with a single full-charged jump!"
     ],
     "successDialogue": [
       "See? You lost your perch, and I bought myself a little more time."
@@ -847,8 +853,8 @@ const PVP_STEPS = Object.freeze([
       "TO THE GROUND"
     ],
     "dialogue": [
-      "Now I'll take the top platform. You start in the middle.",
-      "Use a full jump toward the wall, then another full jump back toward me.",
+      "Now I'll take the top platform. You start on the lower-right perch.",
+      "Give me one full-charged jump and knock me off the top!",
       "Jump above me and land a bonk.",
       "Let's see you bring me back down to earth!"
     ],
@@ -970,7 +976,6 @@ const PVP_STEPS = Object.freeze([
       "Give me two under bonks without giving up your perch!"
     ],
     "successDialogue": [
-      "Okay. Your platform.",
       "Apparently, jumping into the same frog twice doesn't improve the results."
     ]
   },
@@ -1011,7 +1016,8 @@ const PVP_STEPS = Object.freeze([
     ],
     "successDialogue": [
       "Not even a bump!",
-      "You're learning how to ruin my plans. I'm very proud. Annoyed. But proud."
+      "You're learning how to ruin my plans. I'm very proud.",
+      "Annoyed. But proud."
     ]
   },
   {
@@ -1186,7 +1192,7 @@ const PVP_STEPS = Object.freeze([
     ],
     "finalMatch": true,
     "dialogue": [
-      "Look at you! Bonking me, bouncing off me, and stealing my flies.",
+      "Look at you! Bonking, bouncing, and stealing my flies.",
       "You've come a long way, tadpole. Now let's put it all together in a real race!",
       "Normally, Versus is best of three, with 60 seconds in each round.",
       "For this tutorial, we're playing one 30-second round. Best of one—this round decides our match!",
