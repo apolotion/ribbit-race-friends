@@ -19,7 +19,7 @@ function block(source, start, end) {
 
 test("Polish 21 cache marker is wired through the Worker, client, and asset URLs", () => {
   for (const source of [tutorial, common, index, read("public/scripts/cloud-client.js")]) {
-    assert.match(source, /2026\.10\.13-friends-polish-41/);
+    assert.match(source, /2026\.10\.13-friends-polish-42/);
   }
 });
 
@@ -49,13 +49,12 @@ test("adjacent icon groups keep breathing room and Tutorial hover suppresses Ran
   assert.match(rendering, /anotherControlHovered[\s\S]{0,220}game\.homeTutorialButtonHovered/);
 });
 
-test("Achievements leaderboard uses the pixel-art wreath matching the selected frog palette", () => {
+test("Achievements leaderboard displays the selected trophy-and-wreath image inside the button", () => {
   const medal = block(tutorial, "function drawMiniMedalButton", "const LEADERBOARD_METRICS");
-  assert.match(medal, /const skin = getSelectedSkin\(\)/);
-  assert.match(medal, /const vine = active \? skin\.mid/);
-  assert.match(medal, /const leaf = active \? skin\.light/);
-  assert.match(medal, /const gold =/);
-  assert.match(medal, /leafBlock\(/);
+  assert.match(tutorial, /leaderboardMedalSprite\.src = "\/icons\/leaderboard-trophy-wreath\.png"/);
+  assert.match(medal, /ctx\.drawImage\(leaderboardMedalSprite,rect\.x\+1,rect\.y\+2,26,23\)/);
+  assert.match(medal, /ctx\.imageSmoothingEnabled=false/);
+  assert.match(medal, /const skin=getSelectedSkin\(\)/);
 });
 
 test("Undo and Redo arrows stay inside their boxes and no longer show helper bubbles", () => {

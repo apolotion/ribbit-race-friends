@@ -35,11 +35,12 @@ test('refresh glyph and compact clapperboard stay in row footprint',()=>{
  assert.match(ui,/ctx\.fillRect\(x-7, y-5, 14, 10\)/);
  assert.match(ui,/columns\.level-13/);
 });
-test('flashcards have icon controls, floating star and bottom-right question mark',()=>{
- for(const k of ['ICON_PREV','ICON_NEXT','ICON_BACK','ICON_SHUFFLE']) assert.ok(ui.includes(k));
+test('flashcards have card-flipping star, labelled back button and bottom-right help',()=>{
+ for(const k of ['ICON_PREV','ICON_NEXT','ICON_SHUFFLE','"BACK"']) assert.ok(ui.includes(k));
  assert.match(ui,/help:Object\.freeze\(\{id:"help",x:380,y:222/);
- assert.match(ui,/star:Object\.freeze\(\{id:"star",x:378,y:89/);
- assert.match(ui,/Math\.max\(0,polish\.flashcardIndex-1\)/);
+ assert.match(ui,/star:Object\.freeze\(\{id:"star",x:378,y:88/);
+ assert.match(ui,/moveToFlashcard\(polish\.flashcardIndex-1,-1,count\)/);
+ assert.match(ui,/drawFlashcardStar\(starButton\.x\+starButton\.w\/2,starButton\.y\+starButton\.h\/2,starred\)/);
 });
 test('Frog Tags provide search and sorted opponent history',()=>{
  for(const s of ['battleSearch','sortedBattleEntries','searchOpen','battleHeaderRects','ratio','recent','name']) assert.ok(online.includes(s));

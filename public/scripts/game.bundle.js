@@ -64,7 +64,7 @@ function startRibbitRaceGame() {
     const canvas = document.getElementById("game");
     const gameFrame = document.getElementById("game-frame");
     const friendsGameInputLocked = () => window.RibbitFriendsGameInputLocked?.() === true;
-    const RIBBIT_DISPLAY_VERSION = "VERSION 1.7.29";
+    const RIBBIT_DISPLAY_VERSION = "VERSION 1.7.30";
     const RIBBIT_CREDIT_TEXT = "MADE BY NICK M.";
     const RIBBIT_CREDIT_Y = 228;
     const rgbValueEditor = document.getElementById("rgb-value-editor");
@@ -19728,8 +19728,8 @@ function startRibbitRaceGame() {
     requestAnimationFrame(frame);
 
     /* ===== client/game/90-extended-features.js ===== */
-const RIBBIT_FRIENDS_DISPLAY_VERSION = "1.7.29";
-const RIBBIT_FRIENDS_BUILD = "2026.10.13-friends-polish-41";
+const RIBBIT_FRIENDS_DISPLAY_VERSION = "1.7.30";
+const RIBBIT_FRIENDS_BUILD = "2026.10.13-friends-polish-42";
 function rr14Number(value, fallback = 0) {
   const parsed = Number(value);
   return Number.isFinite(parsed) ? parsed : fallback;
@@ -20208,10 +20208,10 @@ window.RibbitRaceMobileDiagnostics = () => ({
  */
 (() => {
   "use strict";
-  const BUILD = "2026.10.13-friends-polish-41";
+  const BUILD = "2026.10.13-friends-polish-42";
   const RR_V160_CANDIDATES = {"catchFly":["attemptFlyCatch","attemptPvpFlyCatch","catchSandboxFly","getPvpImminentCatchFly","recordFlyEaten","scheduleFlyReplacementFromCatch"],"jumpSound":["playJumpSound"],"beep":["playCountdownGoSound","playCountdownSound"],"replayUpload":["saveRecordDate"],"restart":["resetGame","resetPvpGame","resetPvpPlayer","resetRoundLifecycle","resetRoundNetwork","restartCurrentLevel"],"drop":[],"render":["drawPvpScene","drawScene"],"worldRecord":[],"fullscreen":["getFullscreenElement","hideFullscreenFallback","showFullscreenFallback","syncFullscreenButton","toggleRibbitFullscreen"],"onlineSubmit":[],"leaderboard":["isSoloEndlessLeaderboardEligible","savePvpMatchWinsForLeaderboard"]};
   const RR_V160_VARS = {"onlineSelect":[],"achievementSelect":["activeAchievementIndex","hoveredAchievementCard"],"backRect":[]};
-  const VERSION = "1.7.29";
+  const VERSION = "1.7.30";
   const V = {
     menuTouch: new Map(), chargeTouch: new Map(), achievementPinned: -1,
     finalCatchStarted: 0, finalCatchLabelsGone: false,
@@ -21082,7 +21082,7 @@ window.RibbitRaceMobileDiagnostics = () => ({
 "use strict";
 const SOLO_SEEN_KEY = "rrFriendsEngineTutorialSoloSeenV8";
 const PVP_SEEN_KEY = "rrFriendsEngineTutorialPvpSeenV8";
-const TUTORIAL_BUILD = "2026.10.13-friends-polish-41";
+const TUTORIAL_BUILD = "2026.10.13-friends-polish-42";
 const TUTORIAL_ACHIEVEMENT_ID = "tutorial-graduate";
 const PVP_TUTORIAL_ACHIEVEMENT_ID = "versus-tutorial-graduate";
 const TYPEWRITER_MS_PER_CHARACTER = 28;
@@ -27375,6 +27375,10 @@ window.RibbitRaceTutorialEngine = Object.freeze({
     flashcardFlipFrom: "english",
     flashcardFlipTo: "english",
     flashcardStars: [],
+    flashcardSlideAt: 0,
+    flashcardSlideFromIndex: 0,
+    flashcardSlideFromFace: "english",
+    flashcardSlideDirection: 0,
     pauseFullscreenHovered: false,
     flashcardHelpOpen: false
   };
@@ -27419,11 +27423,11 @@ window.RibbitRaceTutorialEngine = Object.freeze({
     previous:Object.freeze({id:"previous",x:76,y:187,w:54,h:23}),
     flip:Object.freeze({id:"flip",x:138,y:187,w:141,h:23}),
     next:Object.freeze({id:"next",x:287,y:187,w:54,h:23}),
-    shuffle:Object.freeze({id:"shuffle",x:349,y:187,w:54,h:23}),
+    shuffle:Object.freeze({id:"shuffle",x:349,y:187,w:27,h:23}),
     starred:Object.freeze({id:"starred",x:76,y:215,w:145,h:19}),
     back:Object.freeze({id:"back",x:230,y:215,w:120,h:19}),
     help:Object.freeze({id:"help",x:380,y:222,w:22,h:20}),
-    star:Object.freeze({id:"star",x:378,y:89,w:18,h:18})
+    star:Object.freeze({id:"star",x:378,y:88,w:24,h:24})
   });
   const FLASHCARD_BUTTON_ORDER = Object.freeze(Object.values(FLASHCARD_BUTTON_RECTS));
   const FLASHCARD_STARS_KEY = "ribbitRaceFlashcardStarsV1";
@@ -27445,6 +27449,18 @@ window.RibbitRaceTutorialEngine = Object.freeze({
     polish.flashcardFace="english";polish.flashcardFlipAt=0;
     polish.flashcardFlipFrom="english";polish.flashcardFlipTo="english";
   }
+  function moveToFlashcard(nextIndex, direction, count) {
+    if (!count || polish.flashcardComplete) return;
+    const current = Math.max(0, Math.min(count-1, polish.flashcardIndex));
+    const destination = Math.max(0, Math.min(count-1, nextIndex));
+    if (current === destination) return;
+    polish.flashcardSlideFromIndex = current;
+    polish.flashcardSlideFromFace = polish.flashcardFlipAt ? polish.flashcardFlipTo : polish.flashcardFace;
+    polish.flashcardSlideDirection = direction < 0 ? -1 : 1;
+    polish.flashcardSlideAt = performance.now();
+    polish.flashcardIndex = destination;
+    resetFlashcardFace();
+  }
   function rebuildFlashcardDeck(starredOnly=false, shuffle=false) {
     const words=getFlashcardVocabulary();
     polish.flashcardOnlyStarred=starredOnly;
@@ -27452,6 +27468,7 @@ window.RibbitRaceTutorialEngine = Object.freeze({
     const order=words.map((_,i)=>i).filter(i=>!starredOnly||stars.has(flashcardKey(words[i])));
     if(shuffle)for(let i=order.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[order[i],order[j]]=[order[j],order[i]];}
     polish.flashcardOrder=order;polish.flashcardIndex=0;polish.flashcardComplete=false;
+    polish.flashcardSlideAt=0; polish.flashcardSlideDirection=0;
     resetFlashcardFace();
   }
   const DEVICE_MENU_RECTS = Object.freeze({
@@ -27619,48 +27636,41 @@ window.RibbitRaceTutorialEngine = Object.freeze({
       drawPagerArrowIcon(rect,title==="ICON_NEXT"?1:-1,ink);
       return;
     }
-    if(title==="ICON_BACK"){
-      drawProfileOptionIcon("back",mid,cy,ink);
+    if(title==="BACK"){
+      drawProfileOptionIcon("back",rect.x+15,cy,ink);
+      drawBitmapText("BACK",mid+5,rect.y+(rect.h-7*.56)/2,.56,"center",ink);
       return;
     }
     if(title==="ICON_SHUFFLE"){
+      const cx=Math.round(mid), y=Math.round(cy);
       ctx.fillStyle=ink;
-      const cx=Math.round(mid),y=Math.round(cy);
-      ctx.fillRect(cx-13,y-5,5,2);ctx.fillRect(cx-8,y-3,3,2);
-      ctx.fillRect(cx-5,y-1,3,2);ctx.fillRect(cx-2,y+1,3,2);
-      ctx.fillRect(cx+1,y+3,3,2);ctx.fillRect(cx+4,y+5,7,2);
-      ctx.fillRect(cx+8,y+3,2,6);ctx.fillRect(cx-13,y+5,5,2);
-      ctx.fillRect(cx-8,y+3,3,2);ctx.fillRect(cx-5,y+1,3,2);
-      ctx.fillRect(cx-2,y-1,3,2);ctx.fillRect(cx+1,y-3,3,2);
-      ctx.fillRect(cx+4,y-5,7,2);ctx.fillRect(cx+8,y-7,2,6);
+      ctx.fillRect(cx-8,y-5,5,2); ctx.fillRect(cx-3,y-3,3,2); ctx.fillRect(cx,y-1,3,2); ctx.fillRect(cx+3,y+1,5,2);
+      ctx.fillRect(cx+5,y-1,2,6); ctx.fillRect(cx-8,y+5,5,2); ctx.fillRect(cx-3,y+3,3,2);
+      ctx.fillRect(cx,y+1,3,2); ctx.fillRect(cx+3,y-1,5,2); ctx.fillRect(cx+5,y-3,2,6);
       return;
     }
     const titleScale=Math.min(rect.h>20?.75:.55,(rect.w-10)/Math.max(1,measureBitmapText(title,1)));
     drawBitmapText(title,mid,rect.y+(rect.h-7*titleScale)/2,titleScale,"center",ink);
   }
+  const flashcardStarSprite = new Image();
+  flashcardStarSprite.src = "/icons/flashcard-star.png";
   function drawFlashcardStar(cx,cy,isStarred=false){
-    const pixels=[
-      "......1......",
-      ".....121.....",
-      ".....222.....",
-      "....12221....",
-      "1111122211111",
-      ".12222222221.",
-      "..122222221..",
-      "...1222221...",
-      "...1222221...",
-      "...1221221...",
-      "..1211.1121..",
-      ".121.....121.",
-      "11.........11"
-    ];
-    const palette=isStarred?{"1":"#593b00","2":"#ffd51e"}:{"1":"#48555a","2":"#dce5e8"};
-    const x0=Math.round(cx-6),y0=Math.round(cy-6);
-    pixels.forEach((row,y)=>{for(let x=0;x<row.length;x++){
-      const color=palette[row[x]];if(!color)continue;
-      ctx.fillStyle=color;ctx.fillRect(x0+x,y0+y,1,1);
-    }});
-    if(isStarred){ctx.fillStyle="#fff5aa";ctx.fillRect(x0+6,y0+3,1,3);ctx.fillRect(x0+5,y0+5,1,1);}
+    const width=22,height=22;
+    const x=Math.round(cx-width/2),y=Math.round(cy-height/2);
+    ctx.save();
+    ctx.globalAlpha=isStarred?1:.78;
+    if(flashcardStarSprite.complete&&flashcardStarSprite.naturalWidth){
+      ctx.imageSmoothingEnabled=false;
+      ctx.drawImage(flashcardStarSprite,x,y,width,height);
+    }else{
+      ctx.fillStyle="#f5cf21";
+      ctx.fillRect(x+9,y+2,4,15); ctx.fillRect(x+3,y+9,16,4);
+      ctx.fillRect(x+5,y+6,12,10);
+      ctx.fillStyle="#1e2124";
+      ctx.fillRect(x+10,y,2,2); ctx.fillRect(x+1,y+9,3,2);
+      ctx.fillRect(x+18,y+9,3,2); ctx.fillRect(x+4,y+18,3,2); ctx.fillRect(x+16,y+18,3,2);
+    }
+    ctx.restore();
   }
   function drawFlashcardHelpPanel(){
     const panel={x:92,y:94,w:296,h:124};
@@ -27687,60 +27697,81 @@ window.RibbitRaceTutorialEngine = Object.freeze({
     drawUtilityWindowFrame("FLASH CARDS", "STUDY YOUR VOCAB SETS");
     const skin=getSelectedSkin(), deck=flashcardEntries(), count=deck.length;
     if(count)polish.flashcardIndex=Math.min(Math.max(0,polish.flashcardIndex),count-1);
-    const pair=count?deck[polish.flashcardIndex]:null,entry=pair?.entry;
-    const currentKey=flashcardKey(entry),starred=Boolean(entry&&polish.flashcardStars.includes(currentKey));
     const prefix=polish.flashcardOnlyStarred?"STARRED TERMS":"FRIENDS VOCAB";
     drawBitmapText(`${prefix}  •  ${count} CARDS`,W/2,68,.48,"center","#48555a");
     const card={x:73,y:79,w:334,h:104};
     ctx.fillStyle="rgba(25,43,52,.15)";ctx.fillRect(card.x+3,card.y+3,card.w,card.h);
     ctx.fillStyle=COLORS.ink;ctx.fillRect(card.x,card.y,card.w,card.h);
-    const flipT=polish.flashcardFlipAt?Math.min(1,(performance.now()-polish.flashcardFlipAt)/280):1;
-    if(polish.flashcardFlipAt&&flipT>=1){polish.flashcardFace=polish.flashcardFlipTo;polish.flashcardFlipAt=0;}
-    const face=polish.flashcardFlipAt&&flipT>=.5?polish.flashcardFlipTo:polish.flashcardFace;
-    const scaleX=polish.flashcardFlipAt?Math.max(.05,Math.abs(Math.cos(Math.PI*flipT))):1;
-    ctx.save();ctx.translate(card.x+card.w/2,0);ctx.scale(scaleX,1);ctx.translate(-(card.x+card.w/2),0);
-    const secondary=face!=="english";
-    ctx.fillStyle=secondary?mixHexColors(skin.mid,"#ffffff",.26):mixHexColors(skin.belly,"#ffffff",.18);
-    ctx.fillRect(card.x+3,card.y+3,card.w-6,card.h-6);
+    const drawCardFace=(index,face,offsetX=0,flipScale=1)=>{
+      const pair=deck[index],entry=pair?.entry;
+      const currentKey=flashcardKey(entry);
+      const starred=Boolean(entry&&polish.flashcardStars.includes(currentKey));
+      const secondary=face!=="english";
+      ctx.save();
+      ctx.beginPath();ctx.rect(card.x+3,card.y+3,card.w-6,card.h-6);ctx.clip();
+      ctx.translate(offsetX,0);
+      ctx.translate(card.x+card.w/2,0);ctx.scale(flipScale,1);ctx.translate(-(card.x+card.w/2),0);
+      ctx.fillStyle=secondary?mixHexColors(skin.mid,"#ffffff",.26):mixHexColors(skin.belly,"#ffffff",.18);
+      ctx.fillRect(card.x+3,card.y+3,card.w-6,card.h-6);
+      if(entry){
+        const label=secondary?"ESPAÑOL":"ENGLISH";
+        const value=String(secondary?entry.spanish||"":entry.english||"").trim().toUpperCase();
+        const fit=Math.min(1.20,(card.w-36)/Math.max(1,measureBitmapText(value,1)));
+        drawBitmapText(`${index+1} / ${count}`,card.x+card.w-50,card.y+12,.53,"right",skin.dark);
+        drawBitmapText(label,W/2,card.y+15,.70,"center",skin.dark);
+        ctx.save();ctx.beginPath();ctx.rect(card.x+12,card.y+30,card.w-24,45);ctx.clip();
+        drawBitmapText(value,W/2,card.y+46,fit,"center",COLORS.ink);ctx.restore();
+        drawBitmapText(secondary?"TARGET LANGUAGE":"ENGLISH FRONT",W/2,card.y+85,.48,"center","#59666b");
+        const starButton=FLASHCARD_BUTTON_RECTS.star;
+        drawFlashcardStar(starButton.x+starButton.w/2,starButton.y+starButton.h/2,starred);
+      }else{
+        drawBitmapText("NO STARRED TERMS YET",W/2,card.y+42,.80,"center",skin.dark);
+        drawBitmapText("PRESS BACK TO SEE ALL CARDS",W/2,card.y+69,.48,"center","#59666b");
+      }
+      ctx.restore();
+    };
+    const slideDuration=255;
+    const slideT=polish.flashcardSlideAt?Math.min(1,(performance.now()-polish.flashcardSlideAt)/slideDuration):1;
+    if(polish.flashcardSlideAt&&slideT>=1)polish.flashcardSlideAt=0;
     if(polish.flashcardComplete){
+      ctx.fillStyle=mixHexColors(skin.belly,"#ffffff",.18);
+      ctx.fillRect(card.x+3,card.y+3,card.w-6,card.h-6);
       drawBitmapText("DECK COMPLETE!",W/2,card.y+34,1.07,"center",skin.dark);
-      drawBitmapText("RESTART OR STUDY STARRED TERMS",W/2,card.y+63,.57,"center","#59666b");
-    }else if(entry){
-      const label=secondary?"ESPAÑOL":"ENGLISH";
-      const value=String(secondary?entry.spanish||"":entry.english||"").trim().toUpperCase();
-      const fit=Math.min(1.20,(card.w-36)/Math.max(1,measureBitmapText(value,1)));
-      drawBitmapText(`${polish.flashcardIndex+1} / ${count}`,card.x+card.w-48,card.y+12,.53,"right",skin.dark);
-      drawBitmapText(label,W/2,card.y+15,.70,"center",skin.dark);
-      ctx.save();ctx.beginPath();ctx.rect(card.x+12,card.y+30,card.w-24,45);ctx.clip();
-      drawBitmapText(value,W/2,card.y+46,fit,"center",COLORS.ink);ctx.restore();
-      drawBitmapText(secondary?"TARGET LANGUAGE":"ENGLISH FRONT",W/2,card.y+85,.48,"center","#59666b");
+      drawBitmapText(polish.flashcardStars.length ? "RESTART OR STUDY STARRED TERMS" : "PRESS SPACE TO RESTART",W/2,card.y+63,.57,"center","#59666b");
+    }else if(polish.flashcardSlideAt){
+      const ease=1-Math.pow(1-slideT,3);
+      const direction=polish.flashcardSlideDirection;
+      drawCardFace(polish.flashcardSlideFromIndex,polish.flashcardSlideFromFace,-direction*card.w*ease);
+      drawCardFace(polish.flashcardIndex,"english",direction*card.w*(1-ease));
     }else{
-      drawBitmapText("NO STARRED TERMS YET",W/2,card.y+42,.80,"center",skin.dark);
-      drawBitmapText("PRESS BACK TO SEE ALL CARDS",W/2,card.y+69,.48,"center","#59666b");
+      const flipT=polish.flashcardFlipAt?Math.min(1,(performance.now()-polish.flashcardFlipAt)/280):1;
+      if(polish.flashcardFlipAt&&flipT>=1){polish.flashcardFace=polish.flashcardFlipTo;polish.flashcardFlipAt=0;}
+      const face=polish.flashcardFlipAt&&flipT>=.5?polish.flashcardFlipTo:polish.flashcardFace;
+      const scaleX=polish.flashcardFlipAt?Math.max(.05,Math.abs(Math.cos(Math.PI*flipT))):1;
+      drawCardFace(polish.flashcardIndex,face,0,scaleX);
     }
-    ctx.restore();
-    if(entry&&!polish.flashcardComplete){
-      const r=FLASHCARD_BUTTON_RECTS.star;
-      drawFlashcardStar(r.x+r.w/2,r.y+r.h/2,starred);
-    }
-    const h=FLASHCARD_BUTTON_RECTS.help, hcx=h.x+h.w/2,hcy=h.y+h.h/2;
-    const helpColor=polish.flashcardHoverKey==="help"?skin.dark:"#48555a";
-    ctx.fillStyle=helpColor;
-    ctx.fillRect(hcx-6,hcy-8,12,2);ctx.fillRect(hcx-8,hcy-6,2,12);
-    ctx.fillRect(hcx+6,hcy-6,2,12);ctx.fillRect(hcx-6,hcy+6,12,2);
-    ctx.fillRect(hcx-3,hcy-5,6,2);ctx.fillRect(hcx+3,hcy-3,2,3);
-    ctx.fillRect(hcx,hcy,3,2);ctx.fillRect(hcx-1,hcy+2,2,2);
-    ctx.fillRect(hcx-1,hcy+5,2,2);
+    const h=FLASHCARD_BUTTON_RECTS.help,hcx=h.x+h.w/2,hcy=h.y+h.h/2;
+    const selectedHelp=polish.flashcardHoverKey==="help",color=selectedHelp?skin.dark:"#48555a";
+    ctx.fillStyle="rgba(25,43,52,.19)";ctx.fillRect(h.x+2,h.y+2,h.w,h.h);
+    ctx.fillStyle=selectedHelp?COLORS.ink:"#9aa9ae";ctx.fillRect(h.x,h.y,h.w,h.h);
+    ctx.fillStyle=selectedHelp?mixHexColors(skin.belly,"#ffffff",.16):"#f7fdff";
+    ctx.fillRect(h.x+2,h.y+2,h.w-4,h.h-4);
+    ctx.fillStyle=selectedHelp?skin.light:"#ffffff";ctx.fillRect(h.x+4,h.y+3,h.w-8,1);
+    ctx.fillStyle=color;
+    ctx.fillRect(hcx-5,hcy-7,10,2);ctx.fillRect(hcx-7,hcy-5,2,10);
+    ctx.fillRect(hcx+5,hcy-5,2,10);ctx.fillRect(hcx-5,hcy+5,10,2);
+    ctx.fillRect(hcx-2,hcy-4,4,2);ctx.fillRect(hcx+2,hcy-2,2,3);
+    ctx.fillRect(hcx-1,hcy+1,2,2);ctx.fillRect(hcx-1,hcy+4,2,2);
     const selected=id=>polish.flashcardHoverKey===id;
     const buttons=[
       ["previous",polish.flashcardComplete?"RESTART DECK":"ICON_PREV",""],
-      ["flip",polish.flashcardComplete?"VIEW STARRED":"FLIP CARD",""],
+      ["flip",polish.flashcardComplete?(polish.flashcardStars.length?"VIEW STARRED":"RESTART DECK"):"FLIP CARD",""],
       ["next",polish.flashcardComplete?"ALL CARDS":"ICON_NEXT",""],
-      ["shuffle","ICON_SHUFFLE",""],["starred",polish.flashcardOnlyStarred?"ALL CARDS":"STARRED TERMS",""],["back","ICON_BACK",""],
+      ["shuffle","ICON_SHUFFLE",""],
+      ["starred",polish.flashcardOnlyStarred?"ALL CARDS":"STARRED TERMS",""],
+      ["back","BACK",""]
     ];
-    buttons.forEach(([id,title,hint])=>{
-      drawCardButton(FLASHCARD_BUTTON_RECTS[id],title,hint,selected(id));
-    });
+    buttons.forEach(([id,title,hint])=>drawCardButton(FLASHCARD_BUTTON_RECTS[id],title,hint,selected(id)));
     if(polish.flashcardHelpOpen)drawFlashcardHelpPanel();
   }
   function drawDeviceModeIcon(rect, mobile, selected) {
@@ -27854,7 +27885,10 @@ window.RibbitRaceTutorialEngine = Object.freeze({
       }
     }else if(polish.flashcardComplete){
       if(id==="previous")rebuildFlashcardDeck(polish.flashcardOnlyStarred,polish.flashcardShuffled);
-      else if(id==="flip")rebuildFlashcardDeck(true,false);
+      else if(id==="flip"){
+        if(polish.flashcardStars.length)rebuildFlashcardDeck(true,false);
+        else rebuildFlashcardDeck(false,polish.flashcardShuffled);
+      }
       else if(id==="next")rebuildFlashcardDeck(false,false);
     }else if(id==="flip"){
       if(!count)return;
@@ -27864,12 +27898,13 @@ window.RibbitRaceTutorialEngine = Object.freeze({
       polish.flashcardFlipTo=polish.flashcardFace==="english"?"spanish":"english";
       polish.flashcardFlipAt=now;
     }else if(id==="previous"){
-      if(count){polish.flashcardIndex=Math.max(0,polish.flashcardIndex-1);resetFlashcardFace();}
+      if(count)moveToFlashcard(polish.flashcardIndex-1,-1,count);
     }else if(id==="next"){
       if(count){
-        if(polish.flashcardIndex>=count-1)polish.flashcardComplete=true;
-        else polish.flashcardIndex++;
-        resetFlashcardFace();
+        if(polish.flashcardIndex>=count-1){
+          polish.flashcardComplete=true;polish.flashcardSlideAt=0;
+          resetFlashcardFace();
+        }else moveToFlashcard(polish.flashcardIndex+1,1,count);
       }
     }
     tone(360,.03,.008,6);
@@ -28018,32 +28053,26 @@ window.RibbitRaceTutorialEngine = Object.freeze({
     return Boolean(point && rect && point.x >= rect.x && point.x <= rect.x + rect.w && point.y >= rect.y && point.y <= rect.y + rect.h);
   }
   const leaderboardMedalSprite = new Image();
-  leaderboardMedalSprite.src = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABwAAAAcCAYAAAByDd+UAAAECUlEQVR4nO2Wz2/VRRTFz7nzLdIYQhUDdqOEQKGvJdESjSGaKPCwxpgY/wE3aowCheLGSqIbVkIftEg0UQoGdWciAZPyY0XQhJBAofDeK9UI2oZQosQCpe137nHx2gTT99oaWXIW38V8Z+Yz587cOwM80H0WZ9Ppw2exoLaG10FAwMSnNNgFBFNxYzcy9wWYW4f0mafI2ieExdnllAM0ApAAsv9wEUikI4ep1hNK/hewoxnj77fXBVgiuHgz3wczwCmYIAcwf8UyKI3o6/6Fx4/BW7qnh1YEtq9D2rJnhQ3nL8tdVKDm1y0lnzxU6nDldSCYhvN5jI0TFoBHMhl0brqAzUcRKs1bcTUECQSkLtTUNYBLfqCRcI4Dv60HOBcGcF5mBZAKNy5dFhQRZtgkK9e4K4u4sWM5/jxfUHQCQQLHAN0C/C6M1YAFuACTwYLB4LhxvoD3csuxcy3j9Nh7lMsixnzGr38HH/w2eMzX+yer4Lub4Wm+3mMh4yo2uIoNHosN3tmMuKM5iWm+3gcPMg4cNE8v1cfdL5eHlnVoiBADFq3KoGNzAZZCG9rrQBJGwuUT7oB3d9TTSHa0FLBwVYaABDndVdbQ1D000EGIpYGb2usAm8vPW3v0TnsjDCptr4ioBJ9t7cHGXBPIEUARwUhAKI8rA6QowSAH5MRXbf24ORSRzDOavBQTB2ACNYqRcWnv1nN8iKa3dyyjBIEJSBJlsFNDSuDu1SJ8XKSZ7o45Pti3EkECWAolJkILmqoTcEN7BiMxBUKAuzhytQ/G8ianAie6uSAYMAdSZ0svaMKp7wcksWTSgZOHr5GEvmy9oDksjfKUoMRZ1cxJ5dYj3j4W4u9dIaYXG2NHM2MsNMZdWcZYWOkx3+ix0OS5LKPyK73zFcY03+B/HAjxVrfFXLZyWlQ4pYQiCQohOKpc3LulF3MkKqnGns29QlUVAHFPa68engswmCQB4ozJX95l1uLIiSQO7qcPHGC8cWS+71yNmBbqffd6xNj/tH/6Alz9TT7QhTjwNePwj0nsqJB/k5p2Lbks41tbSAvQ6G3jnb9dtaszNI+IEgZPFYWEXFBrGk+BfbkUrccr19EZgW1YGGvWDCGYsGQpsea1ABKEBBKAmW4Pg998kSoYMHT0MWzH0LTAGa4S4o1ba7n4xedx9udD6Pr1nKB7SgidY6NV2vrcx7xy8id1sadCMswSWPIvQUTN6KN8dfQl7j99EdtxzdqwKL7ZlAHNKHfEsYgK1exfKntKJyUJAug2zmAud5dYmtYIyKBEEW4C4LN6sEzrUDAcON0LO3PBq5mEvzz65AodwL4zvaixhDjbhztKpXK17L9oGxZNOeIfTbS1lfm3DY/P/h58oPulfwCs5g8I5d5bswAAAABJRU5ErkJggg==";
+  leaderboardMedalSprite.src = "/icons/leaderboard-trophy-wreath.png";
   function drawMiniMedalButton(rect, active = false) {
-    const skin = getSelectedSkin();
-    const vine = active ? skin.mid : mixHexColors(skin.mid, "#4f8d40", .45);
-    const leaf = active ? skin.light : mixHexColors(skin.belly, "#9ad76f", .45);
-    const gold = active ? "#f0c84b" : "#d7a93f";
-    const darkGold = "#8f6220";
-    ctx.fillStyle = "rgba(25,43,52,.20)";
-    ctx.fillRect(rect.x+2, rect.y+2, rect.w, rect.h);
-    ctx.fillStyle = active ? skin.dark : COLORS.ink;
-    ctx.fillRect(rect.x,rect.y,rect.w,rect.h);
-    ctx.fillStyle = active ? mixHexColors(skin.belly, "#ffffff", .16) : "#f7fdff";
+    const skin=getSelectedSkin();
+    ctx.fillStyle="rgba(25,43,52,.20)";ctx.fillRect(rect.x+2,rect.y+2,rect.w,rect.h);
+    ctx.fillStyle=active?skin.dark:COLORS.ink;ctx.fillRect(rect.x,rect.y,rect.w,rect.h);
+    ctx.fillStyle=active?mixHexColors(skin.belly,"#ffffff",.16):"#f7fdff";
     ctx.fillRect(rect.x+2,rect.y+2,rect.w-4,rect.h-4);
-    const cx = Math.round(rect.x + rect.w / 2), cy = Math.round(rect.y + rect.h / 2) + 1;
-    const leafBlock = (x,y) => { ctx.fillStyle = leaf; ctx.fillRect(x,y,2,2); ctx.fillStyle = vine; ctx.fillRect(x+1,y+1,1,2); };
-    leafBlock(cx-11,cy+2); leafBlock(cx-12,cy-1); leafBlock(cx-11,cy-4); leafBlock(cx-8,cy-7);
-    leafBlock(cx+9,cy+2); leafBlock(cx+10,cy-1); leafBlock(cx+9,cy-4); leafBlock(cx+6,cy-7);
-    ctx.fillStyle = vine;
-    ctx.fillRect(cx-8,cy+5,2,1); ctx.fillRect(cx-7,cy+3,1,2); ctx.fillRect(cx-6,cy+1,1,2); ctx.fillRect(cx-5,cy-1,1,2); ctx.fillRect(cx-4,cy-3,1,2); ctx.fillRect(cx-3,cy-5,1,2);
-    ctx.fillRect(cx+6,cy+5,2,1); ctx.fillRect(cx+6,cy+3,1,2); ctx.fillRect(cx+5,cy+1,1,2); ctx.fillRect(cx+4,cy-1,1,2); ctx.fillRect(cx+3,cy-3,1,2); ctx.fillRect(cx+2,cy-5,1,2);
-    ctx.fillRect(cx-2,cy+6,5,1);
-    ctx.fillStyle = darkGold; ctx.fillRect(cx-3,cy-4,6,6);
-    ctx.fillStyle = gold; ctx.fillRect(cx-2,cy-3,4,4);
-    ctx.fillStyle = darkGold; ctx.fillRect(cx-4,cy-2,1,2); ctx.fillRect(cx+3,cy-2,1,2);
-    ctx.fillRect(cx-1,cy+2,2,3); ctx.fillRect(cx-4,cy+5,8,1);
-    if (active) { ctx.fillStyle=skin.light; ctx.fillRect(rect.x+4,rect.y+3,rect.w-8,1); }
+    if(leaderboardMedalSprite.complete&&leaderboardMedalSprite.naturalWidth){
+      ctx.save();ctx.imageSmoothingEnabled=false;
+      ctx.drawImage(leaderboardMedalSprite,rect.x+1,rect.y+2,26,23);
+      ctx.restore();
+    }else{
+      const cx=rect.x+rect.w/2,cy=rect.y+rect.h/2;
+      ctx.fillStyle="#398350";
+      for(let j=0;j<4;j++){ctx.fillRect(cx-9-j/2,cy-5+j*3,2,3);ctx.fillRect(cx+7+j/2,cy-5+j*3,2,3);}
+      ctx.fillStyle="#b77b1d";ctx.fillRect(cx-4,cy-5,8,8);
+      ctx.fillStyle="#f0ba2d";ctx.fillRect(cx-3,cy-4,6,6);
+      ctx.fillStyle="#b77b1d";ctx.fillRect(cx-1,cy+3,2,5);ctx.fillRect(cx-5,cy+8,10,2);
+    }
+    if(active){ctx.fillStyle=skin.light;ctx.fillRect(rect.x+4,rect.y+3,rect.w-8,1);}
   }
   const LEADERBOARD_METRICS = Object.freeze([
     Object.freeze({ id:"time", label:"FASTEST TIME" }),
