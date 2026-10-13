@@ -100,7 +100,6 @@ window.RibbitRaceTutorialEngine = Object.freeze({
     return (Number.isInteger(tutorial.pauseChapterPreviewIndex) ? tutorial.pauseChapterPreviewIndex : fallback) + 1;
   },
   chapterCount(){ return tutorialSceneCatalog().length; },
-  retryScene(){ retryCurrentScene?.(); },
   start,
   exit: () => finish(false),
   get active() { return tutorial.active; },
@@ -111,15 +110,8 @@ window.RibbitRaceTutorialEngine = Object.freeze({
   get step() { return tutorial.step; },
   get setup() { return tutorialStep()?.setup || ""; },
   retryScene() {
-    if (!tutorial.active || tutorial.resetPending) return false;
-    beginPoofTransition({
-      reason:"hotkey-retry",
-      showFailure:false,
-      preserveExistingFlies:false,
-      armFlies:false,
-      action:rebuildCurrentScenarioWithDialogue
-    });
-    return true;
+    if (!tutorial.active) return false;
+    return restartTutorialSceneImmediately();
   },
   get build() { return TUTORIAL_BUILD; },
   get portraitsReady() { return emberPortraitsReady; },

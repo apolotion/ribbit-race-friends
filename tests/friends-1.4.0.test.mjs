@@ -10,9 +10,9 @@ const mobile=read("client/game/100-mobile-experience.js");
 const render=readGameModuleGroup(70, 79);
 const versus=readGameModuleGroup(60, 69);
 
-test("1.7.14 build and responsibility-focused modular gameplay sources are present",()=>{
-  assert.match(read("src/common.js"),/2026\.10\.12-friends-polish-25/);
-  assert.match(read("package.json"),/"version": "1\.7\.14"/);
+test("1.7.19 build and responsibility-focused modular gameplay sources are present",()=>{
+  assert.match(read("src/common.js"),/2026\.10\.12-friends-polish-30/);
+  assert.match(read("package.json"),/"version": "1\.7\.19"/);
   assert.match(read("scripts/build-game.mjs"),/discoverModules\(\)/);
   assert.match(read("public/index.html"),/mobile-experience\.js/);
 });
@@ -47,8 +47,7 @@ test("fastest-time and fewest-jumps replay paths remain available",()=>{
 test("hat progression uses a post-unlock baseline and no online/human-only requirements",()=>{
   assert.match(extension,/fliesBase/);
   assert.match(extension,/jumpsBase/);
-  assert.match(extension,/HATS UNLOCKED/);
-  assert.match(extension,/HAT UNLOCKED/);
+  assert.match(extension,/post-unlock challenge|Silent initialization/);
   assert.match(extension,/Finish Garden under 30 seconds as Blossom/);
   assert.match(extension,/Win 10 Versus matches/);
   const requirements=extension.slice(extension.indexOf("requirements(id"),extension.indexOf("requirementLines(id"));

@@ -63,6 +63,7 @@ bouncePvpPlayersSideways = function(a, b, ...rest) {
   if (active && (a?.lastOpponentBounceType === "rebound" || b?.lastOpponentBounceType === "rebound") &&
       beforeA !== "rebound" && beforeB !== "rebound" && performance.now() - tutorial.pvpLastPracticeEventAt > 120) {
     tutorial.pvpReboundCount += 1;
+    tutorial.pvpReboundAt = performance.now();
     tutorial.pvpRebounds = tutorial.pvpReboundCount;
     tutorial.pvpLastPracticeEventAt = performance.now();
     if (tutorialStep()?.setup === "pvpIntercept") tutorial.pvpInterceptSeen = true;
@@ -77,6 +78,21 @@ attemptPvpFlyCatch = function(player, targetFly, source = "body", ...rest) {
   const setup = tutorial.active && tutorial.kind === "pvp" ? tutorialStep()?.setup : "";
   const scored = Boolean(result && player && Number(player.score || 0) > scoreBefore);
   if (setup && setup !== "pvpFinalMatch" && scored) {
+    // Verify an actual rebound AND catch in the SAME airborne jump. This
+    // native physics flag clears on landing and on every new jump.
+    const reboundCatchSetups = ["pvpDemoReboundCatch", "pvpReboundCatch", "pvpDemoDinnerSteal", "pvpDinnerSteal"];
+    const catchingIndex = setup.startsWith("pvpDemo") ? 1 : 0;
+    const qualified = reboundCatchSetups.includes(setup) && player.index === catchingIndex &&
+      !player.grounded && Boolean(player.bouncedOffOpponentThisJump) &&
+      player.lastOpponentBounceType === "rebound" && tutorial.pvpReboundAt > 0;
+    if (qualified) {
+      tutorial.pvpTechniqueCatchQualified = true;
+      tutorial.pvpTechniqueCatchPlayerIndex = player.index;
+      tutorial.pvpTechniqueCatchAt = performance.now();
+      // Use the existing in-engine slow-motion and zoom cinematic on a real
+      // catch, not when merely approaching or tonguing an uncaught fly.
+      if (!game.pvpCriticalCatchActive) startPvpCriticalCatch(player, targetFly, "contest");
+    }
     tutorial.pvpPracticeCatchCount += 1;
     tutorial.pvpLastPracticeEventAt = performance.now();
     tutorial.promptHidden = true;
@@ -356,20 +372,10 @@ activatePauseSelection = function(...args) {
     return;
   }
   if (game.pauseSelection === "restart") {
-    // Restart Scene resets the active chapter, not any uncommitted preview.
-    tutorial.pauseChapterPreviewIndex = null;
-    tutorial.chapterNavigationPending = false;
-    game.state = "playing";
-    game.pauseHelpOpen = false;
-    game.pauseChargeSnapshot = null;
-    game.resumeChargeAfterCountdown = false;
-    beginPoofTransition({
-      reason: "tutorial-retry",
-      showFailure: false,
-      preserveExistingFlies: false,
-      armFlies: false,
-      action: rebuildCurrentScenarioWithDialogue
-    });
+    // The paused clock must not extend deadlines created by this restart.
+    // Cancel mid-poof callbacks and reconstruct just once, synchronously.
+    tutorialClockSuspendedAt = null;
+    restartTutorialSceneImmediately();
     return;
   }
   return originalActivatePauseSelectionForTutorial.apply(this, args);

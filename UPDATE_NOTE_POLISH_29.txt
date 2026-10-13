@@ -1,0 +1,17 @@
+RIBBIT RACE FRIENDS — POLISH 29 / VERSION 1.7.18
+Build identifier: 2026.10.12-friends-polish-29
+
+Requested tutorial refinements included in this build:
+- Fixed Restart Scene / mid-poof cleanup so scene restarts and scene advances clear pending poof callbacks, smoke clouds, hidden-frog state, and other stale transition artifacts instead of lagging or leaving permanent poof remnants.
+- Corrected the "There Goes the High Ground" authored setup so Ember starts on the lower-right platform and the player starts centered on the top platform.
+- Corrected the "Wait to Bonk Again" demonstration lane to match the requested reference positions.
+- Kept the buffered-sky setup facing/placement fixes and ensured fresh scene starts do not inherit stale poof state.
+- Updated the max-charge / bounce-bonus practice setup to use the mirrored ground-vs-ground layout from the reference image.
+- Added a high fly above the lower-left platform for Ember's bonk-boost demonstration and trigger a dramatic slow-motion catch during the follow-up grab.
+- Updated the under-bonk demonstration to begin from the requested right-platform layout and shift Ember into the lower-middle perch before the under-bonk example.
+- Updated the low-profile lesson so Ember performs three low hops underneath the player's perch, and moved the player practice setup to the requested pictured layout.
+- Scene-to-scene dialogue/audio startup now begins from a clean reset path so Ember no longer loses her scene-start chirps because of inherited transition state.
+
+Build/test status:
+- Rebuilt public/scripts/game.bundle.js successfully.
+- Full automated test suite passes after updating the authored-layout expectation for the revised high-ground scene.

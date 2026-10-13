@@ -56,7 +56,7 @@ test('Chapter browse retains Ember dialogue and works by mouse, keyboard and scr
 test('Restart/exit discard uncommitted chapter previews and no DOM fullscreen tile overlaps the pause panel',()=>{
   const activate=between(hooks,'const originalActivatePauseSelectionForTutorial','function tutorialBlocksLiveInput');
   assert.match(activate,/if \(game\.pauseSelection === "home"\) \{\s*tutorial\.pauseChapterPreviewIndex = null/);
-  assert.match(activate,/if \(game\.pauseSelection === "restart"\) \{[\s\S]{0,180}tutorial\.pauseChapterPreviewIndex = null/);
+  assert.match(activate,/if \(game\.pauseSelection === "restart"\) \{[\s\S]{0,300}restartTutorialSceneImmediately\(\)/);
   assert.match(online,/fsButton\.style\.display="none";/);
   assert.match(integrations,/game\.state==="playing"&&e\.kindPolish19==="pvp"/);
 });

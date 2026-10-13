@@ -17,8 +17,8 @@ function block(start, end) {
 }
 
 test("polish-9 cache marker forces the rebuilt tutorial and Versus lesson UI to load", () => {
-  assert.match(engine, /2026\.10\.12-friends-polish-25/);
-  assert.match(index, /game\.bundle\.js\?v=2026\.10\.12-friends-polish-25/);
+  assert.match(engine, /2026\.10\.12-friends-polish-30/);
+  assert.match(index, /game\.bundle\.js\?v=2026\.10\.12-friends-polish-30/);
 });
 
 test("dialogue uses the new reference framing and keeps Ember's full square unobstructed", () => {
@@ -76,8 +76,8 @@ test("buffered-drop placement is five pixels left and triple-buffer starts botto
 });
 
 test("Solo tutorial book occupies the former settings slot with settings immediately to its left", () => {
-  assert.match(ui, /settingsButton: Object\.freeze\(\{ id: "settings", x: 350, y: 211, w: 24, h: 24 \}\)/);
-  assert.match(ui, /tutorialButton: Object\.freeze\(\{ id: "tutorial", x: 378, y: 211, w: 24, h: 24 \}\)/);
+  assert.match(ui, /settingsButton: Object\.freeze\(\{ id: "settings", x: 346, y: 211, w: 24, h: 24 \}\)/);
+  assert.match(ui, /tutorialButton: Object\.freeze\(\{ id: "tutorial", x: 376, y: 211, w: 24, h: 24 \}\)/);
   assert.match(ui, /timeButton: Object\.freeze\(\{ x: 406, y: 211, w: 24, h: 24 \}\)/);
 });
 

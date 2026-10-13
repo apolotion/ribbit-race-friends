@@ -4,6 +4,21 @@ function configureStep(showDialogue = true, options = {}) {
   const preservedPvpVisualPoses = Array.isArray(options.preservePvpVisualPoses)
     ? options.preservePvpVisualPoses
     : null;
+  // A scene change must never inherit stale smoke, hidden frogs, or a queued
+  // mid-poof callback from the prior scene.
+  tutorial.deferredPoofOptions = null;
+  tutorial.resetPending = false;
+  tutorial.resetAt = 0;
+  tutorial.resetAction = null;
+  tutorial.resetMessage = "";
+  tutorial.resetReason = "";
+  tutorial.preservePromptDuringReset = false;
+  tutorial.frogHidden = false;
+  tutorial.pvpFrogsHidden = false;
+  tutorial.pvpHiddenPlayerIndices = [];
+  tutorial.dialogueHiddenDuringPoof = false;
+  tutorial.resetPvpPoofPlayers = [0, 1];
+  tutorial.smokeClouds.length = 0;
   try { window.RibbitRaceResetFinalCatchLabels?.(); } catch (_) {}
   if (tutorial.kind === "pvp") configurePvpStep(tutorial.step);
   else configureSoloStep(tutorial.step);
@@ -31,21 +46,17 @@ function configureStep(showDialogue = true, options = {}) {
   // new height/perch. The text begins one second after both frogs reappear.
   const prePoofBeforeDialogue = Boolean(
     showDialogue && tutorial.kind === "pvp" &&
-    ["pvpBonkThree", "pvpBonkCatch", "pvpDemoDropLow", "pvpDemoDropHigh", "pvpDemoHighGround"].includes(tutorialStep()?.setup)
+    ["pvpBonkThree", "pvpBonkCatch", "pvpDemoDropLow", "pvpDemoDropHigh", "pvpDemoBufferedBonk", "pvpDemoHighGround"].includes(tutorialStep()?.setup)
   );
   if (prePoofBeforeDialogue && preservedPvpVisualPoses) {
     tutorial.dialogueOpen = true;
     tutorial.scenePositionedDuringDialogue = false;
-    const heldTransitionText = tutorial.transitionHeldLineText;
-    const heldTransitionPortrait = tutorial.transitionHeldPortraitKey;
     beginDialogueLine(0, { delayMs:POOF_TRANSITION_MS + 1000, holdPreviousText:false });
-    if (heldTransitionText) {
-      tutorial.dialogueHeldLineText = heldTransitionText;
-      tutorial.dialogueHeldPortraitKey = heldTransitionPortrait;
-      tutorial.dialogueHeldUntil = tutorial.dialogueLineStartedAt + TYPEWRITER_MS_PER_CHARACTER;
-    }
     tutorial.transitionHeldLineText = "";
     tutorial.transitionHeldPortraitKey = "";
+    tutorial.dialogueHeldLineText = "";
+    tutorial.dialogueHeldPortraitKey = "";
+    tutorial.dialogueHeldUntil = 0;
     game.state = "playing";
     game.pauseHelpOpen = false;
     beginPoofTransition({
@@ -193,6 +204,50 @@ function rebuildCurrentScenarioWithDialogue() {
   tutorial.blockJumpUntilRelease = false;
   restoreStepSequence();
   openDialogue();
+}
+
+function restartTutorialSceneImmediately() {
+  if (!tutorial.active) return false;
+  // Interrupt any in-progress or deferred poof BEFORE it can fire a stale
+  // callback. This also handles Restart Scene while a prior reset was paused.
+  tutorial.deferredPoofOptions = null;
+  tutorial.resetPending = false;
+  tutorial.resetAt = 0;
+  tutorial.resetAction = null;
+  tutorial.resetMessage = "";
+  tutorial.resetReason = "";
+  tutorial.resetShowFailure = true;
+  tutorial.resetArmFlies = true;
+  tutorial.resetPreserveFlyKeys = null;
+  tutorial.preservePromptDuringReset = false;
+  tutorial.resetPvpPoofPlayers = [0, 1];
+  tutorial.pvpFrogsHidden = false;
+  tutorial.pvpHiddenPlayerIndices = [];
+  tutorial.frogHidden = false;
+  tutorial.dialogueHiddenDuringPoof = false;
+  tutorial.smokeClouds.length = 0;
+  tutorial.pendingStartPose = null;
+  tutorial.pendingPvpTargetPoses = null;
+  tutorial.pendingPvpVisualPoses = null;
+  tutorial.pauseChapterPreviewIndex = null;
+  tutorial.chapterNavigationPending = false;
+  tutorial.pvpFlyRevealAt = 0;
+  tutorial.pvpFlyRevealSetup = "";
+  clearPvpScriptActions();
+  clearHeldInput();
+  if (tutorial.kind === "pvp") {
+    resetPvpTutorialTongues();
+    if (Array.isArray(game.pvpImpactEffects)) game.pvpImpactEffects.length = 0;
+  }
+  // Both scenario configurators clear their own state, so rebuild only once.
+  // Reset the paused clock here too for any API-based scene retry.
+  try { if (typeof tutorialClockSuspendedAt !== "undefined") tutorialClockSuspendedAt = null; } catch (_) {}
+  rebuildCurrentScenarioWithDialogue();
+  game.pauseChargeSnapshot = null;
+  game.resumeChargeAfterCountdown = false;
+  game.pauseHelpOpen = false;
+  game.state = "playing";
+  return true;
 }
 
 function beginScenarioEntryTransition() {

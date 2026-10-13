@@ -502,10 +502,14 @@
 
       const p1Palette = getPvpSkinPalette(pvpPlayers[0].skinId, "azure", 0);
       const p2Palette = getPvpSkinPalette(pvpPlayers[1].skinId, "crimson", 1);
-      const roundsToWin = getPvpRoundsToWin();
-      for (let slot = 0; slot < roundsToWin; slot += 1) {
-        drawPvpCrown(88 + slot * 12, 12, game.pvpRoundWins[0] > slot, p1Palette);
-        drawPvpCrown(W - 100 - slot * 12, 12, game.pvpRoundWins[1] > slot, p2Palette);
+      // Round-win crowns are irrelevant in tutorial lessons, even in the
+      // final single-round race. This does not affect Ember's crown hat.
+      if (!tutorialPvp) {
+        const roundsToWin = getPvpRoundsToWin();
+        for (let slot = 0; slot < roundsToWin; slot += 1) {
+          drawPvpCrown(88 + slot * 12, 12, game.pvpRoundWins[0] > slot, p1Palette);
+          drawPvpCrown(W - 100 - slot * 12, 12, game.pvpRoundWins[1] > slot, p2Palette);
+        }
       }
 
       drawVocabularyPrompt();

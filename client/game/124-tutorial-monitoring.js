@@ -309,6 +309,23 @@ function consumePvpPlayerLanding() {
   return false;
 }
 
+// Identifies a genuine completed jump, never the initial grounded charge.
+// It is independent of consumePvpPlayerLanding (used by other lessons).
+function updatePvpLessonLandings() {
+  if (!Array.isArray(tutorial.pvpLessonAirborneSeen)) tutorial.pvpLessonAirborneSeen = [false, false];
+  if (!Array.isArray(tutorial.pvpLessonLanded)) tutorial.pvpLessonLanded = [false, false];
+  const justLanded = [false, false];
+  for (const [index, player] of pvpPlayers.entries()) {
+    if (!player) continue;
+    if (!player.grounded && player.firstJumpMade) tutorial.pvpLessonAirborneSeen[index] = true;
+    if (tutorial.pvpLessonAirborneSeen[index] && player.grounded && !tutorial.pvpLessonLanded[index]) {
+      tutorial.pvpLessonLanded[index] = true;
+      justLanded[index] = true;
+    }
+  }
+  return justLanded;
+}
+
 function pvpPracticeEventReady(delayMs = 1000, now = performance.now()) {
   return tutorial.pvpLastPracticeEventAt > 0 && now - tutorial.pvpLastPracticeEventAt >= delayMs;
 }
@@ -371,8 +388,9 @@ function drivePvpPracticeCpu(setup, now) {
     }
     if (!tutorial.pvpEmberLaunchStarted && now >= tutorial.pvpEmberJumpScheduledAt && ember.grounded) {
       tutorial.pvpEmberLaunchStarted = true;
-      ember.dir = 1;
-      scriptPvpChargedJump(1, setup === "pvpDinnerSteal" ? .68 : .72, 1, 0);
+      const launchDirection = setup === "pvpDinnerSteal" ? -1 : 1;
+      ember.dir = launchDirection;
+      scriptPvpChargedJump(1, setup === "pvpDinnerSteal" ? .82 : .72, launchDirection, 0);
     }
     return;
   }
@@ -395,6 +413,8 @@ function monitorPvp() {
   const now = performance.now();
   drivePvpPracticeCpu(setup, now);
   const playerLanded = consumePvpPlayerLanding();
+  const lessonLandings = ["pvpReboundCatch", "pvpIntercept", "pvpDinnerSteal"].includes(setup)
+    ? updatePvpLessonLandings() : [false, false];
 
   if (setup === "pvpBonkThree") {
     if (tutorial.pvpBonks >= 3) {
@@ -565,22 +585,34 @@ function monitorPvp() {
   }
 
   if (setup === "pvpReboundCatch") {
-    if (tutorial.pvpReboundCount >= 1 && tutorial.pvpPracticeCatchCount >= 1 && pvpTutorialSettled()) passStep();
-    else if (playerLanded && tutorial.pvpPracticeCatchCount < 1 && now - tutorial.enteredAt > 600) failAttempt("REBOUND OFF EMBER, THEN CATCH THE FLY");
+    if (tutorial.pvpTechniqueCatchQualified && tutorial.pvpTechniqueCatchPlayerIndex === 0) {
+      if (!game.pvpCriticalCatchActive && now - tutorial.pvpTechniqueCatchAt >= 350) passStep();
+    } else if (lessonLandings[0]) {
+      // Both frogs poof only after the player's attempted jump actually landed.
+      failAttempt("REBOUND OFF EMBER, THEN CATCH THE FLY IN ONE JUMP");
+    }
     return;
   }
 
   if (setup === "pvpIntercept") {
-    if (tutorial.pvpPracticeCatchCount > 0 && !tutorial.pvpInterceptSeen) failAttempt("REBOUND EMBER BEFORE SHE REACHES THE FLY");
-    else if (tutorial.pvpInterceptSeen && pvpTutorialSettled()) passStep();
-    else if (ember.grounded && tutorial.pvpEmberLaunchStarted && !tutorial.pvpInterceptSeen) failAttempt("INTERCEPT EMBER BEFORE THE FLY");
+    if (tutorial.pvpInterceptSeen) {
+      if (pvpTutorialSettled()) passStep();
+    } else if (lessonLandings[0] || lessonLandings[1]) {
+      // The old grounded check fired while Ember merely CHARGED. Only a
+      // completed flight without the rebound can now trigger the retry.
+      failAttempt("REBOUND EMBER BEFORE HER FLY CATCH");
+    }
     return;
   }
 
   if (setup === "pvpDinnerSteal") {
-    if (tutorial.pvpPracticeCatchCount > 0 && tutorial.pvpReboundCount < 1) failAttempt("TURN EMBER AWAY, THEN TAKE THE FLY");
-    else if (tutorial.pvpReboundCount >= 1 && tutorial.pvpPracticeCatchCount >= 1 && pvpTutorialSettled()) passStep();
-    else if (ember.grounded && tutorial.pvpEmberLaunchStarted && now - tutorial.pvpEmberJumpScheduledAt > 3000 && tutorial.pvpPracticeCatchCount < 1) failAttempt("REBOUND, THEN STEAL THE FLY");
+    if (tutorial.pvpTechniqueCatchQualified && tutorial.pvpTechniqueCatchPlayerIndex === 0) {
+      if (!game.pvpCriticalCatchActive && now - tutorial.pvpTechniqueCatchAt >= 350) passStep();
+    } else if (lessonLandings[0] || lessonLandings[1]) {
+      // A two-jump catch cannot pass. Either frog touching the ground after
+      // its launch ends this attempt and poofs BOTH frogs to their starts.
+      failAttempt("REBOUND AND STEAL THE FLY BEFORE EITHER FROG LANDS");
+    }
     return;
   }
 

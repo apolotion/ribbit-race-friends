@@ -15,9 +15,10 @@
   if(priorDrawSoloHudP19){drawSoloHud=function(...args){const e=engine();if(e?.active&&game.mode==="solo"){const old=game.soloCatchGoal;const goal=Number(e.sceneFlyGoal||0);if(goal>0)game.soloCatchGoal=goal;const result=priorDrawSoloHudP19.apply(this,args);game.soloCatchGoal=old;return result;}return priorDrawSoloHudP19.apply(this,args);};}
   // Chapter previewing is owned by the pause overlay above. Arrow presses only
   // update the preview; resumePausedGame applies the selected chapter.
-  // Keep Fullscreen present but dimmed while the book is open.
+  // Pause fullscreen button is now fully owned by the unified polish UI layer,
+  // including its hover state and the help-overlay placement.
   const priorDrawSceneP19=drawScene;
-  drawScene=function(...args){const result=priorDrawSceneP19.apply(this,args);if(game.state==="paused"&&game.pauseHelpOpen){const r={x:448,y:238,w:22,h:22};ctx.save();ctx.globalAlpha=.28;ctx.fillStyle=COLORS.ink;ctx.fillRect(r.x,r.y,r.w,r.h);ctx.fillStyle="#f7fdff";ctx.fillRect(r.x+2,r.y+2,r.w-4,r.h-4);ctx.fillStyle="#48555a";ctx.fillRect(r.x+5,r.y+5,4,2);ctx.fillRect(r.x+5,r.y+5,2,4);ctx.fillRect(r.x+r.w-9,r.y+5,4,2);ctx.fillRect(r.x+r.w-7,r.y+5,2,4);ctx.fillRect(r.x+5,r.y+r.h-7,4,2);ctx.fillRect(r.x+5,r.y+r.h-9,2,4);ctx.fillRect(r.x+r.w-9,r.y+r.h-7,4,2);ctx.fillRect(r.x+r.w-7,r.y+r.h-9,2,4);ctx.restore();}return result;};
+  drawScene=function(...args){return priorDrawSceneP19.apply(this,args);};
   // Mouse press/release can jump on desktop when only one human is local.
   // Keyboard aliases belong to the core physical-input router. A second
   // window capture listener used to send Right Shift to P1 before the core

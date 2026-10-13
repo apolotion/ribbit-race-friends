@@ -31,7 +31,7 @@
       frogButton: Object.freeze({ id: "frog", x: 140, y: 150, w: 200, h: 30 }),
       profileButton: Object.freeze({ id: "profile", x: 45, y: 211, w: 24, h: 24 }),
       deviceButton: Object.freeze({ id: "device", x: 75, y: 211, w: 24, h: 24 }),
-      achievementsButton: Object.freeze({ id: "achievements", x: 385, y: 211, w: 24, h: 24 }),
+      achievementsButton: Object.freeze({ id: "achievements", x: 379, y: 211, w: 24, h: 24 }),
       statsButton: Object.freeze({ id: "stats", x: 409, y: 211, w: 24, h: 24 })
     });
 
@@ -48,8 +48,8 @@
       customizeButton: Object.freeze({ x: 72, y: 176, w: 120, h: 27 }), // legacy geometry
       randomButton: Object.freeze({ id: "random", x: 188, y: 154, w: 104, h: 17 }),
       backButton: Object.freeze({ id: "back", x: 180, y: 181, w: 120, h: 24 }),
-      settingsButton: Object.freeze({ id: "settings", x: 350, y: 211, w: 24, h: 24 }),
-      tutorialButton: Object.freeze({ id: "tutorial", x: 378, y: 211, w: 24, h: 24 }),
+      settingsButton: Object.freeze({ id: "settings", x: 346, y: 211, w: 24, h: 24 }),
+      tutorialButton: Object.freeze({ id: "tutorial", x: 376, y: 211, w: 24, h: 24 }),
       levelButtons: Object.freeze([
         Object.freeze({ id: "park",   x: 72,  y: 101, w: 104, h: 21 }),
         Object.freeze({ id: "swamp",  x: 188, y: 101, w: 104, h: 21 }),
@@ -129,7 +129,7 @@
     });
 
     const SOLO_PAUSE_BUTTON = Object.freeze({ x: W - 34, y: 7, w: 26, h: 19 });
-    const PVP_PAUSE_BUTTON = Object.freeze({ x: W - 32, y: 239, w: 26, h: 24 });
+    const PVP_PAUSE_BUTTON = Object.freeze({ x: W - 34, y: 28, w: 26, h: 19 });
     const HUD_UI = Object.freeze({
       get pauseButton() { return game.mode === "pvp" ? PVP_PAUSE_BUTTON : SOLO_PAUSE_BUTTON; }
     });

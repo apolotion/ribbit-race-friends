@@ -21,7 +21,7 @@ function block(source, start, end) {
 
 test("Polish 16 cache marker is wired", () => {
   for (const source of [tutorial, read("src/common.js"), read("public/index.html"), read("public/scripts/cloud-client.js")]) {
-    assert.match(source, /2026\.10\.12-friends-polish-25/);
+    assert.match(source, /2026\.10\.12-friends-polish-30/);
   }
 });
 
@@ -52,7 +52,7 @@ test("pause utilities sit inside the lower-right and normal restart counts down"
 
 test("tutorial retry replays dialogue and deliberately skips countdown", () => {
   assert.match(tutorial, /function rebuildCurrentScenarioWithDialogue\(\)[\s\S]{0,900}openDialogue\(\)/);
-  assert.match(tutorial, /reason: "tutorial-retry"[\s\S]{0,180}action: rebuildCurrentScenarioWithDialogue/);
+  assert.match(tutorial, /restartTutorialSceneImmediately\(\)/);
   assert.doesNotMatch(tutorial, /completedResetReason === "pause-retry"\) startResumeCountdown/);
 });
 

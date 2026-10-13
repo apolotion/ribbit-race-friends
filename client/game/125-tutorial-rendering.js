@@ -267,6 +267,12 @@ const TUTORIAL_EMPHASIS_BY_LINE = Object.freeze(
   "Sometimes, you can drop right in!": [
     "drop"
   ],
+  "That's a drop bonk!": [
+    "drop bonk"
+  ],
+  "Your turn. Let's try that same little drop.": [
+    "drop"
+  ],
   "One quick tap, and I'm coming down!": [
     "quick tap"
   ],
@@ -561,7 +567,8 @@ function drawEmberDialogueLine(fullLine, visibleText, x, y, scale, spokenLine = 
 }
 
 function drawTutorialDialogue() {
-  if (!tutorial.active || !tutorial.dialogueOpen || game.state === "countdown") return;
+  if (!tutorial.active || !tutorial.dialogueOpen ||
+      tutorial.dialogueHiddenDuringPoof || game.state === "countdown") return;
 
   const now = performance.now();
   const lines = dialogueLinesForCurrentStep();
@@ -577,13 +584,17 @@ function drawTutorialDialogue() {
     : visibleDialogueCharacterCount(fullLine);
   const lastLine = tutorial.dialogueLineIndex >= lines.length - 1;
 
-  if (!holdingPreviousLine && game.state !== "paused") {
-    if (!dialogueLineIsComplete() && visibleCount > 0 && now >= (tutorial.dialogueTalkBlipAt || 0)) {
+  if (!holdingPreviousLine && game.state !== "paused" && !tutorial.dialogueForceComplete) {
+    // Delayed first lines and new chapters must not inherit the old line's
+    // sound timer. One chirp per fresh group of visible characters.
+    if (visibleCount > tutorial.dialogueTalkCharCount &&
+        now >= tutorial.dialogueTalkBlipAt && visibleCount > 0) {
       const toneStep = visibleCount % 4;
       const frequency = [980, 1060, 1120, 1020][toneStep];
-      try { tone(frequency, 0.016, 0.0045, 20); } catch (_) {}
+      try { tone(frequency, 0.026, 0.011, 20); } catch (_) {}
       tutorial.dialogueTalkBlipAt = now + 54;
     }
+    tutorial.dialogueTalkCharCount = Math.max(tutorial.dialogueTalkCharCount, visibleCount);
   }
 
   // Reference baseline: a long dark-navy text window with layered black,
@@ -1041,6 +1052,7 @@ function applyTutorialChapterPreview() {
   tutorial.pvpCaptionUntil = 0;
   tutorial.deferredPoofOptions = null;
   tutorial.resetPending = false;
+  tutorial.dialogueHiddenDuringPoof = false;
   tutorial.passed = false;
   tutorial.passPending = false;
   tutorial.dynamicDialogueLines = null;
@@ -1073,14 +1085,24 @@ function drawTutorialPauseArrow(rect, direction, disabled = false) {
   ctx.fillStyle = disabled ? "#e4eaec" : active ? skin.belly : "#f7fdff";
   ctx.fillRect(rect.x + 2, rect.y + 2, rect.w - 4, rect.h - 4);
   ctx.fillStyle = disabled ? "#96a2a6" : active ? skin.dark : "#48555a";
-  const cx = rect.x + rect.w / 2;
-  const cy = rect.y + rect.h / 2;
+  const left = Math.round(rect.x + (rect.w - 8) / 2);
+  const top = Math.round(rect.y + (rect.h - 7) / 2);
   if (direction === "previous") {
-    ctx.fillRect(cx - 5, cy - 1, 9, 3);
-    ctx.fillRect(cx - 7, cy - 3, 3, 7);
+    ctx.fillRect(left + 3, top + 0, 2, 1);
+    ctx.fillRect(left + 2, top + 1, 3, 1);
+    ctx.fillRect(left + 1, top + 2, 5, 1);
+    ctx.fillRect(left + 0, top + 3, 7, 1);
+    ctx.fillRect(left + 1, top + 4, 5, 1);
+    ctx.fillRect(left + 2, top + 5, 3, 1);
+    ctx.fillRect(left + 3, top + 6, 2, 1);
   } else {
-    ctx.fillRect(cx - 4, cy - 1, 9, 3);
-    ctx.fillRect(cx + 4, cy - 3, 3, 7);
+    ctx.fillRect(left + 3, top + 0, 2, 1);
+    ctx.fillRect(left + 3, top + 1, 3, 1);
+    ctx.fillRect(left + 2, top + 2, 5, 1);
+    ctx.fillRect(left + 1, top + 3, 7, 1);
+    ctx.fillRect(left + 2, top + 4, 5, 1);
+    ctx.fillRect(left + 3, top + 5, 3, 1);
+    ctx.fillRect(left + 3, top + 6, 2, 1);
   }
 }
 
@@ -1125,7 +1147,7 @@ function drawTutorialPauseOverlay() {
   ctx.fillRect(155, 119, 170, 3);
   ctx.fillStyle = skin.mid;
   ctx.fillRect(155, 119, Math.round(170 * (previewIndex + 1) / Math.max(1, catalog.length)), 3);
-  drawBitmapText("ARROWS OR SCROLL TO BROWSE", W / 2, 124, .40, "center", "#68787e");
+  
   drawPauseControls();
   drawBitmapText(RIBBIT_CREDIT_TEXT, W / 2, 216, 1, "center", "#48555a");
 }

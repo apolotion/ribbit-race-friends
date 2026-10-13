@@ -44,15 +44,16 @@ test('high drop mirrors the player turn onto the right-side landing lane',()=>{
  assert.match(s,/case "pvpDropHigh"[\s\S]{0,220}positionPvpOnPlatform\(p1, top, 1, 4\)/);
  assert.match(s,/case "pvpDropHigh"[\s\S]{0,260}positionPvp\(ember, PARK_PLATFORMS\[3\]\.x \+ PARK_PLATFORMS\[3\]\.w \+ 4, CONFIG\.groundY - ember\.h, -1\)/);
 });
-test('buffered-bonk demo mirrors Ember from the right side of the stage',()=>{
- const s=read('client/game/122-tutorial-scenarios.js');
- assert.match(s,/case "pvpDemoBufferedBonk"[\s\S]{0,200}positionPvpOnPlatform\(p1, PARK_PLATFORMS\[3\], 1\)/);
- assert.match(s,/case "pvpDemoBufferedBonk"[\s\S]{0,200}positionPvp\(ember, 365, CONFIG\.groundY - ember\.h, -1\)/);
+test('buffered-bonk demo positions the player under the lower-middle platform',()=>{
+ const c=geometry();c.setup('pvpDemoBufferedBonk');
+ assert.equal(c.pvpPlayers[0].y,200);
+ assert.equal(c.pvpPlayers[0].x+c.pvpPlayers[0].w/2,240);
+ assert.deepEqual([c.pvpPlayers[1].x,c.pvpPlayers[1].dir],[365,-1]);
 });
-test('knock-off demo now uses the lower-right platform and one jump',()=>{
+test('knock-off demo now uses the top-vs-lower-right platform setup and one jump',()=>{
  const s=read('client/game/122-tutorial-scenarios.js');
- assert.match(s,/case "pvpDemoHighGround"[\s\S]{0,400}positionPvpOnPlatform\(p1, PARK_PLATFORMS\[6\], 1\)/);
- assert.match(s,/case "pvpDemoHighGround"[\s\S]{0,500}positionPvp\(ember, PARK_PLATFORMS\[6\]\.x \+ PARK_PLATFORMS\[6\]\.w - ember\.w - 2, CONFIG\.groundY - ember\.h, -1\)/);
+ assert.match(s,/case "pvpDemoHighGround"[\s\S]{0,500}positionPvpOnPlatform\(p1, top, 1\)/);
+ assert.match(s,/case "pvpDemoHighGround"[\s\S]{0,600}positionPvpOnPlatform\(ember, PARK_PLATFORMS\[6\], -1\)/);
  assert.match(s,/case "pvpDemoHighGround"[\s\S]{0,1200}scriptPvpChargedJump\(1, \.84, -1, 0\)/);
 });
 test('layout mirroring cannot overwrite airborne facing',()=>{
@@ -78,14 +79,14 @@ test('Versus pause and goal hit regions do not overlap; solo position is unchang
  const c={W:480,game:{mode:'pvp'},tutorial:{kind:'pvp'}};vm.createContext(c);
  vm.runInContext(section(read('client/game/40-ui-navigation-audio.js'),'const SOLO_PAUSE_BUTTON','const PAUSE_UI')+'\nglobalThis.hud=HUD_UI;',c);
  vm.runInContext(section(render,'function getTutorialGoalRect','function drawCurrentGoalHud'),c);
- assert.equal(c.hud.pauseButton.x,448);assert.equal(c.hud.pauseButton.y,239);assert.equal(c.getTutorialGoalRect().w,116);
- assert.ok(c.getTutorialGoalRect().x+c.getTutorialGoalRect().w<c.hud.pauseButton.x);
+ assert.equal(c.hud.pauseButton.x,446);assert.equal(c.hud.pauseButton.y,28);assert.equal(c.getTutorialGoalRect().w,116);
+ assert.ok(c.hud.pauseButton.y + c.hud.pauseButton.h < c.getTutorialGoalRect().y);
  c.game.mode='solo';assert.equal(c.hud.pauseButton.y,7);
 });
 test('Versus pause draws only narrow bars, not a pale background tile',()=>{
  const draw=section(read('client/game/130-polish-ui-replay-language.js'),'function drawPvpPauseButtonPolish8','// Own exactly one contextual');
  assert.doesNotMatch(draw,/fillRect\(rect\.x, rect\.y, rect\.w, rect\.h\)/);
- assert.match(draw,/for \(const dx of \[6, 16\]\)/);
+ assert.match(draw,/for \(const dx of \[7, 15\]\)/);
 });
 test('pause suspends script and dialogue deadlines rather than consuming demo time',()=>{
  const c={performance:{now:()=>0},tutorial:{active:true,pvpDemoStartedAt:80,dialogueLineStartedAt:60,pvpScriptActions:[{dueAt:900}],smokeClouds:[{born:50}]},game:{state:'paused'}};

@@ -17,8 +17,8 @@ test("Polish 25 removes the live tutorial R retry shortcut and keeps restart ins
 test("Shared utility icons have breathing room again", () => {
   assert.match(nav, /profileButton: Object\.freeze\(\{ id: "profile", x: 45/);
   assert.match(nav, /deviceButton: Object\.freeze\(\{ id: "device", x: 75/);
-  assert.match(nav, /settingsButton: Object\.freeze\(\{ id: "settings", x: 350/);
-  assert.match(nav, /tutorialButton: Object\.freeze\(\{ id: "tutorial", x: 378/);
+  assert.match(nav, /settingsButton: Object\.freeze\(\{ id: "settings", x: 346/);
+  assert.match(nav, /tutorialButton: Object\.freeze\(\{ id: "tutorial", x: 376/);
 });
 
 test("Solo pause icon no longer paints the old white button tile", () => {

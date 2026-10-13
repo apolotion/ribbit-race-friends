@@ -3,7 +3,7 @@
 
 const SOLO_SEEN_KEY = "rrFriendsEngineTutorialSoloSeenV8";
 const PVP_SEEN_KEY = "rrFriendsEngineTutorialPvpSeenV8";
-const TUTORIAL_BUILD = "2026.10.12-friends-polish-25";
+const TUTORIAL_BUILD = "2026.10.12-friends-polish-30";
 const TUTORIAL_ACHIEVEMENT_ID = "tutorial-graduate";
 const PVP_TUTORIAL_ACHIEVEMENT_ID = "versus-tutorial-graduate";
 const TYPEWRITER_MS_PER_CHARACTER = 28;
@@ -92,6 +92,7 @@ const tutorial = {
   dialoguePointerId: null,
   dialogueTalkBlipAt: 0,
   dialogueTalkCharCount: 0,
+  dialogueHiddenDuringPoof: false,
   transitionHeldLineText: "",
   transitionHeldPortraitKey: "",
   chapterNavigationPending: false,
@@ -239,6 +240,14 @@ const tutorial = {
   pvpPracticeFailureAt: 0,
   pvpDemoBonkHandled: false,
   pvpDemoFollowupStarted: false,
+  // Fresh flight/landing state per lesson; only an actual leap can end an attempt.
+  pvpLessonAirborneSeen: [false, false],
+  pvpLessonLanded: [false, false],
+  pvpTechniqueCatchQualified: false,
+  pvpTechniqueCatchPlayerIndex: -1,
+  pvpTechniqueCatchAt: 0,
+  pvpReboundAt: 0,
+  pvpDemoRetryQueued: false,
   pvpDemoComparePhase: 0,
   pvpScriptBufferPlatform: null,
   pvpScriptBufferTriggered: false,

@@ -277,6 +277,8 @@ function beginDialogueLine(index, options = {}) {
     : 0;
   tutorial.dialogueForceComplete = false;
   tutorial.dialoguePointerId = null;
+  tutorial.dialogueTalkCharCount = 0;
+  tutorial.dialogueTalkBlipAt = now;
   resetDialogueSpaceHold();
 }
 
@@ -387,8 +389,45 @@ function beginDialogueScenarioPlacement(nextIndex, options = {}) {
   });
 }
 
+function beginPvpSkyBonkDialoguePlacement(nextIndex) {
+  if (tutorial.resetPending || tutorial.kind !== "pvp") return false;
+  const targetPoses = Array.isArray(tutorial.pendingPvpTargetPoses)
+    ? tutorial.pendingPvpTargetPoses
+    : capturePvpTutorialPoses();
+  tutorial.dialogueHiddenDuringPoof = true;
+  beginDialogueLine(nextIndex, {
+    delayMs: POOF_TRANSITION_MS + DIALOGUE_SCENE_SETTLE_MS,
+    holdPreviousText: false
+  });
+  const started = beginPoofTransition({
+    reason: "pvp-sky-bonk-mid-dialogue",
+    showFailure: false,
+    preserveExistingFlies: false,
+    armFlies: false,
+    waitForEffects: false,
+    action: () => {
+      applyPvpTutorialPoses(targetPoses);
+      tutorial.pendingPvpTargetPoses = null;
+      tutorial.pendingPvpVisualPoses = null;
+      tutorial.pendingStartPose = null;
+      tutorial.scenePositionedDuringDialogue = true;
+      tutorial.dialogueHiddenDuringPoof = false;
+      tutorial.enteredAt = performance.now();
+    }
+  });
+  if (!started) tutorial.dialogueHiddenDuringPoof = false;
+  return started;
+}
+
 function prepareDialogueLine(nextIndex) {
   const setup = tutorialStep()?.setup;
+  // "Now let's take things a little higher" is the last line in the old
+  // positions. Reposition once before explaining the sky bonk, not after
+  // "Watch me take the scenic route."
+  if (setup === "pvpDemoSkyBonk" && nextIndex === 2) {
+    beginPvpSkyBonkDialoguePlacement(nextIndex);
+    return;
+  }
   // The dinner setup poofs the frog and fly into place together. Ember keeps
   // the previous sentence visible, then waits a clean half-second after the
   // fly appears before announcing that dinner is ready.
@@ -468,7 +507,9 @@ function armScenarioAfterDialogue() {
 
 function closeDialogue(source = "keyboard") {
   if (!tutorial.active || !tutorial.dialogueOpen || game.state === "paused" || game.state === "countdown") return false;
-  if (performance.now() - tutorial.dialogueOpenedAt < 90) return false;
+  if (tutorial.resetPending || tutorial.dialogueHiddenDuringPoof ||
+      performance.now() < tutorial.dialogueLineStartedAt ||
+      performance.now() - tutorial.dialogueOpenedAt < 90) return false;
 
   if (!dialogueLineIsComplete()) {
     tutorial.dialogueForceComplete = true;
@@ -592,6 +633,7 @@ function clearScenarioState() {
   tutorial.sceneAttemptCaught = false;
   tutorial.sceneLandingDelayUntil = 0;
   tutorial.scenePositionedDuringDialogue = false;
+  tutorial.dialogueHiddenDuringPoof = false;
   tutorial.promptHidden = false;
   tutorial.wrongFlyPromptIndex = 0;
   tutorial.wrongFlyOriginalVocabIndex = 1;
@@ -658,6 +700,13 @@ function clearScenarioState() {
   tutorial.pvpPracticeFailureAt = 0;
   tutorial.pvpDemoBonkHandled = false;
   tutorial.pvpDemoFollowupStarted = false;
+  tutorial.pvpLessonAirborneSeen = [false, false];
+  tutorial.pvpLessonLanded = [false, false];
+  tutorial.pvpTechniqueCatchQualified = false;
+  tutorial.pvpTechniqueCatchPlayerIndex = -1;
+  tutorial.pvpTechniqueCatchAt = 0;
+  tutorial.pvpReboundAt = 0;
+  tutorial.pvpDemoRetryQueued = false;
   tutorial.pvpDemoComparePhase = 0;
   tutorial.pvpScriptBufferPlatform = null;
   tutorial.pvpScriptBufferTriggered = false;

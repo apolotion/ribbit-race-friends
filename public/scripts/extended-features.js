@@ -97,6 +97,12 @@
       const close=()=>{try{video.pause()}catch(_){}if(overlay._objectUrl){URL.revokeObjectURL(overlay._objectUrl);overlay._objectUrl="";}overlay.hidden=true;};
       q(".rr-replay-close",overlay).onclick=close;
       q(".rr-replay-again",overlay).onclick=()=>{video.currentTime=0;video.play().catch(()=>{});};
+      video.addEventListener("error",()=>{
+        const message=q(".rr-replay-message",overlay);
+        message.hidden=false;
+        message.innerHTML='<strong>REPLAY COULD NOT LOAD</strong><span>This saved video could not be decoded by the browser. Set a new PB after updating to this build and try again.</span>';
+        q(".rr-replay-again",overlay).hidden=true;
+      });
       overlay.addEventListener("pointerdown",event=>{if(event.target===overlay)close();});
       document.addEventListener("keydown",event=>{if(event.key==="Escape"&&!overlay.hidden){event.preventDefault();close();}});
       return overlay;
@@ -184,7 +190,7 @@
       if(this.progress)return;
       this.progress={startedAt:Date.now(),activityCount:0,fliesBase:this.stat(/total.*flies|flies.*total/i),winsBase:this.stat(/pvp.*win|versus.*win/i),jumpsBase:this.stat(/total.*jump|jumps.*total/i),achievementsBase:this.stat(/achievement/i),counters:{versusWins:0,randomWins:0,cpuWins:0},levelWins:{},skinLevelWins:{},skinFlies:{},skinJumps:{},skinVersusWins:{}};
       setJson(this.key,this.progress);
-      toast("HATS UNLOCKED","Every hat now has a post-unlock challenge.",6500);
+      // Silent initialization: the achievements menu already communicates hat progress. No popup toast. 
     }
     stat(rx){for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if(!rx.test(k||""))continue;const n=Number(localStorage.getItem(k));if(Number.isFinite(n))return n;try{const o=JSON.parse(localStorage.getItem(k));for(const [a,v] of Object.entries(o||{}))if(rx.test(a)&&Number.isFinite(Number(v)))return Number(v)}catch(_){}}return 0}
     add(map,key,amount=1){map[key]=(Number(map[key])||0)+amount}

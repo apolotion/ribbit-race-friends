@@ -27,7 +27,7 @@ test("Achievements medal aligns to the achievement grid", () => {
 
 test("Leaderboard renders player frogs with visibly striped rows and dropdown choices", () => {
   assert.match(tutorial, /function leaderboardFrogPalette/);
-  assert.match(tutorial, /drawMiniFrogSwatchFacing\(77, y \+ 4, rowPalette, \.43, 1\)/);
+  assert.match(tutorial, /drawMiniFrogSwatchFacing\(table\.x \+ 42, y \+ 4, rowPalette, \.43, 1\)/);
   assert.match(tutorial, /offset % 2 \? "#dfe5e7" : "#ffffff"/);
   assert.match(tutorial, /index % 2 \? "#dce3e5" : "#ffffff"/);
 });
@@ -43,7 +43,7 @@ test("Quickplay moves content upward and uses one selected-frog header palette",
 test("Pause utilities occupy the panel bottom-right while tutorial retry replays dialogue without countdown", () => {
   assert.match(ui, /helpButton: \{ x: 353, y: 198, w: 20, h: 20 \}/);
   assert.match(tutorial, /PAUSE_FULLSCREEN_BUTTON = Object\.freeze\(\{ x: 379, y: 198, w: 20, h: 20 \}\)/);
-  assert.match(tutorial, /action: rebuildCurrentScenarioWithDialogue/);
+  assert.match(tutorial, /restartTutorialSceneImmediately\(\)/);
   assert.doesNotMatch(tutorial, /completedResetReason === "pause-retry"\) startResumeCountdown/);
   assert.match(input, /if \(game\.state === "paused"\)[\s\S]{0,900}KeyR/);
 });

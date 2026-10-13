@@ -50,7 +50,7 @@ test("PvP demonstrations use real charged jumps after a one-second viewing delay
   assert.match(tutorial, /function scriptPvpChargedJump/);
   assert.match(tutorial, /tutorial\.pvpDemoStartedAt = performance\.now\(\) \+ 1000/);
   assert.match(tutorial, /case "pvpDemoBonk":[\s\S]{0,120}scriptPvpChargedJump\(1, \.74, -1, 0\)/);
-  assert.match(tutorial, /case "pvpDemoSkyBonk":[\s\S]{0,180}scriptPvpChargedJump\(1, \.92, 1, 0\)/);
+  assert.match(tutorial, /case "pvpDemoSkyBonk":[\s\S]{0,180}scriptPvpChargedJump\(1, 1, -1, 0\)/);
   assert.match(tutorial, /WATCH EMBER!/);
 });
 

@@ -24,7 +24,7 @@ function between(text, start, end) {
 
 test("polish 18 build marker is wired through client and Worker", () => {
   for (const text of [tutorial, common, read("client/game/90-extended-features.js"), read("client/game/110-online-mobile-polish.js"), read("public/scripts/cloud-client.js")]) {
-    assert.match(text, /2026\.10\.12-friends-polish-25/);
+    assert.match(text, /2026\.10\.12-friends-polish-30/);
   }
 });
 
@@ -70,12 +70,12 @@ test("hat progress remains hidden until the hat selector is available", () => {
   assert.match(tutorial, /flushPendingHatNotices/);
 });
 
-test("leaderboard is canvas-native, rounded, wraps pages, and opens account-bound replays", () => {
-  assert.match(tutorial, /Achievement-menu-style pixel-rounded frame/);
+test("leaderboard is canvas-native, wraps pages, and opens replay playback", () => {
+  assert.match(tutorial, /function drawLeaderboardScreen\(\)/);
   assert.match(tutorial, /drawMiniFrogSwatchFacing/);
-  assert.match(tutorial, /leaderboardPage - 1 \+ pageCount\) % pageCount/);
-  assert.match(tutorial, /leaderboardPage \+ 1\) % pageCount/);
-  assert.match(tutorial, /RibbitRacePlayRecordReplay\(row\.replayUsername \|\| row\.name, level, metric, row\.replayUid/);
+  assert.match(tutorial, /polish\.leaderboardPage = \(polish\.leaderboardPage - 1 \+ pageCount\) % pageCount/);
+  assert.match(tutorial, /polish\.leaderboardPage = \(polish\.leaderboardPage \+ 1\) % pageCount/);
+  assert.match(tutorial, /playReplayById\(replay\.row\.replayId/);
 });
 
 test("replay video window uses same-origin Worker storage and immutable user ids", () => {
@@ -102,8 +102,8 @@ test("main menu has canvas-native account and device windows and keyboard focus"
 });
 
 test("single-player tutorial and settings utility buttons are swapped", () => {
-  assert.match(nav, /settingsButton: Object\.freeze\(\{ id: "settings", x: 350/);
-  assert.match(nav, /tutorialButton: Object\.freeze\(\{ id: "tutorial", x: 378/);
+  assert.match(nav, /settingsButton: Object\.freeze\(\{ id: "settings", x: 346/);
+  assert.match(nav, /tutorialButton: Object\.freeze\(\{ id: "tutorial", x: 376/);
 });
 
 test("achievement and standard page navigation wrap consistently", () => {

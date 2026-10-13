@@ -19,7 +19,7 @@ function block(source, start, end) {
 
 test("Polish 21 cache marker is wired through the Worker, client, and asset URLs", () => {
   for (const source of [tutorial, common, index, read("public/scripts/cloud-client.js")]) {
-    assert.match(source, /2026\.10\.12-friends-polish-25/);
+    assert.match(source, /2026\.10\.12-friends-polish-30/);
   }
 });
 
@@ -43,19 +43,18 @@ test("keyboard focus gives profile and device icons the same themed halo as util
 test("adjacent icon groups keep breathing room and Tutorial hover suppresses Random highlight", () => {
   assert.match(nav, /profileButton: Object\.freeze\(\{ id: "profile", x: 45, y: 211, w: 24, h: 24 \}\)/);
   assert.match(nav, /deviceButton: Object\.freeze\(\{ id: "device", x: 75, y: 211, w: 24, h: 24 \}\)/);
-  assert.match(nav, /settingsButton: Object\.freeze\(\{ id: "settings", x: 350, y: 211, w: 24, h: 24 \}\)/);
-  assert.match(nav, /tutorialButton: Object\.freeze\(\{ id: "tutorial", x: 378, y: 211, w: 24, h: 24 \}\)/);
+  assert.match(nav, /settingsButton: Object\.freeze\(\{ id: "settings", x: 346, y: 211, w: 24, h: 24 \}\)/);
+  assert.match(nav, /tutorialButton: Object\.freeze\(\{ id: "tutorial", x: 376, y: 211, w: 24, h: 24 \}\)/);
   assert.match(nav, /timeButton: Object\.freeze\(\{ x: 406, y: 211, w: 24, h: 24 \}\)/);
   assert.match(rendering, /anotherControlHovered[\s\S]{0,220}game\.homeTutorialButtonHovered/);
 });
 
-test("Achievements leaderboard medal is monochrome and inherits the selected frog palette", () => {
-  const medal = block(tutorial, "function drawMiniMedalButton", "function normalizeLeaderboardRows");
-  assert.match(medal, /Monochrome ribbons and medallion inherit the active frog palette/);
-  assert.match(medal, /ctx\.fillStyle = skin\.dark/);
-  assert.match(medal, /ctx\.fillStyle = skin\.mid/);
-  assert.match(medal, /ctx\.fillStyle = skin\.light/);
-  assert.doesNotMatch(medal, /#ef7582|#eac65b|#5ce5e8/);
+test("Achievements leaderboard medal uses custom gold pixel art inside the inset button", () => {
+  const medal = block(tutorial, "function drawMiniMedalButton", "const LEADERBOARD_METRICS");
+  assert.match(medal, /#b12d0d/);
+  assert.match(medal, /#ff5326/);
+  assert.match(medal, /#ffd91d/);
+  assert.match(medal, /#fff2ba/);
 });
 
 test("Undo and Redo arrows stay inside their boxes and no longer show helper bubbles", () => {
@@ -81,11 +80,11 @@ test("PvP tutorial chapter strip is hidden during gameplay and dialogue is cente
   assert.match(dialogue, /const portraitPanel = \{ x: 335, y: 6, w: 54, h: 54 \}/);
 });
 
-test("PvP transitions retain the prior line during authored poofs instead of flashing blank", () => {
+test("PvP transitions hide stale dialogue during authored poofs", () => {
   assert.match(tutorial, /transitionHeldLineText/);
   assert.match(tutorial, /beginDialogueLine\(0, \{ delayMs:POOF_TRANSITION_MS \+ 1000, holdPreviousText:false \}\)/);
-  assert.match(tutorial, /tutorial\.dialogueHeldLineText = heldTransitionText/);
-  assert.match(tutorial, /tutorial\.dialogueHeldUntil = tutorial\.dialogueLineStartedAt \+ TYPEWRITER_MS_PER_CHARACTER/);
+  assert.match(tutorial, /tutorial\.dialogueHeldLineText = ""/);
+  assert.match(tutorial, /tutorial\.dialogueHeldUntil = 0/);
 });
 
 test("Ember retains her facing unless she hits a wall or performs a side rebound", () => {
