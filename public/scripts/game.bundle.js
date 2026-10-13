@@ -64,7 +64,7 @@ function startRibbitRaceGame() {
     const canvas = document.getElementById("game");
     const gameFrame = document.getElementById("game-frame");
     const friendsGameInputLocked = () => window.RibbitFriendsGameInputLocked?.() === true;
-    const RIBBIT_DISPLAY_VERSION = "VERSION 1.7.30";
+    const RIBBIT_DISPLAY_VERSION = "VERSION 1.7.31";
     const RIBBIT_CREDIT_TEXT = "MADE BY NICK M.";
     const RIBBIT_CREDIT_Y = 228;
     const rgbValueEditor = document.getElementById("rgb-value-editor");
@@ -18251,7 +18251,11 @@ function startRibbitRaceGame() {
       }
       try {
         advanceOnlineSimulation(now);
-        drawScene();OnlineVersus.drawOnlineTooltip();OnlineVersus.drawQueueBadge();OnlineVersus.drawSyncLabel();OnlineVersus.drawExitMenu();
+        window.RibbitEngineReplay?.tick?.(now);
+        drawScene();
+        if(!window.RibbitEngineReplay?.active?.()){
+          OnlineVersus.drawOnlineTooltip();OnlineVersus.drawQueueBadge();OnlineVersus.drawSyncLabel();OnlineVersus.drawExitMenu();
+        }
         positionRgbValueEditor();
         runtimeRecoveryCount = 0;
       } catch (error) {
@@ -19728,8 +19732,8 @@ function startRibbitRaceGame() {
     requestAnimationFrame(frame);
 
     /* ===== client/game/90-extended-features.js ===== */
-const RIBBIT_FRIENDS_DISPLAY_VERSION = "1.7.30";
-const RIBBIT_FRIENDS_BUILD = "2026.10.13-friends-polish-42";
+const RIBBIT_FRIENDS_DISPLAY_VERSION = "1.7.31";
+const RIBBIT_FRIENDS_BUILD = "2026.10.13-friends-polish-43";
 function rr14Number(value, fallback = 0) {
   const parsed = Number(value);
   return Number.isFinite(parsed) ? parsed : fallback;
@@ -20208,10 +20212,10 @@ window.RibbitRaceMobileDiagnostics = () => ({
  */
 (() => {
   "use strict";
-  const BUILD = "2026.10.13-friends-polish-42";
+  const BUILD = "2026.10.13-friends-polish-43";
   const RR_V160_CANDIDATES = {"catchFly":["attemptFlyCatch","attemptPvpFlyCatch","catchSandboxFly","getPvpImminentCatchFly","recordFlyEaten","scheduleFlyReplacementFromCatch"],"jumpSound":["playJumpSound"],"beep":["playCountdownGoSound","playCountdownSound"],"replayUpload":["saveRecordDate"],"restart":["resetGame","resetPvpGame","resetPvpPlayer","resetRoundLifecycle","resetRoundNetwork","restartCurrentLevel"],"drop":[],"render":["drawPvpScene","drawScene"],"worldRecord":[],"fullscreen":["getFullscreenElement","hideFullscreenFallback","showFullscreenFallback","syncFullscreenButton","toggleRibbitFullscreen"],"onlineSubmit":[],"leaderboard":["isSoloEndlessLeaderboardEligible","savePvpMatchWinsForLeaderboard"]};
   const RR_V160_VARS = {"onlineSelect":[],"achievementSelect":["activeAchievementIndex","hoveredAchievementCard"],"backRect":[]};
-  const VERSION = "1.7.30";
+  const VERSION = "1.7.31";
   const V = {
     menuTouch: new Map(), chargeTouch: new Map(), achievementPinned: -1,
     finalCatchStarted: 0, finalCatchLabelsGone: false,
@@ -20505,8 +20509,8 @@ window.RibbitRaceMobileDiagnostics = () => ({
     finalCatchTongueAssist();
     fsButton.style.display="none";
     const active=runLooksActive();
-    if(active&&!observedRun){observedRun=true;window.RibbitRecordReplay.start();}
-    if(!active&&observedRun){observedRun=false;const q=qualifiesAsRecord();const blob=await window.RibbitRecordReplay.finish(q);if(q)await uploadReplayBlob(blob);}
+    if(active&&!observedRun)observedRun=true;
+    if(!active&&observedRun)observedRun=false;
     requestAnimationFrame(deepTick);
   };
   requestAnimationFrame(deepTick);
@@ -20517,14 +20521,12 @@ window.RibbitRaceMobileDiagnostics = () => ({
     async del(id){const d=await this.db();await new Promise((res,rej)=>{const t=d.transaction("replays","readwrite");t.objectStore("replays").delete(id);t.oncomplete=res;t.onerror=()=>rej(t.error);});d.close();},
   };
   window.RibbitReplayStore=ReplayDb;
-  const replayModal=document.createElement("section");replayModal.id="rr-v160-replay-modal";replayModal.hidden=true;
-  replayModal.innerHTML='<div class="rrv-replay-card"><button type="button" class="rrv-close">×</button><h2>FROG TAG REPLAY</h2><video controls playsinline preload="metadata"></video><p class="rrv-replay-caption"></p></div>';
-  Object.assign(replayModal.style,{position:"fixed",inset:"0",zIndex:"1600",background:"rgba(7,25,34,.88)",display:"none",placeItems:"center",padding:"18px"});
-  const replayCard=replayModal.firstElementChild;Object.assign(replayCard.style,{position:"relative",width:"min(1000px,96vw)",background:"#f7fdff",border:"7px solid #26363d",padding:"18px",boxShadow:"10px 10px rgba(0,0,0,.35)",color:"#26363d"});
-  const replayVideo=replayModal.querySelector("video");Object.assign(replayVideo.style,{display:"block",width:"100%",maxHeight:"72vh",background:"#101315"});
-  const closeReplay=()=>{try{URL.revokeObjectURL(replayVideo.src)}catch(_){}replayVideo.removeAttribute("src");replayVideo.load();replayModal.hidden=true;replayModal.style.display="none";};
-  replayModal.querySelector(".rrv-close").addEventListener("click",closeReplay);document.body.appendChild(replayModal);
-  async function playStoredReplay(id,caption){const row=await ReplayDb.get(id);if(!row?.blob)return;replayVideo.src=URL.createObjectURL(row.blob);replayModal.querySelector(".rrv-replay-caption").textContent=caption||"";replayModal.hidden=false;replayModal.style.display="grid";try{await replayVideo.play()}catch(_){}}
+  async function playStoredReplay(id,caption){
+    const row=await ReplayDb.get(id);
+    if(row?.record?.kind==="ribbit-engine-frames") return window.RibbitEngineReplay?.play?.(row.record,caption||"FROG TAG REPLAY");
+    window.RibbitEngineReplay?.unavailable?.("LEGACY VIDEO REPLAY","OLD FROG TAG VIDEOS CANNOT BE RECONSTRUCTED AS GAME-STAGE REPLAYS");
+    return false;
+  }
   window.RibbitRacePlayStoredReplay = playStoredReplay;
   window.RibbitPlayStoredReplay=playStoredReplay;
   function currentOnlineAppearance(){return window.RibbitOnlineAppearance.get()||first(["selectedFrogAppearance","selectedAppearance","currentFrogAppearance"])||null;}
@@ -20532,8 +20534,12 @@ window.RibbitRaceMobileDiagnostics = () => ({
   function currentOnlineMatchId(){const o=onlineObj();return String(o?.matchId||o?.roomCode||o?.id||"");}
   let onlineRecording=false,onlineRecordedMatch="";
   async function finishOnlineArchive(){
-    if(!onlineRecording)return;onlineRecording=false;const blob=await window.RibbitRecordReplay.finish(true);if(!blob)return;
-    const id="online-"+(currentOnlineMatchId()||Date.now())+"-"+Date.now();await ReplayDb.put({id,blob,at:Date.now(),type:blob.type});
+    if(!onlineRecording)return;
+    onlineRecording=false;
+    const record=window.RibbitEngineReplay?.exportCurrent?.();
+    if(!record || record.kind!=="ribbit-engine-frames" || record.mode!=="pvp" || record.frames.length<2)return;
+    const id="online-"+(currentOnlineMatchId()||Date.now())+"-"+Date.now();
+    await ReplayDb.put({id,record,at:Date.now(),type:"ribbit-engine-frames"});
     const o=onlineObj();const result=o?.result||o?.finishedResult||{};
     window.RibbitFrogTags.add({id:currentOnlineMatchId()||id,replayId:id,opponent:opponentName(),opponentAppearance:remoteAppearance(),ownAppearance:currentOnlineAppearance(),won:!!(result.won||result.winnerRole===o?.role),score:result.score||result.roundWins||null});
   }
@@ -20594,7 +20600,7 @@ window.RibbitRaceMobileDiagnostics = () => ({
   for(const n of RR_V160_CANDIDATES.worldRecord||[]){const old=get(n);if(typeof old!=="function"||old.__rrv160)continue;const wrapped=function(...args){const info=args.find(a=>a&&typeof a==="object")||{};const metric=String(info.metric||info.category||info.rankBy||"");const level=String(info.level||info.stage||"any");const rows=leaderCache.get(metric+":"+level)||[];if(/pvp|flies/i.test(metric)&&rows[0]&&String(rows[0].name||rows[0].username).toLowerCase()===currentPlayerName().toLowerCase())return;setRecordPrior(metric,level);return old.apply(this,args)};wrapped.__rrv160=true;set(n,wrapped);}
   for(const n of RR_V160_CANDIDATES.render||[]){const old=get(n);if(typeof old!=="function"||old.__rrv160)continue;const wrapped=function(...args){const r=old.apply(this,args);const g=args.find(a=>a&&typeof a.save==="function")||first(["ctx","context"]);if(g){drawFrogTagsPolish(g);window.RibbitDrawCpuTakeover(g);if(V.worldRecordDetail&&performance.now()<V.worldRecordUntil){const mouse=first(["mouse","pointer"]);if(mouse&&mouse.x!=null)window.RibbitTooltipBox(g,V.worldRecordDetail,240,33,{size:7});}}return r};wrapped.__rrv160=true;set(n,wrapped);break;}
   let priorOnlinePlaying=false;
-  const archiveTick=()=>{const online=/online/i.test(stateName())||!!onlineObj();const playing=online&&/playing|countdown/i.test(stateName());if(playing&&!priorOnlinePlaying&&!mobileOn()){onlineRecording=window.RibbitRecordReplay.start();onlineRecordedMatch=currentOnlineMatchId();}if(!playing&&priorOnlinePlaying)finishOnlineArchive();priorOnlinePlaying=playing;requestAnimationFrame(archiveTick);};requestAnimationFrame(archiveTick);
+  const archiveTick=()=>{const online=/online/i.test(stateName())||!!onlineObj();const playing=online&&/playing|countdown/i.test(stateName());if(playing&&!priorOnlinePlaying&&!mobileOn()){onlineRecording=true;onlineRecordedMatch=currentOnlineMatchId();}if(!playing&&priorOnlinePlaying)finishOnlineArchive();priorOnlinePlaying=playing;requestAnimationFrame(archiveTick);};requestAnimationFrame(archiveTick);
   window.RibbitRaceV160={build:BUILD,version:VERSION,state:V,opponentName};
 })();
 
@@ -21082,7 +21088,7 @@ window.RibbitRaceMobileDiagnostics = () => ({
 "use strict";
 const SOLO_SEEN_KEY = "rrFriendsEngineTutorialSoloSeenV8";
 const PVP_SEEN_KEY = "rrFriendsEngineTutorialPvpSeenV8";
-const TUTORIAL_BUILD = "2026.10.13-friends-polish-42";
+const TUTORIAL_BUILD = "2026.10.13-friends-polish-43";
 const TUTORIAL_ACHIEVEMENT_ID = "tutorial-graduate";
 const PVP_TUTORIAL_ACHIEVEMENT_ID = "versus-tutorial-graduate";
 const TYPEWRITER_MS_PER_CHARACTER = 28;
@@ -23840,7 +23846,8 @@ function updatePvpDemonstration() {
         clearPvpScriptActions();
         tutorial.pvpDemoActive = false;
         tutorial.pvpPlayerScriptLocked = false;
-        tutorial.pvpCaption = "";
+        tutorial.pvpCaption = "WATCH EMBER!";
+        tutorial.pvpCaptionUntil = performance.now() + 15000;
         passStep();
       }
       return;
@@ -23949,7 +23956,8 @@ function updatePvpDemonstration() {
     clearPvpScriptActions();
     tutorial.pvpDemoActive = false;
     tutorial.pvpPlayerScriptLocked = false;
-    tutorial.pvpCaption = "";
+    tutorial.pvpCaption = "WATCH EMBER!";
+    tutorial.pvpCaptionUntil = performance.now() + 15000;
     passStep();
   }
 }
@@ -26293,7 +26301,10 @@ function drawCurrentGoalHud() {
   ctx.restore();
 }
 function drawPvpTutorialCaption() {
-  if (tutorial.kind !== "pvp" || !tutorial.pvpCaption || performance.now() > tutorial.pvpCaptionUntil) return;
+  const holdingEmber = tutorial.pvpCaption === "WATCH EMBER!" && !tutorial.dialogueOpen;
+  if (tutorial.kind !== "pvp" || !tutorial.pvpCaption ||
+      (tutorial.dialogueOpen && tutorial.pvpCaption === "WATCH EMBER!") ||
+      (!holdingEmber && performance.now() > tutorial.pvpCaptionUntil)) return;
   const text = tutorial.pvpCaption;
   if (tutorialStep()?.setup === "pvpFinalMatch") return;
   const width = 96;
@@ -27048,7 +27059,18 @@ update = function(dt, ...rest) {
   }
   if (tutorial.active && tutorialMovementLocked()) {
     updateTutorialAmbient(dt, { animateFlies: true });
-    freezeControlledEntity();
+    if (tutorial.kind === "pvp" && tutorial.dialogueOpen && !tutorial.resetPending &&
+        !tutorial.pvpFrogsHidden && game.state === "playing") {
+      for (const player of pvpPlayers) {
+        player.inputHeld = false;
+        player.charging = false;
+        if (!player.grounded) updatePvpPlayer(player, dt);
+        else { player.vx = 0; player.vy = 0; }
+      }
+      updatePvpImpactEffects(dt);
+    } else {
+      freezeControlledEntity();
+    }
     updateTutorial();
     return undefined;
   }
@@ -27423,9 +27445,9 @@ window.RibbitRaceTutorialEngine = Object.freeze({
     previous:Object.freeze({id:"previous",x:76,y:187,w:54,h:23}),
     flip:Object.freeze({id:"flip",x:138,y:187,w:141,h:23}),
     next:Object.freeze({id:"next",x:287,y:187,w:54,h:23}),
-    shuffle:Object.freeze({id:"shuffle",x:349,y:187,w:27,h:23}),
+    shuffle:Object.freeze({id:"shuffle",x:350,y:222,w:22,h:20}),
     starred:Object.freeze({id:"starred",x:76,y:215,w:145,h:19}),
-    back:Object.freeze({id:"back",x:230,y:215,w:120,h:19}),
+    back:Object.freeze({id:"back",x:230,y:215,w:112,h:19}),
     help:Object.freeze({id:"help",x:380,y:222,w:22,h:20}),
     star:Object.freeze({id:"star",x:378,y:88,w:24,h:24})
   });
@@ -27654,16 +27676,41 @@ window.RibbitRaceTutorialEngine = Object.freeze({
   }
   const flashcardStarSprite = new Image();
   flashcardStarSprite.src = "/icons/flashcard-star.png";
+  let flashcardStarOutlineCanvas = null;
+  function getFlashcardStarGraphic(isStarred=false){
+    if(isStarred || !flashcardStarSprite.complete || !flashcardStarSprite.naturalWidth) return flashcardStarSprite;
+    if(!flashcardStarOutlineCanvas){
+      const canvas=document.createElement("canvas");
+      canvas.width=flashcardStarSprite.naturalWidth||22;
+      canvas.height=flashcardStarSprite.naturalHeight||22;
+      const ictx=canvas.getContext("2d",{willReadFrequently:true});
+      ictx.imageSmoothingEnabled=false;
+      ictx.drawImage(flashcardStarSprite,0,0);
+      const image=ictx.getImageData(0,0,canvas.width,canvas.height);
+      const data=image.data;
+      for(let i=0;i<data.length;i+=4){
+        const alpha=data[i+3];
+        if(!alpha) continue;
+        const red=data[i], green=data[i+1], blue=data[i+2];
+        const isOutline=red<24&&green<24&&blue<24;
+        if(!isOutline){ data[i]=255; data[i+1]=255; data[i+2]=255; }
+      }
+      ictx.putImageData(image,0,0);
+      flashcardStarOutlineCanvas=canvas;
+    }
+    return flashcardStarOutlineCanvas;
+  }
   function drawFlashcardStar(cx,cy,isStarred=false){
     const width=22,height=22;
     const x=Math.round(cx-width/2),y=Math.round(cy-height/2);
     ctx.save();
-    ctx.globalAlpha=isStarred?1:.78;
+    ctx.globalAlpha=1;
     if(flashcardStarSprite.complete&&flashcardStarSprite.naturalWidth){
       ctx.imageSmoothingEnabled=false;
-      ctx.drawImage(flashcardStarSprite,x,y,width,height);
+      if(isStarred) ctx.drawImage(flashcardStarSprite,x,y,width,height);
+      else ctx.drawImage(getFlashcardStarGraphic(false),x,y,width,height);
     }else{
-      ctx.fillStyle="#f5cf21";
+      ctx.fillStyle=isStarred?"#f5cf21":"#ffffff";
       ctx.fillRect(x+9,y+2,4,15); ctx.fillRect(x+3,y+9,16,4);
       ctx.fillRect(x+5,y+6,12,10);
       ctx.fillStyle="#1e2124";
@@ -27737,7 +27784,7 @@ window.RibbitRaceTutorialEngine = Object.freeze({
       ctx.fillStyle=mixHexColors(skin.belly,"#ffffff",.18);
       ctx.fillRect(card.x+3,card.y+3,card.w-6,card.h-6);
       drawBitmapText("DECK COMPLETE!",W/2,card.y+34,1.07,"center",skin.dark);
-      drawBitmapText(polish.flashcardStars.length ? "RESTART OR STUDY STARRED TERMS" : "PRESS SPACE TO RESTART",W/2,card.y+63,.57,"center","#59666b");
+      drawBitmapText(polish.flashcardStars.length ? "PRESS SPACE TO STUDY STARRED" : "PRESS SPACE TO RESTART",W/2,card.y+63,.57,"center","#59666b");
     }else if(polish.flashcardSlideAt){
       const ease=1-Math.pow(1-slideT,3);
       const direction=polish.flashcardSlideDirection;
@@ -27758,10 +27805,9 @@ window.RibbitRaceTutorialEngine = Object.freeze({
     ctx.fillRect(h.x+2,h.y+2,h.w-4,h.h-4);
     ctx.fillStyle=selectedHelp?skin.light:"#ffffff";ctx.fillRect(h.x+4,h.y+3,h.w-8,1);
     ctx.fillStyle=color;
-    ctx.fillRect(hcx-5,hcy-7,10,2);ctx.fillRect(hcx-7,hcy-5,2,10);
-    ctx.fillRect(hcx+5,hcy-5,2,10);ctx.fillRect(hcx-5,hcy+5,10,2);
-    ctx.fillRect(hcx-2,hcy-4,4,2);ctx.fillRect(hcx+2,hcy-2,2,3);
-    ctx.fillRect(hcx-1,hcy+1,2,2);ctx.fillRect(hcx-1,hcy+4,2,2);
+    ctx.fillRect(hcx-3,hcy-6,6,2);ctx.fillRect(hcx+3,hcy-4,2,4);
+    ctx.fillRect(hcx-3,hcy-2,2,2);ctx.fillRect(hcx-1,hcy,2,2);
+    ctx.fillRect(hcx-1,hcy+4,2,2);ctx.fillRect(hcx-1,hcy+7,2,2);
     const selected=id=>polish.flashcardHoverKey===id;
     const buttons=[
       ["previous",polish.flashcardComplete?"RESTART DECK":"ICON_PREV",""],
@@ -28269,10 +28315,11 @@ window.RibbitRaceTutorialEngine = Object.freeze({
     if (Number.isNaN(date.getTime())) return String(value).slice(0, 10);
     return `${date.getMonth() + 1}/${date.getDate()}/${String(date.getFullYear()).slice(-2)}`;
   }
-  function drawReplayIcon(cx, cy, active = false) {
-    const dark = active ? getSelectedSkin().dark : "#26363d";
-    const mid = active ? getSelectedSkin().mid : "#8a98a0";
-    const light = "#f7fdff";
+  function drawReplayIcon(cx, cy, active = false, palette = null) {
+    const theme = palette || getSelectedSkin();
+    const dark = theme.dark || (active ? getSelectedSkin().dark : "#26363d");
+    const mid = active ? (theme.dark || getSelectedSkin().dark) : (theme.mid || theme.dark || "#8a98a0");
+    const light = active ? mixHexColors(theme.belly || theme.mid || "#f7fdff", "#ffffff", .25) : "#f7fdff";
     const x = Math.round(cx), y = Math.round(cy);
     ctx.fillStyle = dark;
     ctx.fillRect(x-7, y-5, 14, 10);
@@ -28483,7 +28530,7 @@ window.RibbitRaceTutorialEngine = Object.freeze({
         drawBitmapText(formatLeaderboardValue(row), columns.result, y + 6, .50, "center", "#26363d");
         if (row.replayId) {
           const replayRect = { x: columns.replay - 13, y: y + 1, w: 26, h: 15, row };
-          drawReplayIcon(replayRect.x + replayRect.w / 2, replayRect.y + replayRect.h / 2, polish.leaderboardHoverKey === `replay:${offset}`);
+          drawReplayIcon(replayRect.x + replayRect.w / 2, replayRect.y + replayRect.h / 2, polish.leaderboardHoverKey === `replay:${offset}`, rowPalette);
           polish.leaderboardReplayRects.push(replayRect);
         }
       });
@@ -29482,7 +29529,18 @@ window.RibbitRaceTutorialEngine = Object.freeze({
       event.preventDefault(); event.stopImmediatePropagation(); clearQuickplayAndHome(); return;
     }
   }, { capture:true, passive:false });
+  function closeDomReplayOverlay(){
+    const overlay=document.getElementById("rr-replay-overlay");
+    if(!overlay || overlay.hidden) return false;
+    overlay.querySelector(".rr-replay-close")?.click?.();
+    return true;
+  }
   window.addEventListener("keydown", (event) => {
+    if ((event.code === "Escape" || event.code === "Backspace") && closeDomReplayOverlay()) {
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      return;
+    }
     if (polish.leaderboardStatsRow && game.state !== "rrLeaderboard") {
       const allMetrics = leaderboardPlayerMetrics(polish.leaderboardStatsRow);
       const pageCount = Math.max(1, Math.ceil(allMetrics.length / STATS_UI.itemsPerPage));
@@ -29755,5 +29813,311 @@ window.RibbitRaceTutorialEngine = Object.freeze({
   };
   canvas.addEventListener("pointerleave",()=>{try{window.RibbitCustomBaseRestoreSelected?.();}catch(_){ }},{passive:true});
 })();
+
+    /* ===== client/game/133-engine-replay.js ===== */
+const RIBBIT_ENGINE_REPLAY_MIME = "application/vnd.ribbit-race.frames+json";
+const RIBBIT_REPLAY_SNAPSHOT_FIELDS = [
+  "x","y","vx","vy","dir","grounded","charging","charge","landingSquash",
+  "blinkTimer","blinking","score","skinId","bonked","stunTimer","bonkLandingPopTimer",
+  "collisionCooldown","firstJumpMade","airTime","catchSparkleTimer","wrongCatchBubbleTimer"
+];
+const RIBBIT_REPLAY_GAME_FIELDS = [
+  "mode","state","selectedLevelId","timeOfDay","moonPhaseIndex","worldTime","visualTime",
+  "score","jumps","elapsed","targetVocabIndex","skinId","pvpRoundNumber","pvpTimeRemaining",
+  "pvpElapsed","pvpTimeLimitSeconds","pvpFirstTo","pvpRoundGoalMode","pvpBestOf",
+  "pvpRoundWins","pvpSuddenDeath","onlineMode","pvpCpuEnabled","sandboxMode",
+  "soloCriticalCatchActive","pvpCriticalCatchActive","winPending","pvpWinPendingIndex",
+  "tutorialActive","pvpImpactEffects","messageTimer"
+];
+let ribbitReplayCapture = null;
+let ribbitReplayLastCapture = null;
+let ribbitReplayView = null;
+function captureRibbitReplayPlayer(player) {
+  if (!player) return null;
+  const state = {};
+  for (const field of RIBBIT_REPLAY_SNAPSHOT_FIELDS) {
+    const value = player[field];
+    if (["number","string","boolean"].includes(typeof value)) state[field] = value;
+  }
+  state.tongue = player.tongue ? {
+    active: !!player.tongue.active,
+    elapsed: Number(player.tongue.elapsed)||0,
+    duration: Number(player.tongue.duration)||.24,
+    targetX: Number(player.tongue.targetX)||0,
+    targetY: Number(player.tongue.targetY)||0,
+    targetFlyId:player.tongue.targetFlyId ?? null,
+    captured:!!player.tongue.captured
+  } : undefined;
+  return state;
+}
+function captureRibbitReplayFly(fly) {
+  return {
+    id:fly.id, x:fly.x, y:fly.y, baseX:fly.baseX, baseY:fly.baseY,
+    phase:fly.phase, spawnAge:fly.spawnAge, spawnIndex:fly.spawnIndex,
+    vocabIndex:fly.vocabIndex, state:fly.state, touchLocked:fly.touchLocked,
+    blockedPromptSerial:fly.blockedPromptSerial, pvpBlockedPromptSerials:fly.pvpBlockedPromptSerials
+  };
+}
+function captureRibbitReplaySnapshot(now) {
+  const mode = game.mode === "pvp" ? "pvp" : "solo";
+  const capture = ribbitReplayCapture;
+  return {
+    t: Math.max(0, Math.round(now-capture.startedAt-capture.pausedMillis)),
+    clock:game.elapsed, world:game.worldTime, visual:game.visualTime,
+    target:game.targetVocabIndex, score:game.score, jumps:game.jumps,
+    round:game.pvpRoundNumber, roundTime:game.pvpTimeRemaining,
+    roundWins:Array.isArray(game.pvpRoundWins)?[...game.pvpRoundWins]:[],
+    pvpElapsed:game.pvpElapsed,
+    player:captureRibbitReplayPlayer(frog),
+    players:mode === "pvp" ? pvpPlayers.map(captureRibbitReplayPlayer) : [],
+    flies:flies.filter(fly=>fly && fly.state !== "eaten").map(captureRibbitReplayFly)
+  };
+}
+function finishRibbitReplayCapture() {
+  if (!ribbitReplayCapture) return ribbitReplayLastCapture;
+  if (ribbitReplayCapture.frames.length) ribbitReplayLastCapture = ribbitReplayCapture;
+  ribbitReplayCapture = null;
+  return ribbitReplayLastCapture;
+}
+function ribbitReplayCaptureTick(now = performance.now()) {
+  if (ribbitReplayView) return;
+  const normalGame = game.state === "playing" && ["solo","pvp"].includes(game.mode) &&
+    !tutorial.active && !game.tutorialActive && !game.sandboxMode &&
+    !OnlineVersus.isSpectating();
+  if (!normalGame) {
+    const betweenRounds=ribbitReplayCapture?.mode==="pvp" &&
+      ["pvpCelebration","pvpSuddenDeathAlert"].includes(game.state);
+    if (ribbitReplayCapture && (["paused","countdown"].includes(game.state) || betweenRounds)) {
+      if(!ribbitReplayCapture.pausedAt)ribbitReplayCapture.pausedAt=now;
+    }else if(ribbitReplayCapture)finishRibbitReplayCapture();
+    return;
+  }
+  if(ribbitReplayCapture?.pausedAt){
+    ribbitReplayCapture.pausedMillis+=Math.max(0,now-ribbitReplayCapture.pausedAt);
+    ribbitReplayCapture.pausedAt=0;
+  }
+  const mode = game.mode;
+  const level = String(game.selectedLevelId||"park").toLowerCase();
+  const changed = !ribbitReplayCapture || ribbitReplayCapture.mode !== mode ||
+    ribbitReplayCapture.level !== level ||
+    (mode !== "pvp" && Number(game.elapsed||0) < Number(ribbitReplayCapture.lastGameTime||0)-.15);
+  if (changed) {
+    if(ribbitReplayCapture) finishRibbitReplayCapture();
+    ribbitReplayCapture = {
+      v:1,kind:"ribbit-engine-frames",mode,level,
+      timeOfDay:game.timeOfDay,moonPhaseIndex:game.moonPhaseIndex,skinId:game.skinId,
+      pvpTimeLimitSeconds:game.pvpTimeLimitSeconds,pvpFirstTo:game.pvpFirstTo,
+      pvpRoundGoalMode:game.pvpRoundGoalMode,pvpBestOf:game.pvpBestOf,
+      vocab:VOCABULARY.map(e=>({english:e.english,spanish:e.spanish})),
+      startedAt:now,lastAt:-Infinity,lastGameTime:0,pausedAt:0,pausedMillis:0,frames:[]
+    };
+  }
+  if(now-ribbitReplayCapture.lastAt<75 || ribbitReplayCapture.frames.length>=8500) return;
+  ribbitReplayCapture.lastAt=now;
+  ribbitReplayCapture.lastGameTime=Number(game.elapsed)||0;
+  ribbitReplayCapture.frames.push(captureRibbitReplaySnapshot(now));
+}
+function ribbitReplayExportCurrent() {
+  const capture = ribbitReplayCapture?.frames.length ? ribbitReplayCapture : ribbitReplayLastCapture;
+  if (!capture || capture.frames.length<2) return null;
+  const frames = capture.frames;
+  return {
+    version:1,kind:"ribbit-engine-frames",mode:capture.mode,level:capture.level,
+    timeOfDay:capture.timeOfDay,moonPhaseIndex:capture.moonPhaseIndex,
+    skinId:capture.skinId,vocab:capture.vocab,
+    pvpTimeLimitSeconds:capture.pvpTimeLimitSeconds,pvpFirstTo:capture.pvpFirstTo,
+    pvpRoundGoalMode:capture.pvpRoundGoalMode,pvpBestOf:capture.pvpBestOf,
+    duration:frames[frames.length-1].t,frames
+  };
+}
+function validateRibbitReplayData(data) {
+  if(!data || data.kind!=="ribbit-engine-frames" || data.version!==1 ||
+    !["solo","pvp"].includes(data.mode) || !LEVELS[String(data.level||"").toLowerCase()] ||
+    !Array.isArray(data.frames) || data.frames.length<2 || data.frames.length>8500) return false;
+  let last=-1;
+  for(const frame of data.frames){
+    if(!frame || !Number.isFinite(Number(frame.t)) || frame.t<last || frame.t>3600000 ||
+      !Array.isArray(frame.flies) || frame.flies.length>16 ||
+      !frame.player || !Number.isFinite(frame.player.x) || !Number.isFinite(frame.player.y)) return false;
+    last=frame.t;
+  }
+  return true;
+}
+function ribbitReplayBegin(data, caption = "REPLAY") {
+  if(!validateRibbitReplayData(data)) return ribbitReplayUnavailable("REPLAY UNAVAILABLE","THIS RECORD HAS NO PLAYABLE GAME-STATE DATA");
+  ribbitReplayView = {
+    data,caption:String(caption||"REPLAY").toUpperCase().slice(0,65),
+    position:0,lastTick:performance.now(),paused:false,rate:1,
+    restore:{state:game.state, mode:game.mode},error:""
+  };
+  game.state="rrEngineReplay";
+  document.body.classList.add("rr-engine-replay-active");
+  clearHeldInput();
+  return true;
+}
+function ribbitReplayUnavailable(title, reason) {
+  ribbitReplayView = {
+    data:null,caption:String(title).toUpperCase(),error:String(reason).toUpperCase(),
+    position:0,lastTick:performance.now(),paused:true,rate:1,
+    restore:{state:game.state,mode:game.mode}
+  };
+  game.state="rrEngineReplay";
+  document.body.classList.add("rr-engine-replay-active");
+  clearHeldInput();
+  return false;
+}
+function ribbitReplayClose() {
+  if(!ribbitReplayView) return false;
+  const restore=ribbitReplayView.restore;
+  ribbitReplayView=null;
+  document.body.classList.remove("rr-engine-replay-active");
+  game.state=restore?.state||"main";
+  game.mode=restore?.mode||"solo";
+  clearHeldInput();
+  return true;
+}
+function ribbitReplaySeek(seconds) {
+  if(!ribbitReplayView?.data) return;
+  ribbitReplayView.position=clamp(seconds*1000,0,ribbitReplayView.data.duration||0);
+  ribbitReplayView.lastTick=performance.now();
+}
+function ribbitReplayTick(now=performance.now()){
+  if(!ribbitReplayView){ribbitReplayCaptureTick(now);return;}
+  const view=ribbitReplayView, dt=Math.max(0,Math.min(now-view.lastTick,120));
+  view.lastTick=now;
+  if(view.data && !view.paused){
+    view.position=clamp(view.position+dt*view.rate,0,view.data.duration);
+    if(view.position>=view.data.duration) view.paused=true;
+  }
+}
+function replayFrameAt(position, frames) {
+  let low=0,high=frames.length-1;
+  while(low<high){const mid=(low+high+1)>>1;if(frames[mid].t<=position)low=mid;else high=mid-1;}
+  const a=frames[low],b=frames[Math.min(low+1,frames.length-1)];
+  const factor=clamp((position-a.t)/Math.max(1,b.t-a.t),0,1);
+  const lerpPosition=(p,q)=>{if(!p)return p;const out={...p};if(q){out.x=p.x+(q.x-p.x)*factor;out.y=p.y+(q.y-p.y)*factor;}return out;};
+  const alternate=new Map((b.flies||[]).map(f=>[f.id,f]));
+  const result={...a,player:lerpPosition(a.player,b.player),players:(a.players||[]).map((p,i)=>lerpPosition(p,b.players?.[i])),
+    flies:(a.flies||[]).map(f=>{const next=alternate.get(f.id);return next?{...f,x:f.x+(next.x-f.x)*factor,y:f.y+(next.y-f.y)*factor}:f;})};
+  return result;
+}
+function paintRibbitReplayStage() {
+  const view=ribbitReplayView, data=view?.data;
+  if(!data) {
+    ctx.fillStyle="#102a39";ctx.fillRect(0,0,W,H);
+    drawBitmapText("IN-GAME REPLAY",W/2,65,1.65,"center","#f7fdff");
+    drawBitmapText(view?.caption||"REPLAY UNAVAILABLE",W/2,115,.77,"center","#eac873");
+    drawBitmapText(view?.error||"PLAY A NEW ROUND TO SAVE A REPLAY",W/2,145,.55,"center","#f7fdff");
+    return;
+  }
+  const state=replayFrameAt(view.position,data.frames);
+  const gameOld={};for(const field of RIBBIT_REPLAY_GAME_FIELDS)gameOld[field]=game[field];
+  const frogOld={...frog};
+  const tongueOld={...tongue};
+  const tutorialOld={active:tutorial.active,completeScreen:tutorial.completeScreen,dialogueOpen:tutorial.dialogueOpen};
+  const pvpOld=pvpPlayers.map(p=>({...p,tongue:{...p.tongue}}));
+  const fliesOld=flies.slice();
+  const platformsOld=platforms,flySpawnsOld=flySpawns,vocabularyOld=VOCABULARY;
+  try {
+    game.state="playing";
+    game.mode=data.mode;game.selectedLevelId=data.level;game.timeOfDay=data.timeOfDay;
+    game.moonPhaseIndex=data.moonPhaseIndex;game.skinId=data.skinId;
+    game.worldTime=state.world;game.visualTime=state.visual;game.elapsed=state.clock;
+    game.targetVocabIndex=state.target;game.score=state.score;game.jumps=state.jumps;
+    game.pvpRoundNumber=state.round||1;game.pvpTimeRemaining=state.roundTime||0;
+    game.pvpElapsed=state.pvpElapsed||0;game.onlineMode=false;game.sandboxMode=false;
+    game.pvpRoundWins=state.roundWins||[0,0];
+    game.pvpTimeLimitSeconds=data.pvpTimeLimitSeconds??60;
+    game.pvpFirstTo=data.pvpFirstTo??5;
+    game.pvpRoundGoalMode=data.pvpRoundGoalMode||"5flies";
+    game.pvpBestOf=data.pvpBestOf??3;
+    game.tutorialActive=false;game.soloCriticalCatchActive=false;game.pvpCriticalCatchActive=false;
+    tutorial.active=false;tutorial.completeScreen=false;tutorial.dialogueOpen=false;
+    game.winPending=false;game.pvpWinPendingIndex=null;game.pvpImpactEffects=[];
+    if(data.vocab?.length)VOCABULARY=normalizeVocabularyEntries(data.vocab);
+    platforms=LEVELS[data.level].platforms;flySpawns=LEVELS[data.level].flySpawns;
+    Object.assign(frog,state.player);
+    Object.assign(tongue,state.player.tongue||{active:false});
+    if(data.mode==="pvp")state.players.forEach((player,i)=>{if(pvpPlayers[i])Object.assign(pvpPlayers[i],player,{tongue:player.tongue||{active:false}});});
+    flies.splice(0,flies.length,...state.flies.map(f=>({...f,spawnAge:f.spawnAge||5})));
+    ribbitReplayPreviousDrawScene();
+  } finally {
+    Object.assign(game,gameOld);Object.assign(frog,frogOld);Object.assign(tongue,tongueOld);
+    Object.assign(tutorial,tutorialOld);
+    pvpOld.forEach((player,i)=>Object.assign(pvpPlayers[i],player));
+    flies.splice(0,flies.length,...fliesOld);
+    platforms=platformsOld;flySpawns=flySpawnsOld;VOCABULARY=vocabularyOld;
+  }
+}
+function paintRibbitReplayChrome() {
+  const view=ribbitReplayView, data=view.data;
+  ctx.save();
+  ctx.fillStyle="#071721";ctx.fillRect(0,0,W,22);
+  drawBitmapText(view.caption,9,7,.55,"left","#ffffff");
+  drawBitmapText("SPECTATOR REPLAY",W-10,7,.50,"right","#a9edff");
+  ctx.fillStyle="#071721";ctx.fillRect(0,230,W,40);
+  const y=238;
+  ctx.fillStyle="#e8f4f7";ctx.fillRect(9,y,38,24);ctx.fillRect(52,y,37,24);
+  ctx.fillStyle="#253b45";ctx.fillRect(11,y+2,34,20);ctx.fillRect(54,y+2,33,20);
+  drawBitmapText(view.paused?"PLAY":"PAUSE",28,y+9,.49,"center","#ffffff");
+  drawBitmapText(`${view.rate}X`,70,y+9,.54,"center","#ffffff");
+  ctx.fillStyle="#536f77";ctx.fillRect(98,y+9,284,6);
+  const progress=data?.duration?clamp(view.position/data.duration,0,1):0;
+  ctx.fillStyle="#49dce9";ctx.fillRect(98,y+9,Math.round(progress*284),6);
+  ctx.fillStyle="#f3f9fc";ctx.fillRect(97+Math.round(progress*284),y+7,3,10);
+  ctx.fillStyle="#e8f4f7";ctx.fillRect(402,y,69,24);
+  ctx.fillStyle="#253b45";ctx.fillRect(404,y+2,65,20);
+  drawBitmapText("EXIT",436,y+9,.67,"center","#ffffff");
+  const seconds=Math.floor(view.position/1000), total=Math.floor((data?.duration||0)/1000);
+  drawBitmapText(`${Math.floor(seconds/60)}:${String(seconds%60).padStart(2,"0")} / ${Math.floor(total/60)}:${String(total%60).padStart(2,"0")}`,W/2,224,.53,"center","#f7fdff","#182f3c");
+  ctx.restore();
+}
+function drawRibbitReplayView(){
+  paintRibbitReplayStage();
+  paintRibbitReplayChrome();
+}
+const ribbitReplayPreviousDrawScene=drawScene;
+drawScene=function(...args){
+  if(ribbitReplayView){drawRibbitReplayView();return;}
+  return ribbitReplayPreviousDrawScene.apply(this,args);
+};
+function handleRibbitReplayKey(event){
+  if(!ribbitReplayView)return;
+  const key=event.code;
+  if(!["Escape","Backspace","Space","ArrowLeft","ArrowRight","ArrowUp","ArrowDown","Equal","Minus","KeyR","Home","End"].includes(key)){
+    event.preventDefault();event.stopImmediatePropagation();return;
+  }
+  event.preventDefault();event.stopImmediatePropagation();
+  if(event.repeat && !["ArrowLeft","ArrowRight"].includes(key))return;
+  if(key==="Escape"||key==="Backspace")ribbitReplayClose();
+  else if(key==="Space")ribbitReplayView.paused=!ribbitReplayView.paused;
+  else if(key==="ArrowLeft")ribbitReplaySeek((ribbitReplayView.position/1000)-5);
+  else if(key==="ArrowRight")ribbitReplaySeek((ribbitReplayView.position/1000)+5);
+  else if(key==="KeyR"||key==="Home")ribbitReplaySeek(0);
+  else if(key==="End")ribbitReplaySeek(ribbitReplayView.data?.duration/1000||0);
+  else if(["ArrowUp","Equal"].includes(key))ribbitReplayView.rate=Math.min(4,ribbitReplayView.rate*2);
+  else if(["ArrowDown","Minus"].includes(key))ribbitReplayView.rate=Math.max(.25,ribbitReplayView.rate/2);
+}
+window.addEventListener("keydown",handleRibbitReplayKey,true);
+canvas.addEventListener("pointerdown",event=>{
+  if(!ribbitReplayView)return;
+  event.preventDefault();event.stopImmediatePropagation();
+  const p=getCanvasPoint(event);
+  if(p.y<235)return;
+  if(p.x>=400)ribbitReplayClose();
+  else if(p.x<50)ribbitReplayView.paused=!ribbitReplayView.paused;
+  else if(p.x<91)ribbitReplayView.rate=ribbitReplayView.rate===1?2:ribbitReplayView.rate===2?4:ribbitReplayView.rate===4?.5:1;
+  else if(p.x>=98&&p.x<=383)ribbitReplaySeek(((p.x-98)/284)*(ribbitReplayView.data?.duration||0)/1000);
+},true);
+window.RibbitEngineReplay=Object.freeze({
+  mime:RIBBIT_ENGINE_REPLAY_MIME,
+  tick:ribbitReplayTick,
+  exportCurrent:ribbitReplayExportCurrent,
+  finishCapture:finishRibbitReplayCapture,
+  play:ribbitReplayBegin,
+  close:ribbitReplayClose,
+  unavailable:ribbitReplayUnavailable,
+  active:()=>!!ribbitReplayView
+});
 
 }

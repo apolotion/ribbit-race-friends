@@ -24,7 +24,7 @@ function between(text, start, end) {
 
 test("polish 18 build marker is wired through client and Worker", () => {
   for (const text of [tutorial, common, read("client/game/90-extended-features.js"), read("client/game/110-online-mobile-polish.js"), read("public/scripts/cloud-client.js")]) {
-    assert.match(text, /2026\.10\.13-friends-polish-42/);
+    assert.match(text, /2026\.10\.13-friends-polish-43/);
   }
 });
 
@@ -78,12 +78,12 @@ test("leaderboard is canvas-native, wraps pages, and opens replay playback", () 
   assert.match(tutorial, /playReplayById\(replay\.row\.replayId/);
 });
 
-test("replay video window uses same-origin Worker storage and immutable user ids", () => {
-  assert.match(replay, /rr-replay-window/);
-  assert.match(replay, /<video controls playsinline/);
+test("in-engine replay uses same-origin Worker storage and immutable user ids", () => {
+  assert.doesNotMatch(replay, /rr-replay-window/);
+  assert.doesNotMatch(replay, /<video controls playsinline/);
   assert.match(replay, /URLSearchParams/);
   assert.match(replay, /credentials:"same-origin"/);
-  assert.match(replayCss, /#rr-replay-overlay \.rr-replay-stage/);
+  assert.match(read("client/game/133-engine-replay.js"), /ribbitReplayPreviousDrawScene/);
   assert.match(hub, /CREATE TABLE IF NOT EXISTS record_replays/);
   assert.match(hub, /url\.searchParams\.get\('uid'\)/);
   assert.match(hub, /SELECT mime,data,value,updated FROM record_replays WHERE uid=\?/);

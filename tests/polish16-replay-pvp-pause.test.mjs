@@ -20,7 +20,7 @@ function block(source, start, end) {
 
 test("Polish 16 is wired and restores the prior packaged app icons", () => {
   for (const source of [tutorial, read("src/common.js"), index, read("public/scripts/cloud-client.js")]) {
-    assert.match(source, /2026\.10\.13-friends-polish-42/);
+    assert.match(source, /2026\.10\.13-friends-polish-43/);
   }
   assert.match(index, /\/icons\/favicon-32\.png/);
   assert.match(index, /\/icons\/ribbit-race-180\.png/);
@@ -37,9 +37,9 @@ test("record replays are same-origin Worker routes backed by FriendsHub SQLite",
   assert.match(hub, /\/api\/replays\/submit/);
   assert.match(hub, /\/api\/replays\/get/);
   assert.match(replay, /credentials:"same-origin"/);
-  assert.match(replay, /Replay PB upload skipped/);
+  assert.match(replay, /Replay PB not saved/);
   assert.match(hub, /SELECT id,username,name FROM users WHERE id=\?/);
-  assert.match(replay, /A separate video server is not required/);
+  assert.match(replay, /application\/vnd\.ribbit-race\.frames/);
 });
 
 test("PvP scenes hold prior poses through dialogue and poof only after the handoff", () => {

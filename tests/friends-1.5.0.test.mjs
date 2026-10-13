@@ -106,8 +106,9 @@ test("Versus round results are awarded once and transition through a real result
 
 test("Mobile performance mode reduces render pixels, video recording and catch-up work",()=>{
   assert.match(core,/const RENDER_SCALE = RIBBIT_COARSE_TOUCH_DEVICE \? 2 : 4/);
-  assert.match(extension,/const mobile=window\.RibbitMobileExperience/);
-  assert.match(extension,/if\(mobile&&this\.recorder\)/);
+  // Game-state replay snapshots replace expensive MediaRecorder videos.
+  assert.doesNotMatch(extension,/new MediaRecorder/);
+  assert.match(read("client/game/133-engine-replay.js"),/now-ribbitReplayCapture\.lastAt<75/);
   assert.match(input,/mobilePerformance \? 8 : 12/);
   assert.match(input,/accumulator = Math\.min\(accumulator, STEP \* 2\)/);
   assert.match(css,/100dvh/);
@@ -134,5 +135,5 @@ test("runtime loops are throttled and replay recording is disabled on mobile",()
   assert.match(extension,/setTimeout\(\(\)=>this\.tick\(\),250\)/);
   assert.match(extension,/setTimeout\(\(\)=>this\.tick\(\),750\)/);
   assert.doesNotMatch(extension,/requestAnimationFrame\(\(\)=>this\.tick\(\)\)/);
-  assert.match(extension,/const single=!mobile/);
+  assert.match(read("client/game/133-engine-replay.js"),/ribbitReplayCaptureTick/);
 });

@@ -980,7 +980,10 @@ function drawCurrentGoalHud() {
 }
 
 function drawPvpTutorialCaption() {
-  if (tutorial.kind !== "pvp" || !tutorial.pvpCaption || performance.now() > tutorial.pvpCaptionUntil) return;
+  const holdingEmber = tutorial.pvpCaption === "WATCH EMBER!" && !tutorial.dialogueOpen;
+  if (tutorial.kind !== "pvp" || !tutorial.pvpCaption ||
+      (tutorial.dialogueOpen && tutorial.pvpCaption === "WATCH EMBER!") ||
+      (!holdingEmber && performance.now() > tutorial.pvpCaptionUntil)) return;
   const text = tutorial.pvpCaption;
   // Replace the normal center timer during lesson scenes. The final 30-second
   // match restores the stock timer and no tutorial caption is drawn here.

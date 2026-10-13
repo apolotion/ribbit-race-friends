@@ -698,7 +698,11 @@
       }
       try {
         advanceOnlineSimulation(now);
-        drawScene();OnlineVersus.drawOnlineTooltip();OnlineVersus.drawQueueBadge();OnlineVersus.drawSyncLabel();OnlineVersus.drawExitMenu();
+        window.RibbitEngineReplay?.tick?.(now);
+        drawScene();
+        if(!window.RibbitEngineReplay?.active?.()){
+          OnlineVersus.drawOnlineTooltip();OnlineVersus.drawQueueBadge();OnlineVersus.drawSyncLabel();OnlineVersus.drawExitMenu();
+        }
         positionRgbValueEditor();
         runtimeRecoveryCount = 0;
       } catch (error) {

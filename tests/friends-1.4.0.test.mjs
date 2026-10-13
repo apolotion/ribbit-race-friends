@@ -10,9 +10,9 @@ const mobile=read("client/game/100-mobile-experience.js");
 const render=readGameModuleGroup(70, 79);
 const versus=readGameModuleGroup(60, 69);
 
-test("1.7.30 build and responsibility-focused modular gameplay sources are present",()=>{
-  assert.match(read("src/common.js"),/2026\.10\.13-friends-polish-42/);
-  assert.match(read("package.json"),/"version": "1\.7\.30"/);
+test("1.7.31 build and responsibility-focused modular gameplay sources are present",()=>{
+  assert.match(read("src/common.js"),/2026\.10\.13-friends-polish-43/);
+  assert.match(read("package.json"),/"version": "1\.7\.31"/);
   assert.match(read("scripts/build-game.mjs"),/discoverModules\(\)/);
   assert.match(read("public/index.html"),/mobile-experience\.js/);
 });
@@ -40,7 +40,8 @@ test("fastest-time and fewest-jumps replay paths remain available",()=>{
   assert.match(hub,/record_replays/);
   assert.match(hub,/api\/replays\/submit/);
   assert.match(hub,/api\/replays\/get/);
-  assert.match(extension,/PERSONAL BEST REPLAY/);
+  assert.match(extension,/application\/vnd\.ribbit-race\.frames/);
+  assert.match(extension,/spectator\.play/);
   assert.match(extension,/rr-replay-watch/);
 });
 

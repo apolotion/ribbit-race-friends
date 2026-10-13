@@ -974,7 +974,8 @@ function updatePvpDemonstration() {
         clearPvpScriptActions();
         tutorial.pvpDemoActive = false;
         tutorial.pvpPlayerScriptLocked = false;
-        tutorial.pvpCaption = "";
+        tutorial.pvpCaption = "WATCH EMBER!";
+        tutorial.pvpCaptionUntil = performance.now() + 15000;
         passStep();
       }
       return;
@@ -1127,7 +1128,8 @@ function updatePvpDemonstration() {
     clearPvpScriptActions();
     tutorial.pvpDemoActive = false;
     tutorial.pvpPlayerScriptLocked = false;
-    tutorial.pvpCaption = "";
+    tutorial.pvpCaption = "WATCH EMBER!";
+    tutorial.pvpCaptionUntil = performance.now() + 15000;
     passStep();
   }
 }

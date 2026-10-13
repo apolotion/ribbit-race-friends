@@ -181,6 +181,9 @@
   function drawSpectatorOverlay(){
     if(!octx)return;
     octx.clearRect(0,0,480,270);
+    // An engine-stage replay owns this canvas. Do not repaint the live
+    // spectator nameplates over its seek bar or controls.
+    if(window.RibbitEngineReplay?.active?.())return;
     const h=hooks();
     const stateText=String(h?.state||"");
     const spectator=Boolean(h?.spectator);

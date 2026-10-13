@@ -53,115 +53,94 @@
   }
   new MobileController();
 
+  // Modern personal-best replays are captured as game-state frames and painted
+  // on the actual stage by RibbitEngineReplay. Video-only legacy recordings
+  // cannot be converted to frog positions and are never shown in a video modal.
   class ReplayController {
-    constructor(){this.recorder=null;this.parts=[];this.run=null;this.installLeaderboard();window.addEventListener("ribbit-solo-finished",e=>this.finish(e.detail));setTimeout(()=>this.tick(),250);}
-    preferredMime(){
-      if(typeof MediaRecorder==="undefined") return "";
-      const choices=[
-        "video/mp4;codecs=avc1.42E01E,mp4a.40.2",
-        "video/mp4;codecs=avc1",
-        "video/mp4",
-        "video/webm;codecs=vp9",
-        "video/webm;codecs=vp8",
-        "video/webm"
-      ];
-      return choices.find(type=>MediaRecorder.isTypeSupported?.(type))||"";
+    constructor(){
+      this.installLeaderboard();
+      window.addEventListener("ribbit-solo-finished", event => this.finish(event.detail));
     }
-    tick(){const snap=bridge()?.snapshot?.()||{};const mobile=window.RibbitMobileExperience?.enabled?.()||window.matchMedia?.("(pointer: coarse)")?.matches;if(mobile&&this.recorder){try{this.recorder.stop()}catch(_){}this.recorder=null;this.parts=[];this.run=null;}const single=!mobile&&/playing/i.test(snap.state||"")&&!snap.localVersus&&!snap.onlineVersus&&!/pvp|versus|online|quick/i.test(snap.state||"");if(single&&!this.recorder)this.start(snap);setTimeout(()=>this.tick(),250)}
-    start(snap){
-      const canvas=bridge()?.canvas?.();if(!canvas?.captureStream||typeof MediaRecorder==="undefined")return;
-      try{
-        const stream=canvas.captureStream(24), type=this.preferredMime(), options={videoBitsPerSecond:900000};
-        if(type) options.mimeType=type;
-        this.parts=[];this.run={level:snap.level||"unknown",started:Date.now()};
-        this.recorder=new MediaRecorder(stream,options);
-        this.recorder.ondataavailable=e=>{if(e.data?.size)this.parts.push(e.data)};
-        this.recorder.start(500);
-      }catch(_){this.recorder=null}
+    async encodeReplay(record){
+      const original=new TextEncoder().encode(JSON.stringify(record));
+      let bytes=original;
+      let mime="application/vnd.ribbit-race.frames+json";
+      if(typeof CompressionStream==="function"){
+        const stream=new Blob([original]).stream().pipeThrough(new CompressionStream("gzip"));
+        bytes=new Uint8Array(await new Response(stream).arrayBuffer());
+        mime="application/vnd.ribbit-race.frames+gzip";
+      }
+      let data="";
+      for(let i=0;i<bytes.length;i+=0x6000) data+=String.fromCharCode(...bytes.subarray(i,i+0x6000));
+      return {mime,data:btoa(data)};
+    }
+    async decodeReplay(mime,base64){
+      const raw=atob(String(base64||""));
+      const bytes=new Uint8Array(raw.length);
+      for(let i=0;i<raw.length;i++)bytes[i]=raw.charCodeAt(i);
+      const gzip=mime.includes("+gzip");
+      if(gzip && typeof DecompressionStream!=="function")throw new Error("This browser cannot read the compressed replay.");
+      const restored=gzip ? new Uint8Array(await new Response(new Blob([bytes]).stream().pipeThrough(new DecompressionStream("gzip"))).arrayBuffer()) : bytes;
+      return JSON.parse(new TextDecoder().decode(restored));
     }
     async finish(snap){
-      const rec=this.recorder;if(!rec||!this.run)return;this.recorder=null;const run=this.run;this.run=null;
-      const stopped=new Promise(resolve=>rec.addEventListener("stop",resolve,{once:true}));try{rec.stop()}catch(_){return}await stopped;
-      const blob=new Blob(this.parts,{type:rec.mimeType||"video/webm"});this.parts=[];if(!blob.size||blob.size>2_800_000)return;
-      const data=await new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(String(reader.result).split(",")[1]||"");reader.onerror=reject;reader.readAsDataURL(blob)});
-      // The Worker binds a replay to the authenticated session. Do not depend
-      // on account-name text being present in the DOM; that prevented valid PBs
-      // from uploading on the canvas-native account UI.
-      const payload={level:snap.level||run.level,time:Number(snap.time)||((Date.now()-run.started)/1000),jumps:Number(snap.jumps)||0,mime:blob.type,data};
-      fetch("/api/replays/submit",{method:"POST",credentials:"same-origin",headers:{"content-type":"application/json"},body:JSON.stringify(payload)})
-        .then(async response=>{let detail={};try{detail=await response.json()}catch(_){};
-          if(response.ok&&detail.ok){window.dispatchEvent(new CustomEvent("ribbit-replay-uploaded",{detail:{level:payload.level,stored:detail.stored||[]}}));}
-          else console.warn("Replay PB upload skipped:",detail.message||response.status)})
-        .catch(error=>console.warn("Replay PB upload unavailable:",error));
+      const record=window.RibbitEngineReplay?.exportCurrent?.();
+      if(!record || record.mode!=="solo" || !record.frames?.length) return;
+      try{
+        const encoded=await this.encodeReplay(record);
+        if(encoded.data.length>3_900_000){console.warn("Ribbit replay exceeded storage limit");return;}
+        const payload={
+          level:String(snap?.level||record.level||"park").toLowerCase(),
+          time:Number(snap?.time)||record.duration/1000,
+          jumps:Number(snap?.jumps)||0,
+          ...encoded
+        };
+        const response=await fetch("/api/replays/submit",{
+          method:"POST",credentials:"same-origin",headers:{"content-type":"application/json"},body:JSON.stringify(payload)
+        });
+        const detail=await response.json().catch(()=>({}));
+        if(response.ok&&detail.ok){
+          window.dispatchEvent(new CustomEvent("ribbit-replay-uploaded",{detail:{level:payload.level,stored:detail.stored||[]}}));
+        }else if(response.status!==401) console.warn("Replay PB not saved:",detail.message||response.status);
+      }catch(error){console.warn("In-game replay upload unavailable:",error);}
     }
     installLeaderboard(){
-      document.addEventListener("click",e=>{const trigger=e.target.closest?.(".rr-replay-watch"),row=e.target.closest?.("#leaderboard-body tr");if(!row||(!trigger&&!e.target.closest?.("td:nth-child(2)")))return;const metric=q("#leaderboard-metric")?.value;if(!["time","jumps"].includes(metric))return;const cells=row.querySelectorAll("td");const username=(cells[1]?.dataset.playerName||cells[1]?.textContent||"").replace(/[^\w\s-]/g,"").trim(),level=(cells[3]?.textContent||q("#leaderboard-level")?.value||"").trim().toLowerCase();if(username)this.play(username,level,metric)});
-      const decorate=()=>{const metric=q("#leaderboard-metric")?.value;if(!["time","jumps"].includes(metric))return;qa("#leaderboard-body tr").forEach(row=>{const cell=row.querySelector("td:nth-child(2)");if(!cell||cell.querySelector(".rr-replay-watch"))return;cell.dataset.playerName=cell.textContent.trim();const b=document.createElement("button");b.className="rr-replay-watch";b.type="button";b.title="Watch this record run";b.setAttribute("aria-label","Watch this replay");b.innerHTML='<span class="rr-replay-camera" aria-hidden="true"><span class="rr-rc-reel rr-rc-reel-a"></span><span class="rr-rc-reel rr-rc-reel-b"></span><span class="rr-rc-body"></span><span class="rr-rc-window"></span><span class="rr-rc-dot rr-rc-dot-a"></span><span class="rr-rc-dot rr-rc-dot-b"></span><span class="rr-rc-lens"></span><span class="rr-rc-viewfinder"></span></span>';cell.prepend(b)})};
-      new MutationObserver(decorate).observe(document.body,{subtree:true,childList:true});document.addEventListener("change",decorate);setTimeout(decorate,0);
-      const style=document.createElement("style");style.textContent="#leaderboard-body tr{cursor:pointer}#leaderboard-body tr:hover{outline:3px solid #5ce5e8;outline-offset:-3px}";document.head.append(style);
-    }
-    ensureReplayOverlay(){
-      let overlay=q("#rr-replay-overlay");
-      if(overlay)return overlay;
-      overlay=document.createElement("section");
-      overlay.id="rr-replay-overlay";
-      overlay.hidden=true;
-      overlay.setAttribute("role","dialog");
-      overlay.setAttribute("aria-modal","true");
-      overlay.innerHTML=`<div class="rr-replay-window">
-        <header><span class="rr-replay-title">PERSONAL BEST REPLAY</span><button class="rr-replay-close" type="button" aria-label="Close replay"><span aria-hidden="true">×</span></button></header>
-        <div class="rr-replay-stage"><video controls playsinline preload="metadata"></video><div class="rr-replay-message" hidden></div></div>
-        <footer><span class="rr-replay-caption"></span><button class="rr-replay-again" type="button">PLAY FROM START</button></footer>
-      </div>`;
-      document.body.append(overlay);
-      const video=q("video",overlay);
-      const close=()=>{try{video.pause()}catch(_){}if(overlay._objectUrl){URL.revokeObjectURL(overlay._objectUrl);overlay._objectUrl="";}overlay.hidden=true;};
-      q(".rr-replay-close",overlay).onclick=close;
-      q(".rr-replay-again",overlay).onclick=()=>{video.currentTime=0;video.play().catch(()=>{});};
-      video.addEventListener("error",()=>{
-        const message=q(".rr-replay-message",overlay);
-        message.hidden=false;
-        message.innerHTML='<strong>REPLAY COULD NOT LOAD</strong><span>This saved video could not be decoded by the browser. Set a new PB after updating to this build and try again.</span>';
-        q(".rr-replay-again",overlay).hidden=true;
+      document.addEventListener("click",event=>{
+        const trigger=event.target.closest?.(".rr-replay-watch"),row=event.target.closest?.("#leaderboard-body tr");
+        if(!row||!trigger)return;
+        event.preventDefault();event.stopPropagation();
+        const metric=q("#leaderboard-metric")?.value;
+        if(!["time","jumps"].includes(metric))return;
+        const cells=row.querySelectorAll("td");
+        const name=cells[1]?.dataset.playerName || cells[1]?.textContent?.trim() || "";
+        const level=String(cells[3]?.textContent||q("#leaderboard-level")?.value||"").trim().toLowerCase();
+        this.play(name,level,metric);
       });
-      overlay.addEventListener("pointerdown",event=>{if(event.target===overlay)close();});
-      document.addEventListener("keydown",event=>{if(event.key==="Escape"&&!overlay.hidden){event.preventDefault();close();}});
-      return overlay;
-    }
-    showReplayMessage(title,detail){
-      const overlay=this.ensureReplayOverlay(),video=q("video",overlay),message=q(".rr-replay-message",overlay);
-      try{video.pause()}catch(_){}video.removeAttribute("src");video.load();
-      message.hidden=false;message.innerHTML=`<strong>${title}</strong><span>${detail}</span>`;
-      q(".rr-replay-caption",overlay).textContent="";q(".rr-replay-again",overlay).hidden=true;overlay.hidden=false;
     }
     async play(username,level,metric,uid=""){
-      const overlay=this.ensureReplayOverlay(),video=q("video",overlay),message=q(".rr-replay-message",overlay);
-      message.hidden=false;message.innerHTML='<strong>LOADING REPLAY…</strong><span>Fetching the saved personal-best video.</span>';
-      q(".rr-replay-caption",overlay).textContent=`${username} • ${level.toUpperCase()} • ${metric==="time"?"FASTEST TIME":"FEWEST JUMPS"}`;
-      q(".rr-replay-again",overlay).hidden=true;overlay.hidden=false;
+      const spectator=window.RibbitEngineReplay;
+      if(!spectator)return false;
+      const caption=`${username} • ${String(level).toUpperCase()} • ${metric==="time"?"FASTEST TIME":"FEWEST JUMPS"}`;
       try{
         const params=new URLSearchParams({username:String(username||""),level:String(level||""),metric:String(metric||"")});
         if(uid)params.set("uid",String(uid));
-        const r=await fetch(`/api/replays/get?${params.toString()}`,{credentials:"same-origin",cache:"no-store"});
-        let j={};try{j=await r.json()}catch(_){ }
-        if(!r.ok||!j.ok||!j.data){
-          const detail=r.status===401?"Sign in to the same Friends account used by the game.":r.status===404?"This record predates replay capture, or its PB video was never uploaded.":j.message||`The Worker returned HTTP ${r.status}.`;
-          this.showReplayMessage(r.status===404?"NO VIDEO FOR THIS PB":"REPLAY SERVICE ERROR",detail);return false;
+        const response=await fetch(`/api/replays/get?${params.toString()}`,{credentials:"same-origin",cache:"no-store"});
+        const payload=await response.json().catch(()=>({}));
+        if(!response.ok||!payload.ok||!payload.data){
+          spectator.unavailable("IN-GAME REPLAY",response.status===404?
+            "NO GAME-STATE REPLAY SAVED FOR THIS RECORD":payload.message||"REPLAY SERVICE UNAVAILABLE");
+          return false;
         }
-        const binary=atob(String(j.data||"")),bytes=new Uint8Array(binary.length);for(let i=0;i<binary.length;i++)bytes[i]=binary.charCodeAt(i);
-        const mime=String(j.mime||"video/webm");
-        const blob=new Blob([bytes],{type:mime});
-        if(overlay._objectUrl)URL.revokeObjectURL(overlay._objectUrl);
-        overlay._objectUrl=URL.createObjectURL(blob);video.src=overlay._objectUrl;video.load();message.hidden=true;q(".rr-replay-again",overlay).hidden=false;
-        await video.play().catch(()=>{});return true;
+        const mime=String(payload.mime||"").toLowerCase();
+        if(!mime.startsWith("application/vnd.ribbit-race.frames+")){
+          spectator.unavailable("LEGACY VIDEO REPLAY","OLD VIDEOS CANNOT BE REBUILT AS GAMEPLAY. SET A NEW RECORD TO SAVE A STAGE REPLAY.");
+          return false;
+        }
+        return spectator.play(await this.decodeReplay(mime,payload.data),caption);
       }catch(error){
-        let health=null;try{const response=await fetch("/api/replays/health",{credentials:"same-origin",cache:"no-store"});health=await response.json();}catch(_){ }
-        // A separate video server is not required. Replays live in the same
-        // FriendsHub Durable Object as accounts and saves, on the game domain.
-        const detail=health?.ok
-          ? "The replay service is online, but this video could not be downloaded. Older PB videos may need to be replaced by setting a new record after this build is deployed."
-          : "Deploy the complete Worker project—not only the public folder—on this same game domain. A separate video server is not required.";
-        this.showReplayMessage("REPLAY SERVER UNREACHABLE",detail);console.warn("Replay fetch failed",error);return false;
+        console.warn("Ribbit in-game replay unavailable",error);
+        spectator.unavailable("REPLAY COULD NOT LOAD","SAVED GAME-STATE DATA IS MISSING OR INVALID");
+        return false;
       }
     }
   }

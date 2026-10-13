@@ -17,7 +17,8 @@ test("polish 8 ships canvas-native leaderboard and replay controls", () => {
   assert.match(tutorial, /playReplayById/);
   assert.match(tutorial, /RibbitRacePlayStoredReplay/);
   assert.match(tutorial, /repairReplayModal/);
-  assert.match(read("public/scripts/extended-features.js"), /rr-replay-window/);
+  assert.doesNotMatch(read("public/scripts/extended-features.js"), /rr-replay-window/);
+  assert.match(read("client/game/133-engine-replay.js"), /paintRibbitReplayStage/);
   assert.doesNotMatch(tutorial, /PLAY REPLAY IN GAME/);
   const allClient = ["client/game/90-extended-features.js","client/game/110-online-mobile-polish.js"].map(read).join("\n");
   assert.match(allClient, /rrReplaySource|RibbitRacePlayStoredReplay/);

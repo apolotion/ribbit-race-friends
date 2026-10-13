@@ -102,9 +102,9 @@
     previous:Object.freeze({id:"previous",x:76,y:187,w:54,h:23}),
     flip:Object.freeze({id:"flip",x:138,y:187,w:141,h:23}),
     next:Object.freeze({id:"next",x:287,y:187,w:54,h:23}),
-    shuffle:Object.freeze({id:"shuffle",x:349,y:187,w:27,h:23}),
+    shuffle:Object.freeze({id:"shuffle",x:350,y:222,w:22,h:20}),
     starred:Object.freeze({id:"starred",x:76,y:215,w:145,h:19}),
-    back:Object.freeze({id:"back",x:230,y:215,w:120,h:19}),
+    back:Object.freeze({id:"back",x:230,y:215,w:112,h:19}),
     help:Object.freeze({id:"help",x:380,y:222,w:22,h:20}),
     star:Object.freeze({id:"star",x:378,y:88,w:24,h:24})
   });
@@ -349,17 +349,42 @@
   }
   const flashcardStarSprite = new Image();
   flashcardStarSprite.src = "/icons/flashcard-star.png";
+  let flashcardStarOutlineCanvas = null;
+  function getFlashcardStarGraphic(isStarred=false){
+    if(isStarred || !flashcardStarSprite.complete || !flashcardStarSprite.naturalWidth) return flashcardStarSprite;
+    if(!flashcardStarOutlineCanvas){
+      const canvas=document.createElement("canvas");
+      canvas.width=flashcardStarSprite.naturalWidth||22;
+      canvas.height=flashcardStarSprite.naturalHeight||22;
+      const ictx=canvas.getContext("2d",{willReadFrequently:true});
+      ictx.imageSmoothingEnabled=false;
+      ictx.drawImage(flashcardStarSprite,0,0);
+      const image=ictx.getImageData(0,0,canvas.width,canvas.height);
+      const data=image.data;
+      for(let i=0;i<data.length;i+=4){
+        const alpha=data[i+3];
+        if(!alpha) continue;
+        const red=data[i], green=data[i+1], blue=data[i+2];
+        const isOutline=red<24&&green<24&&blue<24;
+        if(!isOutline){ data[i]=255; data[i+1]=255; data[i+2]=255; }
+      }
+      ictx.putImageData(image,0,0);
+      flashcardStarOutlineCanvas=canvas;
+    }
+    return flashcardStarOutlineCanvas;
+  }
   function drawFlashcardStar(cx,cy,isStarred=false){
     const width=22,height=22;
     const x=Math.round(cx-width/2),y=Math.round(cy-height/2);
     ctx.save();
-    ctx.globalAlpha=isStarred?1:.78;
+    ctx.globalAlpha=1;
     if(flashcardStarSprite.complete&&flashcardStarSprite.naturalWidth){
       ctx.imageSmoothingEnabled=false;
-      // This is the user's exact gold/black pixel star, with only white made transparent.
-      ctx.drawImage(flashcardStarSprite,x,y,width,height);
+      // Use the user's exact pixel star; only the inner fill changes from white to gold when starred.
+      if(isStarred) ctx.drawImage(flashcardStarSprite,x,y,width,height);
+      else ctx.drawImage(getFlashcardStarGraphic(false),x,y,width,height);
     }else{
-      ctx.fillStyle="#f5cf21";
+      ctx.fillStyle=isStarred?"#f5cf21":"#ffffff";
       ctx.fillRect(x+9,y+2,4,15); ctx.fillRect(x+3,y+9,16,4);
       ctx.fillRect(x+5,y+6,12,10);
       ctx.fillStyle="#1e2124";
@@ -437,7 +462,7 @@
       ctx.fillStyle=mixHexColors(skin.belly,"#ffffff",.18);
       ctx.fillRect(card.x+3,card.y+3,card.w-6,card.h-6);
       drawBitmapText("DECK COMPLETE!",W/2,card.y+34,1.07,"center",skin.dark);
-      drawBitmapText(polish.flashcardStars.length ? "RESTART OR STUDY STARRED TERMS" : "PRESS SPACE TO RESTART",W/2,card.y+63,.57,"center","#59666b");
+      drawBitmapText(polish.flashcardStars.length ? "PRESS SPACE TO STUDY STARRED" : "PRESS SPACE TO RESTART",W/2,card.y+63,.57,"center","#59666b");
     }else if(polish.flashcardSlideAt){
       const ease=1-Math.pow(1-slideT,3);
       const direction=polish.flashcardSlideDirection;
@@ -460,10 +485,9 @@
     ctx.fillRect(h.x+2,h.y+2,h.w-4,h.h-4);
     ctx.fillStyle=selectedHelp?skin.light:"#ffffff";ctx.fillRect(h.x+4,h.y+3,h.w-8,1);
     ctx.fillStyle=color;
-    ctx.fillRect(hcx-5,hcy-7,10,2);ctx.fillRect(hcx-7,hcy-5,2,10);
-    ctx.fillRect(hcx+5,hcy-5,2,10);ctx.fillRect(hcx-5,hcy+5,10,2);
-    ctx.fillRect(hcx-2,hcy-4,4,2);ctx.fillRect(hcx+2,hcy-2,2,3);
-    ctx.fillRect(hcx-1,hcy+1,2,2);ctx.fillRect(hcx-1,hcy+4,2,2);
+    ctx.fillRect(hcx-3,hcy-6,6,2);ctx.fillRect(hcx+3,hcy-4,2,4);
+    ctx.fillRect(hcx-3,hcy-2,2,2);ctx.fillRect(hcx-1,hcy,2,2);
+    ctx.fillRect(hcx-1,hcy+4,2,2);ctx.fillRect(hcx-1,hcy+7,2,2);
     const selected=id=>polish.flashcardHoverKey===id;
     const buttons=[
       ["previous",polish.flashcardComplete?"RESTART DECK":"ICON_PREV",""],
@@ -1005,10 +1029,11 @@
     return `${date.getMonth() + 1}/${date.getDate()}/${String(date.getFullYear()).slice(-2)}`;
   }
 
-  function drawReplayIcon(cx, cy, active = false) {
-    const dark = active ? getSelectedSkin().dark : "#26363d";
-    const mid = active ? getSelectedSkin().mid : "#8a98a0";
-    const light = "#f7fdff";
+  function drawReplayIcon(cx, cy, active = false, palette = null) {
+    const theme = palette || getSelectedSkin();
+    const dark = theme.dark || (active ? getSelectedSkin().dark : "#26363d");
+    const mid = active ? (theme.dark || getSelectedSkin().dark) : (theme.mid || theme.dark || "#8a98a0");
+    const light = active ? mixHexColors(theme.belly || theme.mid || "#f7fdff", "#ffffff", .25) : "#f7fdff";
     const x = Math.round(cx), y = Math.round(cy);
     ctx.fillStyle = dark;
     ctx.fillRect(x-7, y-5, 14, 10);
@@ -1239,7 +1264,7 @@
         drawBitmapText(formatLeaderboardValue(row), columns.result, y + 6, .50, "center", "#26363d");
         if (row.replayId) {
           const replayRect = { x: columns.replay - 13, y: y + 1, w: 26, h: 15, row };
-          drawReplayIcon(replayRect.x + replayRect.w / 2, replayRect.y + replayRect.h / 2, polish.leaderboardHoverKey === `replay:${offset}`);
+          drawReplayIcon(replayRect.x + replayRect.w / 2, replayRect.y + replayRect.h / 2, polish.leaderboardHoverKey === `replay:${offset}`, rowPalette);
           polish.leaderboardReplayRects.push(replayRect);
         }
       });
@@ -2326,7 +2351,19 @@
     }
   }, { capture:true, passive:false });
 
+  function closeDomReplayOverlay(){
+    const overlay=document.getElementById("rr-replay-overlay");
+    if(!overlay || overlay.hidden) return false;
+    overlay.querySelector(".rr-replay-close")?.click?.();
+    return true;
+  }
+
   window.addEventListener("keydown", (event) => {
+    if ((event.code === "Escape" || event.code === "Backspace") && closeDomReplayOverlay()) {
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      return;
+    }
     if (polish.leaderboardStatsRow && game.state !== "rrLeaderboard") {
       const allMetrics = leaderboardPlayerMetrics(polish.leaderboardStatsRow);
       const pageCount = Math.max(1, Math.ceil(allMetrics.length / STATS_UI.itemsPerPage));

@@ -536,7 +536,22 @@ update = function(dt, ...rest) {
   // only the controlled frog. Flies stay still during a poof transition.
   if (tutorial.active && tutorialMovementLocked()) {
     updateTutorialAmbient(dt, { animateFlies: true });
-    freezeControlledEntity();
+    if (tutorial.kind === "pvp" && tutorial.dialogueOpen && !tutorial.resetPending &&
+        !tutorial.pvpFrogsHidden && game.state === "playing") {
+      // Dialogue blocks controls, not gravity. A surprise bonk or wall rebound
+      // may leave either frog airborne when Ember begins speaking. Finish that
+      // fall using the normal per-frog platform/ground physics, without running
+      // new opponent collisions, fly catches, CPU inputs, or scoring events.
+      for (const player of pvpPlayers) {
+        player.inputHeld = false;
+        player.charging = false;
+        if (!player.grounded) updatePvpPlayer(player, dt);
+        else { player.vx = 0; player.vy = 0; }
+      }
+      updatePvpImpactEffects(dt);
+    } else {
+      freezeControlledEntity();
+    }
     updateTutorial();
     return undefined;
   }
