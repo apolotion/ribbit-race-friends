@@ -18,16 +18,17 @@ const index = read("public/index.html");
 
 test("polish 11 cache marker is wired through client, worker, and asset URLs", () => {
   for (const source of [tutorial, cloud, index, read("src/common.js")]) {
-    assert.match(source, /2026\.10\.12-friends-polish-30/);
+    assert.match(source, /2026\.10\.12-friends-polish-33/);
   }
 });
 
-test("account and device controls share one aligned geometry and readable speech bubble", () => {
-  assert.match(css, /#rr170-account-icon, #rr170-device-icon \{[\s\S]{0,300}bottom: 2\.2%[\s\S]{0,300}width: 6\.5%[\s\S]{0,300}aspect-ratio: 1/);
-  assert.match(css, /\.rr170-tooltip::after/);
-  assert.match(css, /color: #26363d/);
-  assert.match(pagePolish, /ACCOUNT & LANGUAGE/);
-  assert.match(pagePolish, /COMPUTER \/ MOBILE MODE/);
+test("account and device share canvas geometry and HTML overlays are suppressed", () => {
+  const mobileGame=read("client/game/100-mobile-experience.js");
+  assert.match(mobileGame, /avatar: MAIN_UI\.profileButton/);
+  assert.match(mobileGame, /device: MAIN_UI\.deviceButton/);
+  assert.match(css, /#rr170-pause, #rr170-account-icon, #rr170-device-icon/);
+  assert.match(tutorial, /ACCOUNT & LANGUAGE/);
+  assert.match(tutorial, /COMPUTER \/ MOBILE MODE/);
 });
 
 test("Achievements uses an inset medal button and canvas-native dropdown leaderboard", () => {

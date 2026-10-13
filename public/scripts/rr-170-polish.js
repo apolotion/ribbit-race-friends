@@ -174,11 +174,8 @@
   function installOverlayControls() {
     gameFrame()?.appendChild(root);
 
-    const pause = button("rr170-pause", "Ⅱ", "PAUSE");
-    pause.hidden = true;
-    pause.addEventListener("click", () => hooks()?.pause?.());
-    root.appendChild(pause);
-    tooltipFor(pause, "PAUSE");
+    // No legacy DOM pause: both Solo and Versus use the shared canvas icon.
+    qs("#rr170-pause")?.remove();
 
     // The leaderboard now lives inside the canvas Achievements screen.
     // Remove any stale DOM medal left by older cached builds.
@@ -257,8 +254,7 @@
     function update() {
       const isPlay = playing();
       const isVs = versus();
-      pause.hidden = !(isPlay && isVs);
-      pause.classList.toggle("rr170-versus", isVs);
+      // The old DOM pause was removed; canvas HUD owns the only pause target.
       const inTutorial = tutorialActive();
       hatHover.hidden = inTutorial || !hatMenu();
       const two = mobile() && isPlay && humanLocalVersus();
@@ -314,54 +310,11 @@
   }
 
   function installMainMenuIcons() {
-    const account = button("rr170-account-icon", "", "ACCOUNT • SAVES • RECORDS");
-    account.innerHTML = `<span><span class="rr170-avatar-head"></span><span class="rr170-avatar-body"></span></span>`;
-    account.hidden = true;
-    activateOnRelease(account, () => {
-      const panel = qs("#cloud-account-panel");
-      if (panel) {
-        panel.hidden = false;
-        document.body.classList.add("rr-account-modal-open");
-      }
-    });
-    root.appendChild(account);
-    const accountTip = tooltipFor(account, "ACCOUNT & LANGUAGE");
-    accountTip.classList.add("rr170-main-corner-tooltip");
-
-    const device = button("rr170-device-icon", "", "SWITCH CONTROL MODE");
-    device.innerHTML = `<span class="rr170-device-symbol">▣</span>`;
-    device.hidden = true;
-    activateOnRelease(device, () => {
-      const enabling = !mobile();
-      const accepted = window.confirm(enabling
-        ? "TURN ON MOBILE MODE?\n\nUse touch controls and mobile instructions."
-        : "TURN ON COMPUTER MODE?\n\nUse keyboard and mouse controls.");
-      if (!accepted) return;
-      try { localStorage.setItem("ribbitRaceMobileModeV1", enabling ? "true" : "false"); } catch (_) {}
-      try {
-        if (typeof window.RibbitRaceSetMobileMode === "function") window.RibbitRaceSetMobileMode(enabling);
-        else window.dispatchEvent(new CustomEvent("ribbit:mobile-mode", {detail:{enabled:enabling}}));
-      } catch (_) {}
-      document.body.classList.toggle("rr-mobile-mode", enabling);
-      if (enabling) {
-        const mobileHelp = qs("#cloud-mobile-help") || qs('[id*="mobile"][id*="help"]');
-        mobileHelp?.removeAttribute("hidden");
-      }
-      setTimeout(() => location.reload(), 80);
-    });
-    root.appendChild(device);
-    const deviceTip = tooltipFor(device, "COMPUTER / MOBILE MODE");
-    deviceTip.classList.add("rr170-main-corner-tooltip");
-
-    function update() {
-      const show = mainMenuActive() && !tutorialActive();
-      account.hidden = !show;
-      device.hidden = !show;
-      deviceTip.textContent = mobile() ? "SWITCH TO COMPUTER MODE" : "SWITCH TO MOBILE MODE";
-      device.querySelector(".rr170-device-symbol").textContent = mobile() ? "▰" : "▣";
-      requestAnimationFrame(update);
-    }
-    requestAnimationFrame(update);
+    // Main-menu account and device controls are painted into the canvas.
+    // The old HTML copies stole mouse events and opened an invisible modal,
+    // leaving only its full-screen blurred backdrop.
+    qs("#rr170-account-icon")?.remove();
+    qs("#rr170-device-icon")?.remove();
   }
 
   function firstBootTutorial() {

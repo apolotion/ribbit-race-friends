@@ -20,7 +20,7 @@ function block(source, start, end) {
 
 test("Polish 16 is wired and restores the prior packaged app icons", () => {
   for (const source of [tutorial, read("src/common.js"), index, read("public/scripts/cloud-client.js")]) {
-    assert.match(source, /2026\.10\.12-friends-polish-30/);
+    assert.match(source, /2026\.10\.12-friends-polish-33/);
   }
   assert.match(index, /\/icons\/favicon-32\.png/);
   assert.match(index, /\/icons\/ribbit-race-180\.png/);
@@ -89,7 +89,7 @@ test("rebound effects finish before any next poof", () => {
   assert.match(settled, /game\.pvpImpactEffects/);
   assert.match(settled, /!impactActive/);
   assert.match(tutorial, /setup === "pvpDemoRebound"[\s\S]{0,180}pvpTutorialSettled\(\)/);
-  assert.match(tutorial, /setup === "pvpReboundThree"[\s\S]{0,180}pvpTutorialSettled\(\)/);
+  assert.match(tutorial, /setup === "pvpReboundThree"[\s\S]{0,320}pvpTutorialSettled\(\)/);
 });
 
 test("PvP lesson prompts and authored flies are isolated", () => {

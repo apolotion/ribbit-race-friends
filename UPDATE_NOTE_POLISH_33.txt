@@ -1,0 +1,20 @@
+RIBBIT RACE FRIENDS — POLISH 33 / VERSION 1.7.21
+Build: 2026.10.12-friends-polish-33
+Based on the full Polish 32 build (previous version marker 1.7.20).
+
+VERSUS TUTORIAL POLISH
+- Borrow My Bounce demonstration: player and Ember starting sides swapped; real scripted jumps now face the corresponding opposing directions. Player practice start positions remain unchanged.
+- Vocabulary fly in Borrow My Bounce: Ember's demo fly is over the lower-left stage; during the player's turn a matching fly appears over the lower-right stage. Each uses the correct current English/Spanish vocabulary index and normal fly name tag.
+- Under Bonk demonstration: removed the scripted teleport onto the lower-middle platform. Ember makes an actual charged jump from the mid-right platform, lands near the center of the lower-middle platform, then the player naturally under-bonks her from a closer launch position.
+- Low Profile: Ember performs exactly five genuine low-hop takeoff/landing cycles while approaching from the right, and completes the demo after the fifth clean landing with no automatic retry poof.
+- First Rebounds demonstration: both scripted jumps use 75% charge instead of 50%.
+- Dialogue: apostrophe pixel glyph is now angled correctly. Only BOTH TURNED AROUND is orange in the rebound-success line; WITHOUT TOUCHING A WALL remains white.
+- Three Clean Rebounds practice: after the first successful rebound, player starts centered on the left mid-height platform and Ember centered on right mid-height; both face inward. The third uses opposite ends of the top platform.
+- Three rebounds are cumulative, not consecutive. Missed jumps reset only the frogs' position while retaining the completed rebound counter.
+
+VERIFICATION
+- Full source and built browser bundle included.
+- Tested original game engine in in-memory Chromium for Ember's natural under-bonk, all five low-profile hops, the 75% rebound, mirrored rebound practice setup, non-resetting counter on missed attempts, and practice fly placement.
+- Automated tests cover authored geometry, vocabulary index, movement sequencing, text glyph/emphasis and counter preservation.
+- No cloud database migration or API configuration changes required.
+- Live Cloudflare deployment and real online matches have not been performed.

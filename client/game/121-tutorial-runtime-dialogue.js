@@ -412,6 +412,8 @@ function beginPvpSkyBonkDialoguePlacement(nextIndex) {
       tutorial.pendingStartPose = null;
       tutorial.scenePositionedDuringDialogue = true;
       tutorial.dialogueHiddenDuringPoof = false;
+      tutorial.dialogueLineStartedAt += 500;
+      tutorial.dialoguePreLineDelayUntil = tutorial.dialogueLineStartedAt;
       tutorial.enteredAt = performance.now();
     }
   });

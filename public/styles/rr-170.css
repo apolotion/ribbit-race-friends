@@ -1,5 +1,5 @@
 
-/* Ribbit Race Friends 1.7.19 — account modal, mobile touch, tutorials, and UI polish. */
+/* Ribbit Race Friends 1.7.21 — account modal, mobile touch, tutorials, and UI polish. */
 html, body {
   -webkit-touch-callout: none;
   -webkit-user-select: none;
@@ -302,4 +302,10 @@ select:not(:disabled),
 [role="button"]:not([aria-disabled="true"]),
 a[href] {
   cursor: pointer !important;
+}
+
+/* Polish 31: remove redundant HTML pause/account/device UI permanently. */
+#rr170-pause, #rr170-account-icon, #rr170-device-icon {
+  display: none !important;
+  pointer-events: none !important;
 }

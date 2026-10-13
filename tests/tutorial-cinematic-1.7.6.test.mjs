@@ -17,10 +17,10 @@ function block(start, end) {
   return engine.slice(from, to);
 }
 
-test("1.7.19 polished tutorial build and first-boot marker are installed", () => {
-  assert.equal(JSON.parse(read("package.json")).version, "1.7.19");
-  assert.match(read("src/common.js"), /2026\.10\.12-friends-polish-30/);
-  assert.match(engine, /const TUTORIAL_BUILD = "2026\.10\.12-friends-polish-30"/);
+test("1.7.21 polished tutorial build and first-boot marker are installed", () => {
+  assert.equal(JSON.parse(read("package.json")).version, "1.7.21");
+  assert.match(read("src/common.js"), /2026\.10\.12-friends-polish-33/);
+  assert.match(engine, /const TUTORIAL_BUILD = "2026\.10\.12-friends-polish-33"/);
   assert.match(engine, /rrFriendsEngineTutorialSoloSeenV8/);
 });
 

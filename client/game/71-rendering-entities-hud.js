@@ -375,16 +375,16 @@
     }
 
     function getFrogPalette() {
-      const pauseSkin = getSelectedSkin();
+      const skin = getSelectedSkin();
       return {
         dark: skin.dark,
-        mid: pauseSkin.mid,
-        light: pauseSkin.light,
+        mid: skin.mid,
+        light: skin.light,
         belly: skin.belly,
-        accents: skin.accents || skin.bump || skin.crest || pauseSkin.light,
-        arms: skin.arms || skin.accents || skin.bump || pauseSkin.light,
-        crest: skin.crest || skin.accents || pauseSkin.light,
-        feet: skin.feet || skin.accents || pauseSkin.light,
+        accents: skin.accents || skin.bump || skin.crest || skin.light,
+        arms: skin.arms || skin.accents || skin.bump || skin.light,
+        crest: skin.crest || skin.accents || skin.light,
+        feet: skin.feet || skin.accents || skin.light,
         hat: skin.hat || "none"
       };
     }
@@ -885,7 +885,7 @@
         ctx.translate(22, 17);
         ctx.rotate(-0.45);
         ctx.fillStyle = skin.dark; ctx.fillRect(-1, -7, 3, 10); ctx.fillRect(-4, -8, 9, 3);
-        ctx.fillStyle = pauseSkin.mid; ctx.fillRect(-5, 3, 11, 4);
+        ctx.fillStyle = skin.mid; ctx.fillRect(-5, 3, 11, 4);
         ctx.restore();
         drawBitmapText("SANDBOX", 57, 15, 0.72, "center", skin.dark);
       } else {

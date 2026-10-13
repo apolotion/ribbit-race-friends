@@ -557,29 +557,45 @@ function monitorPvp() {
   }
 
   if (setup === "pvpReboundThree") {
+    // Three total successful rebounds, not three *consecutive* rebounds.
+    // A missed attempt may reset frog positions but never erase earned counts.
     if (tutorial.pvpReboundCount >= 3) {
       if (pvpTutorialSettled()) passStep();
       return;
     }
     if (tutorial.pvpReboundCount > tutorial.pvpPracticeCount && pvpTutorialSettled() && !tutorial.resetPending) {
-      tutorial.pvpPracticeCount = tutorial.pvpReboundCount;
+      const completed = Math.min(2, tutorial.pvpReboundCount);
+      tutorial.pvpPracticeCount = completed;
       beginPoofTransition({
         reason: "next-pvp-rebound",
         showFailure: false,
         preserveExistingFlies: true,
         action: () => {
-          if (tutorial.pvpReboundCount === 1) {
-            positionPvpOnPlatform(p1, PARK_PLATFORMS[5], 1);
-            positionPvpOnPlatform(ember, PARK_PLATFORMS[5], -1, 2);
-          } else {
-            positionPvpOnPlatform(p1, PARK_PLATFORMS[4], 1, 4);
-            positionPvpOnPlatform(ember, PARK_PLATFORMS[4], -1, PARK_PLATFORMS[4].w - ember.w - 4);
-          }
-          tutorial.pvpMirrorWasHeld = false;
+          positionPvpReboundPracticeLayout(completed);
+          tutorial.pvpPlayerAttemptWasAirborne = false;
+          tutorial.pvpPracticeStartedAt = performance.now();
+          clearHeldInput();
         }
       });
-    } else if (playerLanded && tutorial.pvpReboundCount === tutorial.pvpPracticeCount && now - tutorial.enteredAt > 500) {
-      failAttempt("MEET EMBER SIDE-TO-SIDE IN THE AIR");
+    } else if (playerLanded && tutorial.pvpReboundCount === tutorial.pvpPracticeCount &&
+               now - tutorial.enteredAt > 500 && !tutorial.resetPending) {
+      const completed = tutorial.pvpReboundCount;
+      beginPoofTransition({
+        reason: "retry-pvp-rebound-without-losing-progress",
+        message: "TRY THE REBOUND AGAIN",
+        showFailure: true,
+        preserveExistingFlies: true,
+        armFlies: false,
+        action: () => {
+          positionPvpReboundPracticeLayout(completed);
+          tutorial.pvpReboundCount = completed;
+          tutorial.pvpRebounds = completed;
+          tutorial.pvpPracticeCount = completed;
+          tutorial.pvpPlayerAttemptWasAirborne = false;
+          tutorial.pvpPracticeStartedAt = performance.now();
+          clearHeldInput();
+        }
+      });
     }
     return;
   }

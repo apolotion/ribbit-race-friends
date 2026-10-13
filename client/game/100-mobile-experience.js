@@ -3,8 +3,8 @@
 // another player's held jump button on a shared touchscreen.
 
 const RR_MOBILE_MENU_UI = Object.freeze({
-  avatar: Object.freeze({ x: 47, y: 211, w: 24, h: 24 }),
-  device: Object.freeze({ x: 74, y: 211, w: 24, h: 24 })
+  avatar: MAIN_UI.profileButton,
+  device: MAIN_UI.deviceButton
 });
 const RR_MOBILE_SOLO_METER = Object.freeze({ x: 8, y: 234, w: 140, h: 32 });
 const RR_MOBILE_PVP_METERS = Object.freeze([
@@ -193,12 +193,12 @@ window.addEventListener("pointerdown", (event) => {
   if (game.state === "main") {
     if (pointInsideRect(point, RR_MOBILE_MENU_UI.avatar)) {
       rrStopMobilePointerEvent(event);
-      window.RibbitMobileExperience?.openAccount?.();
+      window.RibbitRaceOpenProfileMenu?.();
       return;
     }
     if (pointInsideRect(point, RR_MOBILE_MENU_UI.device)) {
       rrStopMobilePointerEvent(event);
-      window.RibbitMobileExperience?.requestToggle?.();
+      window.RibbitRaceOpenDeviceMenu?.();
       return;
     }
   }

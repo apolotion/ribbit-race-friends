@@ -36,7 +36,7 @@ test("Requested tutorial copy and layouts were updated", () => {
   assert.match(config, /I plan on charging a max jump\./);
   assert.match(config, /Try and time your bonk just as I release it!/);
   assert.match(tutorial, /case "pvpDropHigh"[\s\S]{0,220}positionPvpOnPlatform\(p1, top, 1, 4\)/);
-  assert.match(tutorial, /case "pvpDemoRebound"[\s\S]{0,120}\.50/);
+  assert.match(tutorial, /case "pvpDemoRebound"[\s\S]{0,120}\.75/);
   assert.match(tutorial, /case "pvpDemoIntercept"|case "pvpDemoDinnerSteal"/);
 });
 
@@ -48,6 +48,7 @@ test("Final tutorial match re-enables real CPU control", () => {
 
 test("Recovery bonk and rebound practice use the revised authored checks", () => {
   assert.match(monitor, /recoveryWindowHit/);
-  assert.match(monitor, /positionPvpOnPlatform\(p1, PARK_PLATFORMS\[5\], 1\)/);
-  assert.match(monitor, /positionPvpOnPlatform\(p1, PARK_PLATFORMS\[4\], 1, 4\)/);
+  assert.match(monitor, /positionPvpReboundPracticeLayout\(completed\)/);
+  assert.match(tutorial, /positionPvpOnPlatform\(p1, PARK_PLATFORMS\[2\], 1\)/);
+  assert.match(tutorial, /positionPvpOnPlatform\(ember, PARK_PLATFORMS\[5\], -1\)/);
 });

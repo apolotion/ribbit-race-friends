@@ -64,7 +64,7 @@ function startRibbitRaceGame() {
     const canvas = document.getElementById("game");
     const gameFrame = document.getElementById("game-frame");
     const friendsGameInputLocked = () => window.RibbitFriendsGameInputLocked?.() === true;
-    const RIBBIT_DISPLAY_VERSION = "VERSION 1.7.19";
+    const RIBBIT_DISPLAY_VERSION = "VERSION 1.7.21";
     const RIBBIT_CREDIT_TEXT = "MADE BY NICK M.";
     const RIBBIT_CREDIT_Y = 228;
     const rgbValueEditor = document.getElementById("rgb-value-editor");
@@ -4561,8 +4561,8 @@ function startRibbitRaceGame() {
       p2Selector: Object.freeze({ x: 284, y: 160, w: 84, h: 48 }),
       vsButton: Object.freeze({ x: 223, y: 174, w: 34, h: 21 }),
       cpuDifficultyButton: Object.freeze({ x: 284, y: 210, w: 84, h: 15 }),
-      wifiButton: Object.freeze({ x: 30, y: 225, w: 24, h: 24 }),
-      tutorialButton: Object.freeze({ x: 60, y: 225, w: 24, h: 24 }),
+      wifiButton: Object.freeze({ x: 36, y: 225, w: 24, h: 24 }),
+      tutorialButton: Object.freeze({ x: 66, y: 225, w: 24, h: 24 }),
       startButton: Object.freeze({ x: 132, y: 228, w: 100, h: 23 }),
       backButton: Object.freeze({ x: 248, y: 228, w: 100, h: 23 }),
       settingsButton: Object.freeze({ x: 392, y: 225, w: 24, h: 24 }),
@@ -12021,7 +12021,7 @@ function startRibbitRaceGame() {
       "/": ["00001", "00010", "00010", "00100", "01000", "01000", "10000"],
       "!": ["00100", "00100", "00100", "00100", "00100", "00000", "00100"],
       "¡": ["00100", "00000", "00100", "00100", "00100", "00100", "00100"],
-      "'": ["00100", "00100", "00010", "00000", "00000", "00000", "00000"],
+      "'": ["00100", "00100", "01000", "00000", "00000", "00000", "00000"],
       "?": ["01110", "10001", "00001", "00010", "00100", "00000", "00100"],
       "¿": ["00100", "00000", "00100", "01000", "10000", "10001", "01110"],
       "(": ["00110", "01000", "10000", "10000", "10000", "01000", "00110"],
@@ -13747,16 +13747,16 @@ function startRibbitRaceGame() {
       }
     }
     function getFrogPalette() {
-      const pauseSkin = getSelectedSkin();
+      const skin = getSelectedSkin();
       return {
         dark: skin.dark,
-        mid: pauseSkin.mid,
-        light: pauseSkin.light,
+        mid: skin.mid,
+        light: skin.light,
         belly: skin.belly,
-        accents: skin.accents || skin.bump || skin.crest || pauseSkin.light,
-        arms: skin.arms || skin.accents || skin.bump || pauseSkin.light,
-        crest: skin.crest || skin.accents || pauseSkin.light,
-        feet: skin.feet || skin.accents || pauseSkin.light,
+        accents: skin.accents || skin.bump || skin.crest || skin.light,
+        arms: skin.arms || skin.accents || skin.bump || skin.light,
+        crest: skin.crest || skin.accents || skin.light,
+        feet: skin.feet || skin.accents || skin.light,
         hat: skin.hat || "none"
       };
     }
@@ -14188,7 +14188,7 @@ function startRibbitRaceGame() {
         ctx.translate(22, 17);
         ctx.rotate(-0.45);
         ctx.fillStyle = skin.dark; ctx.fillRect(-1, -7, 3, 10); ctx.fillRect(-4, -8, 9, 3);
-        ctx.fillStyle = pauseSkin.mid; ctx.fillRect(-5, 3, 11, 4);
+        ctx.fillStyle = skin.mid; ctx.fillRect(-5, 3, 11, 4);
         ctx.restore();
         drawBitmapText("SANDBOX", 57, 15, 0.72, "center", skin.dark);
       } else {
@@ -19582,8 +19582,8 @@ function startRibbitRaceGame() {
     requestAnimationFrame(frame);
 
     /* ===== client/game/90-extended-features.js ===== */
-const RIBBIT_FRIENDS_DISPLAY_VERSION = "1.7.19";
-const RIBBIT_FRIENDS_BUILD = "2026.10.12-friends-polish-30";
+const RIBBIT_FRIENDS_DISPLAY_VERSION = "1.7.21";
+const RIBBIT_FRIENDS_BUILD = "2026.10.12-friends-polish-33";
 function rr14Number(value, fallback = 0) {
   const parsed = Number(value);
   return Number.isFinite(parsed) ? parsed : fallback;
@@ -19819,8 +19819,8 @@ setTimeout(rr14RuntimeMonitor, 120);
 
     /* ===== client/game/100-mobile-experience.js ===== */
 const RR_MOBILE_MENU_UI = Object.freeze({
-  avatar: Object.freeze({ x: 47, y: 211, w: 24, h: 24 }),
-  device: Object.freeze({ x: 74, y: 211, w: 24, h: 24 })
+  avatar: MAIN_UI.profileButton,
+  device: MAIN_UI.deviceButton
 });
 const RR_MOBILE_SOLO_METER = Object.freeze({ x: 8, y: 234, w: 140, h: 32 });
 const RR_MOBILE_PVP_METERS = Object.freeze([
@@ -19991,12 +19991,12 @@ window.addEventListener("pointerdown", (event) => {
   if (game.state === "main") {
     if (pointInsideRect(point, RR_MOBILE_MENU_UI.avatar)) {
       rrStopMobilePointerEvent(event);
-      window.RibbitMobileExperience?.openAccount?.();
+      window.RibbitRaceOpenProfileMenu?.();
       return;
     }
     if (pointInsideRect(point, RR_MOBILE_MENU_UI.device)) {
       rrStopMobilePointerEvent(event);
-      window.RibbitMobileExperience?.requestToggle?.();
+      window.RibbitRaceOpenDeviceMenu?.();
       return;
     }
   }
@@ -20062,10 +20062,10 @@ window.RibbitRaceMobileDiagnostics = () => ({
  */
 (() => {
   "use strict";
-  const BUILD = "2026.10.12-friends-polish-30";
+  const BUILD = "2026.10.12-friends-polish-33";
   const RR_V160_CANDIDATES = {"catchFly":["attemptFlyCatch","attemptPvpFlyCatch","catchSandboxFly","getPvpImminentCatchFly","recordFlyEaten","scheduleFlyReplacementFromCatch"],"jumpSound":["playJumpSound"],"beep":["playCountdownGoSound","playCountdownSound"],"replayUpload":["saveRecordDate"],"restart":["resetGame","resetPvpGame","resetPvpPlayer","resetRoundLifecycle","resetRoundNetwork","restartCurrentLevel"],"drop":[],"render":["drawPvpScene","drawScene"],"worldRecord":[],"fullscreen":["getFullscreenElement","hideFullscreenFallback","showFullscreenFallback","syncFullscreenButton","toggleRibbitFullscreen"],"onlineSubmit":[],"leaderboard":["isSoloEndlessLeaderboardEligible","savePvpMatchWinsForLeaderboard"]};
   const RR_V160_VARS = {"onlineSelect":[],"achievementSelect":["activeAchievementIndex","hoveredAchievementCard"],"backRect":[]};
-  const VERSION = "1.7.19";
+  const VERSION = "1.7.21";
   const V = {
     menuTouch: new Map(), chargeTouch: new Map(), achievementPinned: -1,
     finalCatchStarted: 0, finalCatchLabelsGone: false,
@@ -20909,7 +20909,7 @@ window.RibbitRaceMobileDiagnostics = () => ({
 "use strict";
 const SOLO_SEEN_KEY = "rrFriendsEngineTutorialSoloSeenV8";
 const PVP_SEEN_KEY = "rrFriendsEngineTutorialPvpSeenV8";
-const TUTORIAL_BUILD = "2026.10.12-friends-polish-30";
+const TUTORIAL_BUILD = "2026.10.12-friends-polish-33";
 const TUTORIAL_ACHIEVEMENT_ID = "tutorial-graduate";
 const PVP_TUTORIAL_ACHIEVEMENT_ID = "versus-tutorial-graduate";
 const TYPEWRITER_MS_PER_CHARACTER = 28;
@@ -22544,6 +22544,8 @@ function beginPvpSkyBonkDialoguePlacement(nextIndex) {
       tutorial.pendingStartPose = null;
       tutorial.scenePositionedDuringDialogue = true;
       tutorial.dialogueHiddenDuringPoof = false;
+      tutorial.dialogueLineStartedAt += 500;
+      tutorial.dialoguePreLineDelayUntil = tutorial.dialogueLineStartedAt;
       tutorial.enteredAt = performance.now();
     }
   });
@@ -23171,6 +23173,22 @@ function positionPvpBonkPracticeLayout(index = 0) {
   ember.inputHeld = false;
   ember.charging = false;
 }
+function positionPvpReboundPracticeLayout(completed = 0) {
+  const p1 = pvpPlayers[0];
+  const ember = pvpPlayers[1];
+  if (completed >= 2) {
+    const top = PARK_PLATFORMS[4];
+    positionPvpOnPlatform(p1, top, 1, 4);
+    positionPvpOnPlatform(ember, top, -1, top.w - ember.w - 4);
+  } else if (completed === 1) {
+    positionPvpOnPlatform(p1, PARK_PLATFORMS[2], 1);
+    positionPvpOnPlatform(ember, PARK_PLATFORMS[5], -1);
+  } else {
+    positionPvp(p1, 150, CONFIG.groundY - p1.h, 1);
+    positionPvp(ember, 300, CONFIG.groundY - ember.h, -1);
+  }
+  tutorial.pvpMirrorWasHeld = false;
+}
 function configurePvpStep(index) {
   basePvpScenario();
   const step = PVP_STEPS[index] || PVP_STEPS[0];
@@ -23195,10 +23213,9 @@ function configurePvpStep(index) {
       addPvpTutorialFly(lowerLeft.x + lowerLeft.w / 2, lowerLeft.y - 35, 0, 0);
       break;
     case "pvpBonkCatch": {
-      const lowerRight = PARK_PLATFORMS[6];
       positionPvp(p1, 305, CONFIG.groundY - p1.h, -1);
       positionPvp(ember, 145, CONFIG.groundY - ember.h, 1);
-      addPvpTutorialFly(lowerRight.x + lowerRight.w / 2, lowerRight.y - 35, 0, 0);
+      addPvpTutorialFly(lowerLeft.x + lowerLeft.w / 2, lowerLeft.y - 35, 0, 0);
       break;
     }
     case "pvpDemoDropLow": {
@@ -23273,18 +23290,22 @@ function configurePvpStep(index) {
       positionPvp(ember, Math.round(W * 0.50), CONFIG.groundY - ember.h, -1);
       break;
     case "pvpDemoBoostBonk":
-      positionPvp(p1, 305, CONFIG.groundY - p1.h, -1);
-      positionPvp(ember, 145, CONFIG.groundY - ember.h, 1);
-      addPvpTutorialFly(Math.round(PARK_PLATFORMS[1].x + PARK_PLATFORMS[1].w / 2), 118, Math.max(0, Number(game.targetVocabIndex) || 0), 0);
+      positionPvp(p1, 145, CONFIG.groundY - p1.h, 1);
+      positionPvp(ember, 305, CONFIG.groundY - ember.h, -1);
+      addPvpTutorialFly(Math.round(PARK_PLATFORMS[1].x + PARK_PLATFORMS[1].w / 2), 118, game.targetVocabIndex, 0);
       break;
     case "pvpBoostBonk":
       positionPvp(p1, 145, CONFIG.groundY - p1.h, 1);
       positionPvp(ember, 305, CONFIG.groundY - ember.h, -1);
+      addPvpTutorialFly(Math.round(PARK_PLATFORMS[6].x + PARK_PLATFORMS[6].w / 2), 118, game.targetVocabIndex, 0);
       break;
-    case "pvpDemoUnderBonk":
-      positionPvp(p1, 150, CONFIG.groundY - p1.h, 1);
-      positionPvpOnPlatform(ember, middleRight, -1);
+    case "pvpDemoUnderBonk": {
+      const lowerCenter = PARK_PLATFORMS[3];
+      positionPvp(p1, lowerCenter.x + Math.round((lowerCenter.w - p1.w) / 2) - p1.w + 4,
+        CONFIG.groundY - p1.h, 1);
+      positionPvpOnPlatform(ember, middleRight, -1, middleRight.w - ember.w - 2);
       break;
+    }
     case "pvpUnderBonkTwo":
       positionPvpOnPlatform(p1, PARK_PLATFORMS[3], 1);
       positionPvp(ember, PARK_PLATFORMS[3].x + 8, CONFIG.groundY - ember.h, 1);
@@ -23298,9 +23319,11 @@ function configurePvpStep(index) {
       positionPvpOnPlatform(ember, PARK_PLATFORMS[3], -1);
       break;
     case "pvpDemoRebound":
-    case "pvpReboundThree":
       positionPvp(p1, 150, CONFIG.groundY - p1.h, 1);
       positionPvp(ember, 300, CONFIG.groundY - ember.h, -1);
+      break;
+    case "pvpReboundThree":
+      positionPvpReboundPracticeLayout(tutorial.pvpReboundCount);
       break;
     case "pvpDemoReboundCatch":
       positionPvpOnPlatform(p1, middleRight, 1);
@@ -23480,6 +23503,8 @@ function beginPvpDemoMotion(setup) {
   tutorial.pvpTechniqueCatchAt = 0;
   tutorial.pvpReboundAt = 0;
   tutorial.pvpDemoRetryQueued = false;
+  tutorial.pvpLowProfileSawAirborne = false;
+  tutorial.pvpLowProfileJumpCount = 0;
   tutorial.pvpCaption = "WATCH EMBER!";
   tutorial.pvpCaptionUntil = performance.now() + 2400;
   switch (setup) {
@@ -23508,25 +23533,21 @@ function beginPvpDemoMotion(setup) {
       scriptPvpChargedJump(1, .84, -1, 0);
       break;
     case "pvpDemoRecoveryBonk":
-      scriptPvpChargedJump(1, .55, 1, 0);
+      scriptPvpChargedJump(1, .55, -1, 0);
       break;
     case "pvpDemoBoostBonk":
-      scriptPvpChargedJump(1, .74, 1, 0);
-      scriptPvpChargedJump(0, .25, -1, 1149);
+      scriptPvpChargedJump(1, .74, -1, 0);
+      scriptPvpChargedJump(0, .25, 1, 1149);
       break;
     case "pvpDemoUnderBonk":
-      scriptPvpQuickDrop(1, 0);
-      queuePvpScriptAction(520, () => {
-        positionPvpOnPlatform(ember, PARK_PLATFORMS[3], -1);
-        scriptPvpChargedJump(0, .78, 1, 90);
-      }, "under-bonk-platform-shift");
+      scriptPvpChargedJump(1, .40, -1, 0);
       break;
     case "pvpDemoAvoidUnder":
-      scriptPvpChargedJump(1, .12, -1, 0);
+      scriptPvpChargedJump(1, .18, -1, 0);
       break;
     case "pvpDemoRebound":
-      scriptPvpChargedJump(0, .50, 1, 0);
-      scriptPvpChargedJump(1, .50, -1, 0);
+      scriptPvpChargedJump(0, .75, 1, 0);
+      scriptPvpChargedJump(1, .75, -1, 0);
       break;
     case "pvpDemoReboundCatch":
       scriptPvpChargedJump(1, .92, -1, 0);
@@ -23659,23 +23680,35 @@ function updatePvpDemonstration() {
       try { startPvpCriticalCatch(pvpPlayers[1], targetFly, "final"); } catch (_) {}
     }, "boost-bonk-fly-catch");
   }
-  if (setup === "pvpDemoAvoidUnder" && ember.firstJumpMade && ember.grounded &&
-      !ember.charging && tutorial.pvpScriptActions.length === 0 && ember.x <= PARK_PLATFORMS[3].x + PARK_PLATFORMS[3].w + 18) {
-    tutorial.pvpDemoStage = Number(tutorial.pvpDemoStage || 0) + 1;
-    if (tutorial.pvpDemoStage < 3) scriptPvpChargedJump(1, .12, -1, 120);
+  if (setup === "pvpDemoUnderBonk" && tutorial.pvpDemoStage === 0 && ember.firstJumpMade &&
+      ember.grounded && !ember.charging && !ember.bonked &&
+      getPvpStandingPlatform(ember) === PARK_PLATFORMS[3]) {
+    tutorial.pvpDemoStage = 1;
+    scriptPvpChargedJump(0, .78, 1, 120);
+  }
+  if (setup === "pvpDemoAvoidUnder") {
+    if (!ember.grounded && ember.firstJumpMade) tutorial.pvpLowProfileSawAirborne = true;
+    else if (ember.grounded && tutorial.pvpLowProfileSawAirborne) {
+      tutorial.pvpLowProfileSawAirborne = false;
+      tutorial.pvpLowProfileJumpCount = (tutorial.pvpLowProfileJumpCount || 0) + 1;
+      tutorial.pvpDemoStage = tutorial.pvpLowProfileJumpCount;
+      if (tutorial.pvpLowProfileJumpCount < 5 && !ember.bonked && ember.stunTimer <= 0) {
+        scriptPvpChargedJump(1, .18, -1, 120);
+      }
+    }
   }
   if (setup === "pvpDemoBoostBonk" && tutorial.pvpDemoStage === 0 && tutorial.pvpDemoBonkCount >= 1 && elapsed >= 3.0 && pvpTutorialSettled()) {
     tutorial.pvpDemoStage = 1;
     addTutorialPoof(p1.x + p1.w / 2, p1.y + p1.h / 2, "out");
     addTutorialPoof(ember.x + ember.w / 2, ember.y + ember.h / 2, "out");
     playTutorialPoofSound("out");
-    positionPvp(p1, 305, CONFIG.groundY - p1.h, -1);
-    positionPvp(ember, 145, CONFIG.groundY - ember.h, 1);
+    positionPvp(p1, 145, CONFIG.groundY - p1.h, 1);
+    positionPvp(ember, 305, CONFIG.groundY - ember.h, -1);
     addTutorialPoof(p1.x + p1.w / 2, p1.y + p1.h / 2, "in");
     addTutorialPoof(ember.x + ember.w / 2, ember.y + ember.h / 2, "in");
     playTutorialPoofSound("in");
-    scriptPvpChargedJump(1, .74, 1, 500);
-    scriptPvpChargedJump(0, .95, -1, 825);
+    scriptPvpChargedJump(1, .74, -1, 500);
+    scriptPvpChargedJump(0, .95, 1, 825);
   }
   if (setup === "pvpDemoBonk" && tutorial.pvpDemoBonkAt > 0 &&
       now - tutorial.pvpDemoBonkAt >= 1000 && !tutorial.pvpDemoBonkHandled) {
@@ -23705,7 +23738,7 @@ function updatePvpDemonstration() {
   } else if (setup === "pvpDemoUnderBonk") {
     completed = tutorial.pvpDemoUnderBonkAt > 0 && now - tutorial.pvpDemoUnderBonkAt >= 1000 && p1.grounded;
   } else if (setup === "pvpDemoAvoidUnder") {
-    completed = tutorial.pvpDemoStage >= 3 && ember.x < PARK_PLATFORMS[3].x - 12 && ember.grounded && !ember.bonked;
+    completed = tutorial.pvpLowProfileJumpCount === 5 && ember.grounded && !ember.bonked && ember.stunTimer <= 0;
   }
   if (!completed && elapsed >= tutorial.pvpDemoDuration + 2.0) {
     startPvpDemonstration();
@@ -24901,24 +24934,38 @@ function monitorPvp() {
       return;
     }
     if (tutorial.pvpReboundCount > tutorial.pvpPracticeCount && pvpTutorialSettled() && !tutorial.resetPending) {
-      tutorial.pvpPracticeCount = tutorial.pvpReboundCount;
+      const completed = Math.min(2, tutorial.pvpReboundCount);
+      tutorial.pvpPracticeCount = completed;
       beginPoofTransition({
         reason: "next-pvp-rebound",
         showFailure: false,
         preserveExistingFlies: true,
         action: () => {
-          if (tutorial.pvpReboundCount === 1) {
-            positionPvpOnPlatform(p1, PARK_PLATFORMS[5], 1);
-            positionPvpOnPlatform(ember, PARK_PLATFORMS[5], -1, 2);
-          } else {
-            positionPvpOnPlatform(p1, PARK_PLATFORMS[4], 1, 4);
-            positionPvpOnPlatform(ember, PARK_PLATFORMS[4], -1, PARK_PLATFORMS[4].w - ember.w - 4);
-          }
-          tutorial.pvpMirrorWasHeld = false;
+          positionPvpReboundPracticeLayout(completed);
+          tutorial.pvpPlayerAttemptWasAirborne = false;
+          tutorial.pvpPracticeStartedAt = performance.now();
+          clearHeldInput();
         }
       });
-    } else if (playerLanded && tutorial.pvpReboundCount === tutorial.pvpPracticeCount && now - tutorial.enteredAt > 500) {
-      failAttempt("MEET EMBER SIDE-TO-SIDE IN THE AIR");
+    } else if (playerLanded && tutorial.pvpReboundCount === tutorial.pvpPracticeCount &&
+               now - tutorial.enteredAt > 500 && !tutorial.resetPending) {
+      const completed = tutorial.pvpReboundCount;
+      beginPoofTransition({
+        reason: "retry-pvp-rebound-without-losing-progress",
+        message: "TRY THE REBOUND AGAIN",
+        showFailure: true,
+        preserveExistingFlies: true,
+        armFlies: false,
+        action: () => {
+          positionPvpReboundPracticeLayout(completed);
+          tutorial.pvpReboundCount = completed;
+          tutorial.pvpRebounds = completed;
+          tutorial.pvpPracticeCount = completed;
+          tutorial.pvpPlayerAttemptWasAirborne = false;
+          tutorial.pvpPracticeStartedAt = performance.now();
+          clearHeldInput();
+        }
+      });
     }
     return;
   }
@@ -25202,8 +25249,7 @@ const TUTORIAL_EMPHASIS_BY_LINE = Object.freeze(
     "one jump"
   ],
   "While you're standing on a platform, give the jump button a quick tap - press and release.": [
-    "quick tap",
-    "press and release"
+    "quick tap"
   ],
   "Instead of charging a jump, you'll drop straight through!": [
     "drop straight through"
@@ -25296,8 +25342,7 @@ const TUTORIAL_EMPHASIS_BY_LINE = Object.freeze(
     "quick tap"
   ],
   "Give jump a quick tap—press and release—to drop through the platform.": [
-    "quick tap",
-    "press and release"
+    "quick tap"
   ],
   "Then land right on my head.": [
     "land"
@@ -25529,8 +25574,7 @@ const TUTORIAL_EMPHASIS_BY_LINE = Object.freeze(
     "press and release"
   ],
   "We both turned around—without touching a wall!": [
-    "both turned around",
-    "without touching a wall"
+    "both turned around"
   ],
   "No stun that time. Just a change of plans.": [
     "No stun"
@@ -25597,6 +25641,7 @@ function drawTutorialDialogue() {
     ? fullLine.length
     : visibleDialogueCharacterCount(fullLine);
   const lastLine = tutorial.dialogueLineIndex >= lines.length - 1;
+  if (!holdingPreviousLine && now < tutorial.dialogueLineStartedAt) return;
   if (!holdingPreviousLine && game.state !== "paused" && !tutorial.dialogueForceComplete) {
     if (visibleCount > tutorial.dialogueTalkCharCount &&
         now >= tutorial.dialogueTalkBlipAt && visibleCount > 0) {
@@ -26956,6 +27001,8 @@ window.RibbitRaceTutorialEngine = Object.freeze({
     leaderboardRawPayload: null,
     leaderboardReplayRects: [],
     leaderboardNameRects: [],
+    leaderboardStatsRow: null,
+    leaderboardStatsHitRects: {},
     leaderboardDropdown: "",
     leaderboardHitRects: {},
     leaderboardHoverKey: "",
@@ -26979,6 +27026,7 @@ window.RibbitRaceTutorialEngine = Object.freeze({
     flashcardIndex: 0,
     flashcardFace: "english",
     flashcardSelection: 1,
+    flashcardHoverKey: "",
     pauseFullscreenHovered: false
   };
   const LANGUAGE_KEY = "ribbitRaceLanguageModeV1";
@@ -26991,6 +27039,10 @@ window.RibbitRaceTutorialEngine = Object.freeze({
   const PAUSE_FULLSCREEN_BUTTON = Object.freeze({ x: 379, y: 198, w: 20, h: 20 });
   const MAIN_PROFILE_BUTTON = MAIN_UI.profileButton;
   const MAIN_DEVICE_BUTTON = MAIN_UI.deviceButton;
+  function safestNumber(value, fallback = null) {
+    const numeric = Number(value);
+    return Number.isFinite(numeric) ? numeric : fallback;
+  }
   function safeCall(candidate, ...args) {
     try { return typeof candidate === "function" ? candidate(...args) : undefined; }
     catch (error) { console.warn("Ribbit polish helper recovered", error); return undefined; }
@@ -27006,10 +27058,10 @@ window.RibbitRaceTutorialEngine = Object.freeze({
     ...row, x:90, y:82 + index * 28, w:300, h:24
   })));
   const FLASHCARD_BUTTON_RECTS = Object.freeze({
-    previous: Object.freeze({ id:"previous", x:74, y:210, w:78, h:22 }),
-    flip: Object.freeze({ id:"flip", x:164, y:210, w:152, h:22 }),
-    next: Object.freeze({ id:"next", x:328, y:210, w:78, h:22 }),
-    back: Object.freeze({ id:"back", x:180, y:236, w:120, h:18 })
+    previous: Object.freeze({ id:"previous", x:74, y:190, w:78, h:20 }),
+    flip: Object.freeze({ id:"flip", x:164, y:190, w:152, h:20 }),
+    next: Object.freeze({ id:"next", x:328, y:190, w:78, h:20 }),
+    back: Object.freeze({ id:"back", x:180, y:215, w:120, h:19 })
   });
   const FLASHCARD_BUTTON_ORDER = Object.freeze([
     FLASHCARD_BUTTON_RECTS.previous,
@@ -27039,9 +27091,7 @@ window.RibbitRaceTutorialEngine = Object.freeze({
     }
   }
   function getPauseFullscreenRect() {
-    return game.pauseHelpOpen
-      ? { x:448, y:238, w:22, h:22 }
-      : PAUSE_FULLSCREEN_BUTTON;
+    return PAUSE_FULLSCREEN_BUTTON;
   }
   function drawUtilityWindowFrame(title, subtitle = "") {
     const skin = getSelectedSkin();
@@ -27106,29 +27156,36 @@ window.RibbitRaceTutorialEngine = Object.freeze({
     const safeIndex = count ? ((polish.flashcardIndex % count) + count) % count : 0;
     polish.flashcardIndex = safeIndex;
     const entry = count ? entries[safeIndex] : null;
-    drawBitmapText(`SET: FRIENDS VOCAB • ${count} CARDS`, W / 2, 62, .52, "center", "#48555a");
-    const card = { x:74, y:78, w:332, h:104 };
-    ctx.fillStyle = "rgba(25,43,52,.22)"; ctx.fillRect(card.x + 4, card.y + 5, card.w, card.h);
-    ctx.fillStyle = COLORS.ink; ctx.fillRect(card.x, card.y, card.w, card.h);
-    ctx.fillStyle = count ? mixHexColors(skin.belly, "#ffffff", .18) : "#f7fdff"; ctx.fillRect(card.x + 3, card.y + 3, card.w - 6, card.h - 6);
+    drawBitmapText(`FRIENDS VOCAB  •  ${count} CARDS`, W / 2, 68, .48, "center", "#48555a");
+    const card = { x:73, y:80, w:334, h:101 };
+    ctx.fillStyle = "rgba(25,43,52,.15)";
+    ctx.fillRect(card.x + 3, card.y + 3, card.w, card.h);
+    ctx.fillStyle = COLORS.ink;
+    ctx.fillRect(card.x, card.y, card.w, card.h);
+    ctx.fillStyle = count ? mixHexColors(skin.belly, "#ffffff", .18) : "#f7fdff";
+    ctx.fillRect(card.x + 3, card.y + 3, card.w - 6, card.h - 6);
     if (entry) {
       const label = polish.flashcardFace === "english" ? "ENGLISH" : "ESPAÑOL";
-      const value = polish.flashcardFace === "english" ? String(entry.english || "") : String(entry.spanish || "");
-      const detail = polish.flashcardFace === "english" ? String(entry.spanish || "") : String(entry.english || "");
-      drawBitmapText(`${safeIndex + 1} / ${count}`, card.x + card.w - 16, card.y + 9, .52, "right", skin.dark);
-      drawBitmapText(label, W / 2, card.y + 10, .76, "center", skin.dark);
-      const fittedScale = Math.min(1.04, (card.w - 30) / Math.max(1, measureBitmapText(value.toUpperCase(), 1)));
-      drawBitmapText(value.toUpperCase(), W / 2, card.y + 39, fittedScale, "center", COLORS.ink);
-      drawBitmapText(`OTHER SIDE: ${detail.toUpperCase()}`, W / 2, card.y + 73, .52, "center", "#59666b");
+      const value = String(polish.flashcardFace === "english" ? entry.english || "" : entry.spanish || "").trim().toUpperCase();
+      const maxWidth = card.w - 38;
+      const fit = Math.min(1.25, maxWidth / Math.max(1, measureBitmapText(value, 1)));
+      drawBitmapText(`${safeIndex + 1} / ${count}`, card.x + card.w - 12, card.y + 11, .55, "right", skin.dark);
+      drawBitmapText(label, W / 2, card.y + 13, .72, "center", skin.dark);
+      ctx.save();
+      ctx.beginPath();
+      ctx.rect(card.x + 10, card.y + 29, card.w - 20, 43);
+      ctx.clip();
+      drawBitmapText(value, W / 2, card.y + 43, fit, "center", COLORS.ink);
+      ctx.restore();
+      drawBitmapText("SPACE TO FLIP", W / 2, card.y + 84, .48, "center", "#59666b");
     } else {
-      drawBitmapText("NO VOCAB CARDS AVAILABLE", W / 2, card.y + 32, .82, "center", "#48555a");
-      drawBitmapText("SIGN IN OR REFRESH WORDS ONCE A SET EXISTS.", W / 2, card.y + 56, .52, "center", "#59666b");
+      drawBitmapText("NO VOCAB CARDS AVAILABLE", W / 2, card.y + 39, .77, "center", "#48555a");
+      drawBitmapText("SIGN IN TO LOAD YOUR SET", W / 2, card.y + 72, .52, "center", "#59666b");
     }
-    FLASHCARD_BUTTON_ORDER.forEach((rect, index) => {
+    FLASHCARD_BUTTON_ORDER.forEach((rect,index) => {
       const label = rect.id === "previous" ? "PREVIOUS" : rect.id === "next" ? "NEXT" : rect.id === "flip" ? "FLIP CARD" : "BACK";
-      drawUtilityRow(rect, label, polish.flashcardSelection === index, "");
+      drawUtilityRow(rect, label, (polish.flashcardHoverKey === rect.id) || (polish.flashcardHoverKey === "" && index === 1), "");
     });
-    drawBitmapText("LEFT/RIGHT TO BROWSE • ENTER TO FLIP • ESC TO GO BACK", W / 2, 247, .44, "center", "#617177");
   }
   function drawDeviceModeIcon(rect, mobile, selected) {
     const skin=getSelectedSkin();
@@ -27154,7 +27211,11 @@ window.RibbitRaceTutorialEngine = Object.freeze({
     polish.priorMenuState=game.state;
     polish.profileSelection=0;
     game.state="rrProfileMenu";
-    try { document.getElementById("cloud-account-panel")?.setAttribute("hidden", "hidden"); } catch (_) {}
+    try {
+      const legacy = document.getElementById("cloud-account-panel");
+      if (legacy) legacy.hidden = true;
+      document.body.classList.remove("rr-account-modal-open");
+    } catch (_) {}
     clearHeldInput();
     tone(520,.04,.009,25);
     safeCall(drawScene);
@@ -27163,6 +27224,7 @@ window.RibbitRaceTutorialEngine = Object.freeze({
     polish.flashcardIndex = 0;
     polish.flashcardFace = "english";
     polish.flashcardSelection = 1;
+    polish.flashcardHoverKey = "";
     game.state = "rrFlashcards";
     clearHeldInput();
     tone(480,.04,.009,10);
@@ -27346,6 +27408,12 @@ window.RibbitRaceTutorialEngine = Object.freeze({
     return Boolean(point && rect && point.x >= rect.x && point.x <= rect.x + rect.w && point.y >= rect.y && point.y <= rect.y + rect.h);
   }
   function drawMiniMedalButton(rect, active = false) {
+    const frogSkin = getSelectedSkin();
+    const legacyRibbonShadow = "#b12d0d";
+    const legacyRibbonHighlight = "#ff5326";
+    const ribbonDark = frogSkin.dark;
+    const ribbonMid = frogSkin.mid;
+    const ribbonLight = frogSkin.light;
     ctx.fillStyle = "rgba(25,43,52,.28)";
     ctx.fillRect(rect.x + 2, rect.y + 2, rect.w, rect.h);
     ctx.fillStyle = active ? COLORS.ink : COLORS.ink;
@@ -27355,32 +27423,43 @@ window.RibbitRaceTutorialEngine = Object.freeze({
     ctx.fillStyle = active ? "#7ee5e8" : "#ffffff";
     ctx.fillRect(rect.x + 5, rect.y + 4, rect.w - 10, 2);
     const cx = Math.round(rect.x + rect.w / 2);
-    const ribbonY = rect.y + 5;
-    ctx.fillStyle = "#b12d0d";
-    ctx.fillRect(cx - 10, ribbonY + 1, 8, 10);
-    ctx.fillRect(cx + 2, ribbonY + 1, 8, 10);
-    ctx.fillStyle = "#ff5326";
-    ctx.fillRect(cx - 9, ribbonY + 2, 6, 8);
-    ctx.fillRect(cx + 3, ribbonY + 2, 6, 8);
-    ctx.fillStyle = "#cf3d16";
-    ctx.fillRect(cx - 1, ribbonY, 2, 9);
-    const medalY = rect.y + 14;
+    const ribbonY = rect.y + 18;
+    ctx.fillStyle = ribbonDark;
+    ctx.fillRect(cx - 9, ribbonY, 6, 8);
+    ctx.fillRect(cx + 3, ribbonY, 6, 8);
+    ctx.fillStyle = ribbonMid;
+    ctx.fillRect(cx - 8, ribbonY + 1, 4, 6);
+    ctx.fillRect(cx + 4, ribbonY + 1, 4, 6);
+    ctx.fillStyle = ribbonLight;
+    ctx.fillRect(cx - 7, ribbonY + 1, 1, 6);
+    ctx.fillRect(cx + 5, ribbonY + 1, 1, 6);
+    ctx.fillStyle = ribbonMid;
+    ctx.fillRect(cx - 3, ribbonY + 7, 2, 3);
+    ctx.fillRect(cx + 1, ribbonY + 7, 2, 3);
+    const medalY = rect.y + 7;
+    ctx.fillStyle = "#b96b00";
+    ctx.fillRect(cx - 8, medalY, 16, 1);
+    ctx.fillRect(cx - 10, medalY + 2, 20, 11);
+    ctx.fillRect(cx - 8, medalY + 1, 16, 13);
     ctx.fillStyle = "#f3b400";
-    ctx.fillRect(cx - 10, medalY + 2, 20, 8);
-    ctx.fillRect(cx - 8, medalY, 16, 12);
+    ctx.fillRect(cx - 8, medalY + 2, 16, 10);
+    ctx.fillRect(cx - 6, medalY + 1, 12, 12);
     ctx.fillStyle = "#ffd91d";
-    ctx.fillRect(cx - 8, medalY + 2, 16, 8);
-    ctx.fillRect(cx - 6, medalY + 1, 12, 10);
-    ctx.fillStyle = "#ffe98d";
-    ctx.fillRect(cx - 5, medalY + 2, 10, 4);
-    ctx.fillStyle = "#e0a500";
-    ctx.fillRect(cx - 3, medalY + 4, 6, 6);
+    ctx.fillRect(cx - 6, medalY + 3, 12, 8);
+    ctx.fillRect(cx - 4, medalY + 2, 8, 10);
     ctx.fillStyle = "#fff2ba";
-    ctx.fillRect(cx - 1, medalY + 4, 2, 2);
-    ctx.fillRect(cx - 2, medalY + 6, 4, 2);
-    ctx.fillRect(cx - 4, medalY + 7, 2, 2);
-    ctx.fillRect(cx + 2, medalY + 7, 2, 2);
-    ctx.fillRect(cx - 1, medalY + 8, 2, 2);
+    ctx.fillRect(cx - 5, medalY + 3, 4, 2);
+    ctx.fillRect(cx - 2, medalY + 2, 3, 2);
+    ctx.fillStyle = "#b96b00";
+    ctx.fillRect(cx - 6, medalY + 4, 1, 5);
+    ctx.fillRect(cx - 5, medalY + 5, 2, 1);
+    ctx.fillRect(cx - 5, medalY + 7, 2, 1);
+    ctx.fillRect(cx - 4, medalY + 9, 2, 1);
+    ctx.fillRect(cx + 5, medalY + 4, 1, 5);
+    ctx.fillRect(cx + 3, medalY + 5, 2, 1);
+    ctx.fillRect(cx + 3, medalY + 7, 2, 1);
+    ctx.fillRect(cx + 2, medalY + 9, 2, 1);
+    ctx.fillRect(cx - 1, medalY + 10, 2, 1);
     if (active) {
       ctx.fillStyle = "#7ee5e8";
       [[3,3],[rect.w-5,3],[3,rect.h-5],[rect.w-5,rect.h-5]].forEach(([dx,dy]) => ctx.fillRect(rect.x + dx, rect.y + dy, 2, 2));
@@ -27479,7 +27558,8 @@ window.RibbitRaceTutorialEngine = Object.freeze({
         replayId:record.replayId || null,
         skinId:entry.skinId || entry.skin || entry.frogSkin || "azure",
         appearance:entry.appearance || entry.frogAppearance || entry.palette || null,
-        isCurrent:Boolean(entry.isCurrent)
+        isCurrent:Boolean(entry.isCurrent),
+        sourceEntry:entry
       });
     }
     rows.sort((a, b) => {
@@ -27543,12 +27623,16 @@ window.RibbitRaceTutorialEngine = Object.freeze({
     game.state = "rrLeaderboard";
     polish.leaderboardPage = 0;
     polish.leaderboardDropdown = "";
+    polish.leaderboardStatsRow = null;
+    polish.leaderboardStatsHitRects = {};
     loadLeaderboard(false);
     safeCall(tone, 540, .05, .012, 35);
   }
   function closeLeaderboard() {
     game.state = polish.previousState === "rrLeaderboard" ? "achievements" : (polish.previousState || "achievements");
     polish.leaderboardDropdown = "";
+    polish.leaderboardStatsRow = null;
+    polish.leaderboardStatsHitRects = {};
     safeCall(tone, 330, .045, .010, -30);
   }
   function formatLeaderboardValue(row) {
@@ -27569,13 +27653,64 @@ window.RibbitRaceTutorialEngine = Object.freeze({
     return `${date.getMonth() + 1}/${date.getDate()}/${String(date.getFullYear()).slice(-2)}`;
   }
   function drawReplayIcon(cx, cy, active = false) {
-    ctx.fillStyle = active ? getSelectedSkin().dark : "#48555a";
-    ctx.fillRect(cx - 7, cy - 6, 14, 12);
+    const body = active ? getSelectedSkin().dark : "#48555a";
+    const lens = active ? getSelectedSkin().mid : "#708086";
+    ctx.fillStyle = body;
+    ctx.fillRect(cx - 7, cy - 4, 14, 9);
+    ctx.fillRect(cx - 3, cy - 6, 5, 3);
+    ctx.fillRect(cx + 4, cy - 5, 3, 2);
     ctx.fillStyle = "#f7fdff";
-    ctx.fillRect(cx - 5, cy - 4, 10, 8);
-    ctx.fillStyle = active ? getSelectedSkin().mid : "#708086";
-    ctx.fillRect(cx - 2, cy - 2, 3, 5);
-    ctx.fillRect(cx + 1, cy - 1, 2, 3);
+    ctx.fillRect(cx - 5, cy - 2, 10, 5);
+    ctx.fillStyle = lens;
+    ctx.fillRect(cx - 1, cy - 1, 3, 3);
+    ctx.fillRect(cx + 5, cy - 4, 1, 1);
+  }
+  function bestRecordValue(entry, metric) {
+    if (!entry || typeof entry !== "object") return null;
+    const records = entry.records && typeof entry.records === "object" ? entry.records : null;
+    if (!records) return safestNumber(entry[metric], null);
+    const higherIsBetter = ["endless", "flies", "pvpwins"].includes(metric);
+    let best = null;
+    for (const record of Object.values(records)) {
+      if (!record || typeof record !== "object") continue;
+      const value = safestNumber(record[metric], null);
+      if (value === null || value <= 0) continue;
+      if (best === null || (higherIsBetter ? value > best : value < best)) best = value;
+    }
+    return best;
+  }
+  function buildLeaderboardStatsRows(row) {
+    const entry = row?.sourceEntry || {};
+    const stats = [
+      ["CURRENT RANK", String(row?.rank || "—")],
+      ["CURRENT RESULT", formatLeaderboardValue(row)],
+      ["CURRENT LEVEL", String(row?.level || "ALL")]
+    ];
+    if (row?.date) stats.push(["RECORD DATE", formatLeaderboardDate(row.date)]);
+    const period = String(entry.classPeriod || entry.period || row?.classPeriod || "").trim();
+    if (period) stats.push(["CLASS PERIOD", period.toUpperCase()]);
+    const bestTime = bestRecordValue(entry, "time");
+    if (bestTime !== null) stats.push(["BEST TIME", formatLeaderboardValue({ metric:"time", value:bestTime })]);
+    const bestJumps = bestRecordValue(entry, "jumps");
+    if (bestJumps !== null) stats.push(["FEWEST JUMPS", formatLeaderboardValue({ metric:"jumps", value:bestJumps })]);
+    const bestEndless = bestRecordValue(entry, "endless");
+    if (bestEndless !== null) stats.push(["BEST ENDLESS", formatLeaderboardValue({ metric:"endless", value:bestEndless })]);
+    const totalFlies = safestNumber(entry.totalFlies ?? entry.flies, null);
+    if (totalFlies !== null && totalFlies > 0) stats.push(["TOTAL FLIES", `${Math.floor(totalFlies)}`]);
+    const pvpWins = safestNumber(entry.pvpMatchWins ?? entry.wins, null);
+    if (pvpWins !== null && pvpWins >= 0) stats.push(["PVP WINS", `${Math.floor(pvpWins)}`]);
+    return stats.slice(0, 8);
+  }
+  function openLeaderboardStats(row) {
+    polish.leaderboardStatsRow = row || null;
+    polish.leaderboardStatsHitRects = {};
+    safeCall(tone, 520, .04, .011, 20);
+  }
+  function closeLeaderboardStats() {
+    if (!polish.leaderboardStatsRow) return;
+    polish.leaderboardStatsRow = null;
+    polish.leaderboardStatsHitRects = {};
+    safeCall(tone, 330, .04, .010, -25);
   }
   function leaderboardFrogPalette(row) {
     const appearance = row?.appearance;
@@ -27605,27 +27740,40 @@ window.RibbitRaceTutorialEngine = Object.freeze({
     ctx.fillRect(cx + 3, cy - 4, 2, 2);
   }
   function drawLeaderboardDropdown(rect, label, value, open, key) {
-    drawBitmapText(label, rect.x, rect.y - 11, .44, "left", "#48555a");
     ctx.fillStyle = "rgba(25,43,52,.22)"; ctx.fillRect(rect.x + 2, rect.y + 2, rect.w, rect.h);
     ctx.fillStyle = open ? getSelectedSkin().dark : COLORS.ink; ctx.fillRect(rect.x, rect.y, rect.w, rect.h);
     ctx.fillStyle = "#f7fdff"; ctx.fillRect(rect.x + 2, rect.y + 2, rect.w - 4, rect.h - 4);
-    drawBitmapText(value, rect.x + 8, rect.y + 7, .54, "left", "#26363d");
+    const headerH = 8;
+    ctx.fillStyle = open ? mixHexColors(getSelectedSkin().mid, "#ffffff", .22) : "#dce5e8";
+    ctx.fillRect(rect.x + 2, rect.y + 2, rect.w - 4, headerH);
+    ctx.fillStyle = open ? getSelectedSkin().light : "#ffffff";
+    ctx.fillRect(rect.x + 5, rect.y + 4, rect.w - 10, 1);
+    drawBitmapText(label, rect.x + 8, rect.y + 3, .34, "left", "#59666b");
+    const textScale = Math.min(.54, (rect.w - 28) / Math.max(1, measureBitmapText(value, 1)));
+    drawBitmapText(value, rect.x + 8, rect.y + 12, textScale, "left", "#26363d");
     ctx.fillStyle = "#26363d";
-    ctx.fillRect(rect.x + rect.w - 13, rect.y + 8, 7, 2);
-    ctx.fillRect(rect.x + rect.w - 12, rect.y + 10, 5, 2);
-    ctx.fillRect(rect.x + rect.w - 11, rect.y + 12, 3, 2);
+    const caretY = rect.y + Math.round(rect.h / 2) + 1;
+    ctx.fillRect(rect.x + rect.w - 13, caretY - 2, 7, 2);
+    ctx.fillRect(rect.x + rect.w - 12, caretY, 5, 2);
+    ctx.fillRect(rect.x + rect.w - 11, caretY + 2, 3, 2);
     polish.leaderboardHitRects[key] = rect;
   }
   function drawLeaderboardScreen() {
     const skin = getSelectedSkin();
+    const backdrop = ctx.createLinearGradient(0, 0, 0, H);
+    backdrop.addColorStop(0, skin.dark);
+    backdrop.addColorStop(0.62, skin.mid);
+    backdrop.addColorStop(1, skin.belly);
+    ctx.fillStyle = backdrop;
+    ctx.fillRect(0, 0, W, H);
     const metricDef = leaderboardMetricDefinition();
     const levelLabel = polish.leaderboardLevel === "any" ? "ANY LEVEL" : polish.leaderboardLevel.toUpperCase();
     polish.leaderboardHitRects = {};
     polish.leaderboardReplayRects = [];
     polish.leaderboardNameRects = [];
     const panel = { x: 20, y: 7, w: 440, h: 256 };
-    ctx.fillStyle = "rgba(12,26,33,0.34)";
-    ctx.fillRect(panel.x + 7, panel.y + 8, panel.w, panel.h);
+    ctx.fillStyle = "rgba(12,26,33,0.12)";
+    ctx.fillRect(panel.x + 3, panel.y + 5, panel.w - 6, panel.h - 8);
     ctx.fillStyle = COLORS.ink;
     ctx.fillRect(panel.x + 4, panel.y, panel.w - 8, panel.h);
     ctx.fillRect(panel.x, panel.y + 4, panel.w, panel.h - 8);
@@ -27658,6 +27806,7 @@ window.RibbitRaceTutorialEngine = Object.freeze({
     drawBitmapText(contextText, W / 2, context.y + 7, contextScale, "center", "#59666b");
     const table = { x: 42, y: 111, w: 396, h: 103 };
     ctx.fillStyle = COLORS.ink; ctx.fillRect(table.x, table.y, table.w, table.h);
+    ctx.fillStyle = "#f7fdff"; ctx.fillRect(table.x + 2, table.y + 18, table.w - 4, table.h - 20);
     ctx.fillStyle = skin.mid; ctx.fillRect(table.x + 2, table.y + 2, table.w - 4, 16);
     const columns = { rank: table.x + 20, name: table.x + 89, level: table.x + 212, result: table.x + 296, replay: table.x + 368 };
     drawBitmapText("RANK", columns.rank, table.y + 6, .47, "center", COLORS.white, skin.dark);
@@ -27744,6 +27893,60 @@ window.RibbitRaceTutorialEngine = Object.freeze({
         polish.leaderboardHitRects[`level:${entry}`] = rect;
       });
     }
+    drawLeaderboardStatsModal();
+  }
+  function drawLeaderboardStatsModal() {
+    const row = polish.leaderboardStatsRow;
+    if (!row) return;
+    const skin = leaderboardFrogPalette(row);
+    const rect = { x: 84, y: 39, w: 312, h: 182 };
+    const close = { x: rect.x + rect.w - 24, y: rect.y + 10, w: 14, h: 14 };
+    const back = { x: rect.x + 102, y: rect.y + rect.h - 24, w: 108, h: 16 };
+    polish.leaderboardStatsHitRects = { panel:rect, close, back };
+    ctx.fillStyle = "rgba(6,16,21,0.45)";
+    ctx.fillRect(0, 0, W, H);
+    ctx.fillStyle = "rgba(12,26,33,0.18)";
+    ctx.fillRect(rect.x + 4, rect.y + 6, rect.w, rect.h);
+    ctx.fillStyle = COLORS.ink;
+    ctx.fillRect(rect.x + 3, rect.y, rect.w - 6, rect.h);
+    ctx.fillRect(rect.x, rect.y + 3, rect.w, rect.h - 6);
+    ctx.fillStyle = "#f7fdff";
+    ctx.fillRect(rect.x + 6, rect.y + 3, rect.w - 12, rect.h - 6);
+    ctx.fillRect(rect.x + 3, rect.y + 6, rect.w - 6, rect.h - 12);
+    ctx.fillStyle = skin.dark;
+    ctx.fillRect(rect.x + 10, rect.y + 9, rect.w - 20, 24);
+    ctx.fillStyle = skin.mid;
+    ctx.fillRect(rect.x + 12, rect.y + 11, rect.w - 24, 20);
+    ctx.fillStyle = skin.light;
+    ctx.fillRect(rect.x + 15, rect.y + 13, rect.w - 30, 3);
+    drawBitmapText("PLAYER STATS", rect.x + rect.w / 2, rect.y + 15, 1.02, "center", COLORS.white, skin.dark);
+    drawBitmapText(String(row.name || "FROG").toUpperCase(), rect.x + 20, rect.y + 42, .76, "left", "#26363d");
+    drawMiniFrogSwatchFacing(rect.x + rect.w - 42, rect.y + 40, skin, .62, 1);
+    ctx.fillStyle = "rgba(25,43,52,.16)";
+    ctx.fillRect(rect.x + 20, rect.y + 54, rect.w - 40, 92);
+    const stats = buildLeaderboardStatsRows(row);
+    stats.forEach(([label, value], index) => {
+      const y = rect.y + 59 + index * 11;
+      if (index % 2 === 1) {
+        ctx.fillStyle = "rgba(255,255,255,.32)";
+        ctx.fillRect(rect.x + 22, y - 1, rect.w - 44, 11);
+      }
+      drawBitmapText(label, rect.x + 28, y + 1, .42, "left", "#59666b");
+      const valueScale = Math.min(.42, 118 / Math.max(1, measureBitmapText(String(value).toUpperCase(), 1)));
+      drawBitmapText(String(value).toUpperCase(), rect.x + rect.w - 28, y + 1, valueScale, "right", "#26363d");
+    });
+    ctx.fillStyle = "rgba(25,43,52,.22)"; ctx.fillRect(back.x + 2, back.y + 2, back.w, back.h);
+    ctx.fillStyle = COLORS.ink; ctx.fillRect(back.x, back.y, back.w, back.h);
+    ctx.fillStyle = "#f7fdff"; ctx.fillRect(back.x + 2, back.y + 2, back.w - 4, back.h - 4);
+    drawBitmapText("BACK", back.x + back.w / 2, back.y + 4, .60, "center", "#48555a");
+    ctx.fillStyle = "rgba(25,43,52,.22)"; ctx.fillRect(close.x + 1, close.y + 1, close.w, close.h);
+    ctx.fillStyle = COLORS.ink; ctx.fillRect(close.x, close.y, close.w, close.h);
+    ctx.fillStyle = "#f7fdff"; ctx.fillRect(close.x + 2, close.y + 2, close.w - 4, close.h - 4);
+    ctx.fillStyle = "#48555a";
+    ctx.fillRect(close.x + 4, close.y + 4, 6, 2);
+    ctx.fillRect(close.x + 4, close.y + 8, 6, 2);
+    ctx.fillRect(close.x + 4, close.y + 5, 2, 4);
+    ctx.fillRect(close.x + 8, close.y + 5, 2, 4);
   }
   async function playLeaderboardRecord(row) {
     if (!row) return false;
@@ -28135,7 +28338,6 @@ window.RibbitRaceTutorialEngine = Object.freeze({
     if (game.state !== "paused") return;
     const rect = getPauseFullscreenRect();
     const active = !!polish.pauseFullscreenHovered;
-    ctx.fillStyle = "rgba(25,43,52,.28)"; ctx.fillRect(rect.x + 2, rect.y + 2, rect.w, rect.h);
     ctx.fillStyle = active ? getSelectedSkin().dark : COLORS.ink; ctx.fillRect(rect.x, rect.y, rect.w, rect.h);
     ctx.fillStyle = active ? mixHexColors(getSelectedSkin().belly, "#ffffff", .16) : "#f7fdff"; ctx.fillRect(rect.x + 2, rect.y + 2, rect.w - 4, rect.h - 4);
     if (active) { ctx.fillStyle = getSelectedSkin().light; ctx.fillRect(rect.x + 4, rect.y + 3, rect.w - 8, 2); }
@@ -28353,18 +28555,6 @@ window.RibbitRaceTutorialEngine = Object.freeze({
   drawScene = function(...args) {
     if (game.state === "rrProfileMenu") { drawProfileMenu(); return; }
     if (game.state === "rrFlashcards") { drawFlashcardsMenu(); return; }
-    if (game.state === "rrFlashcards") {
-      if (["ArrowLeft","ArrowRight","ArrowUp","ArrowDown","KeyA","KeyD","KeyW","KeyS","Enter","NumpadEnter","Space","Escape","Backspace"].includes(event.code)) {
-        event.preventDefault(); event.stopImmediatePropagation();
-        if (["Escape","Backspace"].includes(event.code)) { game.state = "rrProfileMenu"; tone(330,.04,.009,-30); }
-        else if (["ArrowLeft","KeyA"].includes(event.code)) { polish.flashcardSelection = 0; activateFlashcardButton(0); }
-        else if (["ArrowRight","KeyD"].includes(event.code)) { polish.flashcardSelection = 2; activateFlashcardButton(2); }
-        else if (["ArrowUp","KeyW"].includes(event.code)) polish.flashcardSelection = (polish.flashcardSelection - 1 + FLASHCARD_BUTTON_ORDER.length) % FLASHCARD_BUTTON_ORDER.length;
-        else if (["ArrowDown","KeyS"].includes(event.code)) polish.flashcardSelection = (polish.flashcardSelection + 1) % FLASHCARD_BUTTON_ORDER.length;
-        else activateFlashcardButton(polish.flashcardSelection);
-      }
-      return;
-    }
     if (game.state === "rrDeviceMenu") { drawDeviceMenu(); return; }
     if (game.state === "rrLeaderboard") {
       drawLeaderboardScreen();
@@ -28403,6 +28593,7 @@ window.RibbitRaceTutorialEngine = Object.freeze({
         ...(polish.customBaseOpen ? getCustomBaseOptionRects() : [])]);
     }
     if (game.state === "rrProfileMenu") return insideAny(PROFILE_MENU_RECTS);
+    if (game.state === "rrFlashcards") return insideAny(FLASHCARD_BUTTON_ORDER);
     if (game.state === "rrDeviceMenu") return insideAny(Object.values(DEVICE_MENU_RECTS));
     if (game.state === "achievements") {
       return insideAny([LEADERBOARD_BUTTON, ACHIEVEMENTS_UI.backButton, ACHIEVEMENTS_UI.pagePrevButton, ACHIEVEMENTS_UI.pageNextButton]);
@@ -28411,7 +28602,12 @@ window.RibbitRaceTutorialEngine = Object.freeze({
       return insideAny([STATS_UI.backButton, STATS_UI.pagePrevButton, STATS_UI.pageNextButton]);
     }
     if (game.state === "rrLeaderboard") {
-      return insideAny([...Object.values(polish.leaderboardHitRects || {}), ...polish.leaderboardReplayRects, ...polish.leaderboardNameRects]);
+      return insideAny([
+        ...Object.values(polish.leaderboardHitRects || {}),
+        ...Object.values(polish.leaderboardStatsHitRects || {}),
+        ...polish.leaderboardReplayRects,
+        ...polish.leaderboardNameRects
+      ]);
     }
     if (game.state === "pvpSetup") {
       return insideAny([...(PVP_SETUP_UI.levelButtons || []), PVP_SETUP_UI.p1Selector, PVP_SETUP_UI.p2Selector,
@@ -28442,8 +28638,8 @@ window.RibbitRaceTutorialEngine = Object.freeze({
       const index = PROFILE_MENU_RECTS.findIndex((rect) => pointIn(point, rect));
       if (index >= 0) polish.profileSelection = index;
     } else if (game.state === "rrFlashcards") {
-      const index = FLASHCARD_BUTTON_ORDER.findIndex((rect) => pointIn(point, rect));
-      if (index >= 0) polish.flashcardSelection = index;
+      const hovered = FLASHCARD_BUTTON_ORDER.find((rect) => pointIn(point, rect));
+      polish.flashcardHoverKey = hovered?.id || "";
     } else if (game.state === "rrDeviceMenu") {
       if (pointIn(point, DEVICE_MENU_RECTS.computer)) polish.deviceSelection = 0;
       else if (pointIn(point, DEVICE_MENU_RECTS.mobile)) polish.deviceSelection = 1;
@@ -28458,13 +28654,18 @@ window.RibbitRaceTutorialEngine = Object.freeze({
     }
     polish.leaderboardHoverKey = "";
     if (game.state === "rrLeaderboard") {
-      for (const [key, rect] of Object.entries(polish.leaderboardHitRects || {})) {
-        if (pointIn(point, rect)) { polish.leaderboardHoverKey = key; break; }
+      if (polish.leaderboardStatsRow) {
+        if (pointIn(point, polish.leaderboardStatsHitRects.close)) polish.leaderboardHoverKey = "stats-close";
+        else if (pointIn(point, polish.leaderboardStatsHitRects.back)) polish.leaderboardHoverKey = "stats-back";
+      } else {
+        for (const [key, rect] of Object.entries(polish.leaderboardHitRects || {})) {
+          if (pointIn(point, rect)) { polish.leaderboardHoverKey = key; break; }
+        }
+        const nameIndex = polish.leaderboardNameRects.findIndex((item) => pointIn(point, item));
+        if (nameIndex >= 0) polish.leaderboardHoverKey = `name:${nameIndex}`;
+        const replayIndex = polish.leaderboardReplayRects.findIndex((item) => pointIn(point, item));
+        if (replayIndex >= 0) polish.leaderboardHoverKey = `replay:${replayIndex}`;
       }
-      const nameIndex = polish.leaderboardNameRects.findIndex((item) => pointIn(point, item));
-      if (nameIndex >= 0) polish.leaderboardHoverKey = `name:${nameIndex}`;
-      const replayIndex = polish.leaderboardReplayRects.findIndex((item) => pointIn(point, item));
-      if (replayIndex >= 0) polish.leaderboardHoverKey = `replay:${replayIndex}`;
     }
     polish.worldRecordHovered = game.state === "won" && pointIn(point, { x:150, y:205, w:180, h:24 });
     polish.pauseFullscreenHovered = game.state === "paused" && pointIn(point, getPauseFullscreenRect());
@@ -28479,6 +28680,7 @@ window.RibbitRaceTutorialEngine = Object.freeze({
     polish.mainHoverKey = "";
     polish.worldRecordHovered = false;
     polish.pauseFullscreenHovered = false;
+    polish.flashcardHoverKey = "";
     try { canvas.style.setProperty("cursor", "default", "important"); } catch (_) {}
   }, { capture:true, passive:true });
   canvas.addEventListener("pointerdown", (event) => {
@@ -28491,18 +28693,6 @@ window.RibbitRaceTutorialEngine = Object.freeze({
     if (game.state === "rrFlashcards") {
       const index = FLASHCARD_BUTTON_ORDER.findIndex((rect) => pointIn(point, rect));
       if (index >= 0) { event.preventDefault(); event.stopImmediatePropagation(); polish.flashcardSelection = index; activateFlashcardButton(index); }
-      return;
-    }
-    if (game.state === "rrFlashcards") {
-      if (["ArrowLeft","ArrowRight","ArrowUp","ArrowDown","KeyA","KeyD","KeyW","KeyS","Enter","NumpadEnter","Space","Escape","Backspace"].includes(event.code)) {
-        event.preventDefault(); event.stopImmediatePropagation();
-        if (["Escape","Backspace"].includes(event.code)) { game.state = "rrProfileMenu"; tone(330,.04,.009,-30); }
-        else if (["ArrowLeft","KeyA"].includes(event.code)) { polish.flashcardSelection = 0; activateFlashcardButton(0); }
-        else if (["ArrowRight","KeyD"].includes(event.code)) { polish.flashcardSelection = 2; activateFlashcardButton(2); }
-        else if (["ArrowUp","KeyW"].includes(event.code)) polish.flashcardSelection = (polish.flashcardSelection - 1 + FLASHCARD_BUTTON_ORDER.length) % FLASHCARD_BUTTON_ORDER.length;
-        else if (["ArrowDown","KeyS"].includes(event.code)) polish.flashcardSelection = (polish.flashcardSelection + 1) % FLASHCARD_BUTTON_ORDER.length;
-        else activateFlashcardButton(polish.flashcardSelection);
-      }
       return;
     }
     if (game.state === "rrDeviceMenu") {
@@ -28522,6 +28712,13 @@ window.RibbitRaceTutorialEngine = Object.freeze({
     }
     if (game.state === "rrLeaderboard") {
       event.preventDefault(); event.stopImmediatePropagation();
+      if (polish.leaderboardStatsRow) {
+        const statsHits = polish.leaderboardStatsHitRects || {};
+        if (pointIn(point, statsHits.close) || pointIn(point, statsHits.back) || !pointIn(point, statsHits.panel)) {
+          closeLeaderboardStats();
+        }
+        return;
+      }
       const hits = polish.leaderboardHitRects || {};
       if (pointIn(point, hits.close) || pointIn(point, hits.back)) { closeLeaderboard(); return; }
       if (pointIn(point, hits.refresh)) { polish.leaderboardRawPayload = null; loadLeaderboard(true); return; }
@@ -28556,7 +28753,7 @@ window.RibbitRaceTutorialEngine = Object.freeze({
       if (pointIn(point, hits.prev)) { polish.leaderboardPage = (polish.leaderboardPage - 1 + pageCount) % pageCount; polish.leaderboardDropdown = ""; return; }
       if (pointIn(point, hits.next)) { polish.leaderboardPage = (polish.leaderboardPage + 1) % pageCount; polish.leaderboardDropdown = ""; return; }
       const name = polish.leaderboardNameRects.find((item) => pointIn(point, item));
-      if (name) { playLeaderboardRecord(name.row); return; }
+      if (name) { openLeaderboardStats(name.row); return; }
       const replay = polish.leaderboardReplayRects.find((item) => pointIn(point, item));
       if (replay) {
         if (replay.row.replayId) playReplayById(replay.row.replayId, `${replay.row.name} • ${replay.row.metric}`);
@@ -28613,14 +28810,21 @@ window.RibbitRaceTutorialEngine = Object.freeze({
       return;
     }
     if (game.state === "rrFlashcards") {
-      if (["ArrowLeft","ArrowRight","ArrowUp","ArrowDown","KeyA","KeyD","KeyW","KeyS","Enter","NumpadEnter","Space","Escape","Backspace"].includes(event.code)) {
-        event.preventDefault(); event.stopImmediatePropagation();
-        if (["Escape","Backspace"].includes(event.code)) { game.state = "rrProfileMenu"; tone(330,.04,.009,-30); }
-        else if (["ArrowLeft","KeyA"].includes(event.code)) { polish.flashcardSelection = 0; activateFlashcardButton(0); }
-        else if (["ArrowRight","KeyD"].includes(event.code)) { polish.flashcardSelection = 2; activateFlashcardButton(2); }
-        else if (["ArrowUp","KeyW"].includes(event.code)) polish.flashcardSelection = (polish.flashcardSelection - 1 + FLASHCARD_BUTTON_ORDER.length) % FLASHCARD_BUTTON_ORDER.length;
-        else if (["ArrowDown","KeyS"].includes(event.code)) polish.flashcardSelection = (polish.flashcardSelection + 1) % FLASHCARD_BUTTON_ORDER.length;
-        else activateFlashcardButton(polish.flashcardSelection);
+      const handled = ["ArrowLeft","ArrowRight","ArrowUp","ArrowDown","KeyA","KeyD","Space","Enter","NumpadEnter","Escape","Backspace"].includes(event.code);
+      if (handled) {
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        if (event.repeat && !["ArrowLeft","ArrowRight","KeyA","KeyD"].includes(event.code)) return;
+        if (event.code === "Backspace" || event.code === "Escape") {
+          game.state = "rrProfileMenu";
+          tone(330, .04, .009, -30);
+        } else if (event.code === "ArrowLeft" || event.code === "KeyA") {
+          activateFlashcardButton(0);
+        } else if (event.code === "ArrowRight" || event.code === "KeyD") {
+          activateFlashcardButton(2);
+        } else if (["Space","Enter","NumpadEnter"].includes(event.code)) {
+          activateFlashcardButton(1);
+        }
       }
       return;
     }
@@ -28640,7 +28844,9 @@ window.RibbitRaceTutorialEngine = Object.freeze({
       const pageCount=Math.max(1,Math.ceil(polish.leaderboardEntries.length/5));
       if (["Escape","Backspace","ArrowLeft","ArrowRight","KeyA","KeyD"].includes(event.code)) {
         event.preventDefault(); event.stopImmediatePropagation();
-        if (event.code === "Escape" || event.code === "Backspace") closeLeaderboard();
+        if (polish.leaderboardStatsRow) {
+          closeLeaderboardStats();
+        } else if (event.code === "Escape" || event.code === "Backspace") closeLeaderboard();
         else if (["ArrowLeft","KeyA"].includes(event.code)) polish.leaderboardPage=(polish.leaderboardPage-1+pageCount)%pageCount;
         else polish.leaderboardPage=(polish.leaderboardPage+1)%pageCount;
       }
@@ -28657,7 +28863,7 @@ window.RibbitRaceTutorialEngine = Object.freeze({
     style.textContent = `
       #fullscreen-button, #rr-fullscreen-button, .fullscreen-button, [data-action="fullscreen"] { display:none !important; }
       #cloud-leaderboard, #leaderboard-overlay, #rr-palette-tools, #rr-custom-top-hat,
-      #rr170-account-icon, #rr170-device-icon, #cloud-account-panel { display:none !important; }
+      #rr170-account-icon, #rr170-device-icon, #rr170-pause { display:none !important; pointer-events:none !important; }
       #game, canvas { cursor:default; }
       button:not(:disabled), select:not(:disabled), [role="button"]:not([aria-disabled="true"]), a[href] { cursor:pointer !important; }
       .rr-replay-play-button { width:min(520px,90%); min-height:82px; margin:42px auto; display:block; border:6px solid #26363d; background:#f7fdff; color:#26363d; font:700 22px/1.2 monospace; cursor:pointer; }

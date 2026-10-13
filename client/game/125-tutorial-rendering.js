@@ -183,8 +183,7 @@ const TUTORIAL_EMPHASIS_BY_LINE = Object.freeze(
     "one jump"
   ],
   "While you're standing on a platform, give the jump button a quick tap - press and release.": [
-    "quick tap",
-    "press and release"
+    "quick tap"
   ],
   "Instead of charging a jump, you'll drop straight through!": [
     "drop straight through"
@@ -277,8 +276,7 @@ const TUTORIAL_EMPHASIS_BY_LINE = Object.freeze(
     "quick tap"
   ],
   "Give jump a quick tap—press and release—to drop through the platform.": [
-    "quick tap",
-    "press and release"
+    "quick tap"
   ],
   "Then land right on my head.": [
     "land"
@@ -510,8 +508,7 @@ const TUTORIAL_EMPHASIS_BY_LINE = Object.freeze(
     "press and release"
   ],
   "We both turned around—without touching a wall!": [
-    "both turned around",
-    "without touching a wall"
+    "both turned around"
   ],
   "No stun that time. Just a change of plans.": [
     "No stun"
@@ -583,6 +580,8 @@ function drawTutorialDialogue() {
     ? fullLine.length
     : visibleDialogueCharacterCount(fullLine);
   const lastLine = tutorial.dialogueLineIndex >= lines.length - 1;
+
+  if (!holdingPreviousLine && now < tutorial.dialogueLineStartedAt) return;
 
   if (!holdingPreviousLine && game.state !== "paused" && !tutorial.dialogueForceComplete) {
     // Delayed first lines and new chapters must not inherit the old line's

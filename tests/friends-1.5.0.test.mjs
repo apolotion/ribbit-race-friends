@@ -36,14 +36,14 @@ test("Mobile Mode confirmation and repeat iPhone instructions are explicit",()=>
   assert.match(mobileClient,/window\.navigator\.standalone/);
 });
 
-test("main menu has canvas-native account and phone-computer controls",()=>{
-  assert.match(mobileGame,/RR_MOBILE_MENU_UI/);
-  assert.match(mobileGame,/rrDrawAvatarIcon/);
-  assert.match(mobileGame,/rrDrawDeviceIcon/);
-  assert.match(polish170,/ACCOUNT • SAVES • RECORDS/);
-  assert.match(polish170,/SWITCH TO MOBILE MODE/);
-  assert.match(polish170,/SWITCH TO COMPUTER MODE/);
-  assert.match(mobileGame,/RibbitMobileExperience\?\.openAccount/);
+test("main menu uses one canvas-native profile/device control without legacy DOM modal",()=>{
+  assert.match(mobileGame, /RR_MOBILE_MENU_UI/);
+  assert.match(mobileGame, /rrDrawAvatarIcon/);
+  assert.match(mobileGame, /rrDrawDeviceIcon/);
+  assert.match(mobileGame, /RibbitRaceOpenProfileMenu\?\.\(\)/);
+  assert.match(mobileGame, /RibbitRaceOpenDeviceMenu\?\.\(\)/);
+  assert.match(polish170, /Canvas menu controls are painted into the game canvas|Main-menu account and device controls are painted into the canvas/);
+  assert.doesNotMatch(polish170, /root\.appendChild\(account\)/);
 });
 
 test("Mobile Mode hides the legacy guest/fullscreen DOM toolbar",()=>{

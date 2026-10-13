@@ -76,7 +76,7 @@ test('Only the first Online page draws a fixed-size centered help bubble and Bac
 test('Pause utility buttons are flush, Fullscreen stays available beside the book, and tutorial labels are renamed', () => {
   assert.match(rendering, /Pause utility icons sit flush inside the panel without external drop shadows/);
   assert.match(tutorial, /function getPauseFullscreenRect\(\)/);
-  assert.match(tutorial, /game\.pauseHelpOpen\n      \? \{ x:448, y:238, w:22, h:22 \}/);
+  assert.match(tutorial, /return PAUSE_FULLSCREEN_BUTTON;/);
   assert.match(rendering, /"RESTART SCENE"/);
   assert.match(rendering, /"EXIT TUTORIAL"/);
   assert.match(nav, /captureSoloFrozenWorld\(\)[\s\S]*?startResumeCountdown\(\)/);
