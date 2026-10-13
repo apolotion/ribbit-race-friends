@@ -27,7 +27,7 @@ test("Achievements medal aligns to the achievement grid", () => {
 
 test("Leaderboard renders player frogs with visibly striped rows and dropdown choices", () => {
   assert.match(tutorial, /function leaderboardFrogPalette/);
-  assert.match(tutorial, /drawMiniFrogSwatchFacing\(table\.x \+ 42, y \+ 4, rowPalette, \.43, 1\)/);
+  assert.match(tutorial, /drawMiniFrogSwatchFacing\(table\.x \+ 48, y \+ 4, rowPalette, \.43, 1\)/);
   assert.match(tutorial, /offset % 2 \? "#dfe5e7" : "#ffffff"/);
   assert.match(tutorial, /index % 2 \? "#dce3e5" : "#ffffff"/);
 });

@@ -21,7 +21,7 @@ function block(source, start, end) {
 
 test("Polish 16 cache marker is wired", () => {
   for (const source of [tutorial, read("src/common.js"), read("public/index.html"), read("public/scripts/cloud-client.js")]) {
-    assert.match(source, /2026\.10\.12-friends-polish-35/);
+    assert.match(source, /2026\.10\.13-friends-polish-37/);
   }
 });
 
@@ -113,8 +113,9 @@ test("time-based hats unlock at the win boundary but do not show victory cards",
   assert.match(pageHats, /finished\(d=\{\}\)\{if\(!this\.progress\)this\.initialize\(\)/);
 });
 
-test("Versus renders the compact single-player-style pause control once", () => {
-  assert.match(tutorial, /function drawPvpPauseButtonPolish8/);
-  assert.match(tutorial, /drawPvpPauseButtonPolish8\(\);/);
-  assert.match(tutorial, /const rect = HUD_UI\.pauseButton/);
+test("Versus renders the shared mint pause/play sprite once", () => {
+  const versus = read("client/game/63-versus-rendering-ui.js");
+  assert.match(versus, /drawHudPausePlaySprite\(HUD_UI\.pauseButton/);
+  assert.doesNotMatch(tutorial, /drawPvpPauseButtonPolish8\(\);/);
+  assert.match(tutorial, /game\.state === "paused" && !game\.onlineMode/);
 });

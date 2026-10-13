@@ -1348,6 +1348,7 @@
         if(onlineIdentity.tag)fitText('BATTLE TAG: '+onlineIdentity.tag,240,239,300,.63);
       }
       const battleReplayRects=[];
+      const battleStatsRects=[];
       function recentBattleArchive(opponent) {
         const name=String(opponent||"").trim().toLowerCase();
         const records=window.RibbitFrogTags?.against?.(opponent)||[];
@@ -1365,14 +1366,22 @@
           await window.RibbitRacePlayStoredReplay?.(replayId,`${row.name} • RECENT MATCH`);
         }catch(error){console.warn("Frog Tags replay unavailable",error);}
       }
+      function openBattleStats(row){
+        try{
+          const recent=recentBattleArchive(row?.name)[0]||{};
+          const statsRow=window.RibbitRaceResolvePlayerStatsRow?.(row?.name,recent.opponentAppearance||row?.appearance||null,recent.sourceEntry||null) || {name:row?.name||"FROG",appearance:recent.opponentAppearance||null,sourceEntry:{stats:{}}};
+          window.RibbitRaceOpenPlayerStats?.(statsRow);
+        }catch(error){console.warn("Frog Tags stats unavailable",error);}
+      }
       function drawBattleTags(){
         drawPanel('FROG TAGS');
         fitText(battleView.loading?'LOADING MATCH RECORDS':battleView.error||'YOUR QUICKPLAY HEAD-TO-HEAD RECORDS',240,67,376,.70,battleView.error?'#96334c':'#07516a');
-        drawBitmapText('OPPONENT',103,88,.57,'left','#59666b');
+        drawBitmapText('OPPONENT',110,88,.57,'left','#59666b');
         drawBitmapText('W - L',260,88,.57,'center','#59666b');
-        drawBitmapText('LAST PLAYED',337,88,.53,'center','#59666b');
-        drawBitmapText('REPLAY',395,88,.51,'center','#59666b');
+        drawBitmapText('LAST PLAYED',333,88,.53,'center','#59666b');
+        drawBitmapText('REPLAY',392,88,.51,'center','#59666b');
         battleReplayRects.length=0;
+        battleStatsRects.length=0;
         const entries=battleView.entries.slice(battleView.page*6,battleView.page*6+6);
         entries.forEach((r,i)=>{
           const y=102+i*18;
@@ -1382,17 +1391,20 @@
           let palette=getPvpSkinPalette(appearance?.skinId||appearance?.id||r.skinId||'azure','azure');
           if(appearance&&typeof appearance==='object')palette={...palette,...appearance};
           drawMiniFrogSwatchFacing(82,y+2,palette,.49,1);
-          fitText(r.name+(r.temporary?' *':''),100,y+1,132,.69,'#174f65','left');
+          const statsHit={x:94,y:y-3,w:136,h:17,row:{...r,appearance}};
+          battleStatsRects.push(statsHit);
+          if(state.hoverId===`tagstats:${i}`){ctx.fillStyle='rgba(184,245,220,.65)';ctx.fillRect(statsHit.x,statsHit.y,statsHit.w,statsHit.h);drawMiniFrogSwatchFacing(82,y+2,palette,.49,1);}
+          fitText(r.name+(r.temporary?' *':''),100,y+1,132,.69,state.hoverId===`tagstats:${i}`?'#0e5035':'#174f65','left');
           drawBitmapText(`${r.wins} - ${r.losses}`,260,y+1,.66,'center','#07516a');
           const stamp=Number(latest?.at||r.updatedAt||0);
           const date=stamp?new Date(stamp).toLocaleDateString('en-US',{month:'numeric',day:'numeric',year:'2-digit'}):'—';
-          drawBitmapText(date,338,y+2,.48,'center','#59666b');
+          drawBitmapText(date,333,y+2,.48,'center','#59666b');
           if(recentBattleReplay(r.name)){
-            const hit={x:383,y:y-3,w:26,h:17,row:r};
-            ctx.fillStyle='#26363d';ctx.fillRect(hit.x+1,hit.y+3,17,10);
-            ctx.fillRect(hit.x+5,hit.y+1,8,3);
-            ctx.fillStyle='#f7fdff';ctx.fillRect(hit.x+3,hit.y+5,13,6);
-            ctx.fillStyle='#59666b';ctx.fillRect(hit.x+9,hit.y+6,4,4);
+            const hit={x:379,y:y-3,w:26,h:17,row:r};
+            const body='#48555a',slate='#9aa9ae';
+            ctx.fillStyle=body;ctx.fillRect(hit.x+5,hit.y+6,16,11);ctx.fillRect(hit.x+8,hit.y+2,10,4);
+            ctx.fillStyle=slate;ctx.fillRect(hit.x+7,hit.y+3,3,2);ctx.fillRect(hit.x+11,hit.y+3,3,2);ctx.fillRect(hit.x+15,hit.y+3,3,2);ctx.fillRect(hit.x+6,hit.y+5,3,2);ctx.fillRect(hit.x+10,hit.y+5,3,2);ctx.fillRect(hit.x+14,hit.y+5,3,2);
+            ctx.fillStyle='#f7fdff';ctx.fillRect(hit.x+8,hit.y+9,10,5);ctx.fillStyle=slate;ctx.fillRect(hit.x+12,hit.y+10,2,3);
             battleReplayRects.push(hit);
           }
         });
@@ -1467,6 +1479,8 @@
           else if(pointInsideRect(p,PVP_SETTINGS_UI.backButton))closeSettings();return true;
         }
         if(state.screen==='battleTags'){
+          const statsHit=battleStatsRects.find(hit=>pointInsideRect(p,hit));
+          if(statsHit){openBattleStats(statsHit.row);return true;}
           const replayHit=battleReplayRects.find(hit=>pointInsideRect(p,hit));
           if(replayHit){playBattleReplay(replayHit.row);return true;}
         }
@@ -1480,12 +1494,17 @@
         if(!isMenuVisible())return false;
         const p=getCanvasPoint(e);e.stopImmediatePropagation();state.keyboardFocus=false;
         if(state.screen==='settings'){const i=PVP_SETTINGS_UI.rows.findIndex(r=>pointInsideRect(p,r));if(i>=0)game.pvpSettingsFocusIndex=i;else if(pointInsideRect(p,PVP_SETTINGS_UI.backButton))game.pvpSettingsFocusIndex=4;return true;}
+        if(state.screen==='battleTags'){
+          const statsIndex=battleStatsRects.findIndex(hit=>pointInsideRect(p,hit));
+          if(statsIndex>=0){state.hoverId=`tagstats:${statsIndex}`;try{canvas.style.setProperty('cursor','pointer','important');}catch(_){} return true;}
+          if(battleReplayRects.some(hit=>pointInsideRect(p,hit))){state.hoverId='tagreplay';try{canvas.style.setProperty('cursor','pointer','important');}catch(_){} return true;}
+        }
         const b=onlineButtons().find(b=>pointInsideRect(p,b));
         if(b){const editing=(state.screen==='profile'&&state.focus==='name')||(state.screen==='join'&&state.codeFocused)||(state.screen==='spectateList'&&watch.codeFocus);
           if(!editing||b.id==='name'||b.id==='code'||b.id==='watchCode')focusOnlineButton(b.id);
           state.hoverId=b.id;
         }else {state.hoverId='';if(!['name','code','watchCode'].includes(state.focus))state.focus='';}
-        try{canvas.style.setProperty('cursor',(b||(state.screen==='battleTags'&&battleReplayRects.some(hit=>pointInsideRect(p,hit))))?'pointer':'default','important');}catch(_){ }
+        try{canvas.style.setProperty('cursor',(b||(state.screen==='battleTags'&&(battleReplayRects.some(hit=>pointInsideRect(p,hit))||battleStatsRects.some(hit=>pointInsideRect(p,hit)))))?'pointer':'default','important');}catch(_){ }
         state.keyboardFocus=false;return true;
       }
       const ENTRY={host:{x:115,y:100,w:116,h:30},join:{x:249,y:100,w:116,h:30},

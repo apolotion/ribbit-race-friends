@@ -1536,7 +1536,24 @@
       ctx.fillStyle = bookTheme.frame; ctx.fillRect(help.x, help.y, help.w, help.h);
       ctx.fillStyle = bookTheme.buttonFill; ctx.fillRect(help.x + 2, help.y + 2, help.w - 4, help.h - 4);
       drawMiniBookIcon(help.x + help.w / 2, help.y + help.h / 2, bookTheme);
-      if (game.pauseHelpOpen) drawPauseHowToOverlay();
+      if (game.pauseHelpOpen) {
+        // The fullscreen button is in the game chrome, UNDER the help sheet.
+        // It must be dimmed and clipped by the same overlay, not repainted over it.
+        const fs = { x:379, y:198, w:20, h:20 };
+        ctx.save();
+        // The help sheet does not cover this chrome corner. Dim it explicitly
+        // to the same low-contrast state as the rest of the paused world.
+        ctx.globalAlpha *= 0.23;
+        ctx.fillStyle = COLORS.ink; ctx.fillRect(fs.x, fs.y, fs.w, fs.h);
+        ctx.fillStyle = "#f7fdff"; ctx.fillRect(fs.x + 2, fs.y + 2, fs.w - 4, fs.h - 4);
+        ctx.fillStyle = "#48555a";
+        ctx.fillRect(fs.x + 5, fs.y + 5, 4, 2);ctx.fillRect(fs.x + 5, fs.y + 5, 2, 4);
+        ctx.fillRect(fs.x + fs.w - 9, fs.y + 5, 4, 2);ctx.fillRect(fs.x + fs.w - 7, fs.y + 5, 2, 4);
+        ctx.fillRect(fs.x + 5, fs.y + fs.h - 7, 4, 2);ctx.fillRect(fs.x + 5, fs.y + fs.h - 9, 2, 4);
+        ctx.fillRect(fs.x + fs.w - 9, fs.y + fs.h - 7, 4, 2);ctx.fillRect(fs.x + fs.w - 7, fs.y + fs.h - 9, 2, 4);
+        ctx.restore();
+        drawPauseHowToOverlay();
+      }
     }
 
     function getPauseBookTheme(active = false) {

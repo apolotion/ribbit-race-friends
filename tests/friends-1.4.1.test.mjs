@@ -22,7 +22,7 @@ function extractFunctionSource(source,name){
   throw new Error(`Unclosed ${name}`);
 }
 
-test("1.7.23 keeps a right-edge Lake word plate exactly centered over its fly",()=>{
+test("1.7.25 keeps a right-edge Lake word plate exactly centered over its fly",()=>{
   const names=["flyLabelCacheKey","overlapArea","chooseFlyLabelRect"];
   const source=names.map(name=>extractFunctionSource(rendering,name)).join("\n");
   const make=new Function("game",`${source}\nconst flyLabelPlacementCache=new Map();return {chooseFlyLabelRect};`);
@@ -34,10 +34,10 @@ test("1.7.23 keeps a right-edge Lake word plate exactly centered over its fly",(
   assert.ok(rect.y+rect.h<58,"the plate remains above the fly");
 });
 
-test("running pause button is deliberately translucent",()=>{
-  assert.match(rendering,/const pauseOpacity = game\.state === "paused" \? 0\.92 : game\.sandboxMode \? 0\.74 : 0\.66;/);
-  assert.match(rendering,/ctx\.globalAlpha \*= pauseOpacity;/);
-  assert.match(rendering,/ctx\.restore\(\);\s*\n\s*\}/);
+test("shared Solo and Versus pause sprite replaces the old translucent bars",()=>{
+  assert.match(rendering,/function drawHudPausePlaySprite\(rect, paused = false/);
+  assert.match(rendering,/drawHudPausePlaySprite\(pause, game\.state === "paused"/);
+  assert.match(rendering,/ctx\.fillRect\(x \+ 8, y \+ 5, 4, 10\)/);
 });
 
 test("pause book and How To Play pages inherit the selected frog palette",()=>{

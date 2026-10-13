@@ -32,6 +32,9 @@
     }
 
     function drawSoloPauseOverlay() {
+      // The frozen world retains its PAUSE glyph; swap it for PLAY before the
+      // modal dims the scene, so the same compact button toggles both states.
+      drawHudPausePlaySprite(HUD_UI.pauseButton, true, getSelectedSkin());
       drawOverlayPanel(
         "PAUSED",
         [

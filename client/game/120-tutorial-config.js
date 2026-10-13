@@ -3,7 +3,7 @@
 
 const SOLO_SEEN_KEY = "rrFriendsEngineTutorialSoloSeenV8";
 const PVP_SEEN_KEY = "rrFriendsEngineTutorialPvpSeenV8";
-const TUTORIAL_BUILD = "2026.10.12-friends-polish-35";
+const TUTORIAL_BUILD = "2026.10.13-friends-polish-37";
 const TUTORIAL_ACHIEVEMENT_ID = "tutorial-graduate";
 const PVP_TUTORIAL_ACHIEVEMENT_ID = "versus-tutorial-graduate";
 const TYPEWRITER_MS_PER_CHARACTER = 28;
@@ -622,7 +622,7 @@ const PVP_STEPS = Object.freeze([
     ],
     "demonstration": true,
     "dialogue": [
-      "Let's put those platforms to work!",
+      "Let's put these platforms to work!",
       "You don't always have to jump onto another frog to bonk them.",
       "Sometimes, you can drop right in!",
       "We'll start close to the ground.",

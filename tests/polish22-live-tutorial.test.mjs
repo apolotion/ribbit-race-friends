@@ -44,11 +44,12 @@ test('high drop mirrors the player turn onto the right-side landing lane',()=>{
  assert.match(s,/case "pvpDropHigh"[\s\S]{0,220}positionPvpOnPlatform\(p1, top, 1, 4\)/);
  assert.match(s,/case "pvpDropHigh"[\s\S]{0,260}positionPvp\(ember, PARK_PLATFORMS\[3\]\.x \+ PARK_PLATFORMS\[3\]\.w \+ 4, CONFIG\.groundY - ember\.h, -1\)/);
 });
-test('buffered-bonk demo positions the player under the lower-middle platform',()=>{
+test('buffered-bonk demo positions each frog centered beneath its lower-side platform',()=>{
  const c=geometry();c.setup('pvpDemoBufferedBonk');
  assert.equal(c.pvpPlayers[0].y,200);
- assert.equal(c.pvpPlayers[0].x+c.pvpPlayers[0].w/2,240);
- assert.deepEqual([c.pvpPlayers[1].x,c.pvpPlayers[1].dir],[365,-1]);
+ assert.equal(c.pvpPlayers[0].x+c.pvpPlayers[0].w/2,72);
+ assert.equal(c.pvpPlayers[1].x+c.pvpPlayers[1].w/2,408);
+ assert.equal(c.pvpPlayers[1].dir,-1);
 });
 test('knock-off demo now uses the top-vs-lower-right platform setup and one jump',()=>{
  const s=read('client/game/122-tutorial-scenarios.js');
@@ -97,7 +98,7 @@ test('pause suspends script and dialogue deadlines rather than consuming demo ti
 test('demonstrations require actual results instead of remote catches or timed success',()=>{
  const s=section(scene,'function updatePvpDemonstration','function startPvpFinalMatch');
  assert.doesNotMatch(s,/attemptPvpFlyCatch\(/);assert.doesNotMatch(s,/if \(completed \|\|/);
- assert.match(s,/if \(!completed && elapsed >= tutorial\.pvpDemoDuration \+ 2\.0\)/);
+ assert.match(s,/if \(!completed && elapsed >= tutorial\.pvpDemoDuration \+ 2\.0 && tutorial\.pvpDemoBonkAt <= 0\)/);
  assert.match(s,/tutorial\.pvpDemoBonkCount >= 2/);
 });
 test('sky-buffer tap is scheduled by landing time instead of a fixed pixel gap',()=>{

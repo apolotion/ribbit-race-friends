@@ -433,11 +433,12 @@ function configurePvpStep(index) {
       addPvpTutorialFly(lowerLeft.x + lowerLeft.w / 2, lowerLeft.y - 35, 0, 0);
       break;
     case "pvpBonkCatch": {
-      // Practice keeps the dinner fly in the same lane as the demonstration,
-      // but the frogs swap sides so the player attacks from the right.
-      positionPvp(p1, 305, CONFIG.groundY - p1.h, -1);
-      positionPvp(ember, 145, CONFIG.groundY - ember.h, 1);
-      addPvpTutorialFly(lowerLeft.x + lowerLeft.w / 2, lowerLeft.y - 35, 0, 0);
+      // The learner uses the SAME frog positions and facing as Ember's demo;
+      // only the matching fly crosses to the opposite (right) side.
+      const lowerRight = PARK_PLATFORMS[6];
+      positionPvp(p1, 145, CONFIG.groundY - p1.h, 1);
+      positionPvp(ember, 305, CONFIG.groundY - ember.h, -1);
+      addPvpTutorialFly(lowerRight.x + lowerRight.w / 2, lowerRight.y - 35, 0, 0);
       break;
     }
     case "pvpDemoDropLow": {
@@ -474,17 +475,19 @@ function configurePvpStep(index) {
       break;
     }
     case "pvpDemoBufferedBonk": {
-      const lowerMiddle = PARK_PLATFORMS[3];
-      // The player waits underneath the platform so Ember can demonstrate the
-      // buffered drop-through bonk path from above.
-      positionPvp(p1, lowerMiddle.x + Math.round((lowerMiddle.w - p1.w) / 2), CONFIG.groundY - p1.h, 1);
-      positionPvp(ember, 365, CONFIG.groundY - ember.h, -1);
+      // Both frogs start centered BELOW the corresponding low platform:
+      // P1 under lower-left, Ember under lower-right, facing toward P1.
+      const lowLeft = PARK_PLATFORMS[1], lowRight = PARK_PLATFORMS[6];
+      positionPvp(p1, lowLeft.x + (lowLeft.w - p1.w) / 2, CONFIG.groundY - p1.h, 1);
+      positionPvp(ember, lowRight.x + (lowRight.w - ember.w) / 2, CONFIG.groundY - ember.h, -1);
       break;
     }
-    case "pvpBufferedBonk":
-      positionPvp(p1, 105, CONFIG.groundY - p1.h, 1);
-      positionPvp(ember, PARK_PLATFORMS[3].x + (PARK_PLATFORMS[3].w - ember.w) / 2, CONFIG.groundY - ember.h, -1);
+    case "pvpBufferedBonk": {
+      const lowLeft = PARK_PLATFORMS[1], lowRight = PARK_PLATFORMS[6];
+      positionPvp(p1, lowLeft.x + (lowLeft.w - p1.w) / 2, CONFIG.groundY - p1.h, 1);
+      positionPvp(ember, lowRight.x + (lowRight.w - ember.w) / 2, CONFIG.groundY - ember.h, -1);
       break;
+    }
     case "pvpDemoSkyBonk":
       // Mirror the example: Ember launches LEFT from the top platform,
       // toward P1 waiting on the lower-left platform.
@@ -800,8 +803,10 @@ function beginPvpDemoMotion(setup) {
       scriptPvpQuickDrop(1, 0);
       break;
     case "pvpDemoBufferedBonk":
-      armPvpScriptedBuffer(1, PARK_PLATFORMS[3]);
-      scriptPvpChargedJump(1, .62, -1, 0);
+      // The side-to-side span is wider than one Park jump. Cross toward center
+      // first, then buffer through the lower-left perch over P1 on hop two.
+      tutorial.pvpDemoStage = 0;
+      scriptPvpChargedJump(1, .90, -1, 0);
       break;
     case "pvpDemoSkyBonk":
       // Full charge reaches the mirrored lower-left target after the natural
@@ -981,6 +986,14 @@ function updatePvpDemonstration() {
     scriptPvpChargedJump(1, .72, followDirection, 0);
   }
 
+  if (setup === "pvpDemoBufferedBonk" && tutorial.pvpDemoStage === 0 &&
+      ember.firstJumpMade && ember.grounded && !ember.charging && !ember.bonked &&
+      tutorial.pvpDemoBonkAt <= 0) {
+    tutorial.pvpDemoStage = 1;
+    armPvpScriptedBuffer(1, PARK_PLATFORMS[1]);
+    scriptPvpChargedJump(1, .88, -1, 120);
+  }
+
   if (setup === "pvpDemoHighGround" && tutorial.pvpDemoStage === 0 &&
       ember.firstJumpMade && ember.grounded && !ember.charging && tutorial.pvpDemoBonkAt <= 0) {
     tutorial.pvpDemoStage = 1;
@@ -1061,7 +1074,9 @@ function updatePvpDemonstration() {
   let completed = false;
   if (["pvpDemoDropLow","pvpDemoDropHigh","pvpDemoBufferedBonk","pvpDemoSkyBonk","pvpDemoBufferedSky","pvpDemoHighGround"].includes(setup)) {
     completed = tutorial.pvpDemoBonkAt > 0 && now - tutorial.pvpDemoBonkAt >= 1000 &&
-      (setup !== "pvpDemoHighGround" || (p1.grounded && p1.y + p1.h >= CONFIG.groundY - 1));
+      (setup !== "pvpDemoHighGround" || (p1.grounded && p1.y + p1.h >= CONFIG.groundY - 1)) &&
+      (!["pvpDemoSkyBonk","pvpDemoBufferedSky"].includes(setup) ||
+       (p1.grounded && !p1.bonked && p1.stunTimer <= 0 && ember.grounded));
   } else if (setup === "pvpDemoBonkCatch" || setup === "pvpDemoReboundCatch" || setup === "pvpDemoDinnerSteal") {
     const techniqueSeen = setup === "pvpDemoBonkCatch" ? tutorial.pvpDemoBonkCount > 0 : tutorial.pvpReboundCount > 0;
     completed = techniqueSeen && tutorial.pvpPracticeCatchCount >= 1 && now - tutorial.pvpLastPracticeEventAt >= 650;
@@ -1080,7 +1095,7 @@ function updatePvpDemonstration() {
     completed = tutorial.pvpLowProfileJumpCount === 5 && ember.grounded && !ember.bonked && ember.stunTimer <= 0;
   }
 
-  if (!completed && elapsed >= tutorial.pvpDemoDuration + 2.0) {
+  if (!completed && elapsed >= tutorial.pvpDemoDuration + 2.0 && tutorial.pvpDemoBonkAt <= 0) {
     // A missed demonstration retries its authored setup; it never reports a
     // success or collects a distant fly just because a timer expired.
     startPvpDemonstration();

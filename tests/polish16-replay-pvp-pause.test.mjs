@@ -20,7 +20,7 @@ function block(source, start, end) {
 
 test("Polish 16 is wired and restores the prior packaged app icons", () => {
   for (const source of [tutorial, read("src/common.js"), index, read("public/scripts/cloud-client.js")]) {
-    assert.match(source, /2026\.10\.12-friends-polish-35/);
+    assert.match(source, /2026\.10\.13-friends-polish-37/);
   }
   assert.match(index, /\/icons\/favicon-32\.png/);
   assert.match(index, /\/icons\/ribbit-race-180\.png/);

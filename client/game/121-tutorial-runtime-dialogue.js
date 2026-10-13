@@ -669,6 +669,7 @@ function clearScenarioState() {
   tutorial.pvpBonkCatchArmed = false;
   tutorial.pvpBonkCatchSucceeded = false;
   tutorial.pvpBufferedBonkSeen = false;
+  tutorial.pvpBufferedApproachCount = 0;
   tutorial.pvpSkyBonkSeen = false;
   tutorial.pvpMaximumBonkSeen = false;
   tutorial.pvpUnderBonks = 0;

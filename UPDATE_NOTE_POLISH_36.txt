@@ -1,0 +1,16 @@
+Ribbit Race Friends — Polish 36 (Version 1.7.24)
+Build: 2026.10.13-friends-polish-36
+
+This GitHub-ready package applies the requested UI polish updates:
+- Player stats overlay now shows the selected player's name in the header instead of the generic PLAYER STATS title.
+- Player stats close button is flush to the top-right of the header, the redundant player-name label above Total Jumps is removed, and the selected frog sprite now appears on the left side of the header.
+- Leaderboard row spacing was adjusted so the name column sits farther from rank.
+- Leaderboard dropdown labels/value alignment was centered more cleanly inside the gray dropdown panels.
+- Leaderboard refresh icon was redrawn.
+- Replay icons on the leaderboard and Frog Tags were redesigned to use a clapperboard-style pixel icon.
+- Replay header alignment was tightened above replay icons.
+- Level entries on the leaderboard now include the level sprite before the level name.
+- Flash-card star pixel art was redrawn and repositioned more cleanly in the card corner.
+- Flash cards now use a clickable help/book icon for hotkeys instead of printing hotkeys on the buttons.
+- Frog Tags now allows clicking the opponent entry to open player stats, and replay icons there match the new clapperboard style.
+- Frog Tags continues using the opponent's selected frog appearance for the displayed swatch and stats entry.

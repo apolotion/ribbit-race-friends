@@ -27,7 +27,7 @@ test('ten different 28x28 PNG medal sprite options ship with fitted default',()=
 test('leaderboard names open a stat-card screen with an X and two pages, not replay',()=>{
  assert.match(ui,/function leaderboardPlayerMetrics\(/);
  assert.match(ui,/drawStatsMetricIcon\(/);
- assert.match(ui,/const close = \{ x:432, y:18, w:20, h:20 \}/);
+ assert.match(ui,/const close = \{ x:panel\.x \+ panel\.w - 32, y:panel\.y \+ 9, w:20, h:20 \}/);
  assert.match(ui,/if \(name\) \{ openLeaderboardStats\(name.row\); return; \}/);
 });
 test('leaderboard level filtering uses short flat mini-label and level-specific sprite',()=>{

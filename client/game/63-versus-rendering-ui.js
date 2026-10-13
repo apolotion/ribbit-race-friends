@@ -535,6 +535,11 @@
         }
       }
 
+      if (["playing", "countdown", "paused", "pvpCelebration"].includes(game.state)) {
+        const pauseSkin = getPvpSkinPalette(pvpPlayers[0].skinId, "azure", 0);
+        drawHudPausePlaySprite(HUD_UI.pauseButton, game.state === "paused", pauseSkin);
+      }
+
       drawVocabularyPrompt();
       const meterY = 247;
       const meterW = 112;

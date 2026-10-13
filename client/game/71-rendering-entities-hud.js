@@ -772,6 +772,34 @@
       return `${String(minutes).padStart(2, "0")}:${remaining.toFixed(1).padStart(4, "0")}`;
     }
 
+    function drawHudPausePlaySprite(rect, paused = false, palette = getSelectedSkin()) {
+      if (!rect) return;
+      const x = Math.round(rect.x), y = Math.round(rect.y), w = Math.round(rect.w), h = Math.round(rect.h);
+      // Match the original fixed mint pause icon across ALL frog palettes.
+      // Only the glyph alternates between pause and play.
+      ctx.save();
+      ctx.fillStyle = "rgba(30,49,55,0.25)";
+      ctx.fillRect(x + 1, y + 2, w, h);
+      ctx.fillStyle = COLORS.ink;
+      ctx.fillRect(x, y, w, h);
+      ctx.fillStyle = "#b8f5dc";
+      ctx.fillRect(x + 2, y + 2, w - 4, h - 4);
+      ctx.fillStyle = "#e3fff4";
+      ctx.fillRect(x + 3, y + 2, w - 6, 2);
+      ctx.fillStyle = "#215465";
+      if (paused) {
+        // The play triangle takes up exactly the pause bars' footprint.
+        ctx.fillRect(x + 9, y + 5, 3, 10);
+        ctx.fillRect(x + 12, y + 7, 3, 6);
+        ctx.fillRect(x + 15, y + 8, 2, 4);
+        ctx.fillRect(x + 17, y + 9, 2, 2);
+      } else {
+        ctx.fillRect(x + 8, y + 5, 4, 10);
+        ctx.fillRect(x + 15, y + 5, 4, 10);
+      }
+      ctx.restore();
+    }
+
     function drawHud() {
       ctx.fillStyle = COLORS.white;
       ctx.fillRect(0, CONFIG.playBottom, W, 3);
@@ -924,39 +952,5 @@
       }
 
       const pause = HUD_UI.pauseButton;
-      // Keep the control readable without the old white button tile.
-      // The solo HUD now matches the transparent Versus pause treatment.
-      const pauseOpacity = game.state === "paused" ? 0.92 : game.sandboxMode ? 0.74 : 0.66;
-      const pauseSkin = getSelectedSkin();
-      ctx.save();
-      ctx.globalAlpha *= pauseOpacity;
-      if (game.sandboxMode) {
-        const dotColor = game.state === "paused" ? COLORS.white : pauseSkin.light;
-        ctx.fillStyle = COLORS.ink;
-        for (const [dx, dy] of [[7,5],[10,8],[13,11],[16,5],[13,8],[10,11]]) {
-          ctx.fillRect(pause.x + dx - 1, pause.y + dy - 1, 4, 4);
-          ctx.fillStyle = dotColor;
-          ctx.fillRect(pause.x + dx, pause.y + dy, 2, 2);
-          ctx.fillStyle = COLORS.ink;
-        }
-      } else if (game.state === "paused") {
-        const accent = COLORS.white;
-        ctx.fillStyle = COLORS.ink;
-        ctx.fillRect(pause.x + 8, pause.y + 4, 5, 12);
-        ctx.fillRect(pause.x + 13, pause.y + 7, 4, 6);
-        ctx.fillRect(pause.x + 17, pause.y + 9, 2, 2);
-        ctx.fillStyle = accent;
-        ctx.fillRect(pause.x + 9, pause.y + 5, 3, 10);
-        ctx.fillRect(pause.x + 14, pause.y + 8, 2, 4);
-      } else {
-        for (const dx of [7, 15]) {
-          ctx.fillStyle = COLORS.ink;
-          ctx.fillRect(pause.x + dx - 1, pause.y + 4, 6, 14);
-          ctx.fillStyle = pauseSkin.light;
-          ctx.fillRect(pause.x + dx, pause.y + 5, 4, 12);
-          ctx.fillStyle = pauseSkin.mid;
-          ctx.fillRect(pause.x + dx, pause.y + 14, 4, 3);
-        }
-      }
-      ctx.restore();
+      drawHudPausePlaySprite(pause, game.state === "paused", getSelectedSkin());
     }

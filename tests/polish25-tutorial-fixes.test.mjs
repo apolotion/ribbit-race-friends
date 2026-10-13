@@ -21,10 +21,11 @@ test("Shared utility icons have breathing room again", () => {
   assert.match(nav, /tutorialButton: Object\.freeze\(\{ id: "tutorial", x: 376/);
 });
 
-test("Solo pause icon no longer paints the old white button tile", () => {
-  const block = hud.slice(hud.indexOf("const pause = HUD_UI.pauseButton;"), hud.indexOf("ctx.restore();", hud.indexOf("const pause = HUD_UI.pauseButton;")) + 13);
-  assert.doesNotMatch(block, /ctx\.fillRect\(pause\.x, pause\.y, pause\.w, pause\.h\)/);
-  assert.match(block, /transparent Versus pause treatment/);
+test("Solo pause icon shares the new mint framed pause/play glyph", () => {
+  assert.match(hud, /function drawHudPausePlaySprite\(rect, paused = false/);
+  assert.match(hud, /drawHudPausePlaySprite\(pause, game\.state === "paused"/);
+  assert.match(hud, /if \(paused\) \{/);
+  assert.doesNotMatch(hud, /transparent Versus pause treatment/);
 });
 
 test("PvP tutorial now supports offscreen frog indicators", () => {

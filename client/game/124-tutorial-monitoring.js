@@ -425,7 +425,10 @@ function monitorPvp() {
 
   if (setup === "pvpBonkThree") {
     if (tutorial.pvpBonks >= 3) {
-      if (pvpPracticeEventReady(1000, now)) passStep();
+      // Do not freeze Ember high in the air. Wait for the real fall and
+      // normal 180-degree unstun recovery before the success dialogue.
+      if (pvpPracticeEventReady(1000, now) && ember.grounded && !ember.bonked &&
+          ember.stunTimer <= 0 && ember.y + ember.h >= CONFIG.groundY - 1) passStep();
       return;
     }
     if (tutorial.pvpBonks > tutorial.pvpPracticeCount) {
@@ -499,14 +502,17 @@ function monitorPvp() {
     } else if (tutorial.pvpBonks >= 1) {
       failAttempt("BUFFER THROUGH THE PLATFORM BEFORE THE BONK");
     } else if (playerLanded && now - tutorial.enteredAt > 500) {
-      failAttempt("CHARGE, BUFFER THROUGH, THEN BONK EMBER");
+      // The mirrored left/right ground starts require an approach jump before
+      // the buffered finishing jump. Do not reset after the first landing.
+      tutorial.pvpBufferedApproachCount = (tutorial.pvpBufferedApproachCount || 0) + 1;
+      if (tutorial.pvpBufferedApproachCount >= 4) failAttempt("CHARGE, BUFFER THROUGH, THEN BONK EMBER");
     }
     return;
   }
 
   if (setup === "pvpSkyBonk") {
     if (tutorial.pvpSkyBonkSeen) {
-      if (pvpPracticeEventReady(1000, now)) passStep();
+      if (pvpPracticeEventReady(1000, now) && pvpTutorialSettled()) passStep();
     } else if (tutorial.pvpBonks >= 1) {
       failAttempt("JUMP HIGH ABOVE THE MAP BEFORE THE BONK");
     } else if (playerLanded && now - tutorial.enteredAt > 600) {
@@ -517,7 +523,7 @@ function monitorPvp() {
 
   if (setup === "pvpBufferedSky") {
     if (tutorial.pvpSkyBonkSeen && tutorial.pvpBufferedBonkSeen && tutorial.pvpMaximumBonkSeen) {
-      if (pvpPracticeEventReady(1000, now)) passStep();
+      if (pvpPracticeEventReady(1000, now) && pvpTutorialSettled()) passStep();
     } else if (tutorial.pvpBonks >= 1) {
       failAttempt("COMBINE A SKY BONK WITH A BUFFERED DROP");
     } else if (playerLanded && now - tutorial.enteredAt > 700) {

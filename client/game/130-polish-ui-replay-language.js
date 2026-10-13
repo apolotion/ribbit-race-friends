@@ -49,7 +49,8 @@
     flashcardFlipFrom: "english",
     flashcardFlipTo: "english",
     flashcardStars: [],
-    pauseFullscreenHovered: false
+    pauseFullscreenHovered: false,
+    flashcardHelpOpen: false
   };
 
   const LANGUAGE_KEY = "ribbitRaceLanguageModeV1";
@@ -90,7 +91,8 @@
     shuffle:Object.freeze({id:"shuffle",x:74,y:214,w:102,h:18}),
     starred:Object.freeze({id:"starred",x:181,y:214,w:118,h:18}),
     back:Object.freeze({id:"back",x:304,y:214,w:102,h:18}),
-    star:Object.freeze({id:"star",x:376,y:88,w:24,h:21})
+    help:Object.freeze({id:"help",x:80,y:88,w:24,h:21}),
+    star:Object.freeze({id:"star",x:373,y:88,w:24,h:21})
   });
   const FLASHCARD_BUTTON_ORDER = Object.freeze(Object.values(FLASHCARD_BUTTON_RECTS));
   const FLASHCARD_STARS_KEY = "ribbitRaceFlashcardStarsV1";
@@ -243,9 +245,40 @@
     if(hint)drawBitmapText(hint,mid,rect.y+16,.49,"center",selected?skin.dark:"#59666b");
   }
   function drawFlashcardStar(cx,cy,isStarred=false){
-    ctx.fillStyle=isStarred?"#db9300":"#657981";
-    const pts=[[0,-6],[-1,-3],[1,-3],[-5,-2],[5,-2],[-3,0],[3,0],[-2,2],[2,2],[-4,5],[0,3],[4,5]];
-    for(const [x,y] of pts)ctx.fillRect(cx+x,cy+y,2,2);
+    const outline=isStarred?"#000000":"#48555a";
+    const fillMain=isStarred?"#f0db1d":"#d9e1e4";
+    const fillWarm=isStarred?"#f7b321":"#bcc8cd";
+    const fillLight=isStarred?"#efe48a":"#f7fdff";
+    const px=(x,y,w=1,h=1,c=outline)=>{ctx.fillStyle=c;ctx.fillRect(cx+x,cy+y,w,h);};
+    px(0,-8,2,2); px(-2,-6,2,2); px(2,-6,2,2); px(-4,-4,2,2); px(4,-4,2,2);
+    px(-6,-2,2,2); px(6,-2,2,2); px(-4,0,2,2); px(4,0,2,2); px(-2,2,2,2); px(2,2,2,2);
+    px(-2,4,2,2); px(2,4,2,2); px(0,6,2,2);
+    px(-1,-6,2,2,fillLight); px(1,-6,2,2,fillMain); px(-3,-4,2,2,fillLight); px(-1,-4,2,2,fillMain);
+    px(1,-4,2,2,fillMain); px(3,-4,2,2,fillWarm); px(-5,-2,2,2,fillLight); px(-3,-2,2,2,fillMain);
+    px(-1,-2,2,2,fillMain); px(1,-2,2,2,fillMain); px(3,-2,2,2,fillWarm); px(5,-2,2,2,fillWarm);
+    px(-3,0,2,2,fillLight); px(-1,0,2,2,fillMain); px(1,0,2,2,fillMain); px(3,0,2,2,fillWarm);
+    px(-1,2,2,2,fillMain); px(1,2,2,2,fillWarm); px(-1,4,2,2,fillWarm); px(1,4,2,2,fillMain);
+  }
+  function drawFlashcardHelpPanel(){
+    const panel={x:92,y:94,w:296,h:124};
+    const skin=getSelectedSkin();
+    ctx.fillStyle="rgba(9,22,28,.58)";ctx.fillRect(0,0,W,H);
+    ctx.fillStyle="rgba(25,43,52,.28)";ctx.fillRect(panel.x+4,panel.y+4,panel.w,panel.h);
+    ctx.fillStyle=COLORS.ink;ctx.fillRect(panel.x,panel.y,panel.w,panel.h);
+    ctx.fillStyle="#f7fdff";ctx.fillRect(panel.x+3,panel.y+3,panel.w-6,panel.h-6);
+    ctx.fillStyle=skin.mid;ctx.fillRect(panel.x+4,panel.y+4,panel.w-8,22);
+    ctx.fillStyle=skin.light;ctx.fillRect(panel.x+6,panel.y+6,panel.w-12,2);
+    drawBitmapText("FLASH CARD HOTKEYS",panel.x+panel.w/2,panel.y+9,.84,"center",COLORS.white,skin.dark);
+    const close={x:panel.x+panel.w-24,y:panel.y+4,w:20,h:20};
+    ctx.fillStyle=COLORS.ink;ctx.fillRect(close.x,close.y,close.w,close.h);
+    ctx.fillStyle="#f7fdff";ctx.fillRect(close.x+2,close.y+2,close.w-4,close.h-4);
+    ctx.fillStyle="#48555a";
+    for(let i=0;i<7;i++){ctx.fillRect(close.x+5+i,close.y+5+i,2,2);ctx.fillRect(close.x+11-i,close.y+5+i,2,2);}
+    const rows=[
+      ["LEFT / A","PREVIOUS CARD"],["SPACE / ENTER","FLIP CARD"],["RIGHT / D","NEXT CARD"],
+      ["S / ?","STAR OR UNSTAR CARD"],["H","SHUFFLE DECK"],["V","SHOW STARRED / ALL CARDS"],["BACKSPACE / ESC","BACK"]
+    ];
+    rows.forEach((row,index)=>{const y=panel.y+35+index*12;drawBitmapText(row[0],panel.x+18,y,.50,"left",skin.dark);drawBitmapText(row[1],panel.x+148,y,.50,"left","#59666b");});
   }
   function drawFlashcardsMenu() {
     drawUtilityWindowFrame("FLASH CARDS", "STUDY YOUR VOCAB SETS");
@@ -288,21 +321,24 @@
       ctx.fillStyle=starred?"#fff4c7":"#f7fdff";ctx.fillRect(r.x,r.y,r.w,r.h);
       ctx.fillStyle=starred?"#be8000":COLORS.ink;ctx.fillRect(r.x+1,r.y+1,r.w-2,r.h-2);
       ctx.fillStyle=starred?"#ffe0a6":"#f7fdff";ctx.fillRect(r.x+3,r.y+3,r.w-6,r.h-6);
-      drawFlashcardStar(r.x+r.w/2,r.y+8,starred);
-      drawBitmapText("S /",r.x+r.w/2,r.y+14,.34,"center",starred?"#996000":"#59666b");
+      drawFlashcardStar(r.x+r.w/2,r.y+10,starred);
+      const h=FLASHCARD_BUTTON_RECTS.help;
+      const bookTheme=getPauseBookTheme(polish.flashcardHoverKey==="help");
+      ctx.fillStyle=bookTheme.frame;ctx.fillRect(h.x,h.y,h.w,h.h);
+      ctx.fillStyle=bookTheme.buttonFill;ctx.fillRect(h.x+2,h.y+2,h.w-4,h.h-4);
+      drawMiniBookIcon(h.x+h.w/2,h.y+h.h/2,bookTheme);
     }
     const selected=id=>polish.flashcardHoverKey===id;
     const buttons=[
-      ["previous",polish.flashcardComplete?"RESTART DECK":"PREVIOUS","(LEFT)"],
-      ["flip",polish.flashcardComplete?"VIEW STARRED":"FLIP CARD","(SPACE)"],
-      ["next",polish.flashcardComplete?"ALL CARDS":"NEXT","(RIGHT)"],
+      ["previous",polish.flashcardComplete?"RESTART DECK":"PREVIOUS",""],
+      ["flip",polish.flashcardComplete?"VIEW STARRED":"FLIP CARD",""],
+      ["next",polish.flashcardComplete?"ALL CARDS":"NEXT",""],
       ["shuffle","SHUFFLE",""],["starred",polish.flashcardOnlyStarred?"ALL CARDS":"STARRED TERMS",""],["back","BACK",""],
     ];
     buttons.forEach(([id,title,hint])=>{
-      const hints={shuffle:"H",starred:"V",back:"BACKSPACE"};
-      if(hints[id]&&FLASHCARD_BUTTON_RECTS[id].h<=20)title=`${title} (${hints[id]})`;
       drawCardButton(FLASHCARD_BUTTON_RECTS[id],title,hint,selected(id));
     });
+    if(polish.flashcardHelpOpen)drawFlashcardHelpPanel();
   }
   function drawDeviceModeIcon(rect, mobile, selected) {
     const skin=getSelectedSkin();
@@ -343,7 +379,7 @@
     polish.flashcardStars=readFlashcardStars();
     polish.flashcardShuffled=false;
     rebuildFlashcardDeck(false,false);
-    polish.flashcardSelection=1;polish.flashcardHoverKey="";
+    polish.flashcardSelection=1;polish.flashcardHoverKey="";polish.flashcardHelpOpen=false;
     game.state="rrFlashcards";clearHeldInput();tone(480,.04,.009,10);
   }
   function openDeviceMenu() { polish.priorMenuState=game.state; polish.deviceSelection=isRibbitMobileMode()?1:0; game.state="rrDeviceMenu"; clearHeldInput(); tone(480,.04,.009,20); }
@@ -369,8 +405,9 @@
     const action=FLASHCARD_BUTTON_ORDER[index]||FLASHCARD_BUTTON_RECTS.flip;
     const id=action.id;
     if(id==="back"){
-      game.state="rrProfileMenu";tone(330,.04,.009,-30);return;
+      polish.flashcardHelpOpen=false;game.state="rrProfileMenu";tone(330,.04,.009,-30);return;
     }
+    if(id==="help"){polish.flashcardHelpOpen=!polish.flashcardHelpOpen;tone(polish.flashcardHelpOpen?520:330,.03,.008,polish.flashcardHelpOpen?18:-12);return;}
     if(id==="shuffle"){
       polish.flashcardShuffled=true;rebuildFlashcardDeck(polish.flashcardOnlyStarred,true);
     }else if(id==="starred"){
@@ -803,16 +840,18 @@
 
   function drawReplayIcon(cx, cy, active = false) {
     const body = active ? getSelectedSkin().dark : "#48555a";
-    const lens = active ? getSelectedSkin().mid : "#708086";
+    const slate = active ? mixHexColors(getSelectedSkin().mid,"#ffffff",.2) : "#9aa9ae";
+    const white = "#f7fdff";
     ctx.fillStyle = body;
-    ctx.fillRect(cx - 7, cy - 4, 14, 9);
-    ctx.fillRect(cx - 3, cy - 6, 5, 3);
-    ctx.fillRect(cx + 4, cy - 5, 3, 2);
-    ctx.fillStyle = "#f7fdff";
-    ctx.fillRect(cx - 5, cy - 2, 10, 5);
-    ctx.fillStyle = lens;
-    ctx.fillRect(cx - 1, cy - 1, 3, 3);
-    ctx.fillRect(cx + 5, cy - 4, 1, 1);
+    ctx.fillRect(cx-8,cy-3,16,11);
+    ctx.fillRect(cx-5,cy-7,10,4);
+    ctx.fillStyle = slate;
+    ctx.fillRect(cx-6,cy-6,3,2);ctx.fillRect(cx-2,cy-6,3,2);ctx.fillRect(cx+2,cy-6,3,2);
+    ctx.fillRect(cx-7,cy-4,3,2);ctx.fillRect(cx-3,cy-4,3,2);ctx.fillRect(cx+1,cy-4,3,2);
+    ctx.fillStyle = white;
+    ctx.fillRect(cx-5,cy,10,5);
+    ctx.fillStyle = slate;
+    ctx.fillRect(cx-1,cy+1,2,3);ctx.fillRect(cx+5,cy-1,1,1);
   }
 
   function bestRecordValue(entry, metric) {
@@ -873,6 +912,19 @@
     polish.leaderboardStatsHitRects = {};
     safeCall(tone, 330, .04, .010, -25);
   }
+  function resolvePlayerStatsRow(name, appearance=null, sourceEntry=null) {
+    const matchName=String(name||"").trim().toLowerCase();
+    let row=(polish.leaderboardEntries||[]).find(entry=>String(entry.name||"").trim().toLowerCase()===matchName)||null;
+    if(!row){
+      const payloadRows=normalizeLeaderboardRows(polish.leaderboardRawPayload||[]);
+      row=payloadRows.find(entry=>String(entry.name||"").trim().toLowerCase()===matchName)||null;
+    }
+    if(row)return {...row,appearance:appearance||row.appearance||null};
+    return {name:String(name||"FROG"),appearance:appearance||null,skinId:appearance?.skinId||appearance?.id||"azure",sourceEntry:sourceEntry||{stats:{}}};
+  }
+  window.RibbitRaceOpenPlayerStats=(row)=>openLeaderboardStats(row);
+  window.RibbitRaceClosePlayerStats=()=>closeLeaderboardStats();
+  window.RibbitRaceResolvePlayerStatsRow=resolvePlayerStatsRow;
 
   function leaderboardFrogPalette(row) {
     const appearance = row?.appearance;
@@ -895,28 +947,23 @@
   function drawLeaderboardRefreshIcon(cx, cy, active = false) {
     const color = active ? getSelectedSkin().dark : "#26363d";
     ctx.fillStyle = color;
-    // Pixel circular arrow—avoids unsupported Unicode glyphs rendering as ?.
-    ctx.fillRect(cx - 5, cy - 5, 8, 2);
-    ctx.fillRect(cx - 7, cy - 3, 2, 7);
-    ctx.fillRect(cx - 5, cy + 4, 8, 2);
-    ctx.fillRect(cx + 3, cy + 1, 2, 5);
-    ctx.fillRect(cx + 2, cy - 6, 5, 2);
-    ctx.fillRect(cx + 5, cy - 4, 2, 5);
-    ctx.fillRect(cx + 3, cy - 4, 2, 2);
+    ctx.fillRect(cx-5,cy-4,9,2);ctx.fillRect(cx-7,cy-2,2,6);ctx.fillRect(cx-5,cy+4,7,2);ctx.fillRect(cx+2,cy+1,2,3);
+    ctx.fillRect(cx+2,cy-6,5,2);ctx.fillRect(cx+5,cy-4,2,2);ctx.fillRect(cx+4,cy-3,2,2);
+    ctx.fillRect(cx-6,cy+2,4,2);ctx.fillRect(cx-5,cy+1,2,2);
   }
 
   function drawLeaderboardDropdown(rect, label, value, open, key) {
     ctx.fillStyle = "rgba(25,43,52,.22)"; ctx.fillRect(rect.x + 2, rect.y + 2, rect.w, rect.h);
     ctx.fillStyle = open ? getSelectedSkin().dark : COLORS.ink; ctx.fillRect(rect.x, rect.y, rect.w, rect.h);
     ctx.fillStyle = "#f7fdff"; ctx.fillRect(rect.x + 2, rect.y + 2, rect.w - 4, rect.h - 4);
-    const headerH = 5; // reduced to roughly two thirds of the old 8px header
+    const headerH = 5;
     ctx.fillStyle = open ? "#b3d6db" : "#dce5e8";
     ctx.fillRect(rect.x + 2, rect.y + 2, rect.w - 4, headerH);
-    drawBitmapText(label, rect.x + 8, rect.y + 2, .31, "left", "#59666b");
+    drawBitmapText(label, rect.x + rect.w / 2, rect.y + 2, .31, "center", "#59666b");
     const isLevel = key === "level" && polish.leaderboardLevel !== "any";
-    if (isLevel) drawLevelUnlockIcon(polish.leaderboardLevel, rect.x + 7, rect.y + 10, getSelectedSkin(), .47);
     const textScale = Math.min(.54, (rect.w - 33) / Math.max(1, measureBitmapText(value, 1)));
-    drawBitmapText(value, rect.x + (isLevel ? 22 : 8), rect.y + 12, textScale, "left", "#26363d");
+    if (isLevel) drawLevelUnlockIcon(polish.leaderboardLevel, rect.x + rect.w / 2 - Math.max(24, measureBitmapText(value, textScale) / 2) - 10, rect.y + 10, getSelectedSkin(), .47);
+    drawBitmapText(value, rect.x + rect.w / 2 + (isLevel ? 10 : 0), rect.y + 12, textScale, "center", "#26363d");
     ctx.fillStyle = "#26363d";
     const caretY = rect.y + Math.round(rect.h / 2) + 1;
     ctx.fillRect(rect.x + rect.w - 13, caretY - 2, 7, 2);
@@ -985,7 +1032,7 @@
     // instead of showing a large opaque charcoal box against the gradient.
     ctx.fillStyle = "#f7fdff"; ctx.fillRect(table.x + 2, table.y + 18, table.w - 4, table.h - 20);
     ctx.fillStyle = skin.mid; ctx.fillRect(table.x + 2, table.y + 2, table.w - 4, 16);
-    const columns = { rank: table.x + 20, name: table.x + 89, level: table.x + 212, result: table.x + 296, replay: table.x + 368 };
+    const columns = { rank: table.x + 20, name: table.x + 103, level: table.x + 223, result: table.x + 307, replay: table.x + 363 };
     drawBitmapText("RANK", columns.rank, table.y + 6, .47, "center", COLORS.white, skin.dark);
     drawBitmapText("NAME", columns.name, table.y + 6, .47, "center", COLORS.white, skin.dark);
     drawBitmapText("LEVEL", columns.level, table.y + 6, .47, "center", COLORS.white, skin.dark);
@@ -1008,21 +1055,22 @@
         ctx.fillStyle = "#d2dde0"; ctx.fillRect(table.x + 2, y + 16, table.w - 4, 1);
         drawBitmapText(String(row.rank || "—"), columns.rank, y + 6, .50, "center", "#26363d");
         const rowPalette = leaderboardFrogPalette(row);
-        drawMiniFrogSwatchFacing(table.x + 42, y + 4, rowPalette, .43, 1);
-        const nameRect = { x: table.x + 34, y: y + 1, w: 130, h: 15, row };
+        drawMiniFrogSwatchFacing(table.x + 48, y + 4, rowPalette, .43, 1);
+        const nameRect = { x: table.x + 42, y: y + 1, w: 132, h: 15, row };
         const nameHover = polish.leaderboardHoverKey === `name:${offset}`;
         if (nameHover) {
           ctx.fillStyle = mixHexColors(rowPalette.belly || "#b8f5dc", "#ffffff", .22);
           ctx.fillRect(nameRect.x, nameRect.y, nameRect.w, nameRect.h);
-          drawMiniFrogSwatchFacing(table.x + 42, y + 4, rowPalette, .43, 1);
+          drawMiniFrogSwatchFacing(table.x + 48, y + 4, rowPalette, .43, 1);
         }
         const nameScale = Math.min(.50, 100 / Math.max(1, measureBitmapText(row.name.toUpperCase(), 1)));
-        drawBitmapText(row.name.toUpperCase(), table.x + 54, y + 6, nameScale, "left", nameHover ? rowPalette.dark : "#26363d");
+        drawBitmapText(row.name.toUpperCase(), table.x + 66, y + 6, nameScale, "left", nameHover ? rowPalette.dark : "#26363d");
         polish.leaderboardNameRects.push(nameRect);
-        drawBitmapText(row.level, columns.level, y + 6, .48, "center", "#26363d");
+        if(String(row.level||"ALL").toLowerCase()!=="all") drawLevelUnlockIcon(String(row.level||"park").toLowerCase(), columns.level-20, y+3, skin, .42);
+        drawBitmapText(row.level, columns.level+10, y + 6, .48, "center", "#26363d");
         drawBitmapText(formatLeaderboardValue(row), columns.result, y + 6, .50, "center", "#26363d");
         if (row.replayId) {
-          const replayRect = { x: table.x + 350, y: y + 1, w: 32, h: 15, row };
+          const replayRect = { x: columns.replay - 13, y: y + 1, w: 26, h: 15, row };
           drawReplayIcon(replayRect.x + replayRect.w / 2, replayRect.y + replayRect.h / 2, polish.leaderboardHoverKey === `replay:${offset}`);
           polish.leaderboardReplayRects.push(replayRect);
         }
@@ -1084,7 +1132,7 @@
     if (!row) return;
     const skin = leaderboardFrogPalette(row);
     const panel = { x:20, y:7, w:440, h:256 };
-    const close = { x:432, y:18, w:20, h:20 };
+    const close = { x:panel.x + panel.w - 32, y:panel.y + 9, w:20, h:20 };
     const back = STATS_UI.backButton;
     const prev = STATS_UI.pagePrevButton, next = STATS_UI.pageNextButton;
     polish.leaderboardStatsHitRects = { panel, close, back, prev, next };
@@ -1099,16 +1147,15 @@
     ctx.fillStyle=skin.dark;ctx.fillRect(panel.x+12,panel.y+9,panel.w-24,36);
     ctx.fillStyle=skin.mid;ctx.fillRect(panel.x+14,panel.y+11,panel.w-28,31);
     ctx.fillStyle=skin.light;ctx.fillRect(panel.x+17,panel.y+13,panel.w-34,4);
-    drawBitmapText("PLAYER STATS",W/2,panel.y+18,2,"center",COLORS.white,skin.dark);
-    // Real top-right X; clicking it closes this overlay rather than the leaderboard.
+    drawMiniFrogSwatchFacing(panel.x+42,panel.y+18,skin,.80,1);
+    const name = String(row.name || "FROG").toUpperCase();
+    const titleCenter=(panel.x+78+close.x)/2;
+    const nameScale = Math.min(1.45,Math.max(.70,250 / Math.max(1,measureBitmapText(name,1))));
+    drawBitmapText(name,titleCenter,panel.y+18,nameScale,"center",COLORS.white,skin.dark);
     ctx.fillStyle=COLORS.ink;ctx.fillRect(close.x,close.y,close.w,close.h);
     ctx.fillStyle="#f7fdff";ctx.fillRect(close.x+2,close.y+2,close.w-4,close.h-4);
     ctx.fillStyle="#48555a";
     for(let i=0;i<8;i++){ctx.fillRect(close.x+5+i,close.y+5+i,2,2);ctx.fillRect(close.x+12-i,close.y+5+i,2,2);}
-    const name = String(row.name || "FROG").toUpperCase();
-    const nameScale = Math.min(.75,200 / Math.max(1,measureBitmapText(name,1)));
-    drawBitmapText(name, STATS_UI.startX+4, panel.y+54, nameScale,"left","#34484f");
-    drawMiniFrogSwatchFacing(410,panel.y+50,skin,.72,1);
     const allMetrics=leaderboardPlayerMetrics(row);
     const pageCount=Math.max(1,Math.ceil(allMetrics.length/STATS_UI.itemsPerPage));
     const page=Math.max(0,Math.min(polish.leaderboardStatsPage,pageCount-1));
@@ -1579,7 +1626,8 @@
   }
 
   function drawPauseFullscreenButton() {
-    if (game.state !== "paused") return;
+    // The help overlay must sit ABOVE and dim the fullscreen button.
+    if (game.state !== "paused" || game.pauseHelpOpen) return;
     const rect = getPauseFullscreenRect();
     const active = !!polish.pauseFullscreenHovered;
     // No offset shadow: the fullscreen icon is a flush pixel button.
@@ -1833,12 +1881,14 @@
     drawCustomTooltips();
     drawPauseFullscreenButton();
     drawWorldRecordNotice();
-    drawPvpPauseButtonPolish8();
+    // Pause/play buttons are drawn once inside each mode's native HUD.
+    if(polish.leaderboardStatsRow && game.state !== "rrLeaderboard")drawLeaderboardStatsModal();
     return result;
   };
 
   function interactiveRectForPoint(point) {
     const insideAny = (items = []) => items.some((item) => item && pointIn(point, item));
+    if(polish.leaderboardStatsRow && game.state !== "rrLeaderboard") return insideAny([...(Object.values(polish.leaderboardStatsHitRects||{}))]);
     if (game.state === "main") {
       return insideAny([MAIN_PROFILE_BUTTON, MAIN_DEVICE_BUTTON, MAIN_UI.soloButton, MAIN_UI.pvpButton,
         MAIN_UI.frogButton, MAIN_UI.achievementsButton, MAIN_UI.statsButton]);
@@ -1898,6 +1948,7 @@
   canvas.addEventListener("pointermove", (event) => {
     const point = getCanvasPoint(event);
     try {
+      if(polish.leaderboardStatsRow && game.state !== "rrLeaderboard"){event.preventDefault();event.stopImmediatePropagation();canvas.style.setProperty("cursor",interactiveRectForPoint(point)?"pointer":"default","important");return;}
       if (OnlineVersus?.isMenuVisible?.() && !OnlineVersus?.isActive?.()) return;
     } catch (_) {}
     polish.mainHoverKey = "";
@@ -1954,6 +2005,16 @@
 
   canvas.addEventListener("pointerdown", (event) => {
     const point = getCanvasPoint(event);
+    if (polish.leaderboardStatsRow && game.state !== "rrLeaderboard") {
+      event.preventDefault();event.stopImmediatePropagation();
+      const statsHits = polish.leaderboardStatsHitRects || {};
+      const allMetrics = leaderboardPlayerMetrics(polish.leaderboardStatsRow);
+      const pageCount = Math.max(1, Math.ceil(allMetrics.length / STATS_UI.itemsPerPage));
+      if (pointIn(point, statsHits.close) || pointIn(point, statsHits.back) || !pointIn(point, statsHits.panel)) closeLeaderboardStats();
+      else if (pointIn(point, statsHits.prev)) polish.leaderboardStatsPage = (polish.leaderboardStatsPage - 1 + pageCount) % pageCount;
+      else if (pointIn(point, statsHits.next)) polish.leaderboardStatsPage = (polish.leaderboardStatsPage + 1) % pageCount;
+      return;
+    }
     if (game.state === "rrProfileMenu") {
       const index = PROFILE_MENU_RECTS.findIndex((rect) => pointIn(point, rect));
       if (index >= 0) { event.preventDefault(); event.stopImmediatePropagation(); polish.profileSelection=index; activateProfileRow(index); }
@@ -1962,6 +2023,7 @@
     if (game.state === "rrFlashcards") {
       const index = FLASHCARD_BUTTON_ORDER.findIndex((rect) => pointIn(point, rect));
       if (index >= 0) { event.preventDefault(); event.stopImmediatePropagation(); polish.flashcardSelection = index; activateFlashcardButton(index); }
+      else if(polish.flashcardHelpOpen){ event.preventDefault(); event.stopImmediatePropagation(); polish.flashcardHelpOpen=false; }
       return;
     }
     if (game.state === "rrDeviceMenu") {
@@ -1985,10 +2047,11 @@
         const statsHits = polish.leaderboardStatsHitRects || {};
         if (pointIn(point, statsHits.close) || pointIn(point, statsHits.back) || !pointIn(point, statsHits.panel)) {
           closeLeaderboardStats();
-        } else if(pointIn(point,statsHits.prev)) {
-          polish.leaderboardStatsPage=(polish.leaderboardStatsPage+1)%2;
-        } else if(pointIn(point,statsHits.next)) {
-          polish.leaderboardStatsPage=(polish.leaderboardStatsPage+1)%2;
+        } else {
+          const allMetrics = leaderboardPlayerMetrics(polish.leaderboardStatsRow);
+          const pageCount = Math.max(1, Math.ceil(allMetrics.length / STATS_UI.itemsPerPage));
+          if(pointIn(point,statsHits.prev)) polish.leaderboardStatsPage=(polish.leaderboardStatsPage-1+pageCount)%pageCount;
+          else if(pointIn(point,statsHits.next)) polish.leaderboardStatsPage=(polish.leaderboardStatsPage+1)%pageCount;
         }
         return;
       }
@@ -2042,7 +2105,10 @@
     if (game.mode === "pvp" && ["playing","countdown","pvpCelebration"].includes(game.state) && pointIn(point, HUD_UI.pauseButton)) {
       event.preventDefault(); event.stopImmediatePropagation(); pauseGame(); return;
     }
-    if (game.state === "paused" && pointIn(point, getPauseFullscreenRect())) {
+    if (game.mode === "pvp" && game.state === "paused" && !game.onlineMode && !game.pauseHelpOpen && pointIn(point, HUD_UI.pauseButton)) {
+      event.preventDefault(); event.stopImmediatePropagation(); resumePausedGame(); return;
+    }
+    if (game.state === "paused" && !game.pauseHelpOpen && pointIn(point, getPauseFullscreenRect())) {
       event.preventDefault(); event.stopImmediatePropagation(); toggleFullscreen(); return;
     }
     if (game.state === "custom" && !polish.customBaseOpen && pointIn(point, CUSTOM_RANDOM_BUTTON)) {
@@ -2075,6 +2141,17 @@
   }, { capture:true, passive:false });
 
   window.addEventListener("keydown", (event) => {
+    if (polish.leaderboardStatsRow && game.state !== "rrLeaderboard") {
+      const allMetrics = leaderboardPlayerMetrics(polish.leaderboardStatsRow);
+      const pageCount = Math.max(1, Math.ceil(allMetrics.length / STATS_UI.itemsPerPage));
+      if (["Escape","Backspace","ArrowLeft","ArrowRight","KeyA","KeyD"].includes(event.code)) {
+        event.preventDefault(); event.stopImmediatePropagation();
+        if(["Escape","Backspace"].includes(event.code)) closeLeaderboardStats();
+        else if(["ArrowLeft","KeyA"].includes(event.code)) polish.leaderboardStatsPage=(polish.leaderboardStatsPage-1+pageCount)%pageCount;
+        else polish.leaderboardStatsPage=(polish.leaderboardStatsPage+1)%pageCount;
+      }
+      return;
+    }
     if (game.state === "rrProfileMenu") {
       if (["ArrowUp","ArrowDown","KeyW","KeyS","Enter","NumpadEnter","Space","Escape","Backspace"].includes(event.code)) {
         event.preventDefault(); event.stopImmediatePropagation();
@@ -2091,7 +2168,7 @@
       if(keys.includes(event.code)){
         event.preventDefault();event.stopImmediatePropagation();
         if(event.repeat&&!(["ArrowLeft","ArrowRight","KeyA","KeyD"].includes(event.code)))return;
-        if(["Escape","Backspace"].includes(event.code))activateFlashcardButton(FLASHCARD_BUTTON_ORDER.findIndex(b=>b.id==="back"));
+        if(["Escape","Backspace"].includes(event.code)){if(polish.flashcardHelpOpen)polish.flashcardHelpOpen=false;else activateFlashcardButton(FLASHCARD_BUTTON_ORDER.findIndex(b=>b.id==="back"));}
         else if(["ArrowLeft","KeyA"].includes(event.code))activateFlashcardButton(0);
         else if(["ArrowRight","KeyD"].includes(event.code))activateFlashcardButton(2);
         else if(["Space","Enter","NumpadEnter"].includes(event.code))activateFlashcardButton(1);
@@ -2120,7 +2197,9 @@
       if (["Escape","Backspace","ArrowLeft","ArrowRight","KeyA","KeyD"].includes(event.code)) {
         event.preventDefault(); event.stopImmediatePropagation();
         if (polish.leaderboardStatsRow) {
-          if(["ArrowLeft","ArrowRight","KeyA","KeyD"].includes(event.code))polish.leaderboardStatsPage=(polish.leaderboardStatsPage+1)%2;
+          const allMetrics = leaderboardPlayerMetrics(polish.leaderboardStatsRow);
+          const statsPageCount = Math.max(1, Math.ceil(allMetrics.length / STATS_UI.itemsPerPage));
+          if(["ArrowLeft","ArrowRight","KeyA","KeyD"].includes(event.code))polish.leaderboardStatsPage=(["ArrowLeft","KeyA"].includes(event.code)?(polish.leaderboardStatsPage-1+statsPageCount):(polish.leaderboardStatsPage+1))%statsPageCount;
           else closeLeaderboardStats();
         } else if (event.code === "Escape" || event.code === "Backspace") closeLeaderboard();
         else if (["ArrowLeft","KeyA"].includes(event.code)) polish.leaderboardPage=(polish.leaderboardPage-1+pageCount)%pageCount;
