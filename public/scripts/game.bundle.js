@@ -64,7 +64,7 @@ function startRibbitRaceGame() {
     const canvas = document.getElementById("game");
     const gameFrame = document.getElementById("game-frame");
     const friendsGameInputLocked = () => window.RibbitFriendsGameInputLocked?.() === true;
-    const RIBBIT_DISPLAY_VERSION = "VERSION 1.7.28";
+    const RIBBIT_DISPLAY_VERSION = "VERSION 1.7.29";
     const RIBBIT_CREDIT_TEXT = "MADE BY NICK M.";
     const RIBBIT_CREDIT_Y = 228;
     const rgbValueEditor = document.getElementById("rgb-value-editor");
@@ -4571,8 +4571,8 @@ function startRibbitRaceGame() {
       customizeButton: Object.freeze({ x: 72, y: 176, w: 120, h: 27 }), // legacy geometry
       randomButton: Object.freeze({ id: "random", x: 188, y: 154, w: 104, h: 17 }),
       backButton: Object.freeze({ id: "back", x: 180, y: 181, w: 120, h: 24 }),
-      settingsButton: Object.freeze({ id: "settings", x: 346, y: 211, w: 24, h: 24 }),
-      tutorialButton: Object.freeze({ id: "tutorial", x: 376, y: 211, w: 24, h: 24 }),
+      settingsButton: Object.freeze({ id: "settings", x: 349, y: 211, w: 24, h: 24 }),
+      tutorialButton: Object.freeze({ id: "tutorial", x: 379, y: 211, w: 24, h: 24 }),
       levelButtons: Object.freeze([
         Object.freeze({ id: "park",   x: 72,  y: 101, w: 104, h: 21 }),
         Object.freeze({ id: "swamp",  x: 188, y: 101, w: 104, h: 21 }),
@@ -4581,7 +4581,7 @@ function startRibbitRaceGame() {
         Object.freeze({ id: "lake",   x: 188, y: 130, w: 104, h: 21 }),
         Object.freeze({ id: "garden", x: 304, y: 130, w: 104, h: 21 })
       ]),
-      timeButton: Object.freeze({ x: 406, y: 211, w: 24, h: 24 })
+      timeButton: Object.freeze({ x: 409, y: 211, w: 24, h: 24 })
     });
     const SOLO_SETTINGS_UI = Object.freeze({
       endlessRow: Object.freeze({ x: 94, y: 78, w: 292, h: 30 }),
@@ -17455,10 +17455,13 @@ function startRibbitRaceGame() {
       const hatToast = game.achievementToastHatId
         ? CUSTOM_HAT_OPTIONS.find((item) => item.id === game.achievementToastHatId)
         : null;
-      const width = definition || hatToast ? 208 : genericText ? Math.max(178, measureBitmapText(genericText, 1) + 42) : 178;
-      const height = 29;
+      const hudSafeWidth = Math.max(178, W - 172);
+      const width = definition || hatToast ? 208 : genericText
+        ? Math.min(hudSafeWidth, Math.max(178, Math.ceil(measureBitmapText(genericText, 0.86) + 44)))
+        : 178;
+      const height = 23;
       const left = Math.round((W - width) / 2);
-      const top = 31;
+      const top = 4;
       const life = game.achievementToastTimer / CONFIG.achievementToastDuration;
       const fade = Math.min(1, life * 4, (1 - life) * 5 + 0.1);
       const toastRect = { x: left, y: top, w: width, h: height };
@@ -17473,22 +17476,27 @@ function startRibbitRaceGame() {
       ctx.fillRect(left, top, width, height);
       ctx.fillStyle = mixHexColors(toastSkin.belly, toastSkin.mid, 0.22);
       ctx.fillRect(left + 3, top + 3, width - 6, height - 6);
+      const badgeSize = height - 4;
+      const badgeX = left + 6, badgeY = top + 2;
       ctx.fillStyle = toastSkin.mid;
-      ctx.fillRect(left + 7, top + 7, 30, height - 14);
+      ctx.fillRect(badgeX, badgeY, badgeSize, badgeSize);
       if (game.achievementToastSkinId) {
-        drawMiniFrogSwatch(left + 11, top + 9, skin, 0.8);
-        drawBitmapText("FROG UNLOCKED!", left + 108, top + 5, 1, "center", skin.dark);
-        drawBitmapText(`${skin.name} FROG`, left + 109, top + 16, 1, "center", skin.dark);
+        drawMiniFrogSwatch(left + 11, top + 5, skin, 0.68);
+        drawBitmapText("FROG UNLOCKED!", left + 121, top + 3, 0.8, "center", skin.dark);
+        drawBitmapText(`${skin.name} FROG`, left + 121, top + 13, 0.8, "center", skin.dark);
       } else if (definition) {
-        drawAchievementIcon(definition.icon, left + 13, top + 8, true, 0.82, skin);
-        drawBitmapText("ACHIEVEMENT!", left + 124, top + 5, 1, "center", skin.dark);
-        drawBitmapText(definition.name, left + 124, top + 16, 1, "center", skin.dark);
+        drawAchievementIcon(definition.icon, left + 11, top + 5, true, 0.67, skin);
+        drawBitmapText("ACHIEVEMENT!", left + 123, top + 3, 0.8, "center", skin.dark);
+        const nameScale = Math.min(0.8, (width - 48) / Math.max(1, measureBitmapText(definition.name, 1)));
+        drawBitmapText(definition.name, left + 123, top + 13, nameScale, "center", skin.dark);
       } else if (hatToast) {
         ctx.restore(); return; // silent hat reward; preserve the unlocked hat in inventory
       } else {
-        if (worldRecordToast) drawPixelTrophy(left + 18, top + 7, false, .92);
-        else drawMiniSun(left + 18, top + 15, false);
-        drawBitmapText(genericText, left + width / 2 + 10, top + 10, 1, "center", toastSkin.dark);
+        drawMiniSun(left + 16, top + 11, false);
+        const textLeft = left + 34;
+        const textWidth = width - 39;
+        const textScale = Math.min(0.86, textWidth / Math.max(1, measureBitmapText(genericText, 1)));
+        drawBitmapText(genericText, textLeft + textWidth / 2, top + Math.round((height - 7 * textScale) / 2), textScale, "center", toastSkin.dark);
       }
       ctx.restore();
     }
@@ -19720,8 +19728,8 @@ function startRibbitRaceGame() {
     requestAnimationFrame(frame);
 
     /* ===== client/game/90-extended-features.js ===== */
-const RIBBIT_FRIENDS_DISPLAY_VERSION = "1.7.28";
-const RIBBIT_FRIENDS_BUILD = "2026.10.13-friends-polish-40";
+const RIBBIT_FRIENDS_DISPLAY_VERSION = "1.7.29";
+const RIBBIT_FRIENDS_BUILD = "2026.10.13-friends-polish-41";
 function rr14Number(value, fallback = 0) {
   const parsed = Number(value);
   return Number.isFinite(parsed) ? parsed : fallback;
@@ -20200,10 +20208,10 @@ window.RibbitRaceMobileDiagnostics = () => ({
  */
 (() => {
   "use strict";
-  const BUILD = "2026.10.13-friends-polish-40";
+  const BUILD = "2026.10.13-friends-polish-41";
   const RR_V160_CANDIDATES = {"catchFly":["attemptFlyCatch","attemptPvpFlyCatch","catchSandboxFly","getPvpImminentCatchFly","recordFlyEaten","scheduleFlyReplacementFromCatch"],"jumpSound":["playJumpSound"],"beep":["playCountdownGoSound","playCountdownSound"],"replayUpload":["saveRecordDate"],"restart":["resetGame","resetPvpGame","resetPvpPlayer","resetRoundLifecycle","resetRoundNetwork","restartCurrentLevel"],"drop":[],"render":["drawPvpScene","drawScene"],"worldRecord":[],"fullscreen":["getFullscreenElement","hideFullscreenFallback","showFullscreenFallback","syncFullscreenButton","toggleRibbitFullscreen"],"onlineSubmit":[],"leaderboard":["isSoloEndlessLeaderboardEligible","savePvpMatchWinsForLeaderboard"]};
   const RR_V160_VARS = {"onlineSelect":[],"achievementSelect":["activeAchievementIndex","hoveredAchievementCard"],"backRect":[]};
-  const VERSION = "1.7.28";
+  const VERSION = "1.7.29";
   const V = {
     menuTouch: new Map(), chargeTouch: new Map(), achievementPinned: -1,
     finalCatchStarted: 0, finalCatchLabelsGone: false,
@@ -20212,7 +20220,7 @@ window.RibbitRaceMobileDiagnostics = () => ({
     lastState: "", lastRoundKey: "", previousRecords: new Map(),
     onlineAppearance: null, replay: null, replayChunks: [], replayStartedAt: 0,
     guestSavePending: null, lastDropBuffer: new WeakMap(),
-    worldRecordDetail: "", worldRecordUntil: 0,
+    worldRecordDetail: "", worldRecordMeta: null, worldRecordUntil: 0,
     longPressTimer: 0,
   };
   const get = (name) => { try { return eval(name); } catch (_) { return undefined; } };
@@ -20547,7 +20555,42 @@ window.RibbitRaceMobileDiagnostics = () => ({
     for(const key of Object.keys(cloud))if(/leaderboard/i.test(key)&&typeof cloud[key]==="function"&&!cloud[key].__rrv160){const old=cloud[key].bind(cloud);cloud[key]=async function(...args){const r=await old(...args);const metric=String(args[0]?.metric||args[0]?.rankBy||"default"),level=String(args[0]?.level||"any");const rows=r?.rows||r?.leaderboard||r?.results||[];leaderCache.set(metric+":"+level,rows);return r};cloud[key].__rrv160=true;}
   }
   function currentPlayerName(){return String(document.getElementById("cloud-account-button")?.textContent||"PLAYER").trim();}
-  function setRecordPrior(metric,level){const rows=leaderCache.get(String(metric)+":"+String(level))||[];const prior=rows[0];if(prior){const value=prior.result??prior.value??prior.time??prior.jumps??"—";window.RibbitSetWorldRecordDetail(`PREVIOUS: ${prior.name||prior.username||"PLAYER"} — ${value}`);}else window.RibbitSetWorldRecordDetail(`${String(metric).toUpperCase()} • ${String(level).toUpperCase()}`);}
+  function formatPriorRecordValue(value, metric){
+    const numeric=Number(value);
+    if(!Number.isFinite(numeric)) return String(value ?? "—");
+    if(/time/i.test(String(metric||""))){
+      const minutes=Math.floor(numeric/60),seconds=(numeric-minutes*60).toFixed(1).padStart(4,"0");
+      return `${String(minutes).padStart(2,"0")}:${seconds}`;
+    }
+    return String(Math.floor(numeric));
+  }
+  function formatPriorRecordDate(value){
+    if(!value) return "UNKNOWN DATE";
+    const date=new Date(value);
+    if(Number.isNaN(date.getTime())) return String(value).slice(0,10);
+    return `${date.getMonth()+1}/${date.getDate()}/${date.getFullYear()}`;
+  }
+  function setWorldRecordMeta(meta){V.worldRecordMeta=meta||null;window.RibbitRaceWorldRecordMeta=V.worldRecordMeta;return V.worldRecordMeta;}
+  window.RibbitGetWorldRecordDetail=()=>V.worldRecordMeta;
+  function setRecordPrior(metric,level){
+    const rows=leaderCache.get(String(metric)+":"+String(level))||[];
+    const current=currentPlayerName().toLowerCase();
+    const prior=rows.find((row,index)=>{
+      const name=String(row?.name||row?.username||"").toLowerCase();
+      return name && !(index===0 && name===current);
+    }) || rows[0];
+    if(prior){
+      const rawValue=prior.result??prior.value??prior.time??prior.jumps??"—";
+      const displayValue=formatPriorRecordValue(rawValue, metric);
+      const dateValue=prior.resultDate||prior.date||prior.updatedAt||prior.createdAt||prior.lastUpdated||"";
+      const displayDate=formatPriorRecordDate(dateValue);
+      setWorldRecordMeta({metric:String(metric||"TIME").toUpperCase(),level:String(level||"any").toUpperCase(),name:String(prior.name||prior.username||"PLAYER"),value:displayValue,rawValue,date:displayDate});
+      window.RibbitSetWorldRecordDetail(`PREVIOUS: ${prior.name||prior.username||"PLAYER"} — ${displayValue} — ${displayDate}`);
+    }else{
+      setWorldRecordMeta({metric:String(metric||"TIME").toUpperCase(),level:String(level||"any").toUpperCase(),name:"",value:"—",rawValue:null,date:"UNKNOWN DATE"});
+      window.RibbitSetWorldRecordDetail(`${String(metric).toUpperCase()} • ${String(level).toUpperCase()}`);
+    }
+  }
   for(const n of RR_V160_CANDIDATES.worldRecord||[]){const old=get(n);if(typeof old!=="function"||old.__rrv160)continue;const wrapped=function(...args){const info=args.find(a=>a&&typeof a==="object")||{};const metric=String(info.metric||info.category||info.rankBy||"");const level=String(info.level||info.stage||"any");const rows=leaderCache.get(metric+":"+level)||[];if(/pvp|flies/i.test(metric)&&rows[0]&&String(rows[0].name||rows[0].username).toLowerCase()===currentPlayerName().toLowerCase())return;setRecordPrior(metric,level);return old.apply(this,args)};wrapped.__rrv160=true;set(n,wrapped);}
   for(const n of RR_V160_CANDIDATES.render||[]){const old=get(n);if(typeof old!=="function"||old.__rrv160)continue;const wrapped=function(...args){const r=old.apply(this,args);const g=args.find(a=>a&&typeof a.save==="function")||first(["ctx","context"]);if(g){drawFrogTagsPolish(g);window.RibbitDrawCpuTakeover(g);if(V.worldRecordDetail&&performance.now()<V.worldRecordUntil){const mouse=first(["mouse","pointer"]);if(mouse&&mouse.x!=null)window.RibbitTooltipBox(g,V.worldRecordDetail,240,33,{size:7});}}return r};wrapped.__rrv160=true;set(n,wrapped);break;}
   let priorOnlinePlaying=false;
@@ -21039,7 +21082,7 @@ window.RibbitRaceMobileDiagnostics = () => ({
 "use strict";
 const SOLO_SEEN_KEY = "rrFriendsEngineTutorialSoloSeenV8";
 const PVP_SEEN_KEY = "rrFriendsEngineTutorialPvpSeenV8";
-const TUTORIAL_BUILD = "2026.10.13-friends-polish-40";
+const TUTORIAL_BUILD = "2026.10.13-friends-polish-41";
 const TUTORIAL_ACHIEVEMENT_ID = "tutorial-graduate";
 const PVP_TUTORIAL_ACHIEVEMENT_ID = "versus-tutorial-graduate";
 const TYPEWRITER_MS_PER_CHARACTER = 28;
@@ -27315,6 +27358,7 @@ window.RibbitRaceTutorialEngine = Object.freeze({
     customToolHover: "",
     quickplayLeaving: false,
     profileSelection: 0,
+    languageSelection: 0,
     deviceSelection: 0,
     priorMenuState: "main",
     replayStatus: "",
@@ -27361,6 +27405,15 @@ window.RibbitRaceTutorialEngine = Object.freeze({
   ]);
   const PROFILE_MENU_RECTS = Object.freeze(PROFILE_MENU_ROWS.map((row, index) => Object.freeze({
     ...row, x:91, y:78+index*30, w:298, h:26
+  })));
+  const LANGUAGE_MENU_ROWS = Object.freeze([
+    Object.freeze({ id:"spoken", label:"I SPEAK..." }),
+    Object.freeze({ id:"learning", label:"I'M LEARNING..." }),
+    Object.freeze({ id:"swap", label:"SWAP LANGUAGES" }),
+    Object.freeze({ id:"back", label:"BACK" })
+  ]);
+  const LANGUAGE_MENU_RECTS = Object.freeze(LANGUAGE_MENU_ROWS.map((row, index) => Object.freeze({
+    ...row, x:91, y:92+index*33, w:298, h:28
   })));
   const FLASHCARD_BUTTON_RECTS = Object.freeze({
     previous:Object.freeze({id:"previous",x:76,y:187,w:54,h:23}),
@@ -27477,6 +27530,37 @@ window.RibbitRaceTutorialEngine = Object.freeze({
     else if(kind==="signout") {r(-7,-6,8,12);r(-5,-4,4,8,"#f7fdff");r(0,-1,7,2);r(4,-4,3,3);r(4,1,3,3);}
     else {r(-1,-2,8,4);r(-3,-4,3,8);r(-6,-1,3,2);}
   }
+  function languageName(code) { return code === "es" ? "ESPAÑOL" : "ENGLISH"; }
+  function getSpokenLanguage() {
+    try { return window.RibbitLanguagePreferences?.getSpoken?.() || localStorage.getItem("ribbitRaceSpokenLanguageV1") || (getLanguageMode()==="es-en"?"es":"en"); }
+    catch (_) { return getLanguageMode()==="es-en" ? "es" : "en"; }
+  }
+  function getLearningLanguage() {
+    try { return window.RibbitLanguagePreferences?.getLearning?.() || localStorage.getItem("ribbitRaceLearningLanguageV1") || (getLanguageMode()==="es-en"?"en":"es"); }
+    catch (_) { return getLanguageMode()==="es-en" ? "en" : "es"; }
+  }
+  function drawPixelFlag(code, x, y, scale = 1) {
+    const s = Math.max(1, Math.round(scale));
+    const fill = (px, py, w, h, color) => { ctx.fillStyle = color; ctx.fillRect(Math.round(x + px * s), Math.round(y + py * s), Math.round(w * s), Math.round(h * s)); };
+    fill(0,0,24,14,"#000000");
+    fill(1,1,22,12,"#ffffff");
+    if (code === "es") {
+      fill(1,1,22,3,"#c91111"); fill(1,4,22,6,"#f5c400"); fill(1,10,22,3,"#c91111");
+      fill(7,4,6,6,"#ad7526"); fill(8,5,4,4,"#c99742");
+      fill(6,5,1,4,"#9daab0"); fill(13,5,1,4,"#9daab0");
+      fill(7,4,1,1,"#cf445a"); fill(12,4,1,1,"#cf445a"); fill(9,6,1,3,"#5346a8");
+    } else {
+      fill(1,1,22,12,"#ffffff");
+      [1,3,5,7,9,11].forEach(row => fill(1,row,22,1,"#c73a4a"));
+      fill(1,1,9,6,"#305ca8");
+      for (let py = 0; py < 3; py++) for (let px = 0; px < 4; px++) fill(2 + px*2, 2 + py*2, 1, 1, "#ffffff");
+    }
+  }
+  function drawLanguageValue(rect, code, selected) {
+    const label = languageName(code);
+    drawBitmapText(label, rect.x + rect.w - 45, rect.y + 9, .38, "right", selected ? getSelectedSkin().dark : "#59666b");
+    drawPixelFlag(code, rect.x + rect.w - 34, rect.y + 6, 1);
+  }
   function drawProfileMenu() {
     drawUtilityWindowFrame("ACCOUNT & LANGUAGE", "PLAYER SETTINGS");
     drawBitmapText(`PLAYER: ${accountDisplayName().toUpperCase()}`,W/2,63,.55,"center","#48555a");
@@ -27487,16 +27571,40 @@ window.RibbitRaceTutorialEngine = Object.freeze({
       ctx.fillStyle=selected?COLORS.ink:"#9aa9ae";ctx.fillRect(rect.x,rect.y,rect.w,rect.h);
       ctx.fillStyle=selected?mixHexColors(skin.belly,"#ffffff",.12):"#f7fdff";
       ctx.fillRect(rect.x+2,rect.y+2,rect.w-4,rect.h-4);
-      const stripes={language:skin.light,flashcards:"#f3d171",manage:"#7ee0cf",signout:"#ed9eaa",back:"#b4c7ce"};
+      const stripes={language:skin.light,flashcards:"#f3d171",manage:"#7ee0cf",signout:"#ed9eaa",back:"#f3c5ce"};
       ctx.fillStyle=stripes[rect.id];ctx.fillRect(rect.x+5,rect.y+4,rect.w-10,2);
       drawProfileOptionIcon(rect.id,rect.x+21,rect.y+rect.h/2,selected?skin.dark:"#48555a");
-      const value=rect.id==="language"?(getLanguageMode()==="es-en"?"ES > EN":"EN > ES"):
-        rect.id==="flashcards"?`${getFlashcardVocabulary().length} CARDS`:"";
       const labelScale=Math.min(.69,195/Math.max(1,measureBitmapText(rect.label,1)));
       const baseline=Math.round(rect.y+(rect.h-7*labelScale)/2);
       drawBitmapText(rect.label,rect.x+rect.w/2,baseline,labelScale,"center",selected?skin.dark:"#48555a");
-      if(value)drawBitmapText(value,rect.x+rect.w-9,baseline+1,.38,"right",selected?skin.dark:"#59666b");
+      if(rect.id==="language") drawLanguageValue(rect, getLearningLanguage(), selected);
+      else if(rect.id==="flashcards") drawBitmapText(`${getFlashcardVocabulary().length} CARDS`,rect.x+rect.w-9,baseline+1,.38,"right",selected?skin.dark:"#59666b");
     });
+  }
+  function drawLanguageMenu() {
+    drawUtilityWindowFrame("LANGUAGE MODE", "SET YOUR LANGUAGES");
+    const skin = getSelectedSkin();
+    const spoken = getSpokenLanguage();
+    const learning = getLearningLanguage();
+    LANGUAGE_MENU_RECTS.forEach((rect, index) => {
+      const selected = index === polish.languageSelection;
+      ctx.fillStyle="rgba(25,43,52,.20)";ctx.fillRect(rect.x+2,rect.y+2,rect.w,rect.h);
+      ctx.fillStyle=selected?COLORS.ink:"#9aa9ae";ctx.fillRect(rect.x,rect.y,rect.w,rect.h);
+      ctx.fillStyle=selected?mixHexColors(skin.belly,"#ffffff",.12):"#f7fdff";ctx.fillRect(rect.x+2,rect.y+2,rect.w-4,rect.h-4);
+      const stripe = rect.id === "spoken" ? "#f3d171" : rect.id === "learning" ? "#7ee0cf" : rect.id === "swap" ? "#ed9eaa" : "#b4c7ce";
+      ctx.fillStyle=stripe;ctx.fillRect(rect.x+5,rect.y+4,rect.w-10,2);
+      const labelScale=Math.min(.62,180/Math.max(1,measureBitmapText(rect.label,1)));
+      drawBitmapText(rect.label, rect.x+rect.w/2, rect.y+10, labelScale, "center", selected?skin.dark:"#48555a");
+      if(rect.id === "spoken") drawLanguageValue(rect, spoken, selected);
+      else if(rect.id === "learning") drawLanguageValue(rect, learning, selected);
+      else if(rect.id === "swap") {
+        drawPixelFlag(spoken, rect.x+rect.w-56, rect.y+7, .9);
+        ctx.fillStyle = selected?skin.dark:"#59666b";
+        ctx.fillRect(rect.x+rect.w-29, rect.y+13, 10, 2); ctx.fillRect(rect.x+rect.w-22, rect.y+11, 2, 6);
+        drawPixelFlag(learning, rect.x+rect.w-18, rect.y+7, .9);
+      }
+    });
+    drawBitmapText(`${languageName(spoken)}  •  ${languageName(learning)}`, W/2, 224, .48, "center", "#59666b");
   }
   function drawCardButton(rect,title,hint="",selected=false){
     const skin=getSelectedSkin();
@@ -27668,6 +27776,7 @@ window.RibbitRaceTutorialEngine = Object.freeze({
     tone(520,.04,.009,25);
     safeCall(drawScene);
   }
+  function openLanguageMenu() { polish.languageSelection = 0; game.state = "rrLanguageMenu"; clearHeldInput(); tone(520,.04,.009,25); }
   function openFlashcardsMenu() {
     polish.flashcardStars=readFlashcardStars();
     polish.flashcardShuffled=false;
@@ -27681,7 +27790,7 @@ window.RibbitRaceTutorialEngine = Object.freeze({
   window.RibbitRaceOpenDeviceMenu=openDeviceMenu;
   function activateProfileRow(index=polish.profileSelection) {
     const row=PROFILE_MENU_ROWS[index] || PROFILE_MENU_ROWS[0];
-    if(row.id==="language") setLanguageMode(getLanguageMode()==="es-en"?"en-es":"es-en");
+    if(row.id==="language") openLanguageMenu();
     else if(row.id==="flashcards") openFlashcardsMenu();
     else if(row.id==="back") closeUtilityMenu();
     else {
@@ -27690,6 +27799,33 @@ window.RibbitRaceTutorialEngine = Object.freeze({
       if(button){button.click(); if(row.id!=="manage") game.state="main";}
       else {game.cheatToastText="ACCOUNT ACTION UNAVAILABLE";game.cheatToastTimer=CONFIG.achievementToastDuration;}
     }
+  }
+  function setLanguagePreferences(spoken, learning) {
+    try {
+      const result = window.RibbitLanguagePreferences?.setLanguages?.(spoken, learning);
+      if (result) return result;
+    } catch (_) {}
+    const normalizedSpoken = spoken === "es" ? "es" : "en";
+    let normalizedLearning = learning === "en" ? "en" : "es";
+    if (normalizedSpoken === normalizedLearning) normalizedLearning = normalizedSpoken === "en" ? "es" : "en";
+    try {
+      localStorage.setItem("ribbitRaceSpokenLanguageV1", normalizedSpoken);
+      localStorage.setItem("ribbitRaceLearningLanguageV1", normalizedLearning);
+    } catch (_) {}
+    return { spoken: normalizedSpoken, learning: normalizedLearning, mode: setLanguageMode(normalizedSpoken === "es" && normalizedLearning === "en" ? "es-en" : "en-es") };
+  }
+  function swapLanguagePreferences() {
+    const result = window.RibbitLanguagePreferences?.swapLanguages?.();
+    if (result) return result;
+    return setLanguagePreferences(getLearningLanguage(), getSpokenLanguage());
+  }
+  function activateLanguageRow(index = polish.languageSelection) {
+    const row = LANGUAGE_MENU_ROWS[index] || LANGUAGE_MENU_ROWS[0];
+    if (row.id === "spoken") setLanguagePreferences(getSpokenLanguage() === "en" ? "es" : "en", getLearningLanguage());
+    else if (row.id === "learning") setLanguagePreferences(getSpokenLanguage(), getLearningLanguage() === "en" ? "es" : "en");
+    else if (row.id === "swap") swapLanguagePreferences();
+    else if (row.id === "back") { game.state = "rrProfileMenu"; tone(330,.04,.009,-30); }
+    tone(360,.03,.008,6);
   }
   function activateFlashcardButton(index = polish.flashcardSelection) {
     const deck=flashcardEntries(),count=deck.length;
@@ -27885,26 +28021,29 @@ window.RibbitRaceTutorialEngine = Object.freeze({
   leaderboardMedalSprite.src = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABwAAAAcCAYAAAByDd+UAAAECUlEQVR4nO2Wz2/VRRTFz7nzLdIYQhUDdqOEQKGvJdESjSGaKPCwxpgY/wE3aowCheLGSqIbVkIftEg0UQoGdWciAZPyY0XQhJBAofDeK9UI2oZQosQCpe137nHx2gTT99oaWXIW38V8Z+Yz587cOwM80H0WZ9Ppw2exoLaG10FAwMSnNNgFBFNxYzcy9wWYW4f0mafI2ieExdnllAM0ApAAsv9wEUikI4ep1hNK/hewoxnj77fXBVgiuHgz3wczwCmYIAcwf8UyKI3o6/6Fx4/BW7qnh1YEtq9D2rJnhQ3nL8tdVKDm1y0lnzxU6nDldSCYhvN5jI0TFoBHMhl0brqAzUcRKs1bcTUECQSkLtTUNYBLfqCRcI4Dv60HOBcGcF5mBZAKNy5dFhQRZtgkK9e4K4u4sWM5/jxfUHQCQQLHAN0C/C6M1YAFuACTwYLB4LhxvoD3csuxcy3j9Nh7lMsixnzGr38HH/w2eMzX+yer4Lub4Wm+3mMh4yo2uIoNHosN3tmMuKM5iWm+3gcPMg4cNE8v1cfdL5eHlnVoiBADFq3KoGNzAZZCG9rrQBJGwuUT7oB3d9TTSHa0FLBwVYaABDndVdbQ1D000EGIpYGb2usAm8vPW3v0TnsjDCptr4ioBJ9t7cHGXBPIEUARwUhAKI8rA6QowSAH5MRXbf24ORSRzDOavBQTB2ACNYqRcWnv1nN8iKa3dyyjBIEJSBJlsFNDSuDu1SJ8XKSZ7o45Pti3EkECWAolJkILmqoTcEN7BiMxBUKAuzhytQ/G8ianAie6uSAYMAdSZ0svaMKp7wcksWTSgZOHr5GEvmy9oDksjfKUoMRZ1cxJ5dYj3j4W4u9dIaYXG2NHM2MsNMZdWcZYWOkx3+ix0OS5LKPyK73zFcY03+B/HAjxVrfFXLZyWlQ4pYQiCQohOKpc3LulF3MkKqnGns29QlUVAHFPa68engswmCQB4ozJX95l1uLIiSQO7qcPHGC8cWS+71yNmBbqffd6xNj/tH/6Alz9TT7QhTjwNePwj0nsqJB/k5p2Lbks41tbSAvQ6G3jnb9dtaszNI+IEgZPFYWEXFBrGk+BfbkUrccr19EZgW1YGGvWDCGYsGQpsea1ABKEBBKAmW4Pg998kSoYMHT0MWzH0LTAGa4S4o1ba7n4xedx9udD6Pr1nKB7SgidY6NV2vrcx7xy8id1sadCMswSWPIvQUTN6KN8dfQl7j99EdtxzdqwKL7ZlAHNKHfEsYgK1exfKntKJyUJAug2zmAud5dYmtYIyKBEEW4C4LN6sEzrUDAcON0LO3PBq5mEvzz65AodwL4zvaixhDjbhztKpXK17L9oGxZNOeIfTbS1lfm3DY/P/h58oPulfwCs5g8I5d5bswAAAABJRU5ErkJggg==";
   function drawMiniMedalButton(rect, active = false) {
     const skin = getSelectedSkin();
+    const vine = active ? skin.mid : mixHexColors(skin.mid, "#4f8d40", .45);
+    const leaf = active ? skin.light : mixHexColors(skin.belly, "#9ad76f", .45);
+    const gold = active ? "#f0c84b" : "#d7a93f";
+    const darkGold = "#8f6220";
     ctx.fillStyle = "rgba(25,43,52,.20)";
     ctx.fillRect(rect.x+2, rect.y+2, rect.w, rect.h);
     ctx.fillStyle = active ? skin.dark : COLORS.ink;
     ctx.fillRect(rect.x,rect.y,rect.w,rect.h);
     ctx.fillStyle = active ? mixHexColors(skin.belly, "#ffffff", .16) : "#f7fdff";
     ctx.fillRect(rect.x+2,rect.y+2,rect.w-4,rect.h-4);
-    if (leaderboardMedalSprite.complete && leaderboardMedalSprite.naturalWidth) {
-      ctx.imageSmoothingEnabled = false;
-      ctx.drawImage(leaderboardMedalSprite, rect.x+1, rect.y+1, rect.w-2, rect.h-2);
-    } else {
-      const cx = rect.x+rect.w/2,cy=rect.y+rect.h/2;
-      ctx.fillStyle="#cf8700";ctx.fillRect(cx-7,cy-7,14,14);
-      ctx.fillStyle="#ffd91d";ctx.fillRect(cx-5,cy-6,10,11);
-      ctx.fillStyle="#996000";ctx.fillRect(cx-4,cy-2,2,5);ctx.fillRect(cx+2,cy-2,2,5);
-      ctx.fillStyle="#b42f49";ctx.fillRect(cx-5,cy+7,4,4);ctx.fillRect(cx+1,cy+7,4,4);
-    }
-    if (active) {
-      ctx.fillStyle=skin.light;
-      ctx.fillRect(rect.x+4,rect.y+3,rect.w-8,1);
-    }
+    const cx = Math.round(rect.x + rect.w / 2), cy = Math.round(rect.y + rect.h / 2) + 1;
+    const leafBlock = (x,y) => { ctx.fillStyle = leaf; ctx.fillRect(x,y,2,2); ctx.fillStyle = vine; ctx.fillRect(x+1,y+1,1,2); };
+    leafBlock(cx-11,cy+2); leafBlock(cx-12,cy-1); leafBlock(cx-11,cy-4); leafBlock(cx-8,cy-7);
+    leafBlock(cx+9,cy+2); leafBlock(cx+10,cy-1); leafBlock(cx+9,cy-4); leafBlock(cx+6,cy-7);
+    ctx.fillStyle = vine;
+    ctx.fillRect(cx-8,cy+5,2,1); ctx.fillRect(cx-7,cy+3,1,2); ctx.fillRect(cx-6,cy+1,1,2); ctx.fillRect(cx-5,cy-1,1,2); ctx.fillRect(cx-4,cy-3,1,2); ctx.fillRect(cx-3,cy-5,1,2);
+    ctx.fillRect(cx+6,cy+5,2,1); ctx.fillRect(cx+6,cy+3,1,2); ctx.fillRect(cx+5,cy+1,1,2); ctx.fillRect(cx+4,cy-1,1,2); ctx.fillRect(cx+3,cy-3,1,2); ctx.fillRect(cx+2,cy-5,1,2);
+    ctx.fillRect(cx-2,cy+6,5,1);
+    ctx.fillStyle = darkGold; ctx.fillRect(cx-3,cy-4,6,6);
+    ctx.fillStyle = gold; ctx.fillRect(cx-2,cy-3,4,4);
+    ctx.fillStyle = darkGold; ctx.fillRect(cx-4,cy-2,1,2); ctx.fillRect(cx+3,cy-2,1,2);
+    ctx.fillRect(cx-1,cy+2,2,3); ctx.fillRect(cx-4,cy+5,8,1);
+    if (active) { ctx.fillStyle=skin.light; ctx.fillRect(rect.x+4,rect.y+3,rect.w-8,1); }
   }
   const LEADERBOARD_METRICS = Object.freeze([
     Object.freeze({ id:"time", label:"FASTEST TIME" }),
@@ -28102,17 +28241,18 @@ window.RibbitRaceTutorialEngine = Object.freeze({
     return `${date.getMonth() + 1}/${date.getDate()}/${String(date.getFullYear()).slice(-2)}`;
   }
   function drawReplayIcon(cx, cy, active = false) {
-    const dark=active?getSelectedSkin().dark:"#26363d";
-    const mid=active?getSelectedSkin().mid:"#74818a";
-    const light="#f7fdff";
-    const x=Math.round(cx),y=Math.round(cy);
-    ctx.fillStyle=dark;
-    ctx.fillRect(x-8,y-2,16,9);ctx.fillRect(x-7,y-6,13,4);
-    ctx.fillStyle=mid;ctx.fillRect(x-6,y-5,3,2);ctx.fillRect(x-2,y-5,3,2);
-    ctx.fillRect(x+2,y-5,3,2);ctx.fillRect(x+5,y-5,1,2);
-    ctx.fillStyle=light;ctx.fillRect(x-6,y,12,5);
-    ctx.fillStyle=mid;ctx.fillRect(x-4,y+1,8,1);ctx.fillRect(x-4,y+3,8,1);
-    ctx.fillStyle=dark;ctx.fillRect(x-1,y+1,2,3);
+    const dark = active ? getSelectedSkin().dark : "#26363d";
+    const mid = active ? getSelectedSkin().mid : "#8a98a0";
+    const light = "#f7fdff";
+    const x = Math.round(cx), y = Math.round(cy);
+    ctx.fillStyle = dark;
+    ctx.fillRect(x-7, y-5, 14, 10);
+    ctx.fillStyle = light;
+    ctx.fillRect(x-5, y-3, 10, 6);
+    ctx.fillStyle = dark;
+    ctx.fillRect(x-2, y-2, 1, 4); ctx.fillRect(x-1, y-1, 1, 3); ctx.fillRect(x, y, 1, 1);
+    ctx.fillStyle = mid;
+    ctx.fillRect(x-1, y-2, 1, 4); ctx.fillRect(x, y-1, 1, 2); ctx.fillRect(x+1, y, 1, 1);
   }
   function bestRecordValue(entry, metric) {
     if (!entry || typeof entry !== "object") return null;
@@ -28878,11 +29018,12 @@ window.RibbitRaceTutorialEngine = Object.freeze({
     drawPixelTrophy(rect.x + 15, rect.y + 3, false, .78);
     drawBitmapText("NEW WORLD RECORD!", rect.x + 103, rect.y + 8, .72, "center", "#805316");
     if (polish.worldRecordHovered) {
-      const previous = game.previousWorldRecord || game.worldRecordPrevious || game.worldRecordPrior || game.recordPrevious || game.previousRecord || {};
-      const name = previous.name || previous.holder || previous.displayName || game.previousWorldRecordHolder || "NO PREVIOUS HOLDER";
-      const value = previous.value ?? previous.time ?? previous.jumps ?? previous.score ?? game.previousWorldRecordValue ?? "—";
-      const rawDate = previous.date || previous.createdAt || game.previousWorldRecordDate; const date = rawDate ? new Date(rawDate).toLocaleDateString() : "";
-      drawSpeechBubble(rect, `PREVIOUS: ${name} • ${value}${date ? ` • ${date}` : ""}`, { maxWidth:260, scale:.43, height:23 });
+      const priorMeta = window.RibbitGetWorldRecordDetail?.() || game.previousWorldRecord || game.worldRecordPrevious || game.worldRecordPrior || game.recordPrevious || game.previousRecord || {};
+      const name = priorMeta.name || priorMeta.holder || priorMeta.displayName || game.previousWorldRecordHolder || "NO PREVIOUS HOLDER";
+      const value = priorMeta.value ?? priorMeta.time ?? priorMeta.jumps ?? priorMeta.score ?? game.previousWorldRecordValue ?? "—";
+      const rawDate = priorMeta.date || priorMeta.createdAt || game.previousWorldRecordDate;
+      const date = rawDate ? String(rawDate) : "UNKNOWN DATE";
+      drawSpeechBubble(rect, `PREVIOUS: ${name} • ${value} • ${date}`, { maxWidth:288, scale:.40, height:23 });
     }
   }
   function drawPvpPauseButtonPolish8() {
@@ -29035,6 +29176,7 @@ window.RibbitRaceTutorialEngine = Object.freeze({
   const originalDrawScenePolish8 = drawScene;
   drawScene = function(...args) {
     if (game.state === "rrProfileMenu") { drawProfileMenu(); return; }
+    if (game.state === "rrLanguageMenu") { drawLanguageMenu(); return; }
     if (game.state === "rrFlashcards") { drawFlashcardsMenu(); return; }
     if (game.state === "rrDeviceMenu") { drawDeviceMenu(); return; }
     if (game.state === "rrLeaderboard") {
@@ -29075,6 +29217,7 @@ window.RibbitRaceTutorialEngine = Object.freeze({
         ...(polish.customBaseOpen ? getCustomBaseOptionRects() : [])]);
     }
     if (game.state === "rrProfileMenu") return insideAny(PROFILE_MENU_RECTS);
+    if (game.state === "rrLanguageMenu") return insideAny(LANGUAGE_MENU_RECTS);
     if (game.state === "rrFlashcards") return insideAny(FLASHCARD_BUTTON_ORDER);
     if (game.state === "rrDeviceMenu") return insideAny(Object.values(DEVICE_MENU_RECTS));
     if (game.state === "achievements") {
@@ -29120,6 +29263,9 @@ window.RibbitRaceTutorialEngine = Object.freeze({
     if (game.state === "rrProfileMenu") {
       const index = PROFILE_MENU_RECTS.findIndex((rect) => pointIn(point, rect));
       if (index >= 0) polish.profileSelection = index;
+    } else if (game.state === "rrLanguageMenu") {
+      const index = LANGUAGE_MENU_RECTS.findIndex((rect) => pointIn(point, rect));
+      if (index >= 0) polish.languageSelection = index;
     } else if (game.state === "rrFlashcards") {
       const hovered = FLASHCARD_BUTTON_ORDER.find((rect) => pointIn(point, rect));
       polish.flashcardHoverKey = hovered?.id || "";
@@ -29181,6 +29327,11 @@ window.RibbitRaceTutorialEngine = Object.freeze({
     if (game.state === "rrProfileMenu") {
       const index = PROFILE_MENU_RECTS.findIndex((rect) => pointIn(point, rect));
       if (index >= 0) { event.preventDefault(); event.stopImmediatePropagation(); polish.profileSelection=index; activateProfileRow(index); }
+      return;
+    }
+    if (game.state === "rrLanguageMenu") {
+      const index = LANGUAGE_MENU_RECTS.findIndex((rect) => pointIn(point, rect));
+      if (index >= 0) { event.preventDefault(); event.stopImmediatePropagation(); polish.languageSelection=index; activateLanguageRow(index); }
       return;
     }
     if (game.state === "rrFlashcards") {
@@ -29322,6 +29473,17 @@ window.RibbitRaceTutorialEngine = Object.freeze({
         else if (["ArrowUp","KeyW"].includes(event.code)) polish.profileSelection=(polish.profileSelection-1+PROFILE_MENU_ROWS.length)%PROFILE_MENU_ROWS.length;
         else if (["ArrowDown","KeyS"].includes(event.code)) polish.profileSelection=(polish.profileSelection+1)%PROFILE_MENU_ROWS.length;
         else activateProfileRow();
+      }
+      return;
+    }
+    if (game.state === "rrLanguageMenu") {
+      if (["ArrowUp","ArrowDown","ArrowLeft","ArrowRight","KeyW","KeyS","KeyA","KeyD","Enter","NumpadEnter","Space","Escape","Backspace"].includes(event.code)) {
+        event.preventDefault(); event.stopImmediatePropagation();
+        if (event.repeat && !["ArrowUp","ArrowDown","ArrowLeft","ArrowRight","KeyW","KeyS","KeyA","KeyD"].includes(event.code)) return;
+        if (["Escape","Backspace"].includes(event.code)) { game.state = "rrProfileMenu"; tone(330,.04,.009,-30); }
+        else if (["ArrowUp","KeyW"].includes(event.code)) polish.languageSelection=(polish.languageSelection-1+LANGUAGE_MENU_ROWS.length)%LANGUAGE_MENU_ROWS.length;
+        else if (["ArrowDown","KeyS"].includes(event.code)) polish.languageSelection=(polish.languageSelection+1)%LANGUAGE_MENU_ROWS.length;
+        else if (["ArrowLeft","ArrowRight","KeyA","KeyD","Enter","NumpadEnter","Space"].includes(event.code)) activateLanguageRow();
       }
       return;
     }

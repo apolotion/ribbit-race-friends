@@ -5,11 +5,11 @@
  */
 (() => {
   "use strict";
-  const BUILD = "2026.10.13-friends-polish-40";
+  const BUILD = "2026.10.13-friends-polish-41";
   const RR_V160_CANDIDATES = {"catchFly":["attemptFlyCatch","attemptPvpFlyCatch","catchSandboxFly","getPvpImminentCatchFly","recordFlyEaten","scheduleFlyReplacementFromCatch"],"jumpSound":["playJumpSound"],"beep":["playCountdownGoSound","playCountdownSound"],"replayUpload":["saveRecordDate"],"restart":["resetGame","resetPvpGame","resetPvpPlayer","resetRoundLifecycle","resetRoundNetwork","restartCurrentLevel"],"drop":[],"render":["drawPvpScene","drawScene"],"worldRecord":[],"fullscreen":["getFullscreenElement","hideFullscreenFallback","showFullscreenFallback","syncFullscreenButton","toggleRibbitFullscreen"],"onlineSubmit":[],"leaderboard":["isSoloEndlessLeaderboardEligible","savePvpMatchWinsForLeaderboard"]};
   const RR_V160_VARS = {"onlineSelect":[],"achievementSelect":["activeAchievementIndex","hoveredAchievementCard"],"backRect":[]};
 
-  const VERSION = "1.7.28";
+  const VERSION = "1.7.29";
   const V = {
     menuTouch: new Map(), chargeTouch: new Map(), achievementPinned: -1,
     finalCatchStarted: 0, finalCatchLabelsGone: false,
@@ -18,7 +18,7 @@
     lastState: "", lastRoundKey: "", previousRecords: new Map(),
     onlineAppearance: null, replay: null, replayChunks: [], replayStartedAt: 0,
     guestSavePending: null, lastDropBuffer: new WeakMap(),
-    worldRecordDetail: "", worldRecordUntil: 0,
+    worldRecordDetail: "", worldRecordMeta: null, worldRecordUntil: 0,
     longPressTimer: 0,
   };
   const get = (name) => { try { return eval(name); } catch (_) { return undefined; } };
@@ -429,7 +429,42 @@
     for(const key of Object.keys(cloud))if(/leaderboard/i.test(key)&&typeof cloud[key]==="function"&&!cloud[key].__rrv160){const old=cloud[key].bind(cloud);cloud[key]=async function(...args){const r=await old(...args);const metric=String(args[0]?.metric||args[0]?.rankBy||"default"),level=String(args[0]?.level||"any");const rows=r?.rows||r?.leaderboard||r?.results||[];leaderCache.set(metric+":"+level,rows);return r};cloud[key].__rrv160=true;}
   }
   function currentPlayerName(){return String(document.getElementById("cloud-account-button")?.textContent||"PLAYER").trim();}
-  function setRecordPrior(metric,level){const rows=leaderCache.get(String(metric)+":"+String(level))||[];const prior=rows[0];if(prior){const value=prior.result??prior.value??prior.time??prior.jumps??"—";window.RibbitSetWorldRecordDetail(`PREVIOUS: ${prior.name||prior.username||"PLAYER"} — ${value}`);}else window.RibbitSetWorldRecordDetail(`${String(metric).toUpperCase()} • ${String(level).toUpperCase()}`);}
+  function formatPriorRecordValue(value, metric){
+    const numeric=Number(value);
+    if(!Number.isFinite(numeric)) return String(value ?? "—");
+    if(/time/i.test(String(metric||""))){
+      const minutes=Math.floor(numeric/60),seconds=(numeric-minutes*60).toFixed(1).padStart(4,"0");
+      return `${String(minutes).padStart(2,"0")}:${seconds}`;
+    }
+    return String(Math.floor(numeric));
+  }
+  function formatPriorRecordDate(value){
+    if(!value) return "UNKNOWN DATE";
+    const date=new Date(value);
+    if(Number.isNaN(date.getTime())) return String(value).slice(0,10);
+    return `${date.getMonth()+1}/${date.getDate()}/${date.getFullYear()}`;
+  }
+  function setWorldRecordMeta(meta){V.worldRecordMeta=meta||null;window.RibbitRaceWorldRecordMeta=V.worldRecordMeta;return V.worldRecordMeta;}
+  window.RibbitGetWorldRecordDetail=()=>V.worldRecordMeta;
+  function setRecordPrior(metric,level){
+    const rows=leaderCache.get(String(metric)+":"+String(level))||[];
+    const current=currentPlayerName().toLowerCase();
+    const prior=rows.find((row,index)=>{
+      const name=String(row?.name||row?.username||"").toLowerCase();
+      return name && !(index===0 && name===current);
+    }) || rows[0];
+    if(prior){
+      const rawValue=prior.result??prior.value??prior.time??prior.jumps??"—";
+      const displayValue=formatPriorRecordValue(rawValue, metric);
+      const dateValue=prior.resultDate||prior.date||prior.updatedAt||prior.createdAt||prior.lastUpdated||"";
+      const displayDate=formatPriorRecordDate(dateValue);
+      setWorldRecordMeta({metric:String(metric||"TIME").toUpperCase(),level:String(level||"any").toUpperCase(),name:String(prior.name||prior.username||"PLAYER"),value:displayValue,rawValue,date:displayDate});
+      window.RibbitSetWorldRecordDetail(`PREVIOUS: ${prior.name||prior.username||"PLAYER"} — ${displayValue} — ${displayDate}`);
+    }else{
+      setWorldRecordMeta({metric:String(metric||"TIME").toUpperCase(),level:String(level||"any").toUpperCase(),name:"",value:"—",rawValue:null,date:"UNKNOWN DATE"});
+      window.RibbitSetWorldRecordDetail(`${String(metric).toUpperCase()} • ${String(level).toUpperCase()}`);
+    }
+  }
   for(const n of RR_V160_CANDIDATES.worldRecord||[]){const old=get(n);if(typeof old!=="function"||old.__rrv160)continue;const wrapped=function(...args){const info=args.find(a=>a&&typeof a==="object")||{};const metric=String(info.metric||info.category||info.rankBy||"");const level=String(info.level||info.stage||"any");const rows=leaderCache.get(metric+":"+level)||[];if(/pvp|flies/i.test(metric)&&rows[0]&&String(rows[0].name||rows[0].username).toLowerCase()===currentPlayerName().toLowerCase())return;setRecordPrior(metric,level);return old.apply(this,args)};wrapped.__rrv160=true;set(n,wrapped);}
 
   // Wrap render functions once: CPU transition, Frog Tags sprites, and record detail tooltip.
