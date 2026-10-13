@@ -126,8 +126,11 @@ function freezeControlledEntity() {
   const entities = tutorial.kind === "pvp" ? pvpPlayers : [controlledTutorialEntity()];
   for (const entity of entities) {
     if (!entity) continue;
-    entity.vx = 0;
-    entity.vy = 0;
+    // During voiced dialogue, keep real airborne motion and active bonk
+    // recovery so a rapid text advance cannot skip the flip-back animation.
+    const keepFlight = tutorial.kind === "pvp" && tutorial.dialogueOpen &&
+      game.state === "playing" && (!entity.grounded || entity.bonked);
+    if (!keepFlight) { entity.vx = 0; entity.vy = 0; }
     entity.charging = false;
     entity.chargeHoldTime = 0;
     if ("inputHeld" in entity) entity.inputHeld = false;
@@ -527,6 +530,14 @@ function closeDialogue(source = "keyboard") {
   }
 
   const step = tutorialStep();
+  // Spoken success may start promptly after the attacker's landing, but the
+  // bonked frog must be allowed to finish the upside-down recovery animation
+  // before advancing to a new stage. Ignore a rushed final-line dismissal.
+  if (tutorial.kind === "pvp" && tutorial.dynamicDialogueLines && tutorial.postSuccessAdvance) {
+    const recovering = pvpPlayers.some((player) => player && (player.bonked ||
+      (player.stunCountdownStarted && player.stunTimer > 0)));
+    if (recovering) return true;
+  }
   const keepJumpBlockedUntilRelease = source === "space-keydown" && tutorial.blockJumpUntilRelease;
   tutorial.dialogueOpen = false;
   tutorial.dialogueLineIndex = 0;
@@ -686,6 +697,10 @@ function clearScenarioState() {
   tutorial.pvpCpuTriggerAt = 0;
   tutorial.pvpMirrorWasHeld = false;
   tutorial.pvpFinalMatchStarted = false;
+  tutorial.pvpFinalMatchPoofStarted = false;
+  tutorial.pvpFinalMatchCountdownUntil = 0;
+  tutorial.pvpRecoveryWallReboundSeen = false;
+  tutorial.pvpPracticeRecoveryGraceAt = 0;
   tutorial.pvpFinalOutcome = null;
   tutorial.pvpFlyRevealAt = 0;
   tutorial.pvpFlyRevealSetup = "";

@@ -151,7 +151,7 @@ test('Versus remembers both frogs and supports close-contest and last-second cin
   assert.match(nav, /game\.pvpSetupSkinIds = \[p1, p2\]/);
   assert.match(nav, /saveLastPvpSkinSelections\(game\.pvpSetupSkinIds\)/);
   assert.match(versus, /function pvpFlyContestIsClose/);
-  assert.match(versus, /game\.pvpTimeRemaining\) > 0 && Number\(game\.pvpTimeRemaining\) <= 1\.05/);
+  assert.match(versus, /game\.pvpTimeRemaining\) > 0 && Number\(game\.pvpTimeRemaining\) <= 1\.0/);
   assert.match(versus, /if \(reachedTarget\) return "final"/);
   assert.match(versus, /if \(buzzerWinningCatch \|\| lastSecondCatch\) return "clutch"/);
   assert.match(versus, /return "contest"/);

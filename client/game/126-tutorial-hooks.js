@@ -14,6 +14,13 @@ bonkPvpPlayer = function(victim, stomper, ...rest) {
     tutorial.pvpDemoBonkAt = performance.now();
     tutorial.pvpDemoBonkCount += 1;
     tutorial.pvpLastPracticeEventAt = tutorial.pvpDemoBonkAt;
+    if (tutorialStep()?.setup === "pvpDemoRecoveryBonk" && tutorial.pvpDemoBonkCount === 1) {
+      // This specific lesson needs the first frog to remain dazed until
+      // Ember has physically reached the wall and bounced back. Use the
+      // engine's legal maximum stun duration; do not invent a second hit.
+      victim.bonkStunDuration = Math.max(Number(victim.bonkStunDuration)||0,4.7);
+      if (victim.stunCountdownStarted) victim.stunTimer = Math.max(Number(victim.stunTimer)||0,4.7);
+    }
   }
   if (active && stomper?.index === 0 && victim?.index === 1) {
     tutorial.pvpBonks += 1;
@@ -64,6 +71,11 @@ bouncePvpPlayersSideways = function(a, b, ...rest) {
       beforeA !== "rebound" && beforeB !== "rebound" && performance.now() - tutorial.pvpLastPracticeEventAt > 120) {
     tutorial.pvpReboundCount += 1;
     tutorial.pvpReboundAt = performance.now();
+    if (!a.grounded && !b.grounded && ["pvpDemoRebound", "pvpReboundThree", "pvpDemoReboundCatch", "pvpReboundCatch", "pvpDemoDinnerSteal", "pvpDinnerSteal"].includes(tutorialStep()?.setup)) {
+      // Use the game's existing fly-catch sparkle effect on BOTH frogs.
+      a.catchSparkleTimer = Math.max(Number(a.catchSparkleTimer)||0, CONFIG.catchSparkleDuration);
+      b.catchSparkleTimer = Math.max(Number(b.catchSparkleTimer)||0, CONFIG.catchSparkleDuration);
+    }
     tutorial.pvpRebounds = tutorial.pvpReboundCount;
     tutorial.pvpLastPracticeEventAt = performance.now();
     if (tutorialStep()?.setup === "pvpIntercept") tutorial.pvpInterceptSeen = true;
@@ -99,7 +111,13 @@ attemptPvpFlyCatch = function(player, targetFly, source = "body", ...rest) {
     }
     tutorial.pvpPracticeCatchCount += 1;
     tutorial.pvpLastPracticeEventAt = performance.now();
-    tutorial.promptHidden = true;
+    if (setup === "pvpDemoBoostBonk" && player.index === 1) {
+      // A successful boost catch ends the demonstration's scripted motion.
+      // Do not let a queued second jump start while Ember is eating.
+      clearPvpScriptActions();
+      tutorial.pvpDemoFollowupStarted = true;
+    }
+    tutorial.promptHidden = !(typeof flies !== "undefined" && Array.isArray(flies) && flies.some((fly) => fly?.tutorialAuthored && fly.state === "active" && fly.tutorialArmed && Number.isInteger(fly.vocabIndex)));
     // Lesson catches prove the technique but never alter the visible PvP score.
     player.score = scoreBefore;
     game.spawnQueue.length = 0;
@@ -114,8 +132,7 @@ attemptPvpFlyCatch = function(player, targetFly, source = "body", ...rest) {
 // achievement while it is active; only the dedicated completion achievement
 // may pass through when the tutorial itself awards it.
 window.RibbitTutorialShouldHidePvpCatchTitle = () => Boolean(
-  tutorial.active && tutorial.kind === "pvp" &&
-  ["pvpDemoReboundCatch", "pvpReboundCatch", "pvpDemoDinnerSteal", "pvpDinnerSteal"].includes(tutorialStep()?.setup)
+  tutorial.active && tutorial.kind === "pvp" && tutorialStep()?.setup !== "pvpFinalMatch"
 );
 
 const originalMarkAchievementEarnedForTutorial = markAchievementEarned;
@@ -531,6 +548,18 @@ update = function(dt, ...rest) {
     return result;
   }
 
+  // The final Versus entrance reserves a one-second hold after the poof.
+  // It cannot consume any of the 30-second match clock, run the CPU early,
+  // or spawn/catch flies before the visible 3-2-1 countdown has begun.
+  if (tutorial.active && tutorial.kind === "pvp" &&
+      tutorialStep()?.setup === "pvpFinalMatch" && tutorial.pvpFinalMatchCountdownUntil > 0 &&
+      game.state === "playing") {
+    updateTutorialAmbient(dt, { animateFlies:true });
+    for (const player of pvpPlayers) { player.inputHeld = false; player.charging = false; }
+    updateTutorial();
+    return undefined;
+  }
+
   // During dialogue, poofs, and the brief success hold, keep the Park sky,
   // scenery clock, particles, and already-spawned flies alive while freezing
   // only the controlled frog. Flies stay still during a poof transition.
@@ -545,8 +574,11 @@ update = function(dt, ...rest) {
       for (const player of pvpPlayers) {
         player.inputHeld = false;
         player.charging = false;
-        if (!player.grounded) updatePvpPlayer(player, dt);
-        else { player.vx = 0; player.vy = 0; }
+        if (!player.grounded || player.bonked || player.stunTimer > 0 || player.bonkLandingPopTimer > 0) {
+          // The recovery countdown and final rotation run even with the frog
+          // on the floor and Ember speaking. Input remains blocked.
+          updatePvpPlayer(player, dt);
+        } else { player.vx = 0; player.vy = 0; }
       }
       updatePvpImpactEffects(dt);
     } else {

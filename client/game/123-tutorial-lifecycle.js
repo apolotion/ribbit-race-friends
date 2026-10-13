@@ -373,7 +373,7 @@ function completePendingReset() {
       armTutorialFlies({ preserveKeys: preserveFlyKeys });
     }
   }
-  if (preservePrompt) tutorial.promptHidden = false;
+  if (preservePrompt || (tutorial.kind === "pvp" && flies.some((fly) => fly?.tutorialAuthored && fly.state === "active" && fly.tutorialArmed))) tutorial.promptHidden = false;
   const resetPoofPlayers = Array.isArray(tutorial.resetPvpPoofPlayers) ? tutorial.resetPvpPoofPlayers : [0, 1];
   tutorial.frogHidden = false;
   tutorial.pvpFrogsHidden = false;
@@ -436,9 +436,13 @@ function finalizePassedStep() {
   tutorial.passPendingAt = 0;
   if (!tutorial.successDialogueShown && Array.isArray(step?.successDialogue) && step.successDialogue.length) {
     tutorial.successDialogueShown = true;
-    freezeControlledEntity();
+    // PvP success may open while the *victim* is still falling. Do not erase
+    // the victim's current airborne velocity before opening voiced dialogue;
+    // the dialogue-only physics branch will complete the landing and recovery.
+    if (tutorial.kind === "pvp") clearHeldInput();
+    else freezeControlledEntity();
     openDynamicDialogue(step.successDialogue,
-      step.setup === "pvpDropHigh" ? "dazed" : (step.portrait || "thumbsup"), true);
+      ["pvpDropHigh", "pvpSkyBonk", "pvpBufferedSky"].includes(step.setup) ? "dazed" : (step.portrait || "thumbsup"), true);
     tone(620, .07, .018, 85);
     return;
   }
@@ -452,7 +456,9 @@ function passStep() {
   if (!tutorial.active || tutorial.passed || tutorial.passPending) return;
   // Techniques such as wall rebounds can succeed in mid-air. Let the real
   // engine finish the landing before Ember freezes the pose for dialogue.
-  if (tutorial.kind === "solo" && (!frog.grounded || tongue.active || game.soloCriticalCatchActive)) {
+  if ((tutorial.kind === "solo" && (!frog.grounded || tongue.active || game.soloCriticalCatchActive)) ||
+      (tutorial.kind === "pvp" && ["pvpBoostBonk", "pvpReboundCatch", "pvpDinnerSteal"].includes(tutorialStep()?.setup) &&
+       (!pvpPlayers[0].grounded || pvpPlayers[0].tongue.active || game.pvpCriticalCatchActive))) {
     tutorial.passPending = true;
     tutorial.passPendingAt = performance.now();
     clearHeldInput();

@@ -350,6 +350,9 @@ function schedulePvpFlyReveal(setup, delayMs = pvpFlyRevealDelayMs(setup)) {
   if (!hasHiddenFly) {
     tutorial.pvpFlyRevealAt = 0;
     tutorial.pvpFlyRevealSetup = "";
+    if (tutorial.kind === "pvp" && flies.some((fly) => fly?.tutorialAuthored && fly.state === "active" && fly.tutorialArmed)) {
+      tutorial.promptHidden = false;
+    }
     return 0;
   }
   const safeDelay = Math.max(0, Number(delayMs) || 0);
@@ -525,19 +528,20 @@ function configurePvpStep(index) {
       positionPvpOnPlatform(ember, PARK_PLATFORMS[6], -1);
       break;
     case "pvpHighGround":
-      // Swap roles on the same two platforms. A single player jump must knock
-      // Ember down; a miss poofs the original positions back into place.
+      // Player takes the centered lower-LEFT perch. Ember holds top center.
       positionPvpOnPlatform(ember, top, -1);
-      positionPvpOnPlatform(p1, PARK_PLATFORMS[6], -1);
+      positionPvpOnPlatform(p1, PARK_PLATFORMS[1], 1);
       break;
     case "pvpDemoRecoveryBonk":
-      // Match the requested lane from the reference image.
-      positionPvp(p1, 150, CONFIG.groundY - p1.h, 1);
-      positionPvp(ember, 300, CONFIG.groundY - ember.h, -1);
+      // A single charged leftward jump bonks P1; the wall, not a scripted
+      // direction reversal, must turn Ember around for the second contact.
+      positionPvp(p1, Math.round(W * .25), CONFIG.groundY - p1.h, 1);
+      positionPvp(ember, Math.round(W * .50), CONFIG.groundY - ember.h, -1);
       break;
     case "pvpRecoveryBonk":
-      positionPvp(p1, Math.round(W * 0.25), CONFIG.groundY - p1.h, 1);
-      positionPvp(ember, Math.round(W * 0.50), CONFIG.groundY - ember.h, -1);
+      // Mirror the pictured practice: player RIGHT, Ember LEFT on the ground.
+      positionPvp(p1, 305, CONFIG.groundY - p1.h, -1);
+      positionPvp(ember, 145, CONFIG.groundY - ember.h, 1);
       break;
     case "pvpDemoBoostBonk":
       // Ember's demonstration starts with player on the left and Ember on the
@@ -571,7 +575,7 @@ function configurePvpStep(index) {
       // the player has released the first jump.
       const center = PARK_PLATFORMS[3];
       positionPvpOnPlatform(p1, PARK_PLATFORMS[2], 1);
-      positionPvp(ember, center.x + 28, CONFIG.groundY - ember.h, 1);
+      positionPvp(ember, center.x + 28, CONFIG.groundY - ember.h, -1);
       break;
     }
     case "pvpDemoAvoidUnder":
@@ -835,6 +839,8 @@ function beginPvpDemoMotion(setup) {
       scriptPvpChargedJump(1, 1, -1, 0);
       break;
     case "pvpDemoRecoveryBonk":
+      // One opening charge: after the first bonk Ember continues toward the
+      // LEFT wall and only changes facing when actual wall physics rebounds her.
       scriptPvpChargedJump(1, .55, -1, 0);
       break;
     case "pvpDemoBoostBonk":
@@ -1058,16 +1064,23 @@ function updatePvpDemonstration() {
   // another attempted bonk during the real stun does not score again. Every
   // change in position comes from an actual jump, not a tutorial teleport.
   if (setup === "pvpDemoRecoveryBonk") {
-    const lowerCenter = PARK_PLATFORMS[3];
-    if (tutorial.pvpDemoStage === 0 && ember.firstJumpMade && ember.grounded &&
-        getPvpStandingPlatform(ember) === lowerCenter && !ember.charging &&
-        !tutorial.pvpScriptActions.length) {
+    // First hit P1 normally, then follow through with ONE long jump at the
+    // actual left wall. The wall's collision response turns Ember around;
+    // never set her facing manually to manufacture a follow-up bonk.
+    if (tutorial.pvpDemoBonkCount >= 1 && tutorial.pvpDemoStage === 0) {
       tutorial.pvpDemoStage = 1;
-      scriptPvpChargedJump(1, .42, -1, 120);
-    } else if (tutorial.pvpDemoStage === 1 && tutorial.pvpDemoBonkCount >= 1 &&
-        ember.grounded && !ember.charging && !tutorial.pvpScriptActions.length) {
+      tutorial.pvpRecoveryWallReboundSeen = Boolean(ember.wallBouncedThisJump);
+    }
+    if (ember.wallBouncedThisJump) tutorial.pvpRecoveryWallReboundSeen = true;
+    if (tutorial.pvpDemoStage === 1 && ember.grounded && !ember.charging && !ember.bonked &&
+        !tutorial.pvpScriptActions.length && tutorial.pvpDemoBlockedBonkAt <= 0) {
       tutorial.pvpDemoStage = 2;
-      scriptPvpChargedJump(1, .55, 1, 0);
+      // Preserve real facing. At this point the first stomp is finished and
+      // a powerful jump toward the left wall makes the second approach.
+      // Buffer through the middle-left perch on the return so the recovery
+      // collision reaches the waiting frog instead of stopping on its ledge.
+      armPvpScriptedBuffer(1, PARK_PLATFORMS[1]);
+      scriptPvpChargedJump(1, .75, null, 0);
     }
   }
 
@@ -1136,6 +1149,8 @@ function updatePvpDemonstration() {
 
 function startPvpFinalMatch() {
   tutorial.pvpFinalMatchStarted = true;
+  tutorial.pvpFinalMatchPoofStarted = false;
+  tutorial.pvpFinalMatchCountdownUntil = 0;
   try { window.RibbitRaceResetFinalCatchLabels?.(); } catch (_) {}
   tutorial.pvpFinalOutcome = null;
   tutorial.pvpDemoActive = false;
@@ -1180,5 +1195,21 @@ function startPvpFinalMatch() {
   game.pvpSetupSkinIds[1] = "ember";
   tutorial.scoreStart = 0;
   tutorial.pvpScoreStart = 0;
-  startResumeCountdown(false);
+  tutorial.pvpPlayerScriptLocked = true;
+  tutorial.pvpFinalMatchPoofStarted = true;
+  // Stage entrance uses the standard two-frog poof; only after both reappear
+  // do we hold for a full second before the familiar 3-2-1 countdown.
+  beginPoofTransition({
+    reason:"pvp-final-match-precountdown",
+    showFailure:false,
+    preserveExistingFlies:false,
+    armFlies:false,
+    waitForEffects:false,
+    action:() => {
+      positionPvp(pvpPlayers[0], PVP_START_X[0], CONFIG.groundY-pvpPlayers[0].h, 1);
+      positionPvp(pvpPlayers[1], PVP_START_X[1], CONFIG.groundY-pvpPlayers[1].h, -1);
+      tutorial.pvpFinalMatchCountdownUntil = performance.now() + 1000;
+      tutorial.pvpPlayerScriptLocked = true;
+    }
+  });
 }

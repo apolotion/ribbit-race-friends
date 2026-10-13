@@ -4,7 +4,7 @@ import {readFileSync,existsSync} from "node:fs";
 import { readGameModuleGroup } from "./source-reader.mjs";
 const read=p=>readFileSync(new URL(`../${p}`,import.meta.url),"utf8");
 
-test("v1.7.31 engine tutorial project additions exist",()=>{
+test("v1.7.32 engine tutorial project additions exist",()=>{
   for(const p of [
     "client/game/115-v170-hooks.js",
     "client/game/120-tutorial-config.js",
@@ -17,7 +17,7 @@ test("v1.7.31 engine tutorial project additions exist",()=>{
     "public/tutorial/ember-laughing.png",
     "public/tutorial/ember-thinking.png"
   ])assert.ok(existsSync(new URL(`../${p}`,import.meta.url)),p);
-  assert.equal(JSON.parse(read("package.json")).version,"1.7.31");
+  assert.equal(JSON.parse(read("package.json")).version,"1.7.32");
 });
 
 test("tutorial uses the real Park engine instead of a popup practice canvas",()=>{
@@ -69,7 +69,7 @@ test("tutorial hides legacy floating controls and preserves cloud progress",()=>
   assert.match(css,/display:\s*none\s*!important/);
 });
 
-test("1.7.31 tutorial uses Ember dialogue, checked engine scenes, and a working pause menu",()=>{
+test("1.7.32 tutorial uses Ember dialogue, checked engine scenes, and a working pause menu",()=>{
   const engine=readGameModuleGroup(120, 139);
   for(const word of [
     'FROG_SKINS.ember',

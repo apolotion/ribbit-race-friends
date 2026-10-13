@@ -878,7 +878,23 @@ function currentGoalHowToLines() {
     pvpSkyBonk: ["JUMP HIGH", "THEN LAND ON EMBER"],
     pvpDoubleBonk: ["WAIT FOR RECOVERY", "THEN BONK AGAIN"],
     pvpRebound: ["COLLIDE SIDE-TO-SIDE"],
-    pvpOffense: ["REBOUND OFF EMBER", "THEN CATCH THE FLY"]
+    pvpOffense: ["REBOUND OFF EMBER", "THEN CATCH THE FLY"],
+    pvpBonkThree: ["LAND ON EMBER'S HEAD 3 TIMES", "KEEP YOUR COMPLETED BONKS"],
+    pvpBonkCatch: ["BONK EMBER FROM ABOVE", "CATCH THE MATCH BEFORE RECOVERY"],
+    pvpDropLow: ["QUICK TAP WHILE ON LOW PERCH", "DROP DIRECTLY ONTO EMBER"],
+    pvpDropHigh: ["QUICK TAP ON THE TOP PERCH", "DROP ON EMBER FOR LONG STUN"],
+    pvpBufferedBonk: ["CHARGE ABOVE THE PERCH", "TAP JUST BEFORE LANDING: BONK"],
+    pvpSkyBonk: ["MAX CHARGE HIGH ABOVE THE MAP", "AIM YOUR DESCENT AT EMBER"],
+    pvpBufferedSky: ["LAUNCH HIGH FROM TOP PLATFORM", "BUFFER THROUGH, BONK EMBER"],
+    pvpHighGround: ["START ON THE LOWER-LEFT PERCH", "KNOCK EMBER OFF THE TOP"],
+    pvpRecoveryBonk: ["BONK, THEN HIT THE WALL", "BONK ONLY AFTER SHE RECOVERS"],
+    pvpBoostBonk: ["BONK JUST AS EMBER LAUNCHES", "USE THE BOOST TO REACH A FLY"],
+    pvpUnderBonkTwo: ["HOLD THE CENTER LOW PLATFORM", "UNDER-BONK EMBER TWICE"],
+    pvpAvoidUnder: ["USE FIVE TINY QUICK-TAP HOPS", "SLIP BELOW EMBER WITHOUT A BONK"],
+    pvpReboundThree: ["MEET EMBER SIDEWAYS IN THE AIR", "LAND THREE REBOUNDS TOTAL"],
+    pvpReboundCatch: ["REBOUND FROM STATIONARY EMBER", "CATCH MATCHING FLY IN ONE JUMP"],
+    pvpIntercept: ["REBOUND TO CHANGE EMBER'S PATH", "STOP HER BEFORE THE FLY"],
+    pvpDinnerSteal: ["REBOUND EMBER AWAY FROM FLY", "CATCH IT BEFORE YOU LAND"]
   };
   return instructions[setup] || ["COMPLETE THE CURRENT GOAL"];
 }
@@ -1080,6 +1096,17 @@ function applyTutorialChapterPreview() {
   restoreStepSequence();
   clearHeldInput();
   openDialogue();
+  // A chapter selected while the old scene was paused must be live and fully
+  // authored on the first frame, even if it skipped over a pending poof.
+  tutorial.dialogueOpen = true;
+  tutorial.dialogueHiddenDuringPoof = false;
+  tutorial.dialogueForceComplete = false;
+  tutorial.resetPending = false;
+  tutorial.deferredPoofOptions = null;
+  game.state = "playing";
+  game.pauseHelpOpen = false;
+  game.pauseSelection = "continue";
+  try { if (typeof tutorialClockSuspendedAt !== "undefined") tutorialClockSuspendedAt = null; } catch (_) {}
   // This chapter's frogs were already rebuilt at their authored positions.
   // Skipping again through a poof would make them vanish and delay the
   // first sentence despite nothing moving.
@@ -1311,10 +1338,9 @@ function drawBlankTutorialVocabularyPrompt() {
 
 function tutorialPromptVisibleDuringDialogue() {
   return Boolean(
-    tutorial.active &&
-    tutorial.dialogueOpen &&
-    tutorialStep()?.setup === "threeCatches" &&
-    flies.some((currentFly) => currentFly?.tutorialAuthored && currentFly.tutorialArmed !== false)
+    tutorial.active && tutorial.dialogueOpen &&
+    (tutorialStep()?.setup === "threeCatches" || tutorial.kind === "pvp") &&
+    flies.some((currentFly) => currentFly?.tutorialAuthored && currentFly.state === "active" && currentFly.tutorialArmed !== false)
   );
 }
 
@@ -1329,8 +1355,14 @@ drawVocabularyPrompt = function(...args) {
     tutorialStep()?.setup === "rangeCatch" &&
     (game.soloCriticalCatchActive || tongue.active || tutorial.rangeTongueCaught)
   );
+  const authoredVisible = tutorial.active && flies.some((fly) => fly?.tutorialAuthored && fly.state === "active" && fly.tutorialArmed);
+  const pvpMatchFly = tutorial.active && tutorial.kind === "pvp" && authoredVisible;
+  // Never remove the physical FIND THE MATCH panel—even when all flies were
+  // eaten, during the next poof, or in a scene just reached through Level Select.
   if (tutorial.active && (
-    ((!tutorialPlayerHasControl() && !visibleDuringExplanation && !keepDuringMissReset && !keepDuringTongueCinematic) || tutorial.promptHidden)
+    !Number.isInteger(game.targetVocabIndex) || (!authoredVisible && tutorialStep()?.setup !== "pvpFinalMatch") ||
+    ((!tutorialPlayerHasControl() && !visibleDuringExplanation && !keepDuringMissReset && !keepDuringTongueCinematic && !pvpMatchFly) ||
+    (tutorial.promptHidden && !pvpMatchFly))
   )) {
     drawBlankTutorialVocabularyPrompt();
     return;

@@ -17,6 +17,9 @@
             game.pvpFinalDisplayTime = game.pvpTimeLimitSeconds;
           }
           if (!Number.isFinite(game.pvpTimeExpiredAt)) game.pvpTimeExpiredAt = game.pvpElapsed;
+          // A monotonic timestamp guards the result even if in-game time stops
+          // advancing due to a cinematic, bonk, or lingering jump charge.
+          if (!Number.isFinite(game.pvpTimeExpiredRealAt)) game.pvpTimeExpiredRealAt = performance.now();
           beginPvpTimerJumpGrace();
           if (!game.pvpTimerGraceActive) resolvePvpTimedOutcomeAfterJump();
         }
@@ -54,6 +57,17 @@
           game.spawnQueue.shift();
         }
       }
+      if (tutorial.active && tutorial.kind === "pvp" && tutorialStep()?.setup === "pvpFinalMatch" &&
+          game.state === "playing" && !game.pvpTimedOutcomePending && !game.pvpCriticalCatchActive) {
+        const activeFlyPool = flies.filter((fly) => fly?.state === "active" && Number.isInteger(fly.vocabIndex));
+        // Never display EASY (or any clue) with four unrelated flies onscreen.
+        // If the next matching fly is queued, first target one already alive.
+        if (activeFlyPool.length && !activeFlyPool.some((fly) => fly.vocabIndex === game.targetVocabIndex)) {
+          game.targetVocabIndex = activeFlyPool[0].vocabIndex;
+          game.promptSerial += 1;
+          game.completedVocabIndices.delete(game.targetVocabIndex);
+        }
+      }
       updatePvpCpuInput(dt);
       pvpPlayers.forEach((player) => updatePvpPlayer(player, dt));
       resolvePvpCollision();
@@ -64,6 +78,21 @@
         true
       ));
       updatePvpFlies(dt);
+      const finalTutor = tutorial.active && tutorial.kind === "pvp" && tutorialStep()?.setup === "pvpFinalMatch";
+      // Time-limit grace is for the last airborne catch, not unlimited play.
+      // A bonked or endlessly charging frog must never strand the real 30-sec
+      // final match with the clock showing zero (observed in captured video).
+      if (finalTutor && game.state === "playing" && game.pvpTimedOutcomePending &&
+          !game.pvpCriticalCatchActive && game.pvpTimeRemaining <= 0 &&
+          (!game.pvpTimerGraceActive ||
+           (Number.isFinite(game.pvpTimeExpiredRealAt) &&
+            performance.now() - game.pvpTimeExpiredRealAt >= 2000) ||
+           (Number.isFinite(game.pvpTimeExpiredAt) &&
+            game.pvpElapsed - game.pvpTimeExpiredAt >= 2))) {
+        // One grace-period outcome, never an endless zero-second match.
+        resolvePvpTimedOutcomeAfterJump();
+        return;
+      }
       if (!game.pvpCriticalCatchActive && game.pvpTimerGraceActive && pvpTimerGraceHasFinished()) {
         resolvePvpTimedOutcomeAfterJump();
         return;
@@ -1223,8 +1252,13 @@
       ctx.fillRect(panel.x + 14, panel.y + 12, panel.w - 28, 35);
       ctx.fillStyle = palette.light;
       ctx.fillRect(panel.x + 17, panel.y + 14, panel.w - 34, 4);
-      drawBitmapText(`PLAYER ${winner.index + 1}`, W / 2, panel.y + 16, 1.55, "center", COLORS.white, palette.dark);
-      drawBitmapText(matchWon ? "WINS!" : `WINS ROUND ${game.pvpRoundNumber}!`, W / 2, panel.y + 30, 1.15, "center", COLORS.white, palette.dark);
+      const finalTutorialMatch = tutorial.active && tutorial.kind === "pvp" && tutorialStep()?.setup === "pvpFinalMatch";
+      if (finalTutorialMatch) {
+        drawBitmapText(winner.index === 1 ? "EMBER WINS!" : "YOU WIN!", W / 2, panel.y + 22, 1.5, "center", COLORS.white, palette.dark);
+      } else {
+        drawBitmapText(`PLAYER ${winner.index + 1}`, W / 2, panel.y + 16, 1.55, "center", COLORS.white, palette.dark);
+        drawBitmapText(matchWon ? "WINS!" : `WINS ROUND ${game.pvpRoundNumber}!`, W / 2, panel.y + 30, 1.15, "center", COLORS.white, palette.dark);
+      }
       const badgeX = winner.index === 0 ? panel.x + 29 : panel.x + panel.w - 29;
       drawMiniFrogSwatchFacing(badgeX, panel.y + 23, palette, 0.82, winner.index === 1 ? -1 : 1);
 
@@ -1341,8 +1375,13 @@
       const winner = getPvpSkinPalette(pvpPlayers[winnerIndex].skinId, winnerIndex === 0 ? "azure" : "crimson", winnerIndex);
       ctx.fillStyle = "rgba(38,54,61,.72)";
       ctx.fillRect(W / 2 - 78, 31, 156, 20);
-      drawBitmapText(`PLAYER ${winnerIndex + 1}`, W / 2, 33, 1, "center", COLORS.white, winner.dark);
-      drawBitmapText(`WINS ROUND ${game.pvpRoundNumber}!`, W / 2, 42, 1, "center", COLORS.white, winner.dark);
+      const oneRoundCoachMatch = tutorial.active && tutorial.kind === "pvp" && tutorialStep()?.setup === "pvpFinalMatch";
+      if (oneRoundCoachMatch) {
+        drawBitmapText(winnerIndex === 1 ? "EMBER WINS!" : "YOU WIN!", W / 2, 37, 1.12, "center", COLORS.white, winner.dark);
+      } else {
+        drawBitmapText(`PLAYER ${winnerIndex + 1}`, W / 2, 33, 1, "center", COLORS.white, winner.dark);
+        drawBitmapText(`WINS ROUND ${game.pvpRoundNumber}!`, W / 2, 42, 1, "center", COLORS.white, winner.dark);
+      }
     }
 
     function drawPvpScene() {
@@ -1364,6 +1403,23 @@
         drawFlySpawnSparks(fly);
         drawFlyAt(fly.x, fly.y, getFlySpawnScale(fly));
         if (!window.RibbitRaceFinalCatchLabelsGone) { drawFlyNameTag(fly); }
+      }
+      // Keep an eaten fly visible while its real tongue retracts during the
+      // tutorial slow-motion zoom. The body and word plate travel with it.
+      if (criticalCatch && tutorial.active && tutorial.kind === "pvp") {
+        const ghost = game.pvpCriticalCatchFlyVisual;
+        if (ghost && !flies.some((fly) => fly?.id === ghost.id)) {
+          const catcher = pvpPlayers[game.pvpCriticalCatchWinnerIndex];
+          const tongue = catcher?.tongue;
+          if (tongue?.active) {
+            const mouth = getPvpMouth(catcher);
+            const progress = clamp(tongue.elapsed / Math.max(.001,tongue.duration), 0, 1);
+            const drawProgress = clamp((progress - .46) / .54, 0, 1);
+            ghost.x = lerp(ghost.baseX, mouth.x, drawProgress);
+            ghost.y = lerp(ghost.baseY, mouth.y, drawProgress);
+            drawFlyAt(ghost.x, ghost.y, 1);
+          }
+        }
       }
       pvpPlayers.forEach(p => drawEntity(p, drawFrogAfterimages));
       if (!["pvpCelebration", "won"].includes(game.state)) pvpPlayers.forEach((player)=>drawAirShadowForEntity(OnlineVersus.displayPlayer(player),getPvpSkinPalette(player.skinId,player.index===0?"azure":"crimson")));

@@ -211,6 +211,14 @@
       game.pvpCriticalCatchActive = true;
       game.pvpCriticalCatchElapsed = 0;
       game.pvpCriticalCatchWinnerIndex = player.index;
+      game.pvpCriticalCatchFlyVisual = targetFly && {
+        id:targetFly.id,
+        x:Number(targetFly.x), y:Number(targetFly.y),
+        baseX:Number(targetFly.baseX ?? targetFly.x), baseY:Number(targetFly.baseY ?? targetFly.y),
+        vocabIndex:targetFly.vocabIndex, spawnAge:Math.max(CONFIG.flyGrowDuration, Number(targetFly.spawnAge)||0),
+        state:"active", tutorialArmed:true, tutorialAuthored:!!targetFly.tutorialAuthored,
+        phase:Number(targetFly.phase)||0, spawnIndex:targetFly.spawnIndex
+      };
       game.pvpCriticalCatchX = clamp(Number(targetFly?.baseX ?? targetFly?.x ?? (player.x + player.w / 2)), 24, W - 24);
       game.pvpCriticalCatchY = clamp(Number(targetFly?.baseY ?? targetFly?.y ?? (player.y + player.h / 2)), 28, CONFIG.playBottom - 24);
       game.pvpCriticalCatchCameraX = W / 2;
@@ -229,6 +237,7 @@
       const progress = clamp(game.pvpCriticalCatchElapsed / Math.max(0.001, game.pvpCriticalCatchDuration), 0, 1);
       if (progress >= 1) {
         game.pvpCriticalCatchActive = false;
+        game.pvpCriticalCatchFlyVisual = null;
         game.pvpCriticalCatchCameraX = W / 2;
         game.pvpCriticalCatchCameraY = CONFIG.playBottom / 2;
         game.pvpCriticalCatchCameraZoom = 1;
@@ -324,7 +333,8 @@
       }
       const title = game.pvpCriticalCatchKind === "final" ? "FINAL CATCH!"
         : game.pvpCriticalCatchKind === "clutch" ? "CLUTCH CATCH!" : "CLOSE CATCH!";
-      const silentTrainingCinematic = window.RibbitTutorialShouldHidePvpCatchTitle?.() === true;
+      const silentTrainingCinematic = window.RibbitTutorialShouldHidePvpCatchTitle?.() === true ||
+        (typeof tutorial !== "undefined" && tutorial.active && tutorial.kind === "pvp" && title === "CLOSE CATCH!");
       if (!silentTrainingCinematic && (title !== "FINAL CATCH!" || !window.RibbitTutorialShouldHideFinalCatchTitle?.())) {
         ctx.globalAlpha = holdFade;
         ctx.fillStyle = "rgba(38,54,61,0.78)";
@@ -366,7 +376,7 @@
       );
       const lastSecondCatch = Boolean(
         game.pvpTimeLimitSeconds > 0 && !game.pvpSuddenDeath &&
-        Number(game.pvpTimeRemaining) > 0 && Number(game.pvpTimeRemaining) <= 1.05
+        Number(game.pvpTimeRemaining) > 0 && Number(game.pvpTimeRemaining) <= 1.0
       );
       // Only a score-goal finish (e.g. the fifth of five flies) is final.
       // A contested fly or a last-second catch still gets the same zoom and
@@ -474,7 +484,13 @@
       t.chainNextFlyId = null;
       OnlineVersus.rememberTongueContact(player);
       const criticalKind = getPvpCriticalCatchKind(player, targetFly);
-      if (criticalKind) startPvpCriticalCatch(player, targetFly, criticalKind);
+      const tutorialSetup = tutorial.active && tutorial.kind === "pvp" ? tutorialStep()?.setup : "";
+      const techniqueCatch = ["pvpDemoReboundCatch", "pvpReboundCatch", "pvpDemoDinnerSteal", "pvpDinnerSteal"].includes(tutorialSetup) &&
+        player.bouncedOffOpponentThisJump && !player.grounded && flyMatchesPrompt(targetFly);
+      // Trigger the zoom on real normal-range tongue launch (not after the
+      // fly disappears). Let the fly travel toward the mouth in the cinematic.
+      if (techniqueCatch && !game.pvpCriticalCatchActive) startPvpCriticalCatch(player, targetFly, "contest");
+      else if (criticalKind) startPvpCriticalCatch(player, targetFly, criticalKind);
       tone(player.index === 0 ? 330 : 300, 0.05, 0.015, 80);
     }
 

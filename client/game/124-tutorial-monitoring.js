@@ -454,10 +454,20 @@ function monitorPvp() {
   // practice controller here: holdEmberStill() clears CPU charging every
   // frame and makes her plan/sound loop forever without ever jumping.
   if (setup === "pvpFinalMatch") {
+    if (tutorial.pvpFinalMatchCountdownUntil && now >= tutorial.pvpFinalMatchCountdownUntil) {
+      tutorial.pvpFinalMatchCountdownUntil = 0;
+      tutorial.pvpPlayerScriptLocked = false;
+      startResumeCountdown(false);
+      return;
+    }
     // Never inherit a prior tutorial cinematic's permanent label-hiding flag.
     if (!game.pvpCriticalCatchActive && window.RibbitRaceFinalCatchLabelsGone)
       try { window.RibbitRaceResetFinalCatchLabels?.(); } catch (_) {}
     if (tutorial.pvpFinalMatchStarted && game.state === "won") beginPvpTutorialEnding();
+    return;
+  }
+  if (tutorial.passPending) {
+    if (p1?.grounded && !p1.tongue?.active && !game.pvpCriticalCatchActive) finalizePassedStep();
     return;
   }
   drivePvpPracticeCpu(setup, now);
@@ -562,7 +572,7 @@ function monitorPvp() {
 
   if (setup === "pvpBufferedSky") {
     if (tutorial.pvpSkyBonkSeen && tutorial.pvpBufferedBonkSeen && tutorial.pvpMaximumBonkSeen) {
-      if (pvpPracticeEventReady(1000, now) && pvpTutorialSettled()) passStep();
+      if (p1.grounded && pvpPracticeEventReady(100, now) && !p1.tongue?.active && !game.pvpCriticalCatchActive) passStep();
     } else if (tutorial.pvpBonks >= 1) {
       failAttempt("COMBINE A SKY BONK WITH A BUFFERED DROP");
     } else if (playerLanded && now - tutorial.enteredAt > 700) {
@@ -665,7 +675,8 @@ function monitorPvp() {
         preserveExistingFlies: true,
         armFlies: false,
         action: () => {
-          positionPvpReboundPracticeLayout(completed);
+          positionPvp(pvpPlayers[0], 150, CONFIG.groundY-pvpPlayers[0].h, 1);
+          positionPvp(pvpPlayers[1], 300, CONFIG.groundY-pvpPlayers[1].h, -1);
           tutorial.pvpReboundCount = completed;
           tutorial.pvpRebounds = completed;
           tutorial.pvpPracticeCount = completed;
@@ -767,6 +778,17 @@ function updateTutorial() {
   }
   clearUnrelatedPvpTutorialFlies();
   updatePvpFlyReveal();
+  // Tutorial flies and the English clue must always describe the SAME target,
+  // including after chapter navigation, retry poofs, and rebound demo resets.
+  // A queued reveal is respected; already-visible flies are never hidden again.
+  if (tutorial.kind === "pvp" && tutorialStep()?.setup !== "pvpFinalMatch" &&
+      !tutorial.dialogueOpen && !tutorial.resetPending && tutorial.pvpFlyRevealAt <= 0) {
+    const authored = flies.filter((fly) => fly?.tutorialAuthored && fly.state === "active" && fly.tutorialArmed);
+    if (authored.length) {
+      if (!authored.some((fly) => fly.vocabIndex === game.targetVocabIndex)) setPrompt(authored[0].vocabIndex);
+      tutorial.promptHidden = false;
+    }
+  }
   if (tutorial.pvpDemoActive) {
     updatePvpDemonstration();
     return;

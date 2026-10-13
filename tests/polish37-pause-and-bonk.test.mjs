@@ -88,7 +88,7 @@ test('third practice bonk waits until Ember falls and finishes her stun rotation
 
 test('sky bonk dialogue waits until frogs complete their natural recovery',()=>{
  assert.match(monitor,/setup === "pvpSkyBonk"[\s\S]{0,190}pvpPracticeEventReady\(100, now\)/);
- assert.match(monitor,/setup === "pvpBufferedSky"[\s\S]{0,260}pvpTutorialSettled\(\)/);
+ assert.match(monitor,/setup === "pvpBufferedSky"[\s\S]{0,350}pvpPracticeEventReady\(100, now\)/);
  assert.match(scene,/setup === "pvpDemoSkyBonk" \? ember\.grounded/);
  assert.match(scene,/setup !== "pvpDemoBufferedSky" \|\| ember\.grounded/);
 });

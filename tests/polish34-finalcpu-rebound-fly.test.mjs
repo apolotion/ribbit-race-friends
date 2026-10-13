@@ -13,7 +13,7 @@ const catches = read('client/game/61-versus-catches-rounds.js');
 
 test('final tutorial CPU bypasses scripted practice controller',()=>{
  const m=monitor.slice(monitor.indexOf('function monitorPvp()'),monitor.indexOf('function tutorialMovementLocked'));
- assert.match(m,/if \(setup === "pvpFinalMatch"\) \{[\s\S]{0,700}return;[\s\S]{0,40}\}\s*drivePvpPracticeCpu/);
+ assert.match(m,/if \(setup === "pvpFinalMatch"\) \{[\s\S]{0,1000}return;[\s\S]{0,40}\}\s*drivePvpPracticeCpu/);
  assert.match(hooks,/const finalCpu = tutorial\.active/);
 });
 test('CPU cannot be stranded charging with its virtual key released',()=>{

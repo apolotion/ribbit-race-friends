@@ -332,6 +332,7 @@
       pvpVictoryAchievementHoverId: null,
       pvpVictoryAchievementPage: 0,
       pvpTimeExpiredAt: null,
+      pvpTimeExpiredRealAt: null,
       pvpUnpauseCountdown: readPvpUnpauseCountdown(),
       soloLastUrgentSecond: null,
       soloCriticalCatchActive: false,

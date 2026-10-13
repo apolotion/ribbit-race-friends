@@ -3,7 +3,7 @@
 
 const SOLO_SEEN_KEY = "rrFriendsEngineTutorialSoloSeenV8";
 const PVP_SEEN_KEY = "rrFriendsEngineTutorialPvpSeenV8";
-const TUTORIAL_BUILD = "2026.10.13-friends-polish-43";
+const TUTORIAL_BUILD = "2026.10.13-friends-polish-44";
 const TUTORIAL_ACHIEVEMENT_ID = "tutorial-graduate";
 const PVP_TUTORIAL_ACHIEVEMENT_ID = "versus-tutorial-graduate";
 const TYPEWRITER_MS_PER_CHARACTER = 28;
@@ -223,6 +223,10 @@ const tutorial = {
   pvpCpuTriggerAt: 0,
   pvpMirrorWasHeld: false,
   pvpFinalMatchStarted: false,
+  pvpFinalMatchPoofStarted: false,
+  pvpFinalMatchCountdownUntil: 0,
+  pvpRecoveryWallReboundSeen: false,
+  pvpPracticeRecoveryGraceAt: 0,
   pvpFinalOutcome: null,
   pvpFlyRevealAt: 0,
   pvpFlyRevealSetup: "",
@@ -853,7 +857,7 @@ const PVP_STEPS = Object.freeze([
       "TO THE GROUND"
     ],
     "dialogue": [
-      "Now I'll take the top platform. You start on the lower-right perch.",
+      "I'll take the top platform. You take the bottom LEFT perch.",
       "Give me one full-charged jump and knock me off the top!",
       "Jump above me and land a bonk.",
       "Let's see you bring me back down to earth!"

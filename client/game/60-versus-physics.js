@@ -80,6 +80,8 @@
       game.finishTime = null;
       game.pvpElapsed = 0;
       game.pvpFinalDisplayTime = null;
+      game.pvpTimeExpiredAt = null;
+      game.pvpTimeExpiredRealAt = null;
       game.pvpTimeRemaining = game.pvpTimeLimitSeconds > 0 ? game.pvpTimeLimitSeconds : 0;
       if (isPvpEndlessMode() && game.pvpTimeRemaining <= 0) game.pvpTimeRemaining = 30;
       game.pvpTimedOutcomePending = false;

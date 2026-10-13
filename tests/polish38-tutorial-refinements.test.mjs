@@ -69,10 +69,11 @@ test('high-ground lesson uses one maximum jump and resets misses', () => {
   assert.match(monitoring, /failAttempt\("KNOCK EMBER OFF THE TOP IN ONE JUMP"\)/);
 });
 
-test('wait-next-bonk demonstration crosses from middle platform and then jumps into recovery', () => {
-  assert.match(scenes, /setup === "pvpDemoRecoveryBonk"[\s\S]{0,500}getPvpStandingPlatform\(ember\) === lowerCenter/);
-  assert.match(scenes, /tutorial\.pvpDemoStage = 1;\s*scriptPvpChargedJump\(1, \.42, -1, 120\)/);
-  assert.match(scenes, /tutorial\.pvpDemoStage = 2;\s*scriptPvpChargedJump\(1, \.55, 1, 0\)/);
+test('wait-next-bonk demo uses physical wall rebound and never turns Ember manually', () => {
+  assert.match(scenes, /case "pvpDemoRecoveryBonk":[\s\S]{0,350}scriptPvpChargedJump\(1, \.55, -1, 0\)/);
+  assert.match(scenes, /if \(ember\.wallBouncedThisJump\) tutorial\.pvpRecoveryWallReboundSeen = true/);
+  assert.match(scenes, /scriptPvpChargedJump\(1, \.75, null, 0\)/);
+  assert.doesNotMatch(scenes, /scriptPvpChargedJump\(1, \.55, 1, 0\)/);
 });
 
 test('Ember starts buffered sky drop centered atop the high platform and practice mirrors', () => {

@@ -17,8 +17,8 @@ function block(start, end) {
 }
 
 test("polish-9 cache marker forces the rebuilt tutorial and Versus lesson UI to load", () => {
-  assert.match(engine, /2026\.10\.13-friends-polish-43/);
-  assert.match(index, /game\.bundle\.js\?v=2026\.10\.13-friends-polish-43/);
+  assert.match(engine, /2026\.10\.13-friends-polish-44/);
+  assert.match(index, /game\.bundle\.js\?v=2026\.10\.13-friends-polish-44/);
 });
 
 test("dialogue uses the new reference framing and keeps Ember's full square unobstructed", () => {
@@ -83,7 +83,7 @@ test("Solo tutorial book occupies the former settings slot with settings immedia
 
 test("English clue is ready during its explanation and match count is capped", () => {
   assert.match(engine, /function tutorialPromptVisibleDuringDialogue/);
-  assert.match(engine, /flies\.some\(\(currentFly\) => currentFly\?\.tutorialAuthored && currentFly\.tutorialArmed !== false\)/);
+  assert.match(engine, /flies\.some\(\(currentFly\) => currentFly\?\.tutorialAuthored && currentFly\.state === "active" && currentFly\.tutorialArmed !== false\)/);
   assert.match(engine, /Math\.min\(3, tutorial\.sceneCatchCount\)/);
   assert.match(engine, /sceneCatchCount = Math\.min\(3, tutorial\.sceneCatchCount \+ 1\)/);
 });

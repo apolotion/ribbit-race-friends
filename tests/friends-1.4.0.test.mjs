@@ -10,9 +10,9 @@ const mobile=read("client/game/100-mobile-experience.js");
 const render=readGameModuleGroup(70, 79);
 const versus=readGameModuleGroup(60, 69);
 
-test("1.7.31 build and responsibility-focused modular gameplay sources are present",()=>{
-  assert.match(read("src/common.js"),/2026\.10\.13-friends-polish-43/);
-  assert.match(read("package.json"),/"version": "1\.7\.31"/);
+test("1.7.32 build and responsibility-focused modular gameplay sources are present",()=>{
+  assert.match(read("src/common.js"),/2026\.10\.13-friends-polish-44/);
+  assert.match(read("package.json"),/"version": "1\.7\.32"/);
   assert.match(read("scripts/build-game.mjs"),/discoverModules\(\)/);
   assert.match(read("public/index.html"),/mobile-experience\.js/);
 });
