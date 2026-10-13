@@ -48,7 +48,14 @@ function configureStep(showDialogue = true, options = {}) {
     showDialogue && tutorial.kind === "pvp" &&
     ["pvpBonkThree", "pvpBonkCatch", "pvpDemoDropLow", "pvpDemoDropHigh", "pvpDemoBufferedBonk", "pvpDemoHighGround"].includes(tutorialStep()?.setup)
   );
-  if (prePoofBeforeDialogue && preservedPvpVisualPoses) {
+  if (prePoofBeforeDialogue && preservedPvpVisualPoses && pvpAtIntendedPositions(tutorial.pendingPvpTargetPoses)) {
+    // The authored start and displayed pose are identical. Show the first
+    // line immediately without hiding/reappearing either frog.
+    tutorial.pendingPvpVisualPoses = null;
+    tutorial.pendingPvpTargetPoses = null;
+    openDialogue();
+    tutorial.scenePositionedDuringDialogue = true;
+  } else if (prePoofBeforeDialogue && preservedPvpVisualPoses) {
     tutorial.dialogueOpen = true;
     tutorial.scenePositionedDuringDialogue = false;
     beginDialogueLine(0, { delayMs:POOF_TRANSITION_MS + 1000, holdPreviousText:false });
@@ -83,6 +90,16 @@ function configureStep(showDialogue = true, options = {}) {
     game.state = "playing";
     game.pauseHelpOpen = false;
   }
+}
+
+function pvpAtIntendedPositions(poses, tolerance = 1) {
+  if (!Array.isArray(poses) || poses.length < 2) return false;
+  return poses.slice(0,2).every((pose, index) => {
+    const player = pvpPlayers[index];
+    return player && pose &&
+      Math.abs(Number(player.x) - Number(pose.x)) <= tolerance &&
+      Math.abs(Number(player.y) - Number(pose.y)) <= tolerance;
+  });
 }
 
 function addTutorialPoof(x, y, kind = "out") {
@@ -254,6 +271,17 @@ function beginScenarioEntryTransition() {
   const intendedStartPose = tutorial.pendingStartPose || captureControlledPose();
   const intendedPvpPoses = tutorial.pendingPvpTargetPoses;
   const setup = tutorialStep()?.setup || "";
+  if (tutorial.kind === "pvp" && pvpAtIntendedPositions(intendedPvpPoses)) {
+    tutorial.pendingStartPose = null;
+    tutorial.pendingPvpTargetPoses = null;
+    tutorial.pendingPvpVisualPoses = null;
+    restoreStepSequence();
+    tutorial.pvpCaption = "YOUR TURN!";
+    tutorial.pvpCaptionUntil = performance.now() + 1600;
+    schedulePvpFlyReveal(setup, pvpFlyRevealDelayMs(setup));
+    tutorial.enteredAt = performance.now();
+    return;
+  }
   beginPoofTransition({
     reason: "scene-entry",
     showFailure: false,

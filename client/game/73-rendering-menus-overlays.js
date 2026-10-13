@@ -524,17 +524,8 @@
 
 
     function drawMiniTutorialBookIcon(cx, cy, color = "#48555a") {
-      ctx.fillStyle = COLORS.ink;
-      ctx.fillRect(cx - 7, cy - 6, 14, 12);
-      ctx.fillStyle = "#f7fdff";
-      ctx.fillRect(cx - 5, cy - 4, 10, 8);
-      ctx.fillStyle = color;
-      ctx.fillRect(cx - 1, cy - 4, 2, 8);
-      ctx.fillRect(cx - 4, cy - 2, 3, 1);
-      ctx.fillRect(cx - 4, cy, 3, 1);
-      ctx.fillRect(cx + 1, cy - 2, 3, 1);
-      ctx.fillRect(cx + 1, cy, 3, 1);
-      ctx.fillRect(cx - 5, cy + 4, 10, 1);
+      // The mode-selector books use the exact same sprite as the pause-menu help book.
+      drawMiniBookIcon(cx, cy, getPauseBookTheme(false));
     }
 
     function drawHomeTutorialButton() {
@@ -1486,7 +1477,7 @@
         game.muted ? COLORS.redDark : skin.dark
       );
 
-      drawBitmapText("VOLUME", 274, track.y - 2, 1, "right", "#48555a");
+      drawBitmapText("VOLUME", (button.x + button.w + track.x - 2) / 2, track.y - 1, 1, "center", "#48555a");
       ctx.fillStyle = COLORS.ink;
       ctx.fillRect(track.x - 2, track.y - 2, track.w + 4, track.h + 4);
       ctx.fillStyle = game.muted ? "#b8d8df" : skin.belly;
@@ -1682,6 +1673,8 @@
 
     function drawAchievementToast() {
       if (game.achievementToastTimer <= 0) return;
+      // Hat discoveries are recorded silently, never drawn as unlock toasts.
+      if (game.achievementToastHatId) return;
       const pvpToastPlayer = Number.isInteger(game.achievementToastPvpPlayerIndex)
         ? pvpPlayers[game.achievementToastPvpPlayerIndex]
         : null;
@@ -1734,9 +1727,7 @@
         drawBitmapText("ACHIEVEMENT!", left + 124, top + 5, 1, "center", skin.dark);
         drawBitmapText(definition.name, left + 124, top + 16, 1, "center", skin.dark);
       } else if (hatToast) {
-        drawPixelFrogHat(left + 22, top + 16, hatToast.id, .92, 1, { ...skin, previewCenterHat:true });
-        drawBitmapText("HAT UNLOCKED!", left + 126, top + 5, 1, "center", skin.dark);
-        drawBitmapText(hatToast.name, left + 126, top + 16, .92, "center", skin.dark);
+        ctx.restore(); return; // silent hat reward; preserve the unlocked hat in inventory
       } else {
         if (worldRecordToast) drawPixelTrophy(left + 18, top + 7, false, .92);
         else drawMiniSun(left + 18, top + 15, false);

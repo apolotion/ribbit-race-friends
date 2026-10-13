@@ -336,7 +336,7 @@ function addPvpTutorialFly(x, y, vocabIndex = 0, authoredIndex = 0) {
 function pvpFlyRevealDelayMs(setup) {
   // The timed Scene 14 practice reveal is immediate. Other scripted fly
   // lessons use the one-second post-poof delay from the authored script.
-  if (setup === "pvpIntercept") return 0;
+  if (["pvpIntercept", "pvpDemoDinnerSteal", "pvpDinnerSteal"].includes(setup)) return 0;
   return PVP_ONE_SECOND_FLY_SETUPS.has(String(setup || "")) ? 1000 : 0;
 }
 
@@ -581,29 +581,31 @@ function configurePvpStep(index) {
       positionPvpReboundPracticeLayout(tutorial.pvpReboundCount);
       break;
     case "pvpDemoReboundCatch":
-      positionPvpOnPlatform(p1, middleRight, 1);
-      positionPvp(ember, 390, CONFIG.groundY - ember.h, -1);
-      addPvpTutorialFly(Math.round(PARK_PLATFORMS[6].x + PARK_PLATFORMS[6].w / 2), 118, 0, 0);
+      // The stationary frog stands on the lower-middle perch. Ember starts
+      // at ground level on its right and rebounds toward the fly behind her.
+      positionPvpOnPlatform(p1, PARK_PLATFORMS[3], 1);
+      positionPvp(ember, 273, CONFIG.groundY - ember.h, -1);
+      addPvpTutorialFly(399, PARK_PLATFORMS[4].y + 8, 0, 0);
       break;
     case "pvpReboundCatch": {
-      // True horizontal mirror of Ember's example: the player approaches a
-      // stationary Ember from the LEFT and rebounds back toward a left fly.
-      const reflectedPlayerX = W - 390 - p1.w;
-      const reflectedFlyX = W - (PARK_PLATFORMS[6].x + PARK_PLATFORMS[6].w / 2);
-      positionPvpOnPlatform(ember, middleLeft, -1);
+      // Player practice is the exact left/right reflection of the demo.
+      const reflectedPlayerX = W - 273 - p1.w;
+      positionPvpOnPlatform(ember, PARK_PLATFORMS[3], -1);
       positionPvp(p1, reflectedPlayerX, CONFIG.groundY - p1.h, 1);
-      addPvpTutorialFly(Math.round(reflectedFlyX), 118, 0, 0);
+      addPvpTutorialFly(W - 399, PARK_PLATFORMS[4].y + 8, 0, 0);
       break;
     }
     case "pvpDemoIntercept":
       positionPvp(p1, 118, CONFIG.groundY - p1.h, 1);
       positionPvp(ember, 305, CONFIG.groundY - ember.h, -1);
-      addPvpTutorialFly(390, 130, 0, 0);
+      // Keep the bait well above rebound height so nobody can eat it
+      // immediately after changing directions.
+      addPvpTutorialFly(390, PARK_PLATFORMS[4].y - 2, 0, 0);
       break;
     case "pvpIntercept":
       positionPvp(p1, 275, CONFIG.groundY - p1.h, -1);
       positionPvp(ember, 135, CONFIG.groundY - ember.h, 1);
-      addPvpTutorialFly(390, 130, 0, 0);
+      addPvpTutorialFly(390, PARK_PLATFORMS[4].y - 2, 0, 0);
       break;
     case "pvpDemoDinnerSteal":
       // Rebound occurs near center. The fly is close enough on Ember's
@@ -611,7 +613,7 @@ function configurePvpStep(index) {
       // enough from her starting pose that she cannot eat it beforehand.
       positionPvp(p1, 118, CONFIG.groundY - p1.h, 1);
       positionPvp(ember, 305, CONFIG.groundY - ember.h, -1);
-      addPvpTutorialFly(348, 110, 0, 0);
+      addPvpTutorialFly(348, PARK_PLATFORMS[4].y + 4, 0, 0);
       break;
     case "pvpDinnerSteal":
       // Switch ownership of the same opposing approach lanes: P1 starts LEFT,
@@ -619,7 +621,7 @@ function configurePvpStep(index) {
       // Positioning P1 on the right would rebound them AWAY from that fly.
       positionPvp(p1, 118, CONFIG.groundY - p1.h, 1);
       positionPvp(ember, 305, CONFIG.groundY - ember.h, -1);
-      addPvpTutorialFly(Math.round(PARK_PLATFORMS[1].x + PARK_PLATFORMS[1].w / 2) + 14, 143, 0, 0);
+      addPvpTutorialFly(Math.round(PARK_PLATFORMS[1].x + PARK_PLATFORMS[1].w / 2) + 14, PARK_PLATFORMS[4].y + 4, 0, 0);
       break;
     case "pvpFinalMatch":
       positionPvp(p1, PVP_START_X[0], CONFIG.groundY - p1.h, 1);
@@ -842,17 +844,19 @@ function beginPvpDemoMotion(setup) {
       scriptPvpChargedJump(1, .75, -1, 0);
       break;
     case "pvpDemoReboundCatch":
-      scriptPvpChargedJump(1, .92, -1, 0);
+      scriptPvpChargedJump(1, 1, -1, 0);
       break;
     case "pvpDemoIntercept":
-      scriptPvpChargedJump(0, .62, 1, 0);
-      scriptPvpChargedJump(1, .62, -1, 100);
+      scriptPvpChargedJump(0, .85, 1, 0);
+      scriptPvpChargedJump(1, .85, -1, 100);
       break;
     case "pvpDemoDinnerSteal":
       // The two frogs each get ONE charged jump. The rebound turns Ember
       // toward the fly; no scripted second jump is allowed after landing.
-      scriptPvpChargedJump(0, .82, 1, 0);
-      scriptPvpChargedJump(1, .82, -1, 100);
+      // Launch together at matching height. A 100ms stagger put Ember below
+      // P1 at their crossing, causing a miss and endless poof retries.
+      scriptPvpChargedJump(0, 1, 1, 0);
+      scriptPvpChargedJump(1, 1, -1, 0);
       break;
     default:
       break;
@@ -861,8 +865,8 @@ function beginPvpDemoMotion(setup) {
 
 function startPvpDemonstration(options = {}) {
   const setup = tutorialStep()?.setup || "";
-  const skipPoof = Boolean(options.skipPoof);
   const intendedPvpPoses = tutorial.pendingPvpTargetPoses;
+  const skipPoof = Boolean(options.skipPoof || pvpAtIntendedPositions(intendedPvpPoses));
   const prepare = () => {
     tutorial.pvpDemoActive = true;
     tutorial.pvpDemoKind = setup;
@@ -909,15 +913,19 @@ function startPvpDemonstration(options = {}) {
 function restartMissedPvpReboundDemonstration() {
   if (tutorial.pvpDemoRetryQueued || tutorial.resetPending) return false;
   tutorial.pvpDemoRetryQueued = true;
+  const stillVisible = collectVisibleTutorialFlyKeys();
   clearPvpScriptActions();
   return beginPoofTransition({
     reason: "retry-single-jump-rebound-catch",
     showFailure: false,
-    preserveExistingFlies: false,
+    preserveExistingFlies: true,
     armFlies: false,
     waitForEffects: false,
     action: () => {
       rebuildCurrentScenarioForRetry();
+      // A fly that survived the attempt stays present without a second spawn
+      // effect; an eaten one returns with the frogs' poof-in.
+      armTutorialFlies({ preserveKeys: stillVisible });
       tutorial.pvpDemoRetryQueued = false;
       startPvpDemonstration({ skipPoof: true });
     }
@@ -946,7 +954,8 @@ function updatePvpDemonstration() {
     // An actual matching catch after a rebound (while airborne) is the sole
     // completion condition. A missed jump must land before the poof retry.
     if (tutorial.pvpTechniqueCatchQualified && tutorial.pvpTechniqueCatchPlayerIndex === 1) {
-      if (!game.pvpCriticalCatchActive && now - tutorial.pvpTechniqueCatchAt >= 450) {
+      if (!game.pvpCriticalCatchActive && ember.grounded && !ember.tongue.active &&
+          now - tutorial.pvpTechniqueCatchAt >= 450) {
         clearPvpScriptActions();
         tutorial.pvpDemoActive = false;
         tutorial.pvpPlayerScriptLocked = false;
@@ -955,7 +964,7 @@ function updatePvpDemonstration() {
       }
       return;
     }
-    const missedLanding = setup === "pvpDemoReboundCatch" ? landed[1] : landed[0] || landed[1];
+    const missedLanding = tutorial.pvpReboundCount > 0 ? landed[1] : (landed[0] || landed[1]);
     if (missedLanding) {
       restartMissedPvpReboundDemonstration();
       return;
@@ -1059,7 +1068,8 @@ function updatePvpDemonstration() {
   } else if (setup === "pvpDemoRebound") {
     completed = tutorial.pvpReboundCount >= 1 && now - tutorial.pvpLastPracticeEventAt >= 750 && pvpTutorialSettled();
   } else if (setup === "pvpDemoIntercept") {
-    completed = tutorial.pvpReboundCount >= 1 && now - tutorial.pvpLastPracticeEventAt >= 750;
+    completed = tutorial.pvpReboundCount >= 1 && p1.grounded && ember.grounded &&
+      now - tutorial.pvpLastPracticeEventAt >= 750;
   } else if (setup === "pvpDemoRecoveryBonk") {
     completed = tutorial.pvpDemoBlockedBonkAt > 0 && !p1.bonked && p1.stunTimer <= 0 && pvpTutorialSettled();
   } else if (setup === "pvpDemoBoostBonk") {
@@ -1097,6 +1107,12 @@ function startPvpFinalMatch() {
   game.onlineMode = false;
   game.pvpCpuEnabled = true;
   game.pvpCpuDifficulty = 5;
+  game.sandboxMode = false;
+  tutorial.blockJumpUntilRelease = false;
+  tutorial.pvpFrogsHidden = false;
+  tutorial.pvpHiddenPlayerIndices = [];
+  tutorial.dialogueHiddenDuringPoof = false;
+  tutorial.resetPending = false;
   game.pvpRoundGoalMode = "endless";
   game.pvpTimeLimitSeconds = 30;
   game.pvpBestOf = 1;

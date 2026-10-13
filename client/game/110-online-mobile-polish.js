@@ -5,11 +5,11 @@
  */
 (() => {
   "use strict";
-  const BUILD = "2026.10.12-friends-polish-33";
+  const BUILD = "2026.10.12-friends-polish-35";
   const RR_V160_CANDIDATES = {"catchFly":["attemptFlyCatch","attemptPvpFlyCatch","catchSandboxFly","getPvpImminentCatchFly","recordFlyEaten","scheduleFlyReplacementFromCatch"],"jumpSound":["playJumpSound"],"beep":["playCountdownGoSound","playCountdownSound"],"replayUpload":["saveRecordDate"],"restart":["resetGame","resetPvpGame","resetPvpPlayer","resetRoundLifecycle","resetRoundNetwork","restartCurrentLevel"],"drop":[],"render":["drawPvpScene","drawScene"],"worldRecord":[],"fullscreen":["getFullscreenElement","hideFullscreenFallback","showFullscreenFallback","syncFullscreenButton","toggleRibbitFullscreen"],"onlineSubmit":[],"leaderboard":["isSoloEndlessLeaderboardEligible","savePvpMatchWinsForLeaderboard"]};
   const RR_V160_VARS = {"onlineSelect":[],"achievementSelect":["activeAchievementIndex","hoveredAchievementCard"],"backRect":[]};
 
-  const VERSION = "1.7.21";
+  const VERSION = "1.7.23";
   const V = {
     menuTouch: new Map(), chargeTouch: new Map(), achievementPinned: -1,
     finalCatchStarted: 0, finalCatchLabelsGone: false,
@@ -411,16 +411,8 @@
     g.save();g.translate(x,y);g.fillStyle=appearance?.mid||"#0f9fbb";g.strokeStyle=appearance?.dark||"#07516a";g.lineWidth=2;g.fillRect(-8,-4,16,8);g.strokeRect(-8,-4,16,8);g.fillRect(4,-9,5,6);g.restore();
   }
   function drawFrogTagsPolish(g){
-    if(!/tag/i.test(stateName()))return;
-    const rows=window.RibbitFrogTags.list();
-    // Cover obsolete guest-session/footer fragments while preserving the current menu.
-    g.save();g.fillStyle="#f7fdff";g.fillRect(55,218,370,16);
-    const names=[...new Map(rows.map(r=>[String(r.opponent||"OPPONENT").toLowerCase(),r])).values()].slice(0,6);
-    names.forEach((r,i)=>drawMiniFrog(g,r.opponentAppearance,49,102+i*22));
-    // Arrow buttons share Back y-level; inactive directions are visibly gray.
-    const page=Number(get("battleTagPage")??get("frogTagPage")??0);const pages=Math.max(1,Math.ceil(names.length/6));
-    const backY=234;g.globalAlpha=page>0?1:.35;g.fillStyle="#f7fdff";g.strokeStyle="#26363d";g.lineWidth=2;g.fillRect(370,backY,28,26);g.strokeRect(370,backY,28,26);g.fillStyle="#26363d";g.fillText("←",384,backY+17);
-    g.globalAlpha=page<pages-1?1:.35;g.fillStyle="#f7fdff";g.fillRect(405,backY,28,26);g.strokeRect(405,backY,28,26);g.fillStyle="#26363d";g.fillText("→",419,backY+17);g.restore();
+    // OnlineVersus now owns all Frog Tags row sprites and correctly aligned
+    // arrow buttons; the old post-render overlay must not draw duplicates.
   }
 
   // Select a Frog Tags opponent to view every locally archived game against them.
@@ -428,7 +420,7 @@
   document.body.appendChild(tagModal);
   function openTagGames(name){const localHistory=(()=>{try{return JSON.parse(localStorage.getItem("ribbitRaceOnlineHistoryV2")||"{}")[name]||[]}catch(_){return[]}})();const baseGames=window.RibbitFrogTags.against(name)||[];const seenGames=new Set();const games=[...localHistory,...baseGames].filter(g=>{const k=String(g.replayId||g.id||`${g.at}:${g.won}`);if(seenGames.has(k))return false;seenGames.add(k);return true;});tagModal.innerHTML='<div class="rrv-tag-card"><button class="rrv-tag-close">×</button><h2></h2><div class="rrv-tag-list"></div></div>';const card=tagModal.firstElementChild;Object.assign(card.style,{position:"relative",width:"min(760px,95vw)",maxHeight:"85vh",overflow:"auto",background:"#f7fdff",border:"6px solid #26363d",padding:"18px",color:"#26363d"});card.querySelector("h2").textContent=`FROG TAGS — ${name}`;const list=card.querySelector(".rrv-tag-list");for(const g of games){const b=document.createElement("button");b.type="button";b.textContent=`${new Date(g.at).toLocaleDateString()} — ${g.won?"WIN":"LOSS"} — PLAY REPLAY`;b.disabled=!g.replayId;b.title=g.replayId?"PLAY SAVED REPLAY":"REPLAY IS STILL UPLOADING";b.addEventListener("click",()=>playStoredReplay(g.replayId,`${name} • ${g.won?"WIN":"LOSS"}`));list.appendChild(b);}card.querySelector(".rrv-tag-close").onclick=()=>{tagModal.hidden=true;tagModal.style.display="none"};tagModal.hidden=false;tagModal.style.display="grid";}
   window.RibbitOpenFrogTagGames=openTagGames;
-  c?.addEventListener("pointerup",ev=>{if(!/tag/i.test(stateName()))return;const p=logicalPoint(ev);if(p.y<88||p.y>210)return;const rows=window.RibbitFrogTags.list();const names=[...new Set(rows.map(r=>r.opponent))];const idx=Math.floor((p.y-88)/22);if(names[idx])openTagGames(names[idx]);},true);
+  c?.addEventListener("pointerup",ev=>{if(!/tag/i.test(stateName()))return;const p=logicalPoint(ev);if(p.y<88||p.y>210||p.x>=378)return;const rows=window.RibbitFrogTags.list();const names=[...new Set(rows.map(r=>r.opponent))];const idx=Math.floor((p.y-88)/22);if(names[idx])openTagGames(names[idx]);},true);
 
   // Capture leaderboard responses to show actual frog sprites and prior record details.
   const leaderCache=new Map();

@@ -223,11 +223,7 @@
       for (const frogId of game.roundUnlockedSkinIds.filter((id) => FROG_SKINS[id])) {
         items.push({ type: "frog", frogId, title: `${FROG_SKINS[frogId].name} FROG UNLOCKED`, subtitle: "CLICK TO EQUIP", palette: FROG_SKINS[frogId] });
       }
-      for (const hatId of (game.roundUnlockedHatIds || [])) {
-        const hat = CUSTOM_HAT_OPTIONS.find((item) => item.id === hatId);
-        if (!hat) continue;
-        items.push({ type: "hat", hatId, title: `${hat.name} UNLOCKED`, subtitle: "HAT UNLOCKED", palette: getSelectedSkin() });
-      }
+      // Hat rewards change inventory silently; do not put hat notifications in the menu.
       if (game.roundCustomColorUnlocked) {
         items.push({ type: "custom", title: "CUSTOM COLORS UNLOCKED", subtitle: "CLICK TO CREATE", palette: getCustomFrogSkin() });
       }

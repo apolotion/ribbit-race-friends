@@ -109,6 +109,11 @@ attemptPvpFlyCatch = function(player, targetFly, source = "body", ...rest) {
 // Training is a reversible playtest session. Suppress every ordinary solo/PvP
 // achievement while it is active; only the dedicated completion achievement
 // may pass through when the tutorial itself awards it.
+window.RibbitTutorialShouldHidePvpCatchTitle = () => Boolean(
+  tutorial.active && tutorial.kind === "pvp" &&
+  ["pvpDemoReboundCatch", "pvpReboundCatch", "pvpDemoDinnerSteal", "pvpDinnerSteal"].includes(tutorialStep()?.setup)
+);
+
 const originalMarkAchievementEarnedForTutorial = markAchievementEarned;
 markAchievementEarned = function(id, ...rest) {
   const trainingSession = Boolean(tutorial.active || tutorial.completeScreen || game.tutorialActive);
@@ -440,15 +445,22 @@ getPvpSkinPalette = function(skinId, fallbackId = "azure", playerIndexHint = nul
 };
 
 const originalPressPvpButtonForTutorial = pressPvpButton;
-pressPvpButton = function(index, ...rest) {
-  if (tutorialBlocksLiveInput()) return;
-  return originalPressPvpButtonForTutorial.call(this, index, ...rest);
+pressPvpButton = function(index, source = "human", ...rest) {
+  // The final Level 5 CPU is a genuine simulation-controlled frog, not a human
+  // input. Tutorial dialogue/Space-release locks must never suppress its
+  // charge and release actions.
+  const finalCpu = tutorial.active && tutorial.kind === "pvp" &&
+    tutorialStep()?.setup === "pvpFinalMatch" && index === getPvpCpuIndex() && source === "cpu";
+  if (!finalCpu && tutorialBlocksLiveInput()) return;
+  return originalPressPvpButtonForTutorial.call(this, index, source, ...rest);
 };
 
 const originalReleasePvpButtonForTutorial = releasePvpButton;
-releasePvpButton = function(index, ...rest) {
-  if (tutorialBlocksLiveInput()) return;
-  return originalReleasePvpButtonForTutorial.call(this, index, ...rest);
+releasePvpButton = function(index, source = "human", ...rest) {
+  const finalCpu = tutorial.active && tutorial.kind === "pvp" &&
+    tutorialStep()?.setup === "pvpFinalMatch" && index === getPvpCpuIndex() && source === "cpu";
+  if (!finalCpu && tutorialBlocksLiveInput()) return;
+  return originalReleasePvpButtonForTutorial.call(this, index, source, ...rest);
 };
 
 const originalDrawArcPreviewForTutorial = drawArcPreview;

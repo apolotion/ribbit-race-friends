@@ -361,6 +361,7 @@
     }
 
     function queueAchievementToast(entry) {
+      if (entry?.type === "hat") return; // hats unlock silently in every mode
       const key = getAchievementToastKey(entry);
       if (!key || key === game.achievementToastKey) return;
       if (game.achievementToastQueue.some((queued) => getAchievementToastKey(queued) === key)) return;

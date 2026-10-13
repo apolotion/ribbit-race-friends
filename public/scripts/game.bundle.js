@@ -64,7 +64,7 @@ function startRibbitRaceGame() {
     const canvas = document.getElementById("game");
     const gameFrame = document.getElementById("game-frame");
     const friendsGameInputLocked = () => window.RibbitFriendsGameInputLocked?.() === true;
-    const RIBBIT_DISPLAY_VERSION = "VERSION 1.7.21";
+    const RIBBIT_DISPLAY_VERSION = "VERSION 1.7.23";
     const RIBBIT_CREDIT_TEXT = "MADE BY NICK M.";
     const RIBBIT_CREDIT_Y = 228;
     const rgbValueEditor = document.getElementById("rgb-value-editor");
@@ -2658,7 +2658,7 @@ function startRibbitRaceGame() {
         pendingAction:'',changingMatch:false,queued:false,background:false,peekActivity:null,suspendedActivity:null,lastLocalSkin:'',queueTimer:null};
       const QUICK_UI={quick:{x:115,y:137,w:250,h:31},
         preview:{x:151,y:91,w:178,h:72},previous:{x:159,y:111,w:22,h:27},next:{x:299,y:111,w:22,h:27},
-        enter:{x:144,y:176,w:192,h:26},cancel:{x:185,y:232,w:110,h:22},minimize:{x:115,y:178,w:250,h:28}};
+        enter:{x:144,y:176,w:192,h:26},cancel:{x:184,y:231,w:112,h:23},minimize:{x:115,y:178,w:250,h:28}};
       function isQuickplay(){return !!state.quickplay;}
       function quickRoundStage(number){return quick.roundStages[Math.max(0,Number(number)-1)]||'park';}
       function updateQuickCounts(counts){
@@ -3338,7 +3338,7 @@ function startRibbitRaceGame() {
         if(state.screen==='quickQueue')return [spec('quickMinimize','PLAY WHILE WAITING',QUICK_UI.minimize,'play','#7fe3ae','Keep searching while you play solo or customize frogs.','DEVICE CHECK PASSED - PARTNER LINK NOT YET TESTED'),spec('quickCancel','CANCEL',QUICK_UI.cancel,'cancel','#ef7582','Leave the queue.')];
         if(state.screen==='quickConnecting')return [spec('back','CANCEL',ENTRY.back,'back','#bac8cf','Cancel this connection.')];
         if(state.screen==='profile')return [spec('name','',PROFILE_UI.name,null,'#ef9ebc','Type a display name, up to 20 characters.'),spec('nameSave',onlineIdentity.saving?'SAVING':'SAVE',PROFILE_UI.save,'save','#7fe3ae','Save this online name without changing your Friends account.'),spec('nameBack','BACK',PROFILE_UI.back,'back','#bac8cf','Return to Online.')];
-        if(state.screen==='battleTags')return [spec('battlePrev','',{x:354,y:232,w:23,h:22},'previous','#eac65b','Previous opponents.'),spec('battleNext','',{x:384,y:232,w:23,h:22},'next','#eac65b','More opponents.'),spec('back','BACK',ENTRY.back,'back','#bac8cf','Return to Online.')];
+        if(state.screen==='battleTags')return [spec('battlePrev','',{x:354,y:231,w:23,h:23},'previous','#eac65b','Previous opponents.'),spec('battleNext','',{x:384,y:231,w:23,h:23},'next','#eac65b','More opponents.'),spec('back','BACK',{x:184,y:231,w:112,h:23},'back','#bac8cf','Return to Online.')];
         if(state.screen==='spectateList')return watch.rooms.slice(0,4).map((r,i)=>spec('watch:'+i,`${(r.names||[]).join(' VS ')} - ${r.roomCode}`,{x:65,y:88+i*24,w:348,h:21},'eye','#a68be5','Watch a delayed, read-only recording.')).concat([
           spec('watchCode','',WATCH_UI.code,null,'#a68be5','Type a five-character room ID.'),spec('watchGo','WATCH',WATCH_UI.go,'eye','#a68be5','Open this room recording.'),spec('back','BACK',WATCH_UI.back,'back','#bac8cf','Return to Online.')]);
         if(state.screen==='room'){
@@ -3426,12 +3426,55 @@ function startRibbitRaceGame() {
         for(const b of onlineButtons())if(b.id!=='name')drawOnlineAction(b,state.focus===b.id);
         if(onlineIdentity.tag)fitText('BATTLE TAG: '+onlineIdentity.tag,240,239,300,.63);
       }
+      const battleReplayRects=[];
+      function recentBattleArchive(opponent) {
+        const name=String(opponent||"").trim().toLowerCase();
+        const records=window.RibbitFrogTags?.against?.(opponent)||[];
+        return records.filter(r=>r&&String(r.opponent||opponent).toLowerCase()===name)
+          .sort((a,b)=>Number(b.at||b.updatedAt||0)-Number(a.at||a.updatedAt||0));
+      }
+      function recentBattleReplay(opponent) {
+        return recentBattleArchive(opponent).find(r=>typeof r.replayId==="string"&&r.replayId.length>0)||null;
+      }
+      async function playBattleReplay(row) {
+        const recent=recentBattleReplay(row?.name);
+        if(!recent)return;
+        const replayId=recent.replayId;
+        try {
+          await window.RibbitRacePlayStoredReplay?.(replayId,`${row.name} • RECENT MATCH`);
+        }catch(error){console.warn("Frog Tags replay unavailable",error);}
+      }
       function drawBattleTags(){
-        drawPanel('FROG TAGS');fitText(battleView.loading?'LOADING MATCH RECORDS':battleView.error||'YOUR QUICKPLAY HEAD-TO-HEAD RECORDS',240,67,376,.76,battleView.error?'#96334c':'#07516a');
-        const xs=[79,286,370];drawBitmapText((window.RibbitOpponentName?.() || "OPPONENT"),xs[0],88,.72,'left','#59666b');drawBitmapText('MATCHES',xs[1],88,.65,'center','#59666b');drawBitmapText('W - L',xs[2],88,.72,'center','#59666b');
+        drawPanel('FROG TAGS');
+        fitText(battleView.loading?'LOADING MATCH RECORDS':battleView.error||'YOUR QUICKPLAY HEAD-TO-HEAD RECORDS',240,67,376,.70,battleView.error?'#96334c':'#07516a');
+        drawBitmapText('OPPONENT',103,88,.57,'left','#59666b');
+        drawBitmapText('W - L',260,88,.57,'center','#59666b');
+        drawBitmapText('LAST PLAYED',337,88,.53,'center','#59666b');
+        drawBitmapText('REPLAY',395,88,.51,'center','#59666b');
+        battleReplayRects.length=0;
         const entries=battleView.entries.slice(battleView.page*6,battleView.page*6+6);
-        entries.forEach((r,i)=>{const y=102+i*18;ctx.fillStyle=i%2?'#e6f3f3':'#f0f7f8';ctx.fillRect(68,y-3,344,17);
-          fitText(r.name+(r.temporary?' *':''),80,y+1,166,.78,'#174f65','left');drawBitmapText(String(r.matches),286,y+1,.78,'center','#48555a');drawBitmapText(`${r.wins} - ${r.losses}`,370,y+1,.78,'center','#07516a');});
+        entries.forEach((r,i)=>{
+          const y=102+i*18;
+          ctx.fillStyle=i%2?'#e6f3f3':'#f0f7f8';ctx.fillRect(68,y-3,344,17);
+          const latest=recentBattleArchive(r.name)[0];
+          const appearance=latest?.opponentAppearance;
+          let palette=getPvpSkinPalette(appearance?.skinId||appearance?.id||r.skinId||'azure','azure');
+          if(appearance&&typeof appearance==='object')palette={...palette,...appearance};
+          drawMiniFrogSwatchFacing(82,y+2,palette,.49,1);
+          fitText(r.name+(r.temporary?' *':''),100,y+1,132,.69,'#174f65','left');
+          drawBitmapText(`${r.wins} - ${r.losses}`,260,y+1,.66,'center','#07516a');
+          const stamp=Number(latest?.at||r.updatedAt||0);
+          const date=stamp?new Date(stamp).toLocaleDateString('en-US',{month:'numeric',day:'numeric',year:'2-digit'}):'—';
+          drawBitmapText(date,338,y+2,.48,'center','#59666b');
+          if(recentBattleReplay(r.name)){
+            const hit={x:383,y:y-3,w:26,h:17,row:r};
+            ctx.fillStyle='#26363d';ctx.fillRect(hit.x+1,hit.y+3,17,10);
+            ctx.fillRect(hit.x+5,hit.y+1,8,3);
+            ctx.fillStyle='#f7fdff';ctx.fillRect(hit.x+3,hit.y+5,13,6);
+            ctx.fillStyle='#59666b';ctx.fillRect(hit.x+9,hit.y+6,4,4);
+            battleReplayRects.push(hit);
+          }
+        });
         if(!entries.length&&!battleView.loading&&!battleView.error)fitText('NO COMPLETED QUICKPLAY MATCHES YET',240,146,350,.78);
         fitText(battleView.guest?'GUEST RECORDS ARE TEMPORARY':"",240,216,374,.53);
         for(const b of onlineButtons())drawOnlineAction(b,state.focus===b.id);
@@ -3502,6 +3545,10 @@ function startRibbitRaceGame() {
           const i=PVP_SETTINGS_UI.rows.findIndex(r=>pointInsideRect(p,r));if(i>=0){game.pvpSettingsFocusIndex=i;const r=PVP_SETTINGS_UI.rows[i];cyclePvpSetting(['roundGoal','time','bestOf','unpause'][i],p.x<r.x+r.w/2?-1:1);settingsChanged();}
           else if(pointInsideRect(p,PVP_SETTINGS_UI.backButton))closeSettings();return true;
         }
+        if(state.screen==='battleTags'){
+          const replayHit=battleReplayRects.find(hit=>pointInsideRect(p,hit));
+          if(replayHit){playBattleReplay(replayHit.row);return true;}
+        }
         const b=onlineButtons().find(b=>pointInsideRect(p,b));if(!b)return true;focusOnlineButton(b.id);
         if(b.id==='quickFrog'){quickCycleSkin(p.x<b.x+b.w/2?-1:1);return true;}
         if(b.id==='myFrog'){cycleSkin(p.x<b.x+b.w/2?-1:1);return true;}
@@ -3517,7 +3564,7 @@ function startRibbitRaceGame() {
           if(!editing||b.id==='name'||b.id==='code'||b.id==='watchCode')focusOnlineButton(b.id);
           state.hoverId=b.id;
         }else {state.hoverId='';if(!['name','code','watchCode'].includes(state.focus))state.focus='';}
-        try{canvas.style.setProperty('cursor',b?'pointer':'default','important');}catch(_){ }
+        try{canvas.style.setProperty('cursor',(b||(state.screen==='battleTags'&&battleReplayRects.some(hit=>pointInsideRect(p,hit))))?'pointer':'default','important');}catch(_){ }
         state.keyboardFocus=false;return true;
       }
       const ENTRY={host:{x:115,y:100,w:116,h:30},join:{x:249,y:100,w:116,h:30},
@@ -4732,6 +4779,7 @@ function startRibbitRaceGame() {
       game.achievementToastTimer = CONFIG.achievementToastDuration;
     }
     function queueAchievementToast(entry) {
+      if (entry?.type === "hat") return; // hats unlock silently in every mode
       const key = getAchievementToastKey(entry);
       if (!key || key === game.achievementToastKey) return;
       if (game.achievementToastQueue.some((queued) => getAchievementToastKey(queued) === key)) return;
@@ -9573,7 +9621,8 @@ function startRibbitRaceGame() {
       }
       const title = game.pvpCriticalCatchKind === "final" ? "FINAL CATCH!"
         : game.pvpCriticalCatchKind === "clutch" ? "CLUTCH CATCH!" : "CLOSE CATCH!";
-      if (title !== "FINAL CATCH!" || !window.RibbitTutorialShouldHideFinalCatchTitle?.()) {
+      const silentTrainingCinematic = window.RibbitTutorialShouldHidePvpCatchTitle?.() === true;
+      if (!silentTrainingCinematic && (title !== "FINAL CATCH!" || !window.RibbitTutorialShouldHideFinalCatchTitle?.())) {
         ctx.globalAlpha = holdFade;
         ctx.fillStyle = "rgba(38,54,61,0.78)";
         ctx.fillRect(W / 2 - 74, 29, 148, 18);
@@ -10488,6 +10537,7 @@ function startRibbitRaceGame() {
       game.pvpCpuDecisionTimer = Math.max(0, (game.pvpCpuDecisionTimer || 0) - dt);
       if (cpu.charging) {
         cpu.dir = cpu.chargeFacingDir >= 0 ? 1 : -1;
+        if (!cpu.inputHeld) cpu.inputHeld = true;
       }
       if (!cpu.grounded) return;
       const opponent = pvpPlayers[1-getPvpCpuIndex()];
@@ -10545,7 +10595,8 @@ function startRibbitRaceGame() {
           }
         } else {
           cpu.cpuHoldChargeTrap = false;
-          cpu.inputHeld = false;
+          if (cpu.charging) releasePvpButton(cpu.index, "cpu");
+          else cpu.inputHeld = false;
         }
         return;
       }
@@ -10686,6 +10737,25 @@ function startRibbitRaceGame() {
       updatePvpMovingPlatforms();
       updatePvpImpactEffects(dt);
       if (game.pvpWinPendingIndex === null && !game.pvpTimerGraceActive && !game.pvpTimedOutcomePending) {
+        const authoredTraining = tutorial.active && tutorial.kind === "pvp" &&
+          tutorialStep()?.setup !== "pvpFinalMatch";
+        if (!game.onlineMode && !authoredTraining && !game.sandboxMode && !game.pvpSuddenDeath) {
+          const liveCount = flies.filter((fly) => fly && fly.state !== "eaten").length;
+          const missing = Math.max(0, CONFIG.maxFlies - liveCount - game.spawnQueue.length);
+          if (missing) {
+            const reserved = getReservedVocabIndices();
+            const selected = new Set(reserved);
+            const vocabPool = shuffledVocabularyIndices().filter((index) => !selected.has(index));
+            let latestDue = game.spawnQueue.reduce((last, ticket) => Math.max(last, Number(ticket.dueAt) || 0), game.elapsed);
+            for (let count = 0; count < missing; count += 1) {
+              const vocabIndex = vocabPool[count] ?? chooseUnusedVocabularyIndex([...selected]);
+              selected.add(vocabIndex);
+              latestDue = Math.max(game.elapsed + STEP, latestDue + CONFIG.flySpawnMinimumSpacing);
+              game.spawnQueue.push({ dueAt: latestDue, source: "pvp-fill", vocabIndex });
+            }
+            game.spawnQueue.sort((a, b) => a.dueAt - b.dueAt);
+          }
+        }
         ensureTargetVocabularyAvailable(game.targetVocabIndex);
         while (flies.length < CONFIG.maxFlies && game.spawnQueue.length && game.spawnQueue[0].dueAt <= game.elapsed) {
           const ticket = game.spawnQueue[0];
@@ -16228,17 +16298,7 @@ function startRibbitRaceGame() {
       }
     }
     function drawMiniTutorialBookIcon(cx, cy, color = "#48555a") {
-      ctx.fillStyle = COLORS.ink;
-      ctx.fillRect(cx - 7, cy - 6, 14, 12);
-      ctx.fillStyle = "#f7fdff";
-      ctx.fillRect(cx - 5, cy - 4, 10, 8);
-      ctx.fillStyle = color;
-      ctx.fillRect(cx - 1, cy - 4, 2, 8);
-      ctx.fillRect(cx - 4, cy - 2, 3, 1);
-      ctx.fillRect(cx - 4, cy, 3, 1);
-      ctx.fillRect(cx + 1, cy - 2, 3, 1);
-      ctx.fillRect(cx + 1, cy, 3, 1);
-      ctx.fillRect(cx - 5, cy + 4, 10, 1);
+      drawMiniBookIcon(cx, cy, getPauseBookTheme(false));
     }
     function drawHomeTutorialButton() {
       const button = HOME_UI.tutorialButton;
@@ -17113,7 +17173,7 @@ function startRibbitRaceGame() {
         "center",
         game.muted ? COLORS.redDark : skin.dark
       );
-      drawBitmapText("VOLUME", 274, track.y - 2, 1, "right", "#48555a");
+      drawBitmapText("VOLUME", (button.x + button.w + track.x - 2) / 2, track.y - 1, 1, "center", "#48555a");
       ctx.fillStyle = COLORS.ink;
       ctx.fillRect(track.x - 2, track.y - 2, track.w + 4, track.h + 4);
       ctx.fillStyle = game.muted ? "#b8d8df" : skin.belly;
@@ -17291,6 +17351,7 @@ function startRibbitRaceGame() {
     }
     function drawAchievementToast() {
       if (game.achievementToastTimer <= 0) return;
+      if (game.achievementToastHatId) return;
       const pvpToastPlayer = Number.isInteger(game.achievementToastPvpPlayerIndex)
         ? pvpPlayers[game.achievementToastPvpPlayerIndex]
         : null;
@@ -17340,9 +17401,7 @@ function startRibbitRaceGame() {
         drawBitmapText("ACHIEVEMENT!", left + 124, top + 5, 1, "center", skin.dark);
         drawBitmapText(definition.name, left + 124, top + 16, 1, "center", skin.dark);
       } else if (hatToast) {
-        drawPixelFrogHat(left + 22, top + 16, hatToast.id, .92, 1, { ...skin, previewCenterHat:true });
-        drawBitmapText("HAT UNLOCKED!", left + 126, top + 5, 1, "center", skin.dark);
-        drawBitmapText(hatToast.name, left + 126, top + 16, .92, "center", skin.dark);
+        ctx.restore(); return; // silent hat reward; preserve the unlocked hat in inventory
       } else {
         if (worldRecordToast) drawPixelTrophy(left + 18, top + 7, false, .92);
         else drawMiniSun(left + 18, top + 15, false);
@@ -17671,11 +17730,6 @@ function startRibbitRaceGame() {
       const items = [];
       for (const frogId of game.roundUnlockedSkinIds.filter((id) => FROG_SKINS[id])) {
         items.push({ type: "frog", frogId, title: `${FROG_SKINS[frogId].name} FROG UNLOCKED`, subtitle: "CLICK TO EQUIP", palette: FROG_SKINS[frogId] });
-      }
-      for (const hatId of (game.roundUnlockedHatIds || [])) {
-        const hat = CUSTOM_HAT_OPTIONS.find((item) => item.id === hatId);
-        if (!hat) continue;
-        items.push({ type: "hat", hatId, title: `${hat.name} UNLOCKED`, subtitle: "HAT UNLOCKED", palette: getSelectedSkin() });
       }
       if (game.roundCustomColorUnlocked) {
         items.push({ type: "custom", title: "CUSTOM COLORS UNLOCKED", subtitle: "CLICK TO CREATE", palette: getCustomFrogSkin() });
@@ -19582,8 +19636,8 @@ function startRibbitRaceGame() {
     requestAnimationFrame(frame);
 
     /* ===== client/game/90-extended-features.js ===== */
-const RIBBIT_FRIENDS_DISPLAY_VERSION = "1.7.21";
-const RIBBIT_FRIENDS_BUILD = "2026.10.12-friends-polish-33";
+const RIBBIT_FRIENDS_DISPLAY_VERSION = "1.7.23";
+const RIBBIT_FRIENDS_BUILD = "2026.10.12-friends-polish-35";
 function rr14Number(value, fallback = 0) {
   const parsed = Number(value);
   return Number.isFinite(parsed) ? parsed : fallback;
@@ -20062,10 +20116,10 @@ window.RibbitRaceMobileDiagnostics = () => ({
  */
 (() => {
   "use strict";
-  const BUILD = "2026.10.12-friends-polish-33";
+  const BUILD = "2026.10.12-friends-polish-35";
   const RR_V160_CANDIDATES = {"catchFly":["attemptFlyCatch","attemptPvpFlyCatch","catchSandboxFly","getPvpImminentCatchFly","recordFlyEaten","scheduleFlyReplacementFromCatch"],"jumpSound":["playJumpSound"],"beep":["playCountdownGoSound","playCountdownSound"],"replayUpload":["saveRecordDate"],"restart":["resetGame","resetPvpGame","resetPvpPlayer","resetRoundLifecycle","resetRoundNetwork","restartCurrentLevel"],"drop":[],"render":["drawPvpScene","drawScene"],"worldRecord":[],"fullscreen":["getFullscreenElement","hideFullscreenFallback","showFullscreenFallback","syncFullscreenButton","toggleRibbitFullscreen"],"onlineSubmit":[],"leaderboard":["isSoloEndlessLeaderboardEligible","savePvpMatchWinsForLeaderboard"]};
   const RR_V160_VARS = {"onlineSelect":[],"achievementSelect":["activeAchievementIndex","hoveredAchievementCard"],"backRect":[]};
-  const VERSION = "1.7.21";
+  const VERSION = "1.7.23";
   const V = {
     menuTouch: new Map(), chargeTouch: new Map(), achievementPinned: -1,
     finalCatchStarted: 0, finalCatchLabelsGone: false,
@@ -20397,20 +20451,12 @@ window.RibbitRaceMobileDiagnostics = () => ({
     g.save();g.translate(x,y);g.fillStyle=appearance?.mid||"#0f9fbb";g.strokeStyle=appearance?.dark||"#07516a";g.lineWidth=2;g.fillRect(-8,-4,16,8);g.strokeRect(-8,-4,16,8);g.fillRect(4,-9,5,6);g.restore();
   }
   function drawFrogTagsPolish(g){
-    if(!/tag/i.test(stateName()))return;
-    const rows=window.RibbitFrogTags.list();
-    g.save();g.fillStyle="#f7fdff";g.fillRect(55,218,370,16);
-    const names=[...new Map(rows.map(r=>[String(r.opponent||"OPPONENT").toLowerCase(),r])).values()].slice(0,6);
-    names.forEach((r,i)=>drawMiniFrog(g,r.opponentAppearance,49,102+i*22));
-    const page=Number(get("battleTagPage")??get("frogTagPage")??0);const pages=Math.max(1,Math.ceil(names.length/6));
-    const backY=234;g.globalAlpha=page>0?1:.35;g.fillStyle="#f7fdff";g.strokeStyle="#26363d";g.lineWidth=2;g.fillRect(370,backY,28,26);g.strokeRect(370,backY,28,26);g.fillStyle="#26363d";g.fillText("←",384,backY+17);
-    g.globalAlpha=page<pages-1?1:.35;g.fillStyle="#f7fdff";g.fillRect(405,backY,28,26);g.strokeRect(405,backY,28,26);g.fillStyle="#26363d";g.fillText("→",419,backY+17);g.restore();
   }
   const tagModal=document.createElement("section");tagModal.hidden=true;tagModal.id="rr-v160-tag-games";Object.assign(tagModal.style,{position:"fixed",inset:"0",zIndex:"1550",display:"none",placeItems:"center",background:"rgba(7,25,34,.86)",padding:"20px"});
   document.body.appendChild(tagModal);
   function openTagGames(name){const localHistory=(()=>{try{return JSON.parse(localStorage.getItem("ribbitRaceOnlineHistoryV2")||"{}")[name]||[]}catch(_){return[]}})();const baseGames=window.RibbitFrogTags.against(name)||[];const seenGames=new Set();const games=[...localHistory,...baseGames].filter(g=>{const k=String(g.replayId||g.id||`${g.at}:${g.won}`);if(seenGames.has(k))return false;seenGames.add(k);return true;});tagModal.innerHTML='<div class="rrv-tag-card"><button class="rrv-tag-close">×</button><h2></h2><div class="rrv-tag-list"></div></div>';const card=tagModal.firstElementChild;Object.assign(card.style,{position:"relative",width:"min(760px,95vw)",maxHeight:"85vh",overflow:"auto",background:"#f7fdff",border:"6px solid #26363d",padding:"18px",color:"#26363d"});card.querySelector("h2").textContent=`FROG TAGS — ${name}`;const list=card.querySelector(".rrv-tag-list");for(const g of games){const b=document.createElement("button");b.type="button";b.textContent=`${new Date(g.at).toLocaleDateString()} — ${g.won?"WIN":"LOSS"} — PLAY REPLAY`;b.disabled=!g.replayId;b.title=g.replayId?"PLAY SAVED REPLAY":"REPLAY IS STILL UPLOADING";b.addEventListener("click",()=>playStoredReplay(g.replayId,`${name} • ${g.won?"WIN":"LOSS"}`));list.appendChild(b);}card.querySelector(".rrv-tag-close").onclick=()=>{tagModal.hidden=true;tagModal.style.display="none"};tagModal.hidden=false;tagModal.style.display="grid";}
   window.RibbitOpenFrogTagGames=openTagGames;
-  c?.addEventListener("pointerup",ev=>{if(!/tag/i.test(stateName()))return;const p=logicalPoint(ev);if(p.y<88||p.y>210)return;const rows=window.RibbitFrogTags.list();const names=[...new Set(rows.map(r=>r.opponent))];const idx=Math.floor((p.y-88)/22);if(names[idx])openTagGames(names[idx]);},true);
+  c?.addEventListener("pointerup",ev=>{if(!/tag/i.test(stateName()))return;const p=logicalPoint(ev);if(p.y<88||p.y>210||p.x>=378)return;const rows=window.RibbitFrogTags.list();const names=[...new Set(rows.map(r=>r.opponent))];const idx=Math.floor((p.y-88)/22);if(names[idx])openTagGames(names[idx]);},true);
   const leaderCache=new Map();
   const cloud=first(["RibbitCloud"]);
   if(cloud&&typeof cloud==="object"){
@@ -20909,7 +20955,7 @@ window.RibbitRaceMobileDiagnostics = () => ({
 "use strict";
 const SOLO_SEEN_KEY = "rrFriendsEngineTutorialSoloSeenV8";
 const PVP_SEEN_KEY = "rrFriendsEngineTutorialPvpSeenV8";
-const TUTORIAL_BUILD = "2026.10.12-friends-polish-33";
+const TUTORIAL_BUILD = "2026.10.12-friends-polish-35";
 const TUTORIAL_ACHIEVEMENT_ID = "tutorial-graduate";
 const PVP_TUTORIAL_ACHIEVEMENT_ID = "versus-tutorial-graduate";
 const TYPEWRITER_MS_PER_CHARACTER = 28;
@@ -22462,7 +22508,7 @@ function tutorialFlyKey(currentFly) {
 function collectVisibleTutorialFlyKeys() {
   return new Set(
     flies
-      .filter((currentFly) => currentFly?.tutorialAuthored && currentFly.tutorialArmed !== false)
+      .filter((currentFly) => currentFly?.tutorialAuthored && currentFly.state === "active" && currentFly.tutorialArmed !== false)
       .map(tutorialFlyKey)
       .filter(Boolean)
   );
@@ -23129,7 +23175,7 @@ function addPvpTutorialFly(x, y, vocabIndex = 0, authoredIndex = 0) {
   return fly;
 }
 function pvpFlyRevealDelayMs(setup) {
-  if (setup === "pvpIntercept") return 0;
+  if (["pvpIntercept", "pvpDemoDinnerSteal", "pvpDinnerSteal"].includes(setup)) return 0;
   return PVP_ONE_SECOND_FLY_SETUPS.has(String(setup || "")) ? 1000 : 0;
 }
 function schedulePvpFlyReveal(setup, delayMs = pvpFlyRevealDelayMs(setup)) {
@@ -23326,37 +23372,36 @@ function configurePvpStep(index) {
       positionPvpReboundPracticeLayout(tutorial.pvpReboundCount);
       break;
     case "pvpDemoReboundCatch":
-      positionPvpOnPlatform(p1, middleRight, 1);
-      positionPvp(ember, 390, CONFIG.groundY - ember.h, -1);
-      addPvpTutorialFly(Math.round(PARK_PLATFORMS[6].x + PARK_PLATFORMS[6].w / 2), 118, 0, 0);
+      positionPvpOnPlatform(p1, PARK_PLATFORMS[3], 1);
+      positionPvp(ember, 273, CONFIG.groundY - ember.h, -1);
+      addPvpTutorialFly(399, PARK_PLATFORMS[4].y + 8, 0, 0);
       break;
     case "pvpReboundCatch": {
-      const reflectedPlayerX = W - 390 - p1.w;
-      const reflectedFlyX = W - (PARK_PLATFORMS[6].x + PARK_PLATFORMS[6].w / 2);
-      positionPvpOnPlatform(ember, middleLeft, -1);
+      const reflectedPlayerX = W - 273 - p1.w;
+      positionPvpOnPlatform(ember, PARK_PLATFORMS[3], -1);
       positionPvp(p1, reflectedPlayerX, CONFIG.groundY - p1.h, 1);
-      addPvpTutorialFly(Math.round(reflectedFlyX), 118, 0, 0);
+      addPvpTutorialFly(W - 399, PARK_PLATFORMS[4].y + 8, 0, 0);
       break;
     }
     case "pvpDemoIntercept":
       positionPvp(p1, 118, CONFIG.groundY - p1.h, 1);
       positionPvp(ember, 305, CONFIG.groundY - ember.h, -1);
-      addPvpTutorialFly(390, 130, 0, 0);
+      addPvpTutorialFly(390, PARK_PLATFORMS[4].y - 2, 0, 0);
       break;
     case "pvpIntercept":
       positionPvp(p1, 275, CONFIG.groundY - p1.h, -1);
       positionPvp(ember, 135, CONFIG.groundY - ember.h, 1);
-      addPvpTutorialFly(390, 130, 0, 0);
+      addPvpTutorialFly(390, PARK_PLATFORMS[4].y - 2, 0, 0);
       break;
     case "pvpDemoDinnerSteal":
       positionPvp(p1, 118, CONFIG.groundY - p1.h, 1);
       positionPvp(ember, 305, CONFIG.groundY - ember.h, -1);
-      addPvpTutorialFly(348, 110, 0, 0);
+      addPvpTutorialFly(348, PARK_PLATFORMS[4].y + 4, 0, 0);
       break;
     case "pvpDinnerSteal":
       positionPvp(p1, 118, CONFIG.groundY - p1.h, 1);
       positionPvp(ember, 305, CONFIG.groundY - ember.h, -1);
-      addPvpTutorialFly(Math.round(PARK_PLATFORMS[1].x + PARK_PLATFORMS[1].w / 2) + 14, 143, 0, 0);
+      addPvpTutorialFly(Math.round(PARK_PLATFORMS[1].x + PARK_PLATFORMS[1].w / 2) + 14, PARK_PLATFORMS[4].y + 4, 0, 0);
       break;
     case "pvpFinalMatch":
       positionPvp(p1, PVP_START_X[0], CONFIG.groundY - p1.h, 1);
@@ -23550,15 +23595,15 @@ function beginPvpDemoMotion(setup) {
       scriptPvpChargedJump(1, .75, -1, 0);
       break;
     case "pvpDemoReboundCatch":
-      scriptPvpChargedJump(1, .92, -1, 0);
+      scriptPvpChargedJump(1, 1, -1, 0);
       break;
     case "pvpDemoIntercept":
-      scriptPvpChargedJump(0, .62, 1, 0);
-      scriptPvpChargedJump(1, .62, -1, 100);
+      scriptPvpChargedJump(0, .85, 1, 0);
+      scriptPvpChargedJump(1, .85, -1, 100);
       break;
     case "pvpDemoDinnerSteal":
-      scriptPvpChargedJump(0, .82, 1, 0);
-      scriptPvpChargedJump(1, .82, -1, 100);
+      scriptPvpChargedJump(0, 1, 1, 0);
+      scriptPvpChargedJump(1, 1, -1, 0);
       break;
     default:
       break;
@@ -23566,8 +23611,8 @@ function beginPvpDemoMotion(setup) {
 }
 function startPvpDemonstration(options = {}) {
   const setup = tutorialStep()?.setup || "";
-  const skipPoof = Boolean(options.skipPoof);
   const intendedPvpPoses = tutorial.pendingPvpTargetPoses;
+  const skipPoof = Boolean(options.skipPoof || pvpAtIntendedPositions(intendedPvpPoses));
   const prepare = () => {
     tutorial.pvpDemoActive = true;
     tutorial.pvpDemoKind = setup;
@@ -23611,15 +23656,17 @@ function startPvpDemonstration(options = {}) {
 function restartMissedPvpReboundDemonstration() {
   if (tutorial.pvpDemoRetryQueued || tutorial.resetPending) return false;
   tutorial.pvpDemoRetryQueued = true;
+  const stillVisible = collectVisibleTutorialFlyKeys();
   clearPvpScriptActions();
   return beginPoofTransition({
     reason: "retry-single-jump-rebound-catch",
     showFailure: false,
-    preserveExistingFlies: false,
+    preserveExistingFlies: true,
     armFlies: false,
     waitForEffects: false,
     action: () => {
       rebuildCurrentScenarioForRetry();
+      armTutorialFlies({ preserveKeys: stillVisible });
       tutorial.pvpDemoRetryQueued = false;
       startPvpDemonstration({ skipPoof: true });
     }
@@ -23643,7 +23690,8 @@ function updatePvpDemonstration() {
   const landed = updatePvpLessonLandings();
   if (["pvpDemoReboundCatch", "pvpDemoDinnerSteal"].includes(setup)) {
     if (tutorial.pvpTechniqueCatchQualified && tutorial.pvpTechniqueCatchPlayerIndex === 1) {
-      if (!game.pvpCriticalCatchActive && now - tutorial.pvpTechniqueCatchAt >= 450) {
+      if (!game.pvpCriticalCatchActive && ember.grounded && !ember.tongue.active &&
+          now - tutorial.pvpTechniqueCatchAt >= 450) {
         clearPvpScriptActions();
         tutorial.pvpDemoActive = false;
         tutorial.pvpPlayerScriptLocked = false;
@@ -23652,7 +23700,7 @@ function updatePvpDemonstration() {
       }
       return;
     }
-    const missedLanding = setup === "pvpDemoReboundCatch" ? landed[1] : landed[0] || landed[1];
+    const missedLanding = tutorial.pvpReboundCount > 0 ? landed[1] : (landed[0] || landed[1]);
     if (missedLanding) {
       restartMissedPvpReboundDemonstration();
       return;
@@ -23730,7 +23778,8 @@ function updatePvpDemonstration() {
   } else if (setup === "pvpDemoRebound") {
     completed = tutorial.pvpReboundCount >= 1 && now - tutorial.pvpLastPracticeEventAt >= 750 && pvpTutorialSettled();
   } else if (setup === "pvpDemoIntercept") {
-    completed = tutorial.pvpReboundCount >= 1 && now - tutorial.pvpLastPracticeEventAt >= 750;
+    completed = tutorial.pvpReboundCount >= 1 && p1.grounded && ember.grounded &&
+      now - tutorial.pvpLastPracticeEventAt >= 750;
   } else if (setup === "pvpDemoRecoveryBonk") {
     completed = tutorial.pvpDemoBlockedBonkAt > 0 && !p1.bonked && p1.stunTimer <= 0 && pvpTutorialSettled();
   } else if (setup === "pvpDemoBoostBonk") {
@@ -23763,6 +23812,12 @@ function startPvpFinalMatch() {
   game.onlineMode = false;
   game.pvpCpuEnabled = true;
   game.pvpCpuDifficulty = 5;
+  game.sandboxMode = false;
+  tutorial.blockJumpUntilRelease = false;
+  tutorial.pvpFrogsHidden = false;
+  tutorial.pvpHiddenPlayerIndices = [];
+  tutorial.dialogueHiddenDuringPoof = false;
+  tutorial.resetPending = false;
   game.pvpRoundGoalMode = "endless";
   game.pvpTimeLimitSeconds = 30;
   game.pvpBestOf = 1;
@@ -23828,7 +23883,12 @@ function configureStep(showDialogue = true, options = {}) {
     showDialogue && tutorial.kind === "pvp" &&
     ["pvpBonkThree", "pvpBonkCatch", "pvpDemoDropLow", "pvpDemoDropHigh", "pvpDemoBufferedBonk", "pvpDemoHighGround"].includes(tutorialStep()?.setup)
   );
-  if (prePoofBeforeDialogue && preservedPvpVisualPoses) {
+  if (prePoofBeforeDialogue && preservedPvpVisualPoses && pvpAtIntendedPositions(tutorial.pendingPvpTargetPoses)) {
+    tutorial.pendingPvpVisualPoses = null;
+    tutorial.pendingPvpTargetPoses = null;
+    openDialogue();
+    tutorial.scenePositionedDuringDialogue = true;
+  } else if (prePoofBeforeDialogue && preservedPvpVisualPoses) {
     tutorial.dialogueOpen = true;
     tutorial.scenePositionedDuringDialogue = false;
     beginDialogueLine(0, { delayMs:POOF_TRANSITION_MS + 1000, holdPreviousText:false });
@@ -23863,6 +23923,15 @@ function configureStep(showDialogue = true, options = {}) {
     game.state = "playing";
     game.pauseHelpOpen = false;
   }
+}
+function pvpAtIntendedPositions(poses, tolerance = 1) {
+  if (!Array.isArray(poses) || poses.length < 2) return false;
+  return poses.slice(0,2).every((pose, index) => {
+    const player = pvpPlayers[index];
+    return player && pose &&
+      Math.abs(Number(player.x) - Number(pose.x)) <= tolerance &&
+      Math.abs(Number(player.y) - Number(pose.y)) <= tolerance;
+  });
 }
 function addTutorialPoof(x, y, kind = "out") {
   tutorial.smokeClouds.push({
@@ -24019,6 +24088,17 @@ function beginScenarioEntryTransition() {
   const intendedStartPose = tutorial.pendingStartPose || captureControlledPose();
   const intendedPvpPoses = tutorial.pendingPvpTargetPoses;
   const setup = tutorialStep()?.setup || "";
+  if (tutorial.kind === "pvp" && pvpAtIntendedPositions(intendedPvpPoses)) {
+    tutorial.pendingStartPose = null;
+    tutorial.pendingPvpTargetPoses = null;
+    tutorial.pendingPvpVisualPoses = null;
+    restoreStepSequence();
+    tutorial.pvpCaption = "YOUR TURN!";
+    tutorial.pvpCaptionUntil = performance.now() + 1600;
+    schedulePvpFlyReveal(setup, pvpFlyRevealDelayMs(setup));
+    tutorial.enteredAt = performance.now();
+    return;
+  }
   beginPoofTransition({
     reason: "scene-entry",
     showFailure: false,
@@ -24797,6 +24877,10 @@ function monitorPvp() {
   const p1 = pvpPlayers[0];
   const ember = pvpPlayers[1];
   const now = performance.now();
+  if (setup === "pvpFinalMatch") {
+    if (tutorial.pvpFinalMatchStarted && game.state === "won") beginPvpTutorialEnding();
+    return;
+  }
   drivePvpPracticeCpu(setup, now);
   const playerLanded = consumePvpPlayerLanding();
   const lessonLandings = ["pvpReboundCatch", "pvpIntercept", "pvpDinnerSteal"].includes(setup)
@@ -24971,7 +25055,8 @@ function monitorPvp() {
   }
   if (setup === "pvpReboundCatch") {
     if (tutorial.pvpTechniqueCatchQualified && tutorial.pvpTechniqueCatchPlayerIndex === 0) {
-      if (!game.pvpCriticalCatchActive && now - tutorial.pvpTechniqueCatchAt >= 350) passStep();
+      if (!game.pvpCriticalCatchActive && p1.grounded && !p1.tongue.active &&
+          now - tutorial.pvpTechniqueCatchAt >= 350) passStep();
     } else if (lessonLandings[0]) {
       failAttempt("REBOUND OFF EMBER, THEN CATCH THE FLY IN ONE JUMP");
     }
@@ -24979,7 +25064,7 @@ function monitorPvp() {
   }
   if (setup === "pvpIntercept") {
     if (tutorial.pvpInterceptSeen) {
-      if (pvpTutorialSettled()) passStep();
+      if (p1.grounded && ember.grounded && pvpTutorialSettled()) passStep();
     } else if (lessonLandings[0] || lessonLandings[1]) {
       failAttempt("REBOUND EMBER BEFORE HER FLY CATCH");
     }
@@ -24987,9 +25072,10 @@ function monitorPvp() {
   }
   if (setup === "pvpDinnerSteal") {
     if (tutorial.pvpTechniqueCatchQualified && tutorial.pvpTechniqueCatchPlayerIndex === 0) {
-      if (!game.pvpCriticalCatchActive && now - tutorial.pvpTechniqueCatchAt >= 350) passStep();
-    } else if (lessonLandings[0] || lessonLandings[1]) {
-      failAttempt("REBOUND AND STEAL THE FLY BEFORE EITHER FROG LANDS");
+      if (!game.pvpCriticalCatchActive && p1.grounded && !p1.tongue.active &&
+          now - tutorial.pvpTechniqueCatchAt >= 350) passStep();
+    } else if (tutorial.pvpReboundCount > 0 ? lessonLandings[0] : (lessonLandings[0] || lessonLandings[1])) {
+      failAttempt("REBOUND AND STEAL THE FLY BEFORE LANDING");
     }
     return;
   }
@@ -25620,6 +25706,7 @@ function drawEmberDialogueLine(fullLine, visibleText, x, y, scale, spokenLine = 
       ? Math.min(visible.length, orangeRange[1])
       : Math.min(visible.length, ...ranges.filter(([start]) => start > cursor).map(([start]) => start));
     const chunk = visible.slice(cursor,nextBoundary);
+    if (chunk.startsWith("?") && cursor > 0) drawX += Math.max(1, Math.round(scale * 2));
     drawBitmapText(chunk,drawX,y,scale,"left",orangeRange ? "#ff9b45" : COLORS.white);
     drawX += measureBitmapText(chunk,scale);
     cursor = nextBoundary;
@@ -26061,6 +26148,15 @@ function applyTutorialChapterPreview() {
   restoreStepSequence();
   clearHeldInput();
   openDialogue();
+  tutorial.scenePositionedDuringDialogue = true;
+  tutorial.dialogueLineStartedAt = performance.now();
+  tutorial.dialoguePreLineDelayUntil = tutorial.dialogueLineStartedAt;
+  tutorial.dialogueHeldLineText = "";
+  tutorial.dialogueHeldPortraitKey = "";
+  tutorial.dialogueHeldUntil = 0;
+  tutorial.dialogueTalkCharCount = 0;
+  tutorial.dialogueTalkBlipAt = performance.now();
+  tutorial.smokeClouds.length = 0;
   return true;
 }
 function drawTutorialPauseArrow(rect, direction, disabled = false) {
@@ -26368,6 +26464,10 @@ attemptPvpFlyCatch = function(player, targetFly, source = "body", ...rest) {
   }
   return result;
 };
+window.RibbitTutorialShouldHidePvpCatchTitle = () => Boolean(
+  tutorial.active && tutorial.kind === "pvp" &&
+  ["pvpDemoReboundCatch", "pvpReboundCatch", "pvpDemoDinnerSteal", "pvpDinnerSteal"].includes(tutorialStep()?.setup)
+);
 const originalMarkAchievementEarnedForTutorial = markAchievementEarned;
 markAchievementEarned = function(id, ...rest) {
   const trainingSession = Boolean(tutorial.active || tutorial.completeScreen || game.tutorialActive);
@@ -26647,14 +26747,18 @@ getPvpSkinPalette = function(skinId, fallbackId = "azure", playerIndexHint = nul
   return palette;
 };
 const originalPressPvpButtonForTutorial = pressPvpButton;
-pressPvpButton = function(index, ...rest) {
-  if (tutorialBlocksLiveInput()) return;
-  return originalPressPvpButtonForTutorial.call(this, index, ...rest);
+pressPvpButton = function(index, source = "human", ...rest) {
+  const finalCpu = tutorial.active && tutorial.kind === "pvp" &&
+    tutorialStep()?.setup === "pvpFinalMatch" && index === getPvpCpuIndex() && source === "cpu";
+  if (!finalCpu && tutorialBlocksLiveInput()) return;
+  return originalPressPvpButtonForTutorial.call(this, index, source, ...rest);
 };
 const originalReleasePvpButtonForTutorial = releasePvpButton;
-releasePvpButton = function(index, ...rest) {
-  if (tutorialBlocksLiveInput()) return;
-  return originalReleasePvpButtonForTutorial.call(this, index, ...rest);
+releasePvpButton = function(index, source = "human", ...rest) {
+  const finalCpu = tutorial.active && tutorial.kind === "pvp" &&
+    tutorialStep()?.setup === "pvpFinalMatch" && index === getPvpCpuIndex() && source === "cpu";
+  if (!finalCpu && tutorialBlocksLiveInput()) return;
+  return originalReleasePvpButtonForTutorial.call(this, index, source, ...rest);
 };
 const originalDrawArcPreviewForTutorial = drawArcPreview;
 drawArcPreview = function(...args) {
@@ -27003,6 +27107,7 @@ window.RibbitRaceTutorialEngine = Object.freeze({
     leaderboardNameRects: [],
     leaderboardStatsRow: null,
     leaderboardStatsHitRects: {},
+    leaderboardStatsPage: 0,
     leaderboardDropdown: "",
     leaderboardHitRects: {},
     leaderboardHoverKey: "",
@@ -27027,6 +27132,14 @@ window.RibbitRaceTutorialEngine = Object.freeze({
     flashcardFace: "english",
     flashcardSelection: 1,
     flashcardHoverKey: "",
+    flashcardOrder: [],
+    flashcardShuffled: false,
+    flashcardOnlyStarred: false,
+    flashcardComplete: false,
+    flashcardFlipAt: 0,
+    flashcardFlipFrom: "english",
+    flashcardFlipTo: "english",
+    flashcardStars: [],
     pauseFullscreenHovered: false
   };
   const LANGUAGE_KEY = "ribbitRaceLanguageModeV1";
@@ -27055,20 +27168,46 @@ window.RibbitRaceTutorialEngine = Object.freeze({
     Object.freeze({ id:"back", label:"BACK" })
   ]);
   const PROFILE_MENU_RECTS = Object.freeze(PROFILE_MENU_ROWS.map((row, index) => Object.freeze({
-    ...row, x:90, y:82 + index * 28, w:300, h:24
+    ...row, x:91, y:78+index*30, w:298, h:26
   })));
   const FLASHCARD_BUTTON_RECTS = Object.freeze({
-    previous: Object.freeze({ id:"previous", x:74, y:190, w:78, h:20 }),
-    flip: Object.freeze({ id:"flip", x:164, y:190, w:152, h:20 }),
-    next: Object.freeze({ id:"next", x:328, y:190, w:78, h:20 }),
-    back: Object.freeze({ id:"back", x:180, y:215, w:120, h:19 })
+    previous:Object.freeze({id:"previous",x:72,y:187,w:96,h:23}),
+    flip:Object.freeze({id:"flip",x:175,y:187,w:130,h:23}),
+    next:Object.freeze({id:"next",x:312,y:187,w:96,h:23}),
+    shuffle:Object.freeze({id:"shuffle",x:74,y:214,w:102,h:18}),
+    starred:Object.freeze({id:"starred",x:181,y:214,w:118,h:18}),
+    back:Object.freeze({id:"back",x:304,y:214,w:102,h:18}),
+    star:Object.freeze({id:"star",x:376,y:88,w:24,h:21})
   });
-  const FLASHCARD_BUTTON_ORDER = Object.freeze([
-    FLASHCARD_BUTTON_RECTS.previous,
-    FLASHCARD_BUTTON_RECTS.flip,
-    FLASHCARD_BUTTON_RECTS.next,
-    FLASHCARD_BUTTON_RECTS.back
-  ]);
+  const FLASHCARD_BUTTON_ORDER = Object.freeze(Object.values(FLASHCARD_BUTTON_RECTS));
+  const FLASHCARD_STARS_KEY = "ribbitRaceFlashcardStarsV1";
+  function flashcardKey(entry) {return `${String(entry?.english || "").trim()}|${String(entry?.spanish || "").trim()}`;}
+  function readFlashcardStars() {
+    try {const data=JSON.parse(localStorage.getItem(FLASHCARD_STARS_KEY)||"[]");return Array.isArray(data)?data:[];}
+    catch(_){return [];}
+  }
+  function flashcardEntries() {
+    const words = getFlashcardVocabulary();
+    if(polish.flashcardOrder.length!==words.length && !polish.flashcardOnlyStarred){
+      polish.flashcardOrder=words.map((_,i)=>i);
+      polish.flashcardIndex=Math.min(polish.flashcardIndex,Math.max(0,words.length-1));
+    }
+    const order=polish.flashcardOrder.filter(index=>Number.isInteger(index)&&words[index]);
+    return order.map(index=>({entry:words[index],index}));
+  }
+  function resetFlashcardFace() {
+    polish.flashcardFace="english";polish.flashcardFlipAt=0;
+    polish.flashcardFlipFrom="english";polish.flashcardFlipTo="english";
+  }
+  function rebuildFlashcardDeck(starredOnly=false, shuffle=false) {
+    const words=getFlashcardVocabulary();
+    polish.flashcardOnlyStarred=starredOnly;
+    const stars=new Set(polish.flashcardStars);
+    const order=words.map((_,i)=>i).filter(i=>!starredOnly||stars.has(flashcardKey(words[i])));
+    if(shuffle)for(let i=order.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[order[i],order[j]]=[order[j],order[i]];}
+    polish.flashcardOrder=order;polish.flashcardIndex=0;polish.flashcardComplete=false;
+    resetFlashcardFace();
+  }
   const DEVICE_MENU_RECTS = Object.freeze({
     computer:Object.freeze({ x:75, y:91, w:150, h:86 }),
     mobile:Object.freeze({ x:255, y:91, w:150, h:86 }),
@@ -27137,54 +27276,106 @@ window.RibbitRaceTutorialEngine = Object.freeze({
     drawBitmapText(label,rect.x+12,rect.y+7,.58,"left",selected?skin.dark:"#34484f");
     if(value) drawBitmapText(value,rect.x+rect.w-10,rect.y+7,.52,"right",selected?skin.dark:"#59666b");
   }
+  function drawProfileOptionIcon(kind,cx,cy,color="#48555a") {
+    const r=(x,y,w,h,c=color)=>{ctx.fillStyle=c;ctx.fillRect(Math.round(cx+x),Math.round(cy+y),w,h);};
+    if(kind==="language") {r(-6,-6,12,12);r(-4,-4,8,8,"#f7fdff");r(-1,-6,2,12);r(-6,-1,12,2);}
+    else if(kind==="flashcards") {r(-7,-5,10,12);r(-5,-3,6,7,"#f7fdff");r(0,-7,7,11);r(2,-5,3,5,"#f7fdff");}
+    else if(kind==="manage") {r(-7,-6,14,12);r(-4,-5,8,4,"#f7fdff");r(-4,1,8,4,"#f7fdff");r(-1,2,3,3);}
+    else if(kind==="signout") {r(-7,-6,8,12);r(-5,-4,4,8,"#f7fdff");r(0,-1,7,2);r(4,-4,3,3);r(4,1,3,3);}
+    else {r(-1,-2,8,4);r(-3,-4,3,8);r(-6,-1,3,2);}
+  }
   function drawProfileMenu() {
     drawUtilityWindowFrame("ACCOUNT & LANGUAGE", "PLAYER SETTINGS");
-    drawBitmapText(`PLAYER: ${accountDisplayName().toUpperCase()}`,W/2,62,.55,"center","#48555a");
-    PROFILE_MENU_RECTS.forEach((rect,index) => {
-      let value="";
-      if(rect.id==="language") value=getLanguageMode()==="es-en"?"ESPAÑOL → ENGLISH":"ENGLISH → ESPAÑOL";
-      else if(rect.id==="flashcards") value=`${getFlashcardVocabulary().length || 0} CARDS`;
-      drawUtilityRow(rect,rect.label,index===polish.profileSelection,value);
+    drawBitmapText(`PLAYER: ${accountDisplayName().toUpperCase()}`,W/2,63,.55,"center","#48555a");
+    const skin=getSelectedSkin();
+    PROFILE_MENU_RECTS.forEach((rect,index)=>{
+      const selected=index===polish.profileSelection;
+      ctx.fillStyle="rgba(25,43,52,.20)";ctx.fillRect(rect.x+2,rect.y+2,rect.w,rect.h);
+      ctx.fillStyle=selected?COLORS.ink:"#9aa9ae";ctx.fillRect(rect.x,rect.y,rect.w,rect.h);
+      ctx.fillStyle=selected?mixHexColors(skin.belly,"#ffffff",.12):"#f7fdff";
+      ctx.fillRect(rect.x+2,rect.y+2,rect.w-4,rect.h-4);
+      const stripes={language:skin.light,flashcards:"#f3d171",manage:"#7ee0cf",signout:"#ed9eaa",back:"#b4c7ce"};
+      ctx.fillStyle=stripes[rect.id];ctx.fillRect(rect.x+5,rect.y+4,rect.w-10,2);
+      drawProfileOptionIcon(rect.id,rect.x+17,rect.y+rect.h/2,selected?skin.dark:"#48555a");
+      const value=rect.id==="language"?(getLanguageMode()==="es-en"?"ES > EN":"EN > ES"):
+        rect.id==="flashcards"?`${getFlashcardVocabulary().length} CARDS`:"";
+      const labelScale=Math.min(.69,195/Math.max(1,measureBitmapText(rect.label,1)));
+      drawBitmapText(rect.label,rect.x+rect.w/2-(value?18:0),rect.y+9,labelScale,"center",selected?skin.dark:"#48555a");
+      if(value)drawBitmapText(value,rect.x+rect.w-10,rect.y+10,.42,"right",selected?skin.dark:"#59666b");
     });
-    drawBitmapText("ARROWS TO BROWSE • ENTER TO SELECT",W/2,247,.48,"center","#617177");
+  }
+  function drawCardButton(rect,title,hint="",selected=false){
+    const skin=getSelectedSkin();
+    ctx.fillStyle="rgba(25,43,52,.19)";ctx.fillRect(rect.x+2,rect.y+2,rect.w,rect.h);
+    ctx.fillStyle=selected?COLORS.ink:"#9aa9ae";ctx.fillRect(rect.x,rect.y,rect.w,rect.h);
+    ctx.fillStyle=selected?mixHexColors(skin.belly,"#ffffff",.16):"#f7fdff";
+    ctx.fillRect(rect.x+2,rect.y+2,rect.w-4,rect.h-4);
+    if(selected){ctx.fillStyle=skin.light;ctx.fillRect(rect.x+5,rect.y+4,rect.w-10,2);}
+    const titleScale=Math.min(rect.h>20?.75:.55,(rect.w-10)/Math.max(1,measureBitmapText(title,1)));
+    const mid=rect.x+rect.w/2;
+    drawBitmapText(title,mid,rect.y+(hint?5:rect.h>20?9:6),titleScale,"center",selected?skin.dark:"#48555a");
+    if(hint)drawBitmapText(hint,mid,rect.y+16,.49,"center",selected?skin.dark:"#59666b");
+  }
+  function drawFlashcardStar(cx,cy,isStarred=false){
+    ctx.fillStyle=isStarred?"#db9300":"#657981";
+    const pts=[[0,-6],[-1,-3],[1,-3],[-5,-2],[5,-2],[-3,0],[3,0],[-2,2],[2,2],[-4,5],[0,3],[4,5]];
+    for(const [x,y] of pts)ctx.fillRect(cx+x,cy+y,2,2);
   }
   function drawFlashcardsMenu() {
     drawUtilityWindowFrame("FLASH CARDS", "STUDY YOUR VOCAB SETS");
-    const skin = getSelectedSkin();
-    const entries = getFlashcardVocabulary();
-    const count = entries.length;
-    const safeIndex = count ? ((polish.flashcardIndex % count) + count) % count : 0;
-    polish.flashcardIndex = safeIndex;
-    const entry = count ? entries[safeIndex] : null;
-    drawBitmapText(`FRIENDS VOCAB  •  ${count} CARDS`, W / 2, 68, .48, "center", "#48555a");
-    const card = { x:73, y:80, w:334, h:101 };
-    ctx.fillStyle = "rgba(25,43,52,.15)";
-    ctx.fillRect(card.x + 3, card.y + 3, card.w, card.h);
-    ctx.fillStyle = COLORS.ink;
-    ctx.fillRect(card.x, card.y, card.w, card.h);
-    ctx.fillStyle = count ? mixHexColors(skin.belly, "#ffffff", .18) : "#f7fdff";
-    ctx.fillRect(card.x + 3, card.y + 3, card.w - 6, card.h - 6);
-    if (entry) {
-      const label = polish.flashcardFace === "english" ? "ENGLISH" : "ESPAÑOL";
-      const value = String(polish.flashcardFace === "english" ? entry.english || "" : entry.spanish || "").trim().toUpperCase();
-      const maxWidth = card.w - 38;
-      const fit = Math.min(1.25, maxWidth / Math.max(1, measureBitmapText(value, 1)));
-      drawBitmapText(`${safeIndex + 1} / ${count}`, card.x + card.w - 12, card.y + 11, .55, "right", skin.dark);
-      drawBitmapText(label, W / 2, card.y + 13, .72, "center", skin.dark);
-      ctx.save();
-      ctx.beginPath();
-      ctx.rect(card.x + 10, card.y + 29, card.w - 20, 43);
-      ctx.clip();
-      drawBitmapText(value, W / 2, card.y + 43, fit, "center", COLORS.ink);
-      ctx.restore();
-      drawBitmapText("SPACE TO FLIP", W / 2, card.y + 84, .48, "center", "#59666b");
-    } else {
-      drawBitmapText("NO VOCAB CARDS AVAILABLE", W / 2, card.y + 39, .77, "center", "#48555a");
-      drawBitmapText("SIGN IN TO LOAD YOUR SET", W / 2, card.y + 72, .52, "center", "#59666b");
+    const skin=getSelectedSkin(), deck=flashcardEntries(), count=deck.length;
+    if(count)polish.flashcardIndex=Math.min(Math.max(0,polish.flashcardIndex),count-1);
+    const pair=count?deck[polish.flashcardIndex]:null,entry=pair?.entry;
+    const currentKey=flashcardKey(entry),starred=Boolean(entry&&polish.flashcardStars.includes(currentKey));
+    const prefix=polish.flashcardOnlyStarred?"STARRED TERMS":"FRIENDS VOCAB";
+    drawBitmapText(`${prefix}  •  ${count} CARDS`,W/2,68,.48,"center","#48555a");
+    const card={x:73,y:79,w:334,h:104};
+    ctx.fillStyle="rgba(25,43,52,.15)";ctx.fillRect(card.x+3,card.y+3,card.w,card.h);
+    ctx.fillStyle=COLORS.ink;ctx.fillRect(card.x,card.y,card.w,card.h);
+    const flipT=polish.flashcardFlipAt?Math.min(1,(performance.now()-polish.flashcardFlipAt)/280):1;
+    if(polish.flashcardFlipAt&&flipT>=1){polish.flashcardFace=polish.flashcardFlipTo;polish.flashcardFlipAt=0;}
+    const face=polish.flashcardFlipAt&&flipT>=.5?polish.flashcardFlipTo:polish.flashcardFace;
+    const scaleX=polish.flashcardFlipAt?Math.max(.05,Math.abs(Math.cos(Math.PI*flipT))):1;
+    ctx.save();ctx.translate(card.x+card.w/2,0);ctx.scale(scaleX,1);ctx.translate(-(card.x+card.w/2),0);
+    const secondary=face!=="english";
+    ctx.fillStyle=secondary?mixHexColors(skin.mid,"#ffffff",.26):mixHexColors(skin.belly,"#ffffff",.18);
+    ctx.fillRect(card.x+3,card.y+3,card.w-6,card.h-6);
+    if(polish.flashcardComplete){
+      drawBitmapText("DECK COMPLETE!",W/2,card.y+34,1.07,"center",skin.dark);
+      drawBitmapText("RESTART OR STUDY STARRED TERMS",W/2,card.y+63,.57,"center","#59666b");
+    }else if(entry){
+      const label=secondary?"ESPAÑOL":"ENGLISH";
+      const value=String(secondary?entry.spanish||"":entry.english||"").trim().toUpperCase();
+      const fit=Math.min(1.20,(card.w-36)/Math.max(1,measureBitmapText(value,1)));
+      drawBitmapText(`${polish.flashcardIndex+1} / ${count}`,card.x+card.w-48,card.y+12,.53,"right",skin.dark);
+      drawBitmapText(label,W/2,card.y+15,.70,"center",skin.dark);
+      ctx.save();ctx.beginPath();ctx.rect(card.x+12,card.y+30,card.w-24,45);ctx.clip();
+      drawBitmapText(value,W/2,card.y+46,fit,"center",COLORS.ink);ctx.restore();
+      drawBitmapText(secondary?"TARGET LANGUAGE":"ENGLISH FRONT",W/2,card.y+85,.48,"center","#59666b");
+    }else{
+      drawBitmapText("NO STARRED TERMS YET",W/2,card.y+42,.80,"center",skin.dark);
+      drawBitmapText("PRESS BACK TO SEE ALL CARDS",W/2,card.y+69,.48,"center","#59666b");
     }
-    FLASHCARD_BUTTON_ORDER.forEach((rect,index) => {
-      const label = rect.id === "previous" ? "PREVIOUS" : rect.id === "next" ? "NEXT" : rect.id === "flip" ? "FLIP CARD" : "BACK";
-      drawUtilityRow(rect, label, (polish.flashcardHoverKey === rect.id) || (polish.flashcardHoverKey === "" && index === 1), "");
+    ctx.restore();
+    if(entry&&!polish.flashcardComplete){
+      const r=FLASHCARD_BUTTON_RECTS.star;
+      ctx.fillStyle=starred?"#fff4c7":"#f7fdff";ctx.fillRect(r.x,r.y,r.w,r.h);
+      ctx.fillStyle=starred?"#be8000":COLORS.ink;ctx.fillRect(r.x+1,r.y+1,r.w-2,r.h-2);
+      ctx.fillStyle=starred?"#ffe0a6":"#f7fdff";ctx.fillRect(r.x+3,r.y+3,r.w-6,r.h-6);
+      drawFlashcardStar(r.x+r.w/2,r.y+8,starred);
+      drawBitmapText("S /",r.x+r.w/2,r.y+14,.34,"center",starred?"#996000":"#59666b");
+    }
+    const selected=id=>polish.flashcardHoverKey===id;
+    const buttons=[
+      ["previous",polish.flashcardComplete?"RESTART DECK":"PREVIOUS","(LEFT)"],
+      ["flip",polish.flashcardComplete?"VIEW STARRED":"FLIP CARD","(SPACE)"],
+      ["next",polish.flashcardComplete?"ALL CARDS":"NEXT","(RIGHT)"],
+      ["shuffle","SHUFFLE",""],["starred",polish.flashcardOnlyStarred?"ALL CARDS":"STARRED TERMS",""],["back","BACK",""],
+    ];
+    buttons.forEach(([id,title,hint])=>{
+      const hints={shuffle:"H",starred:"V",back:"BACKSPACE"};
+      if(hints[id]&&FLASHCARD_BUTTON_RECTS[id].h<=20)title=`${title} (${hints[id]})`;
+      drawCardButton(FLASHCARD_BUTTON_RECTS[id],title,hint,selected(id));
     });
   }
   function drawDeviceModeIcon(rect, mobile, selected) {
@@ -27221,13 +27412,11 @@ window.RibbitRaceTutorialEngine = Object.freeze({
     safeCall(drawScene);
   }
   function openFlashcardsMenu() {
-    polish.flashcardIndex = 0;
-    polish.flashcardFace = "english";
-    polish.flashcardSelection = 1;
-    polish.flashcardHoverKey = "";
-    game.state = "rrFlashcards";
-    clearHeldInput();
-    tone(480,.04,.009,10);
+    polish.flashcardStars=readFlashcardStars();
+    polish.flashcardShuffled=false;
+    rebuildFlashcardDeck(false,false);
+    polish.flashcardSelection=1;polish.flashcardHoverKey="";
+    game.state="rrFlashcards";clearHeldInput();tone(480,.04,.009,10);
   }
   function openDeviceMenu() { polish.priorMenuState=game.state; polish.deviceSelection=isRibbitMobileMode()?1:0; game.state="rrDeviceMenu"; clearHeldInput(); tone(480,.04,.009,20); }
   function closeUtilityMenu() { game.state="main"; game.mainFocusVisible=true; tone(330,.04,.009,-30); }
@@ -27246,22 +27435,49 @@ window.RibbitRaceTutorialEngine = Object.freeze({
     }
   }
   function activateFlashcardButton(index = polish.flashcardSelection) {
-    const entries = getFlashcardVocabulary();
-    const count = entries.length;
-    const action = FLASHCARD_BUTTON_ORDER[index] || FLASHCARD_BUTTON_ORDER[1];
-    if (action.id === "back") {
-      game.state = "rrProfileMenu";
-      tone(330,.04,.009,-30);
-      return;
+    const deck=flashcardEntries(),count=deck.length;
+    const action=FLASHCARD_BUTTON_ORDER[index]||FLASHCARD_BUTTON_RECTS.flip;
+    const id=action.id;
+    if(id==="back"){
+      game.state="rrProfileMenu";tone(330,.04,.009,-30);return;
     }
-    if (action.id === "flip") {
-      polish.flashcardFace = polish.flashcardFace === "english" ? "spanish" : "english";
-      tone(430,.03,.008,8);
-      return;
+    if(id==="shuffle"){
+      polish.flashcardShuffled=true;rebuildFlashcardDeck(polish.flashcardOnlyStarred,true);
+    }else if(id==="starred"){
+      rebuildFlashcardDeck(!polish.flashcardOnlyStarred,false);
+    }else if(id==="star"){
+      if(polish.flashcardComplete||!count)return;
+      const entry=deck[polish.flashcardIndex]?.entry,key=flashcardKey(entry);
+      if(!entry)return;
+      const marked=new Set(polish.flashcardStars);
+      if(marked.has(key))marked.delete(key);else marked.add(key);
+      polish.flashcardStars=[...marked];
+      try{localStorage.setItem(FLASHCARD_STARS_KEY,JSON.stringify(polish.flashcardStars));}catch(_){}
+      if(polish.flashcardOnlyStarred&&!marked.has(key)){
+        const oldIndex=polish.flashcardIndex;
+        rebuildFlashcardDeck(true,false);
+        polish.flashcardIndex=Math.min(oldIndex,Math.max(0,polish.flashcardOrder.length-1));
+      }
+    }else if(polish.flashcardComplete){
+      if(id==="previous")rebuildFlashcardDeck(polish.flashcardOnlyStarred,polish.flashcardShuffled);
+      else if(id==="flip")rebuildFlashcardDeck(true,false);
+      else if(id==="next")rebuildFlashcardDeck(false,false);
+    }else if(id==="flip"){
+      if(!count)return;
+      const now=performance.now();
+      if(polish.flashcardFlipAt){polish.flashcardFace=polish.flashcardFlipTo;}
+      polish.flashcardFlipFrom=polish.flashcardFace;
+      polish.flashcardFlipTo=polish.flashcardFace==="english"?"spanish":"english";
+      polish.flashcardFlipAt=now;
+    }else if(id==="previous"){
+      if(count){polish.flashcardIndex=(polish.flashcardIndex-1+count)%count;resetFlashcardFace();}
+    }else if(id==="next"){
+      if(count){
+        if(polish.flashcardIndex>=count-1)polish.flashcardComplete=true;
+        else polish.flashcardIndex++;
+        resetFlashcardFace();
+      }
     }
-    if (!count) return;
-    if (action.id === "previous") polish.flashcardIndex = (polish.flashcardIndex - 1 + count) % count;
-    if (action.id === "next") polish.flashcardIndex = (polish.flashcardIndex + 1) % count;
     tone(360,.03,.008,6);
   }
   function setCanvasMobileMode(enabled) {
@@ -27407,62 +27623,29 @@ window.RibbitRaceTutorialEngine = Object.freeze({
   function pointIn(point, rect) {
     return Boolean(point && rect && point.x >= rect.x && point.x <= rect.x + rect.w && point.y >= rect.y && point.y <= rect.y + rect.h);
   }
+  const leaderboardMedalSprite = new Image();
+  leaderboardMedalSprite.src = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABwAAAAcCAYAAAByDd+UAAAECUlEQVR4nO2Wz2/VRRTFz7nzLdIYQhUDdqOEQKGvJdESjSGaKPCwxpgY/wE3aowCheLGSqIbVkIftEg0UQoGdWciAZPyY0XQhJBAofDeK9UI2oZQosQCpe137nHx2gTT99oaWXIW38V8Z+Yz587cOwM80H0WZ9Ppw2exoLaG10FAwMSnNNgFBFNxYzcy9wWYW4f0mafI2ieExdnllAM0ApAAsv9wEUikI4ep1hNK/hewoxnj77fXBVgiuHgz3wczwCmYIAcwf8UyKI3o6/6Fx4/BW7qnh1YEtq9D2rJnhQ3nL8tdVKDm1y0lnzxU6nDldSCYhvN5jI0TFoBHMhl0brqAzUcRKs1bcTUECQSkLtTUNYBLfqCRcI4Dv60HOBcGcF5mBZAKNy5dFhQRZtgkK9e4K4u4sWM5/jxfUHQCQQLHAN0C/C6M1YAFuACTwYLB4LhxvoD3csuxcy3j9Nh7lMsixnzGr38HH/w2eMzX+yer4Lub4Wm+3mMh4yo2uIoNHosN3tmMuKM5iWm+3gcPMg4cNE8v1cfdL5eHlnVoiBADFq3KoGNzAZZCG9rrQBJGwuUT7oB3d9TTSHa0FLBwVYaABDndVdbQ1D000EGIpYGb2usAm8vPW3v0TnsjDCptr4ioBJ9t7cHGXBPIEUARwUhAKI8rA6QowSAH5MRXbf24ORSRzDOavBQTB2ACNYqRcWnv1nN8iKa3dyyjBIEJSBJlsFNDSuDu1SJ8XKSZ7o45Pti3EkECWAolJkILmqoTcEN7BiMxBUKAuzhytQ/G8ianAie6uSAYMAdSZ0svaMKp7wcksWTSgZOHr5GEvmy9oDksjfKUoMRZ1cxJ5dYj3j4W4u9dIaYXG2NHM2MsNMZdWcZYWOkx3+ix0OS5LKPyK73zFcY03+B/HAjxVrfFXLZyWlQ4pYQiCQohOKpc3LulF3MkKqnGns29QlUVAHFPa68engswmCQB4ozJX95l1uLIiSQO7qcPHGC8cWS+71yNmBbqffd6xNj/tH/6Alz9TT7QhTjwNePwj0nsqJB/k5p2Lbks41tbSAvQ6G3jnb9dtaszNI+IEgZPFYWEXFBrGk+BfbkUrccr19EZgW1YGGvWDCGYsGQpsea1ABKEBBKAmW4Pg998kSoYMHT0MWzH0LTAGa4S4o1ba7n4xedx9udD6Pr1nKB7SgidY6NV2vrcx7xy8id1sadCMswSWPIvQUTN6KN8dfQl7j99EdtxzdqwKL7ZlAHNKHfEsYgK1exfKntKJyUJAug2zmAud5dYmtYIyKBEEW4C4LN6sEzrUDAcON0LO3PBq5mEvzz65AodwL4zvaixhDjbhztKpXK17L9oGxZNOeIfTbS1lfm3DY/P/h58oPulfwCs5g8I5d5bswAAAABJRU5ErkJggg==";
   function drawMiniMedalButton(rect, active = false) {
-    const frogSkin = getSelectedSkin();
-    const legacyRibbonShadow = "#b12d0d";
-    const legacyRibbonHighlight = "#ff5326";
-    const ribbonDark = frogSkin.dark;
-    const ribbonMid = frogSkin.mid;
-    const ribbonLight = frogSkin.light;
-    ctx.fillStyle = "rgba(25,43,52,.28)";
-    ctx.fillRect(rect.x + 2, rect.y + 2, rect.w, rect.h);
-    ctx.fillStyle = active ? COLORS.ink : COLORS.ink;
-    ctx.fillRect(rect.x, rect.y, rect.w, rect.h);
-    ctx.fillStyle = active ? "#eef7fb" : "#f7fdff";
-    ctx.fillRect(rect.x + 2, rect.y + 2, rect.w - 4, rect.h - 4);
-    ctx.fillStyle = active ? "#7ee5e8" : "#ffffff";
-    ctx.fillRect(rect.x + 5, rect.y + 4, rect.w - 10, 2);
-    const cx = Math.round(rect.x + rect.w / 2);
-    const ribbonY = rect.y + 18;
-    ctx.fillStyle = ribbonDark;
-    ctx.fillRect(cx - 9, ribbonY, 6, 8);
-    ctx.fillRect(cx + 3, ribbonY, 6, 8);
-    ctx.fillStyle = ribbonMid;
-    ctx.fillRect(cx - 8, ribbonY + 1, 4, 6);
-    ctx.fillRect(cx + 4, ribbonY + 1, 4, 6);
-    ctx.fillStyle = ribbonLight;
-    ctx.fillRect(cx - 7, ribbonY + 1, 1, 6);
-    ctx.fillRect(cx + 5, ribbonY + 1, 1, 6);
-    ctx.fillStyle = ribbonMid;
-    ctx.fillRect(cx - 3, ribbonY + 7, 2, 3);
-    ctx.fillRect(cx + 1, ribbonY + 7, 2, 3);
-    const medalY = rect.y + 7;
-    ctx.fillStyle = "#b96b00";
-    ctx.fillRect(cx - 8, medalY, 16, 1);
-    ctx.fillRect(cx - 10, medalY + 2, 20, 11);
-    ctx.fillRect(cx - 8, medalY + 1, 16, 13);
-    ctx.fillStyle = "#f3b400";
-    ctx.fillRect(cx - 8, medalY + 2, 16, 10);
-    ctx.fillRect(cx - 6, medalY + 1, 12, 12);
-    ctx.fillStyle = "#ffd91d";
-    ctx.fillRect(cx - 6, medalY + 3, 12, 8);
-    ctx.fillRect(cx - 4, medalY + 2, 8, 10);
-    ctx.fillStyle = "#fff2ba";
-    ctx.fillRect(cx - 5, medalY + 3, 4, 2);
-    ctx.fillRect(cx - 2, medalY + 2, 3, 2);
-    ctx.fillStyle = "#b96b00";
-    ctx.fillRect(cx - 6, medalY + 4, 1, 5);
-    ctx.fillRect(cx - 5, medalY + 5, 2, 1);
-    ctx.fillRect(cx - 5, medalY + 7, 2, 1);
-    ctx.fillRect(cx - 4, medalY + 9, 2, 1);
-    ctx.fillRect(cx + 5, medalY + 4, 1, 5);
-    ctx.fillRect(cx + 3, medalY + 5, 2, 1);
-    ctx.fillRect(cx + 3, medalY + 7, 2, 1);
-    ctx.fillRect(cx + 2, medalY + 9, 2, 1);
-    ctx.fillRect(cx - 1, medalY + 10, 2, 1);
+    const skin = getSelectedSkin();
+    ctx.fillStyle = "rgba(25,43,52,.20)";
+    ctx.fillRect(rect.x+2, rect.y+2, rect.w, rect.h);
+    ctx.fillStyle = active ? skin.dark : COLORS.ink;
+    ctx.fillRect(rect.x,rect.y,rect.w,rect.h);
+    ctx.fillStyle = active ? mixHexColors(skin.belly, "#ffffff", .16) : "#f7fdff";
+    ctx.fillRect(rect.x+2,rect.y+2,rect.w-4,rect.h-4);
+    if (leaderboardMedalSprite.complete && leaderboardMedalSprite.naturalWidth) {
+      ctx.imageSmoothingEnabled = false;
+      ctx.drawImage(leaderboardMedalSprite, rect.x+1, rect.y+1, rect.w-2, rect.h-2);
+    } else {
+      const cx = rect.x+rect.w/2,cy=rect.y+rect.h/2;
+      ctx.fillStyle="#cf8700";ctx.fillRect(cx-7,cy-7,14,14);
+      ctx.fillStyle="#ffd91d";ctx.fillRect(cx-5,cy-6,10,11);
+      ctx.fillStyle="#996000";ctx.fillRect(cx-4,cy-2,2,5);ctx.fillRect(cx+2,cy-2,2,5);
+      ctx.fillStyle="#b42f49";ctx.fillRect(cx-5,cy+7,4,4);ctx.fillRect(cx+1,cy+7,4,4);
+    }
     if (active) {
-      ctx.fillStyle = "#7ee5e8";
-      [[3,3],[rect.w-5,3],[3,rect.h-5],[rect.w-5,rect.h-5]].forEach(([dx,dy]) => ctx.fillRect(rect.x + dx, rect.y + dy, 2, 2));
+      ctx.fillStyle=skin.light;
+      ctx.fillRect(rect.x+4,rect.y+3,rect.w-8,1);
     }
   }
   const LEADERBOARD_METRICS = Object.freeze([
@@ -27545,6 +27728,9 @@ window.RibbitRaceTutorialEngine = Object.freeze({
     for (const entry of source) {
       const record = leaderboardRecordForEntry(entry, metric, level);
       if (!record || !Number.isFinite(Number(record.score)) || Number(record.score) <= 0) continue;
+      const recordLevel = String(record.level || (level === "any" ? "all" : level)).toLowerCase();
+      const serverReplay = (metric === "time" || metric === "jumps") &&
+        Boolean(entry.replayAvailable?.[recordLevel]?.[metric]);
       rows.push({
         rank:0,
         name:String(entry.name || entry.displayName || entry.username || entry.player || "FROG"),
@@ -27555,7 +27741,8 @@ window.RibbitRaceTutorialEngine = Object.freeze({
         metric,
         level:String(record.level || (level === "any" ? "ALL" : level)).toUpperCase(),
         date:String(record.date || ""),
-        replayId:record.replayId || null,
+        replayId:record.replayId || (serverReplay ? `server:${recordLevel}:${metric}` : null),
+        serverReplayAvailable:serverReplay,
         skinId:entry.skinId || entry.skin || entry.frogSkin || "azure",
         appearance:entry.appearance || entry.frogAppearance || entry.palette || null,
         isCurrent:Boolean(entry.isCurrent),
@@ -27625,9 +27812,13 @@ window.RibbitRaceTutorialEngine = Object.freeze({
     polish.leaderboardDropdown = "";
     polish.leaderboardStatsRow = null;
     polish.leaderboardStatsHitRects = {};
-    loadLeaderboard(false);
+    loadLeaderboard(true); // authoritative replay availability may have changed since last visit
     safeCall(tone, 540, .05, .012, 35);
   }
+  window.addEventListener("ribbit-replay-uploaded", () => {
+    polish.leaderboardRawPayload = null;
+    if (game.state === "rrLeaderboard") loadLeaderboard(true);
+  });
   function closeLeaderboard() {
     game.state = polish.previousState === "rrLeaderboard" ? "achievements" : (polish.previousState || "achievements");
     polish.leaderboardDropdown = "";
@@ -27679,30 +27870,38 @@ window.RibbitRaceTutorialEngine = Object.freeze({
     }
     return best;
   }
-  function buildLeaderboardStatsRows(row) {
+  function leaderboardPlayerMetrics(row) {
     const entry = row?.sourceEntry || {};
-    const stats = [
-      ["CURRENT RANK", String(row?.rank || "—")],
-      ["CURRENT RESULT", formatLeaderboardValue(row)],
-      ["CURRENT LEVEL", String(row?.level || "ALL")]
+    const stats = entry.stats && typeof entry.stats === "object" ? entry.stats : {};
+    const format = (value, digits = 0) => {
+      const n = Number(value);
+      return value === undefined || value === null || !Number.isFinite(n) ? "—" : (digits ? n.toFixed(digits) : String(Math.floor(n)));
+    };
+    const records = entry.records && typeof entry.records === "object" ? entry.records : {};
+    const bestTime = Object.values(records).reduce((result, record) => {
+      const n = Number(record?.time);
+      return Number.isFinite(n) && n > 0 && (result === null || n < result) ? n : result;
+    }, null);
+    return [
+      { label:"TOTAL JUMPS", value:format(entry.totalJumps ?? stats.totalJumps), icon:"jump" },
+      { label:"FLIES CAUGHT", value:format(entry.totalFlies ?? stats.totalFliesEaten), icon:"fly" },
+      { label:"DISTANCE JUMPED", value:stats.distanceJumpedPx === undefined ? "—" : formatStatDistance(stats.distanceJumpedPx), icon:"distance" },
+      { label:"PERFECT JUMPS", value:format(stats.perfectJumps), icon:"perfect" },
+      { label:"BEST FLY COMBO", value:format(stats.maxFliesOneJump), icon:"combo" },
+      { label:"LONGEST AIR TIME", value:stats.longestAirTime === undefined ? "—" : `${format(stats.longestAirTime,1)} SEC`, icon:"air" },
+      { label:"FASTEST FINISH", value:bestTime === null ? "--:--.-" : formatTime(bestTime), icon:"clock" },
+      { label:"LEVEL WINS", value:format(stats.totalWins), icon:"trophy" },
+      { label:"WALL BOUNCES", value:format(stats.wallBounces), icon:"bounce" },
+      { label:"FLIES SPAT BACK", value:format(stats.wrongFlies), icon:"spit" },
+      { label:"PVP BONKS", value:format(stats.pvpBonksDealt), icon:"pvpBonk" },
+      { label:"TIMES BONKED", value:format(stats.pvpTimesBonked), icon:"bonk-max" },
+      { label:"PVP BOUNCES", value:format(stats.pvpBounces), icon:"bounce" },
+      { label:"PVP MATCH WINS", value:format(entry.pvpMatchWins ?? stats.pvpMatchWins), icon:"trophy" }
     ];
-    if (row?.date) stats.push(["RECORD DATE", formatLeaderboardDate(row.date)]);
-    const period = String(entry.classPeriod || entry.period || row?.classPeriod || "").trim();
-    if (period) stats.push(["CLASS PERIOD", period.toUpperCase()]);
-    const bestTime = bestRecordValue(entry, "time");
-    if (bestTime !== null) stats.push(["BEST TIME", formatLeaderboardValue({ metric:"time", value:bestTime })]);
-    const bestJumps = bestRecordValue(entry, "jumps");
-    if (bestJumps !== null) stats.push(["FEWEST JUMPS", formatLeaderboardValue({ metric:"jumps", value:bestJumps })]);
-    const bestEndless = bestRecordValue(entry, "endless");
-    if (bestEndless !== null) stats.push(["BEST ENDLESS", formatLeaderboardValue({ metric:"endless", value:bestEndless })]);
-    const totalFlies = safestNumber(entry.totalFlies ?? entry.flies, null);
-    if (totalFlies !== null && totalFlies > 0) stats.push(["TOTAL FLIES", `${Math.floor(totalFlies)}`]);
-    const pvpWins = safestNumber(entry.pvpMatchWins ?? entry.wins, null);
-    if (pvpWins !== null && pvpWins >= 0) stats.push(["PVP WINS", `${Math.floor(pvpWins)}`]);
-    return stats.slice(0, 8);
   }
   function openLeaderboardStats(row) {
     polish.leaderboardStatsRow = row || null;
+    polish.leaderboardStatsPage = 0;
     polish.leaderboardStatsHitRects = {};
     safeCall(tone, 520, .04, .011, 20);
   }
@@ -27743,14 +27942,14 @@ window.RibbitRaceTutorialEngine = Object.freeze({
     ctx.fillStyle = "rgba(25,43,52,.22)"; ctx.fillRect(rect.x + 2, rect.y + 2, rect.w, rect.h);
     ctx.fillStyle = open ? getSelectedSkin().dark : COLORS.ink; ctx.fillRect(rect.x, rect.y, rect.w, rect.h);
     ctx.fillStyle = "#f7fdff"; ctx.fillRect(rect.x + 2, rect.y + 2, rect.w - 4, rect.h - 4);
-    const headerH = 8;
-    ctx.fillStyle = open ? mixHexColors(getSelectedSkin().mid, "#ffffff", .22) : "#dce5e8";
+    const headerH = 5; // reduced to roughly two thirds of the old 8px header
+    ctx.fillStyle = open ? "#b3d6db" : "#dce5e8";
     ctx.fillRect(rect.x + 2, rect.y + 2, rect.w - 4, headerH);
-    ctx.fillStyle = open ? getSelectedSkin().light : "#ffffff";
-    ctx.fillRect(rect.x + 5, rect.y + 4, rect.w - 10, 1);
-    drawBitmapText(label, rect.x + 8, rect.y + 3, .34, "left", "#59666b");
-    const textScale = Math.min(.54, (rect.w - 28) / Math.max(1, measureBitmapText(value, 1)));
-    drawBitmapText(value, rect.x + 8, rect.y + 12, textScale, "left", "#26363d");
+    drawBitmapText(label, rect.x + 8, rect.y + 2, .31, "left", "#59666b");
+    const isLevel = key === "level" && polish.leaderboardLevel !== "any";
+    if (isLevel) drawLevelUnlockIcon(polish.leaderboardLevel, rect.x + 7, rect.y + 10, getSelectedSkin(), .47);
+    const textScale = Math.min(.54, (rect.w - 33) / Math.max(1, measureBitmapText(value, 1)));
+    drawBitmapText(value, rect.x + (isLevel ? 22 : 8), rect.y + 12, textScale, "left", "#26363d");
     ctx.fillStyle = "#26363d";
     const caretY = rect.y + Math.round(rect.h / 2) + 1;
     ctx.fillRect(rect.x + rect.w - 13, caretY - 2, 7, 2);
@@ -27889,7 +28088,8 @@ window.RibbitRaceTutorialEngine = Object.freeze({
         const rect = { x, y:y + index * h, w, h };
         ctx.fillStyle = COLORS.ink; ctx.fillRect(rect.x, rect.y, rect.w, rect.h);
         ctx.fillStyle = entry === polish.leaderboardLevel ? skin.belly : (index % 2 ? "#dce3e5" : "#ffffff"); ctx.fillRect(rect.x + 2, rect.y + 1, rect.w - 4, rect.h - 2);
-        drawBitmapText(entry === "any" ? "ANY LEVEL" : entry.toUpperCase(), rect.x + 7, rect.y + 5, .43, "left", "#26363d");
+        if (entry !== "any") drawLevelUnlockIcon(entry, rect.x+7, rect.y+3, skin, .44);
+        drawBitmapText(entry === "any" ? "ANY LEVEL" : entry.toUpperCase(), rect.x + (entry === "any" ? 7 : 25), rect.y + 6, .43, "left", "#26363d");
         polish.leaderboardHitRects[`level:${entry}`] = rect;
       });
     }
@@ -27899,54 +28099,58 @@ window.RibbitRaceTutorialEngine = Object.freeze({
     const row = polish.leaderboardStatsRow;
     if (!row) return;
     const skin = leaderboardFrogPalette(row);
-    const rect = { x: 84, y: 39, w: 312, h: 182 };
-    const close = { x: rect.x + rect.w - 24, y: rect.y + 10, w: 14, h: 14 };
-    const back = { x: rect.x + 102, y: rect.y + rect.h - 24, w: 108, h: 16 };
-    polish.leaderboardStatsHitRects = { panel:rect, close, back };
-    ctx.fillStyle = "rgba(6,16,21,0.45)";
-    ctx.fillRect(0, 0, W, H);
-    ctx.fillStyle = "rgba(12,26,33,0.18)";
-    ctx.fillRect(rect.x + 4, rect.y + 6, rect.w, rect.h);
-    ctx.fillStyle = COLORS.ink;
-    ctx.fillRect(rect.x + 3, rect.y, rect.w - 6, rect.h);
-    ctx.fillRect(rect.x, rect.y + 3, rect.w, rect.h - 6);
-    ctx.fillStyle = "#f7fdff";
-    ctx.fillRect(rect.x + 6, rect.y + 3, rect.w - 12, rect.h - 6);
-    ctx.fillRect(rect.x + 3, rect.y + 6, rect.w - 6, rect.h - 12);
-    ctx.fillStyle = skin.dark;
-    ctx.fillRect(rect.x + 10, rect.y + 9, rect.w - 20, 24);
-    ctx.fillStyle = skin.mid;
-    ctx.fillRect(rect.x + 12, rect.y + 11, rect.w - 24, 20);
-    ctx.fillStyle = skin.light;
-    ctx.fillRect(rect.x + 15, rect.y + 13, rect.w - 30, 3);
-    drawBitmapText("PLAYER STATS", rect.x + rect.w / 2, rect.y + 15, 1.02, "center", COLORS.white, skin.dark);
-    drawBitmapText(String(row.name || "FROG").toUpperCase(), rect.x + 20, rect.y + 42, .76, "left", "#26363d");
-    drawMiniFrogSwatchFacing(rect.x + rect.w - 42, rect.y + 40, skin, .62, 1);
-    ctx.fillStyle = "rgba(25,43,52,.16)";
-    ctx.fillRect(rect.x + 20, rect.y + 54, rect.w - 40, 92);
-    const stats = buildLeaderboardStatsRows(row);
-    stats.forEach(([label, value], index) => {
-      const y = rect.y + 59 + index * 11;
-      if (index % 2 === 1) {
-        ctx.fillStyle = "rgba(255,255,255,.32)";
-        ctx.fillRect(rect.x + 22, y - 1, rect.w - 44, 11);
-      }
-      drawBitmapText(label, rect.x + 28, y + 1, .42, "left", "#59666b");
-      const valueScale = Math.min(.42, 118 / Math.max(1, measureBitmapText(String(value).toUpperCase(), 1)));
-      drawBitmapText(String(value).toUpperCase(), rect.x + rect.w - 28, y + 1, valueScale, "right", "#26363d");
+    const panel = { x:20, y:7, w:440, h:256 };
+    const close = { x:432, y:18, w:20, h:20 };
+    const back = STATS_UI.backButton;
+    const prev = STATS_UI.pagePrevButton, next = STATS_UI.pageNextButton;
+    polish.leaderboardStatsHitRects = { panel, close, back, prev, next };
+    ctx.fillStyle="rgba(8,25,33,.66)";ctx.fillRect(0,0,W,H);
+    ctx.fillStyle="rgba(12,26,33,.22)";ctx.fillRect(panel.x+6,panel.y+7,panel.w-6,panel.h-7);
+    ctx.fillStyle=COLORS.ink;
+    ctx.fillRect(panel.x+4,panel.y,panel.w-8,panel.h);
+    ctx.fillRect(panel.x,panel.y+4,panel.w,panel.h-8);
+    ctx.fillStyle="#f7fdff";
+    ctx.fillRect(panel.x+7,panel.y+4,panel.w-14,panel.h-8);
+    ctx.fillRect(panel.x+4,panel.y+8,panel.w-8,panel.h-16);
+    ctx.fillStyle=skin.dark;ctx.fillRect(panel.x+12,panel.y+9,panel.w-24,36);
+    ctx.fillStyle=skin.mid;ctx.fillRect(panel.x+14,panel.y+11,panel.w-28,31);
+    ctx.fillStyle=skin.light;ctx.fillRect(panel.x+17,panel.y+13,panel.w-34,4);
+    drawBitmapText("PLAYER STATS",W/2,panel.y+18,2,"center",COLORS.white,skin.dark);
+    ctx.fillStyle=COLORS.ink;ctx.fillRect(close.x,close.y,close.w,close.h);
+    ctx.fillStyle="#f7fdff";ctx.fillRect(close.x+2,close.y+2,close.w-4,close.h-4);
+    ctx.fillStyle="#48555a";
+    for(let i=0;i<8;i++){ctx.fillRect(close.x+5+i,close.y+5+i,2,2);ctx.fillRect(close.x+12-i,close.y+5+i,2,2);}
+    const name = String(row.name || "FROG").toUpperCase();
+    const nameScale = Math.min(.75,200 / Math.max(1,measureBitmapText(name,1)));
+    drawBitmapText(name, STATS_UI.startX+4, panel.y+54, nameScale,"left","#34484f");
+    drawMiniFrogSwatchFacing(410,panel.y+50,skin,.72,1);
+    const allMetrics=leaderboardPlayerMetrics(row);
+    const pageCount=Math.max(1,Math.ceil(allMetrics.length/STATS_UI.itemsPerPage));
+    const page=Math.max(0,Math.min(polish.leaderboardStatsPage,pageCount-1));
+    polish.leaderboardStatsPage=page;
+    const metrics=allMetrics.slice(page*STATS_UI.itemsPerPage,(page+1)*STATS_UI.itemsPerPage);
+    metrics.forEach((metric,index)=>{
+      const column=index%STATS_UI.columns, rowIndex=Math.floor(index/STATS_UI.columns);
+      const x=STATS_UI.startX+column*(STATS_UI.cardW+STATS_UI.gapX),y=STATS_UI.startY+rowIndex*(STATS_UI.cardH+STATS_UI.gapY);
+      ctx.fillStyle="rgba(25,43,52,.22)";ctx.fillRect(x+2,y+2,STATS_UI.cardW,STATS_UI.cardH);
+      ctx.fillStyle="#8fa6ac";ctx.fillRect(x,y,STATS_UI.cardW,STATS_UI.cardH);
+      ctx.fillStyle="#f7fdff";ctx.fillRect(x+2,y+2,STATS_UI.cardW-4,STATS_UI.cardH-4);
+      ctx.fillStyle=mixHexColors(skin.belly,"#ffffff",.25);ctx.fillRect(x+5,y+4,STATS_UI.cardW-10,3);
+      drawStatsMetricIcon(metric.icon,x+30,y+STATS_UI.cardH/2,skin);
+      drawBitmapText(metric.label,x+120,y+7,.82,"center","#59666b");
+      drawBitmapText(metric.value,x+120,y+16,.90,"center",skin.dark);
     });
-    ctx.fillStyle = "rgba(25,43,52,.22)"; ctx.fillRect(back.x + 2, back.y + 2, back.w, back.h);
-    ctx.fillStyle = COLORS.ink; ctx.fillRect(back.x, back.y, back.w, back.h);
-    ctx.fillStyle = "#f7fdff"; ctx.fillRect(back.x + 2, back.y + 2, back.w - 4, back.h - 4);
-    drawBitmapText("BACK", back.x + back.w / 2, back.y + 4, .60, "center", "#48555a");
-    ctx.fillStyle = "rgba(25,43,52,.22)"; ctx.fillRect(close.x + 1, close.y + 1, close.w, close.h);
-    ctx.fillStyle = COLORS.ink; ctx.fillRect(close.x, close.y, close.w, close.h);
-    ctx.fillStyle = "#f7fdff"; ctx.fillRect(close.x + 2, close.y + 2, close.w - 4, close.h - 4);
-    ctx.fillStyle = "#48555a";
-    ctx.fillRect(close.x + 4, close.y + 4, 6, 2);
-    ctx.fillRect(close.x + 4, close.y + 8, 6, 2);
-    ctx.fillRect(close.x + 4, close.y + 5, 2, 4);
-    ctx.fillRect(close.x + 8, close.y + 5, 2, 4);
+    if(pageCount>1){
+      [{rect:prev,dir:-1},{rect:next,dir:1}].forEach(({rect,dir})=>{
+        ctx.fillStyle="#9aa9ae";ctx.fillRect(rect.x,rect.y,rect.w,rect.h);
+        ctx.fillStyle="#f7fdff";ctx.fillRect(rect.x+2,rect.y+2,rect.w-4,rect.h-4);
+        drawPagerArrowIcon(rect,dir,"#48555a");
+      });
+      drawBitmapText(`${page+1}/${pageCount}`,STATS_UI.pagePrevButton.x-8,STATS_UI.pagePrevButton.y+5,.75,"right","#617177");
+    }
+    ctx.fillStyle="#93a2a7";ctx.fillRect(back.x,back.y,back.w,back.h);
+    ctx.fillStyle="#f7fdff";ctx.fillRect(back.x+2,back.y+2,back.w-4,back.h-4);
+    drawBitmapText("BACK",back.x+back.w/2,back.y+6,.92,"center","#48555a");
   }
   async function playLeaderboardRecord(row) {
     if (!row) return false;
@@ -28716,6 +28920,10 @@ window.RibbitRaceTutorialEngine = Object.freeze({
         const statsHits = polish.leaderboardStatsHitRects || {};
         if (pointIn(point, statsHits.close) || pointIn(point, statsHits.back) || !pointIn(point, statsHits.panel)) {
           closeLeaderboardStats();
+        } else if(pointIn(point,statsHits.prev)) {
+          polish.leaderboardStatsPage=(polish.leaderboardStatsPage+1)%2;
+        } else if(pointIn(point,statsHits.next)) {
+          polish.leaderboardStatsPage=(polish.leaderboardStatsPage+1)%2;
         }
         return;
       }
@@ -28756,8 +28964,11 @@ window.RibbitRaceTutorialEngine = Object.freeze({
       if (name) { openLeaderboardStats(name.row); return; }
       const replay = polish.leaderboardReplayRects.find((item) => pointIn(point, item));
       if (replay) {
-        if (replay.row.replayId) playReplayById(replay.row.replayId, `${replay.row.name} • ${replay.row.metric}`);
-        else playLeaderboardRecord(replay.row);
+        if (replay.row.serverReplayAvailable || String(replay.row.replayId).startsWith("server:")) {
+          playLeaderboardRecord(replay.row);
+        } else if (replay.row.replayId) {
+          playReplayById(replay.row.replayId, `${replay.row.name} • ${replay.row.metric}`);
+        }
         return;
       }
       polish.leaderboardDropdown = "";
@@ -28810,21 +29021,18 @@ window.RibbitRaceTutorialEngine = Object.freeze({
       return;
     }
     if (game.state === "rrFlashcards") {
-      const handled = ["ArrowLeft","ArrowRight","ArrowUp","ArrowDown","KeyA","KeyD","Space","Enter","NumpadEnter","Escape","Backspace"].includes(event.code);
-      if (handled) {
-        event.preventDefault();
-        event.stopImmediatePropagation();
-        if (event.repeat && !["ArrowLeft","ArrowRight","KeyA","KeyD"].includes(event.code)) return;
-        if (event.code === "Backspace" || event.code === "Escape") {
-          game.state = "rrProfileMenu";
-          tone(330, .04, .009, -30);
-        } else if (event.code === "ArrowLeft" || event.code === "KeyA") {
-          activateFlashcardButton(0);
-        } else if (event.code === "ArrowRight" || event.code === "KeyD") {
-          activateFlashcardButton(2);
-        } else if (["Space","Enter","NumpadEnter"].includes(event.code)) {
-          activateFlashcardButton(1);
-        }
+      const keys=["ArrowLeft","ArrowRight","ArrowUp","ArrowDown","KeyA","KeyD","KeyS","Slash","Space","Enter","NumpadEnter","KeyH","KeyV","KeyR","Escape","Backspace"];
+      if(keys.includes(event.code)){
+        event.preventDefault();event.stopImmediatePropagation();
+        if(event.repeat&&!(["ArrowLeft","ArrowRight","KeyA","KeyD"].includes(event.code)))return;
+        if(["Escape","Backspace"].includes(event.code))activateFlashcardButton(FLASHCARD_BUTTON_ORDER.findIndex(b=>b.id==="back"));
+        else if(["ArrowLeft","KeyA"].includes(event.code))activateFlashcardButton(0);
+        else if(["ArrowRight","KeyD"].includes(event.code))activateFlashcardButton(2);
+        else if(["Space","Enter","NumpadEnter"].includes(event.code))activateFlashcardButton(1);
+        else if(["KeyS","Slash"].includes(event.code))activateFlashcardButton(FLASHCARD_BUTTON_ORDER.findIndex(b=>b.id==="star"));
+        else if(event.code==="KeyH")activateFlashcardButton(FLASHCARD_BUTTON_ORDER.findIndex(b=>b.id==="shuffle"));
+        else if(event.code==="KeyV")activateFlashcardButton(FLASHCARD_BUTTON_ORDER.findIndex(b=>b.id==="starred"));
+        else if(event.code==="KeyR"&&polish.flashcardComplete)rebuildFlashcardDeck(polish.flashcardOnlyStarred,polish.flashcardShuffled);
       }
       return;
     }
@@ -28845,7 +29053,8 @@ window.RibbitRaceTutorialEngine = Object.freeze({
       if (["Escape","Backspace","ArrowLeft","ArrowRight","KeyA","KeyD"].includes(event.code)) {
         event.preventDefault(); event.stopImmediatePropagation();
         if (polish.leaderboardStatsRow) {
-          closeLeaderboardStats();
+          if(["ArrowLeft","ArrowRight","KeyA","KeyD"].includes(event.code))polish.leaderboardStatsPage=(polish.leaderboardStatsPage+1)%2;
+          else closeLeaderboardStats();
         } else if (event.code === "Escape" || event.code === "Backspace") closeLeaderboard();
         else if (["ArrowLeft","KeyA"].includes(event.code)) polish.leaderboardPage=(polish.leaderboardPage-1+pageCount)%pageCount;
         else polish.leaderboardPage=(polish.leaderboardPage+1)%pageCount;

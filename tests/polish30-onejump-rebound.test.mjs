@@ -47,7 +47,7 @@ test('Rebound-and-catch player turn is horizontally mirrored to the left',()=>{
   assert.equal(ctx.flies[0].x,480-oldFlyX);
   assert.equal(player.dir,1);
   assert.equal(ember.dir,-1);
-  assert.equal(ctx.flies[0].y,118);
+  assert.equal(ctx.flies[0].y,78);
 });
 
 test('Dinner-steal player rebound points toward left fly, not away from it',()=>{
@@ -140,8 +140,8 @@ test('Real same-jump rebound catch triggers zoom for both Ember and the player',
 test('Demonstrations cannot use a second jump or a timer-only completion',()=>{
   const motion=between(source,'function beginPvpDemoMotion','function startPvpDemonstration');
   const dinner=between(motion,'case "pvpDemoDinnerSteal"','default:');
-  assert.match(dinner,/scriptPvpChargedJump\(0, \.82, 1, 0\)/);
-  assert.match(dinner,/scriptPvpChargedJump\(1, \.82, -1, 100\)/);
+  assert.match(dinner,/scriptPvpChargedJump\(0, 1, 1, 0\)/);
+  assert.match(dinner,/scriptPvpChargedJump\(1, 1, -1, 0\)/);
   assert.equal((dinner.match(/scriptPvpChargedJump/g)||[]).length,2);
   const follow=between(source,'function updatePvpDemonstration','function startPvpFinalMatch');
   assert.doesNotMatch(follow,/setup === "pvpDemoDinnerSteal" && tutorial\.pvpReboundCount[^\n]*[\s\S]{0,200}scriptPvpChargedJump/);

@@ -325,7 +325,7 @@ function tutorialFlyKey(currentFly) {
 function collectVisibleTutorialFlyKeys() {
   return new Set(
     flies
-      .filter((currentFly) => currentFly?.tutorialAuthored && currentFly.tutorialArmed !== false)
+      .filter((currentFly) => currentFly?.tutorialAuthored && currentFly.state === "active" && currentFly.tutorialArmed !== false)
       .map(tutorialFlyKey)
       .filter(Boolean)
   );

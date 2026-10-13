@@ -36,8 +36,8 @@ test("PIN hashing stays within Cloudflare PBKDF2 limit and matches 100000 rounds
 });
 
 test("Friends release exposes the new build marker",()=>{
-  assert.equal(BUILD,"2026.10.12-friends-polish-33");
-  assert.match(browserSource,/2026\.10\.12\-friends\-polish\-33/);
+  assert.equal(BUILD,"2026.10.12-friends-polish-35");
+  assert.match(browserSource,/2026\.10\.12\-friends\-polish\-35/);
 });
 
 test("server vocabulary is exactly the requested 15 entries",()=>{
@@ -135,7 +135,7 @@ test("Quickplay partner connection check is capped at 30 seconds",()=>{
 
 test("queued device-check status is centered inside Play While Waiting",()=>{
   assert.match(html,/minimize:\{x:115,y:178,w:250,h:28\}/);
-  assert.match(html,/cancel:\{x:185,y:232,w:110,h:22\}/);
+  assert.match(html,/cancel:\{x:184,y:231,w:112,h:23\}/);
   assert.match(html,/DEVICE CHECK PASSED - PARTNER LINK NOT YET TESTED/);
   assert.match(html,/const groupTop=y\+\(h-\(mainHeight\+gap\+subHeight\)\)\/2;/);
   assert.match(html,/drawBitmapText\(spec\.subLabel,\(left\+right\)\/2,groupTop\+mainHeight\+gap,subScale/);
@@ -323,8 +323,8 @@ test("Friends first-place notice is a world-record notice with hover details",()
   assert.doesNotMatch(indexHtml,/MIGRATE OLD PRIVATE-KEY ACCOUNT/);
 });
 
-test("version 1.7.21 remains in settings and the How To Play book footer",()=>{
-  assert.match(html,/const RIBBIT_DISPLAY_VERSION = "VERSION 1\.7\.21"/);
+test("version 1.7.23 remains in settings and the How To Play book footer",()=>{
+  assert.match(html,/const RIBBIT_DISPLAY_VERSION = "VERSION 1\.7\.23"/);
   assert.match(html,/drawVersionLabel\(panel\.x \+ panel\.w \/ 2, panel\.y \+ panel\.h - 14, "center"/);
   assert.doesNotMatch(html,/drawVersionLabel\(399, 218, "right"\)/);
   assert.match(html,/function getPauseBookTheme/);

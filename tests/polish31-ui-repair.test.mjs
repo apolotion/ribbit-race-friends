@@ -47,20 +47,20 @@ test('Profile menu mouse fallback stays within canvas, so blurred overlay cannot
 
 test('Flash cards never print answer on front or outside the bounded card',()=>{
  const flash=section(polish,'function drawFlashcardsMenu()','function drawDeviceModeIcon(');
- assert.match(flash,/measureBitmapText\(value, 1\)/);
+ assert.match(flash,/measureBitmapText\(value,1\)/);
  assert.match(flash,/ctx\.clip\(\)/);
- assert.match(flash,/SPACE TO FLIP/);
+ assert.match(flash,/FLIP CARD/);
  assert.doesNotMatch(flash,/OTHER SIDE:/);
  assert.doesNotMatch(flash,/ARROWS TO BROWSE/);
 });
 
 test('Flash controls reserve left/right for browsing, Space for flip and Backspace for profile',()=>{
- const key=section(polish,'if \(game.state === "rrFlashcards"\) {\n      const handled', 'if \(game.state === "rrDeviceMenu"\) {');
- assert.match(key,/event\.code === "ArrowLeft"/);
- assert.match(key,/event\.code === "ArrowRight"/);
+ const key=polish.slice(polish.indexOf('window.addEventListener("keydown"'));
+ assert.match(key,/"ArrowLeft","ArrowRight"/);
+ assert.match(key,/activateFlashcardButton\(2\)/);
  assert.match(key,/"Space","Enter","NumpadEnter"/);
- assert.match(key,/event\.code === "Backspace"/);
- assert.match(key,/Up\/down arrows are intentionally inert/);
+ assert.match(key,/["Escape","Backspace"]/);
+ assert.match(key,/Up\/Down deliberately do nothing/);
  assert.doesNotMatch(key,/flashcardSelection\s*=/);
 });
 

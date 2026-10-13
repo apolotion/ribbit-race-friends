@@ -19,7 +19,7 @@ function block(source, start, end) {
 
 test("Polish 21 cache marker is wired through the Worker, client, and asset URLs", () => {
   for (const source of [tutorial, common, index, read("public/scripts/cloud-client.js")]) {
-    assert.match(source, /2026\.10\.12-friends-polish-33/);
+    assert.match(source, /2026\.10\.12-friends-polish-35/);
   }
 });
 
@@ -51,10 +51,9 @@ test("adjacent icon groups keep breathing room and Tutorial hover suppresses Ran
 
 test("Achievements leaderboard medal uses custom gold pixel art inside the inset button", () => {
   const medal = block(tutorial, "function drawMiniMedalButton", "const LEADERBOARD_METRICS");
-  assert.match(medal, /#b12d0d/);
-  assert.match(medal, /#ff5326/);
-  assert.match(medal, /#ffd91d/);
-  assert.match(medal, /#fff2ba/);
+  assert.match(medal, /leaderboardMedalSprite\.naturalWidth/);
+  assert.match(medal, /ctx\.drawImage\(leaderboardMedalSprite/);
+  assert.match(tutorial, /data:image\/png;base64/);
 });
 
 test("Undo and Redo arrows stay inside their boxes and no longer show helper bubbles", () => {
@@ -108,7 +107,7 @@ test("high and low drop-bonk layouts use mirrored clear lanes and correct facing
 test("scripted player jumps and poof transitions cannot be canceled by live input", () => {
   assert.match(tutorial, /tutorial\.pvpPlayerScriptLocked/);
   assert.match(tutorial, /tutorialBlocksLiveInput\(\)[\s\S]{0,380}tutorial\.pvpPlayerScriptLocked/);
-  assert.match(tutorial, /pressPvpButton = function\(index[\s\S]{0,100}if \(tutorialBlocksLiveInput\(\)\) return/);
-  assert.match(tutorial, /releasePvpButton = function\(index[\s\S]{0,100}if \(tutorialBlocksLiveInput\(\)\) return/);
+  assert.match(tutorial, /pressPvpButton = function\(index[\s\S]{0,450}if \(!finalCpu && tutorialBlocksLiveInput\(\)\) return/);
+  assert.match(tutorial, /releasePvpButton = function\(index[\s\S]{0,450}if \(!finalCpu && tutorialBlocksLiveInput\(\)\) return/);
   assert.match(tutorial, /tutorial\.pvpFrogsHidden/);
 });

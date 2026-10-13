@@ -21,7 +21,7 @@ function block(source, start, end) {
 
 test("Polish 16 cache marker is wired", () => {
   for (const source of [tutorial, read("src/common.js"), read("public/index.html"), read("public/scripts/cloud-client.js")]) {
-    assert.match(source, /2026\.10\.12-friends-polish-33/);
+    assert.match(source, /2026\.10\.12-friends-polish-35/);
   }
 });
 
@@ -104,12 +104,12 @@ test("single buffer start is five pixels left and closing rivalry line is presen
   assert.match(tutorial, /If you really want a challenge, come face me in Versus\. I'll be waiting!/);
 });
 
-test("time-based hats unlock at the win boundary and appear as victory cards", () => {
+test("time-based hats unlock at the win boundary but do not show victory cards", () => {
   assert.match(tutorial, /originalCompleteWinForHatChallenges/);
   assert.match(tutorial, /snapshot\.level === "park" && snapshot\.skin === "forest"[\s\S]{0,120}unlockHatFromLiveProgress\("straw-hat"/);
   assert.match(tutorial, /window\.dispatchEvent\(new CustomEvent\("ribbit-hat-unlocked"/);
-  assert.match(input, /roundUnlockedHatIds/);
-  assert.match(input, /card\.type === "hat"[\s\S]{0,300}drawPixelFrogHat/);
+  assert.doesNotMatch(input, /items\.push\(\{ type: "hat"/);
+  assert.match(read("client/game/40-ui-navigation-audio.js"), /if \(entry\?\.type === "hat"\) return/);
   assert.match(pageHats, /finished\(d=\{\}\)\{if\(!this\.progress\)this\.initialize\(\)/);
 });
 

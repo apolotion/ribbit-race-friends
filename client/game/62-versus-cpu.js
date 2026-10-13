@@ -465,6 +465,11 @@
       game.pvpCpuDecisionTimer = Math.max(0, (game.pvpCpuDecisionTimer || 0) - dt);
       if (cpu.charging) {
         cpu.dir = cpu.chargeFacingDir >= 0 ? 1 : -1;
+        // A skipped/trap decision can clear inputHeld without ending the charge.
+        // The next release then silently fails and leaves the CPU charging
+        // forever. Reconnect the charge to its virtual held key so it can
+        // always release into a real launch, including the tutorial finale.
+        if (!cpu.inputHeld) cpu.inputHeld = true;
       }
       if (!cpu.grounded) return;
 
@@ -525,7 +530,10 @@
           }
         } else {
           cpu.cpuHoldChargeTrap = false;
-          cpu.inputHeld = false;
+          // A plan change must release a started charge, never abandon it in
+          // the charging state without a matching virtual keyup.
+          if (cpu.charging) releasePvpButton(cpu.index, "cpu");
+          else cpu.inputHeld = false;
         }
         return;
       }

@@ -232,13 +232,22 @@ export class FriendsHub extends DurableObject {
     }
     if(method==='apiGetLeaderboard'){
      const rows=this.sql.exec('SELECT id,username,name,savedata,summary,updated FROM users ORDER BY updated DESC LIMIT 500').toArray();
+     const replayRows=this.sql.exec('SELECT uid,level,metric FROM record_replays').toArray();
+     const replaysByUser=new Map();
+     for(const replay of replayRows){const byLevel=replaysByUser.get(replay.uid)||{};
+       const levelRecord=byLevel[replay.level]||(byLevel[replay.level]={});
+       levelRecord[replay.metric]=true;replaysByUser.set(replay.uid,byLevel);}
      return {ok:true,currentClassPeriod:'friends',entries:rows.map(u=>{
       const summary=JSON.parse(u.summary),saved=parseSaveJson_(u.savedata);
+      const parsedStats=parseSaveJson_(saved.ribbitRaceStatsV1);
+      const publicKeys=['distanceJumpedPx','perfectJumps','maxFliesOneJump','totalWins','longestAirTime','wrongFlies','wallBounces','pvpBonksDealt','pvpTimesBonked','pvpBounces','pvpMatchWins'];
+      const stats=Object.fromEntries(publicKeys.map(k=>[k,Number.isFinite(Number(parsedStats[k]))?Math.max(0,Number(parsedStats[k])):0]));
+      const replayAvailable=replaysByUser.get(u.id)||{};
       const skinId=String(saved.ribbitRaceFrogSkin||'azure').toLowerCase();
       let appearance=null;
       const customMatch=/^custom([1-3])$/.exec(skinId);
       if(customMatch){try{const slots=JSON.parse(saved.ribbitRaceCustomFrogSlots||'[]');appearance=Array.isArray(slots)?slots[Number(customMatch[1])-1]||null:null;}catch(_){}}
-      return {uid:u.id,username:u.username,name:u.name,classPeriod:'friends',isCurrent:u.id===auth.uid,totalFlies:summary.totalFlies,pvpMatchWins:summary.pvpMatchWins,records:summary.levelRecords,lastUpdated:new Date(u.updated).toISOString(),skinId,appearance};
+      return {uid:u.id,username:u.username,name:u.name,classPeriod:'friends',isCurrent:u.id===auth.uid,totalFlies:summary.totalFlies,totalJumps:summary.totalJumps,pvpMatchWins:summary.pvpMatchWins,stats,records:summary.levelRecords,replayAvailable,lastUpdated:new Date(u.updated).toISOString(),skinId,appearance};
      })};
     }
     if(['apiOnlineCreateRoom','apiOnlineJoinRoom','apiQuickplayEnter'].includes(method)&&!this.limit('rooms:'+auth.uid,20,60))return error('RATE_LIMIT','Too many room requests. Wait a minute.');

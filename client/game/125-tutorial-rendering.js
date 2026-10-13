@@ -557,6 +557,9 @@ function drawEmberDialogueLine(fullLine, visibleText, x, y, scale, spokenLine = 
       ? Math.min(visible.length, orangeRange[1])
       : Math.min(visible.length, ...ranges.filter(([start]) => start > cursor).map(([start]) => start));
     const chunk = visible.slice(cursor,nextBoundary);
+    // The accent-color boundary after "my catch" lands directly against the
+    // white question mark. Give punctuation one pixel of breathing room.
+    if (chunk.startsWith("?") && cursor > 0) drawX += Math.max(1, Math.round(scale * 2));
     drawBitmapText(chunk,drawX,y,scale,"left",orangeRange ? "#ff9b45" : COLORS.white);
     drawX += measureBitmapText(chunk,scale);
     cursor = nextBoundary;
@@ -1071,6 +1074,18 @@ function applyTutorialChapterPreview() {
   restoreStepSequence();
   clearHeldInput();
   openDialogue();
+  // This chapter's frogs were already rebuilt at their authored positions.
+  // Skipping again through a poof would make them vanish and delay the
+  // first sentence despite nothing moving.
+  tutorial.scenePositionedDuringDialogue = true;
+  tutorial.dialogueLineStartedAt = performance.now();
+  tutorial.dialoguePreLineDelayUntil = tutorial.dialogueLineStartedAt;
+  tutorial.dialogueHeldLineText = "";
+  tutorial.dialogueHeldPortraitKey = "";
+  tutorial.dialogueHeldUntil = 0;
+  tutorial.dialogueTalkCharCount = 0;
+  tutorial.dialogueTalkBlipAt = performance.now();
+  tutorial.smokeClouds.length = 0;
   return true;
 }
 

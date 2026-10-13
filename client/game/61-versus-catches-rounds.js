@@ -324,7 +324,8 @@
       }
       const title = game.pvpCriticalCatchKind === "final" ? "FINAL CATCH!"
         : game.pvpCriticalCatchKind === "clutch" ? "CLUTCH CATCH!" : "CLOSE CATCH!";
-      if (title !== "FINAL CATCH!" || !window.RibbitTutorialShouldHideFinalCatchTitle?.()) {
+      const silentTrainingCinematic = window.RibbitTutorialShouldHidePvpCatchTitle?.() === true;
+      if (!silentTrainingCinematic && (title !== "FINAL CATCH!" || !window.RibbitTutorialShouldHideFinalCatchTitle?.())) {
         ctx.globalAlpha = holdFade;
         ctx.fillStyle = "rgba(38,54,61,0.78)";
         ctx.fillRect(W / 2 - 74, 29, 148, 18);

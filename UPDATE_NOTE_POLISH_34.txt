@@ -1,0 +1,17 @@
+RIBBIT RACE FRIENDS — POLISH 34 / VERSION 1.7.22
+Build: 2026.10.12-friends-polish-34
+
+Improvements:
+* Fix late/blank text after manual tutorial chapter navigation and skip redundant poofs when frogs are already in the authored starting poses.
+* Grounded rebound demonstration: P1 stays centered on lower-middle platform; Ember rebounds from the right, then catches a matching fly near top-platform height in the same jump.
+* Local regular Versus uses the same four-fly capacity and replenishment schedule as Solo; keeps authored lessons and authoritative online matches isolated.
+* Center VOLUME label in the pause controls.
+* Successful airborne rebound+catch practices and demonstrations wait for the catching frog to land and the cinematic to finish before showing Ember's next dialogue.
+* Both frogs use 85%-charged jumps for the rebound interception demonstration; fly is high to avoid accidental immediate catching.
+* Improve question-mark/space handling in Ember's dialogue and hide CLOSE CATCH titles in authored tutorial slow-motion catches.
+* Chapter 15 dinner-steal fly appears with the frogs' poof, stays visibly present on a failed attempt if it was not eaten, and returns only when eaten; simultaneous 100%-charge demo jumps make the one-jump rebound and catch physically attainable.
+* Final Level-5 Ember CPU no longer receives scripted practice charge-clearing or silently drops its virtual key-release. Actual jumps and four simultaneous flies verified in Chromium.
+
+Deployment:
+* The attached single-file HTML is an OFFLINE build. Cloud login, online matchmaking, live leaderboard data and remote replay APIs require the normal deployed Friends project.
+* This does not alter the Worker, database schema, or external project configuration.

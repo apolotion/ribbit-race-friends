@@ -1,0 +1,31 @@
+RIBBIT RACE FRIENDS — POLISH 35 / VERSION 1.7.23
+Build: 2026.10.12-friends-polish-35
+
+This release follows Polish 34 and implements the accumulated achievements, leaderboard, account, flash-card and online-menu changes.
+
+1. Leaderboard medal: compact 28x28, gold laurel medal with red ribbons, centered in its 28x28 button. Ten pixel-art medal options are provided in public/icons/medal-options/ and also at the ZIP top level. A preview contact sheet is included. The default choice is public/icons/leaderboard-medal.png.
+2. Clicking a leaderboard name opens a two-page Player Stats view, with the same metric cards and icons used in the normal Player Stats menu and a working top-right X.
+3. Leaderboard Rank By and Level dropdowns use a smaller, single-color top header. Level choices use their own level icon.
+4. Leaderboard replay cameras are derived from the deployed server's actual saved record_replays. New uploaded PB videos trigger a refresh. Cameras open saved record videos, and clicking names does not open replays. Existing historical PBs without a saved recording cannot be retroactively assigned a video.
+5. Account & Language left-side button/hitbox moves right one pixel. Five menu options have distinct compact icons, color strips and the online-menu style.
+6. Flash cards: animated card flip, frog secondary-color reverse, shuffled deck, persistent starred terms (S or /), English front whenever revisiting a card, concise centered controls with on-screen key labels, end-of-deck Restart/View Starred actions.
+7. Hat unlock progress continues silently. Hat unlocks do not display menu or in-game toasts.
+8. Solo/Versus tutorial book buttons reuse the pause-menu book icon sprite.
+9. Frog Tags: opponent frog icon, last-played date, latest locally saved replay camera on the right, arrows at BACK button height, and a consistent BACK button at the same coordinates as the Online menu. The Quickplay BACK control now matches the Online menu button size and position.
+
+Packaging:
+- Full hosted project (Worker API, browser bundle, all source modules and tests).
+- Polish 35 standalone offline HTML included for offline play.
+- 10 transparent 28x28 medal PNGs + preview contact sheet.
+
+Important deployment requirements:
+- Deploy the COMPLETE Cloudflare Worker project, not just index.html or the public/ directory. Server-side stats and replay camera availability are provided by the Worker update.
+- Cloud login, online matchmaking, online records and remote replay playback require a running hosted Friends deployment; the standalone HTML cannot provide those services by itself.
+- Previously completed records without stored videos do not gain retroactive replays. Videos must be successfully captured/uploaded while the new Worker is live.
+- No database migration is required: record_replays uses the already-existing table.
+- Hosted/real-user production online integration was not tested from this environment.
+
+Validation:
+- Source compiles, 29 modules bundled, 23 assets present.
+- 397/397 automated tests pass (including 9 Polish 35 regression tests).
+- In-memory Chromium tested Account mouse entry, flash-card shortcuts and reverse color, clicked leaderboard player Stats grid and close X with mocked API data; zero browser JavaScript errors.

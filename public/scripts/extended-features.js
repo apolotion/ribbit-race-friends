@@ -70,7 +70,9 @@
       // from uploading on the canvas-native account UI.
       const payload={level:snap.level||run.level,time:Number(snap.time)||((Date.now()-run.started)/1000),jumps:Number(snap.jumps)||0,mime:blob.type,data};
       fetch("/api/replays/submit",{method:"POST",credentials:"same-origin",headers:{"content-type":"application/json"},body:JSON.stringify(payload)})
-        .then(async response=>{if(!response.ok){let detail={};try{detail=await response.json()}catch(_){}console.warn("Replay PB upload skipped:",detail.message||response.status)}})
+        .then(async response=>{let detail={};try{detail=await response.json()}catch(_){};
+          if(response.ok&&detail.ok){window.dispatchEvent(new CustomEvent("ribbit-replay-uploaded",{detail:{level:payload.level,stored:detail.stored||[]}}));}
+          else console.warn("Replay PB upload skipped:",detail.message||response.status)})
         .catch(error=>console.warn("Replay PB upload unavailable:",error));
     }
     installLeaderboard(){
@@ -248,7 +250,7 @@
     }
     requirementLines(id){const t=(this.requirements(id).text||"Complete its hat challenge").toUpperCase();const words=t.split(/\s+/);let a="",b="";for(const word of words){if(!b&&(a+" "+word).trim().length<=29)a=(a+" "+word).trim();else b=(b+" "+word).trim();}return [a,b||"AFTER HATS UNLOCK"]}
     ids(){return [...new Set([...(bridge()?.hatIds?.()||[]),"flower","bunny-ears","crown","top-hat","party-hat","straw-hat","pirate-hat","wizard-hat","cowboy-hat"].filter(x=>x&&x!=="none"))]}
-    unlock(id){if(this.unlocked.has(id))return false;this.unlocked.add(id);setJson(this.unlockedKey,[...this.unlocked]);toast("HAT UNLOCKED",String(id).replace(/[-_]/g," ").toUpperCase(),6500);window.dispatchEvent(new CustomEvent("ribbit-hat-unlocked",{detail:{id,at:Date.now()}}));return true}
+    unlock(id){if(this.unlocked.has(id))return false;this.unlocked.add(id);setJson(this.unlockedKey,[...this.unlocked]);/* Hat unlocks must be completely silent. */window.dispatchEvent(new CustomEvent("ribbit-hat-unlocked",{detail:{id,at:Date.now()}}));return true}
     sanitizeAssignments(){for(let i=0;i<localStorage.length;i++){const key=localStorage.key(i);if(!/hat.*assign|custom.*frog.*hat/i.test(key||""))continue;let data;try{data=JSON.parse(localStorage.getItem(key))}catch(_){continue}let changed=false;const clean=x=>{if(typeof x==="string"&&x!=="none"&&!this.unlocked.has(x)){changed=true;return "none"}if(Array.isArray(x))return x.map(clean);if(x&&typeof x==="object")for(const k of Object.keys(x))x[k]=clean(x[k]);return x};data=clean(data);if(changed)setJson(key,data)}}
     unlockCustom3(){localStorage.setItem("ribbitRaceCustom3UnlockedV2","true")}
     evaluate(snap=bridge()?.snapshot?.()||{}){if(!this.progress||(this.progress.activityCount||0)<=0)return;for(const id of this.ids()){if(!this.unlocked.has(id)&&this.requirements(id,snap).ok)this.unlock(id)}this.custom3()}

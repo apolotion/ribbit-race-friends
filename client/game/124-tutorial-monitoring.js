@@ -411,6 +411,13 @@ function monitorPvp() {
   const p1 = pvpPlayers[0];
   const ember = pvpPlayers[1];
   const now = performance.now();
+  // The final round is a real Level-5 CPU match. Never run the scripted
+  // practice controller here: holdEmberStill() clears CPU charging every
+  // frame and makes her plan/sound loop forever without ever jumping.
+  if (setup === "pvpFinalMatch") {
+    if (tutorial.pvpFinalMatchStarted && game.state === "won") beginPvpTutorialEnding();
+    return;
+  }
   drivePvpPracticeCpu(setup, now);
   const playerLanded = consumePvpPlayerLanding();
   const lessonLandings = ["pvpReboundCatch", "pvpIntercept", "pvpDinnerSteal"].includes(setup)
@@ -602,7 +609,8 @@ function monitorPvp() {
 
   if (setup === "pvpReboundCatch") {
     if (tutorial.pvpTechniqueCatchQualified && tutorial.pvpTechniqueCatchPlayerIndex === 0) {
-      if (!game.pvpCriticalCatchActive && now - tutorial.pvpTechniqueCatchAt >= 350) passStep();
+      if (!game.pvpCriticalCatchActive && p1.grounded && !p1.tongue.active &&
+          now - tutorial.pvpTechniqueCatchAt >= 350) passStep();
     } else if (lessonLandings[0]) {
       // Both frogs poof only after the player's attempted jump actually landed.
       failAttempt("REBOUND OFF EMBER, THEN CATCH THE FLY IN ONE JUMP");
@@ -612,7 +620,7 @@ function monitorPvp() {
 
   if (setup === "pvpIntercept") {
     if (tutorial.pvpInterceptSeen) {
-      if (pvpTutorialSettled()) passStep();
+      if (p1.grounded && ember.grounded && pvpTutorialSettled()) passStep();
     } else if (lessonLandings[0] || lessonLandings[1]) {
       // The old grounded check fired while Ember merely CHARGED. Only a
       // completed flight without the rebound can now trigger the retry.
@@ -623,11 +631,12 @@ function monitorPvp() {
 
   if (setup === "pvpDinnerSteal") {
     if (tutorial.pvpTechniqueCatchQualified && tutorial.pvpTechniqueCatchPlayerIndex === 0) {
-      if (!game.pvpCriticalCatchActive && now - tutorial.pvpTechniqueCatchAt >= 350) passStep();
-    } else if (lessonLandings[0] || lessonLandings[1]) {
-      // A two-jump catch cannot pass. Either frog touching the ground after
-      // its launch ends this attempt and poofs BOTH frogs to their starts.
-      failAttempt("REBOUND AND STEAL THE FLY BEFORE EITHER FROG LANDS");
+      if (!game.pvpCriticalCatchActive && p1.grounded && !p1.tongue.active &&
+          now - tutorial.pvpTechniqueCatchAt >= 350) passStep();
+    } else if (tutorial.pvpReboundCount > 0 ? lessonLandings[0] : (lessonLandings[0] || lessonLandings[1])) {
+      // If the rebound occurred, the *player* gets the entire airborne arc
+      // to reach the fly before the poof retry is allowed.
+      failAttempt("REBOUND AND STEAL THE FLY BEFORE LANDING");
     }
     return;
   }

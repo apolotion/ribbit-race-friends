@@ -18,7 +18,7 @@ const index = read("public/index.html");
 
 test("polish 11 cache marker is wired through client, worker, and asset URLs", () => {
   for (const source of [tutorial, cloud, index, read("src/common.js")]) {
-    assert.match(source, /2026\.10\.12-friends-polish-33/);
+    assert.match(source, /2026\.10\.12-friends-polish-35/);
   }
 });
 
@@ -60,7 +60,7 @@ test("original online panel owns rendering and input in requested order", () => 
     assert.ok(next >= cursor, `${id} is in the requested order`);
     cursor = next;
   }
-  assert.match(online, /canvas\.style\.setProperty\('cursor',b\?'pointer':'default','important'\)/);
+  assert.match(online, /battleReplayRects\.some/);
   assert.doesNotMatch(pagePolish, /medal\.hidden = inTutorial/);
 });
 

@@ -561,7 +561,7 @@
         pendingAction:'',changingMatch:false,queued:false,background:false,peekActivity:null,suspendedActivity:null,lastLocalSkin:'',queueTimer:null};
       const QUICK_UI={quick:{x:115,y:137,w:250,h:31},
         preview:{x:151,y:91,w:178,h:72},previous:{x:159,y:111,w:22,h:27},next:{x:299,y:111,w:22,h:27},
-        enter:{x:144,y:176,w:192,h:26},cancel:{x:185,y:232,w:110,h:22},minimize:{x:115,y:178,w:250,h:28}};
+        enter:{x:144,y:176,w:192,h:26},cancel:{x:184,y:231,w:112,h:23},minimize:{x:115,y:178,w:250,h:28}};
       function isQuickplay(){return !!state.quickplay;}
       function quickRoundStage(number){return quick.roundStages[Math.max(0,Number(number)-1)]||'park';}
       function updateQuickCounts(counts){
@@ -1259,7 +1259,7 @@
         if(state.screen==='quickQueue')return [spec('quickMinimize','PLAY WHILE WAITING',QUICK_UI.minimize,'play','#7fe3ae','Keep searching while you play solo or customize frogs.','DEVICE CHECK PASSED - PARTNER LINK NOT YET TESTED'),spec('quickCancel','CANCEL',QUICK_UI.cancel,'cancel','#ef7582','Leave the queue.')];
         if(state.screen==='quickConnecting')return [spec('back','CANCEL',ENTRY.back,'back','#bac8cf','Cancel this connection.')];
         if(state.screen==='profile')return [spec('name','',PROFILE_UI.name,null,'#ef9ebc','Type a display name, up to 20 characters.'),spec('nameSave',onlineIdentity.saving?'SAVING':'SAVE',PROFILE_UI.save,'save','#7fe3ae','Save this online name without changing your Friends account.'),spec('nameBack','BACK',PROFILE_UI.back,'back','#bac8cf','Return to Online.')];
-        if(state.screen==='battleTags')return [spec('battlePrev','',{x:354,y:232,w:23,h:22},'previous','#eac65b','Previous opponents.'),spec('battleNext','',{x:384,y:232,w:23,h:22},'next','#eac65b','More opponents.'),spec('back','BACK',ENTRY.back,'back','#bac8cf','Return to Online.')];
+        if(state.screen==='battleTags')return [spec('battlePrev','',{x:354,y:231,w:23,h:23},'previous','#eac65b','Previous opponents.'),spec('battleNext','',{x:384,y:231,w:23,h:23},'next','#eac65b','More opponents.'),spec('back','BACK',{x:184,y:231,w:112,h:23},'back','#bac8cf','Return to Online.')];
         if(state.screen==='spectateList')return watch.rooms.slice(0,4).map((r,i)=>spec('watch:'+i,`${(r.names||[]).join(' VS ')} - ${r.roomCode}`,{x:65,y:88+i*24,w:348,h:21},'eye','#a68be5','Watch a delayed, read-only recording.')).concat([
           spec('watchCode','',WATCH_UI.code,null,'#a68be5','Type a five-character room ID.'),spec('watchGo','WATCH',WATCH_UI.go,'eye','#a68be5','Open this room recording.'),spec('back','BACK',WATCH_UI.back,'back','#bac8cf','Return to Online.')]);
         if(state.screen==='room'){
@@ -1347,12 +1347,55 @@
         for(const b of onlineButtons())if(b.id!=='name')drawOnlineAction(b,state.focus===b.id);
         if(onlineIdentity.tag)fitText('BATTLE TAG: '+onlineIdentity.tag,240,239,300,.63);
       }
+      const battleReplayRects=[];
+      function recentBattleArchive(opponent) {
+        const name=String(opponent||"").trim().toLowerCase();
+        const records=window.RibbitFrogTags?.against?.(opponent)||[];
+        return records.filter(r=>r&&String(r.opponent||opponent).toLowerCase()===name)
+          .sort((a,b)=>Number(b.at||b.updatedAt||0)-Number(a.at||a.updatedAt||0));
+      }
+      function recentBattleReplay(opponent) {
+        return recentBattleArchive(opponent).find(r=>typeof r.replayId==="string"&&r.replayId.length>0)||null;
+      }
+      async function playBattleReplay(row) {
+        const recent=recentBattleReplay(row?.name);
+        if(!recent)return;
+        const replayId=recent.replayId;
+        try {
+          await window.RibbitRacePlayStoredReplay?.(replayId,`${row.name} • RECENT MATCH`);
+        }catch(error){console.warn("Frog Tags replay unavailable",error);}
+      }
       function drawBattleTags(){
-        drawPanel('FROG TAGS');fitText(battleView.loading?'LOADING MATCH RECORDS':battleView.error||'YOUR QUICKPLAY HEAD-TO-HEAD RECORDS',240,67,376,.76,battleView.error?'#96334c':'#07516a');
-        const xs=[79,286,370];drawBitmapText((window.RibbitOpponentName?.() || "OPPONENT"),xs[0],88,.72,'left','#59666b');drawBitmapText('MATCHES',xs[1],88,.65,'center','#59666b');drawBitmapText('W - L',xs[2],88,.72,'center','#59666b');
+        drawPanel('FROG TAGS');
+        fitText(battleView.loading?'LOADING MATCH RECORDS':battleView.error||'YOUR QUICKPLAY HEAD-TO-HEAD RECORDS',240,67,376,.70,battleView.error?'#96334c':'#07516a');
+        drawBitmapText('OPPONENT',103,88,.57,'left','#59666b');
+        drawBitmapText('W - L',260,88,.57,'center','#59666b');
+        drawBitmapText('LAST PLAYED',337,88,.53,'center','#59666b');
+        drawBitmapText('REPLAY',395,88,.51,'center','#59666b');
+        battleReplayRects.length=0;
         const entries=battleView.entries.slice(battleView.page*6,battleView.page*6+6);
-        entries.forEach((r,i)=>{const y=102+i*18;ctx.fillStyle=i%2?'#e6f3f3':'#f0f7f8';ctx.fillRect(68,y-3,344,17);
-          fitText(r.name+(r.temporary?' *':''),80,y+1,166,.78,'#174f65','left');drawBitmapText(String(r.matches),286,y+1,.78,'center','#48555a');drawBitmapText(`${r.wins} - ${r.losses}`,370,y+1,.78,'center','#07516a');});
+        entries.forEach((r,i)=>{
+          const y=102+i*18;
+          ctx.fillStyle=i%2?'#e6f3f3':'#f0f7f8';ctx.fillRect(68,y-3,344,17);
+          const latest=recentBattleArchive(r.name)[0];
+          const appearance=latest?.opponentAppearance;
+          let palette=getPvpSkinPalette(appearance?.skinId||appearance?.id||r.skinId||'azure','azure');
+          if(appearance&&typeof appearance==='object')palette={...palette,...appearance};
+          drawMiniFrogSwatchFacing(82,y+2,palette,.49,1);
+          fitText(r.name+(r.temporary?' *':''),100,y+1,132,.69,'#174f65','left');
+          drawBitmapText(`${r.wins} - ${r.losses}`,260,y+1,.66,'center','#07516a');
+          const stamp=Number(latest?.at||r.updatedAt||0);
+          const date=stamp?new Date(stamp).toLocaleDateString('en-US',{month:'numeric',day:'numeric',year:'2-digit'}):'—';
+          drawBitmapText(date,338,y+2,.48,'center','#59666b');
+          if(recentBattleReplay(r.name)){
+            const hit={x:383,y:y-3,w:26,h:17,row:r};
+            ctx.fillStyle='#26363d';ctx.fillRect(hit.x+1,hit.y+3,17,10);
+            ctx.fillRect(hit.x+5,hit.y+1,8,3);
+            ctx.fillStyle='#f7fdff';ctx.fillRect(hit.x+3,hit.y+5,13,6);
+            ctx.fillStyle='#59666b';ctx.fillRect(hit.x+9,hit.y+6,4,4);
+            battleReplayRects.push(hit);
+          }
+        });
         if(!entries.length&&!battleView.loading&&!battleView.error)fitText('NO COMPLETED QUICKPLAY MATCHES YET',240,146,350,.78);
         fitText(battleView.guest?'GUEST RECORDS ARE TEMPORARY':"",240,216,374,.53);
         for(const b of onlineButtons())drawOnlineAction(b,state.focus===b.id);
@@ -1423,6 +1466,10 @@
           const i=PVP_SETTINGS_UI.rows.findIndex(r=>pointInsideRect(p,r));if(i>=0){game.pvpSettingsFocusIndex=i;const r=PVP_SETTINGS_UI.rows[i];cyclePvpSetting(['roundGoal','time','bestOf','unpause'][i],p.x<r.x+r.w/2?-1:1);settingsChanged();}
           else if(pointInsideRect(p,PVP_SETTINGS_UI.backButton))closeSettings();return true;
         }
+        if(state.screen==='battleTags'){
+          const replayHit=battleReplayRects.find(hit=>pointInsideRect(p,hit));
+          if(replayHit){playBattleReplay(replayHit.row);return true;}
+        }
         const b=onlineButtons().find(b=>pointInsideRect(p,b));if(!b)return true;focusOnlineButton(b.id);
         if(b.id==='quickFrog'){quickCycleSkin(p.x<b.x+b.w/2?-1:1);return true;}
         if(b.id==='myFrog'){cycleSkin(p.x<b.x+b.w/2?-1:1);return true;}
@@ -1438,7 +1485,7 @@
           if(!editing||b.id==='name'||b.id==='code'||b.id==='watchCode')focusOnlineButton(b.id);
           state.hoverId=b.id;
         }else {state.hoverId='';if(!['name','code','watchCode'].includes(state.focus))state.focus='';}
-        try{canvas.style.setProperty('cursor',b?'pointer':'default','important');}catch(_){ }
+        try{canvas.style.setProperty('cursor',(b||(state.screen==='battleTags'&&battleReplayRects.some(hit=>pointInsideRect(p,hit))))?'pointer':'default','important');}catch(_){ }
         state.keyboardFocus=false;return true;
       }
       const ENTRY={host:{x:115,y:100,w:116,h:30},join:{x:249,y:100,w:116,h:30},

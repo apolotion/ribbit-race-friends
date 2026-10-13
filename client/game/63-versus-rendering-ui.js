@@ -24,6 +24,29 @@
       updatePvpMovingPlatforms();
       updatePvpImpactEffects(dt);
       if (game.pvpWinPendingIndex === null && !game.pvpTimerGraceActive && !game.pvpTimedOutcomePending) {
+        // Solo and local Versus use the same four-fly pool. A past tutorial
+        // or one-off catch must not strand local Versus with a single target.
+        // Respect already-scheduled spawn tickets and avoid touching the
+        // authoritative online room or individual lesson fly setups.
+        const authoredTraining = tutorial.active && tutorial.kind === "pvp" &&
+          tutorialStep()?.setup !== "pvpFinalMatch";
+        if (!game.onlineMode && !authoredTraining && !game.sandboxMode && !game.pvpSuddenDeath) {
+          const liveCount = flies.filter((fly) => fly && fly.state !== "eaten").length;
+          const missing = Math.max(0, CONFIG.maxFlies - liveCount - game.spawnQueue.length);
+          if (missing) {
+            const reserved = getReservedVocabIndices();
+            const selected = new Set(reserved);
+            const vocabPool = shuffledVocabularyIndices().filter((index) => !selected.has(index));
+            let latestDue = game.spawnQueue.reduce((last, ticket) => Math.max(last, Number(ticket.dueAt) || 0), game.elapsed);
+            for (let count = 0; count < missing; count += 1) {
+              const vocabIndex = vocabPool[count] ?? chooseUnusedVocabularyIndex([...selected]);
+              selected.add(vocabIndex);
+              latestDue = Math.max(game.elapsed + STEP, latestDue + CONFIG.flySpawnMinimumSpacing);
+              game.spawnQueue.push({ dueAt: latestDue, source: "pvp-fill", vocabIndex });
+            }
+            game.spawnQueue.sort((a, b) => a.dueAt - b.dueAt);
+          }
+        }
         ensureTargetVocabularyAvailable(game.targetVocabIndex);
         while (flies.length < CONFIG.maxFlies && game.spawnQueue.length && game.spawnQueue[0].dueAt <= game.elapsed) {
           const ticket = game.spawnQueue[0];

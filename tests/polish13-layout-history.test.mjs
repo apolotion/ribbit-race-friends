@@ -35,7 +35,7 @@ test("Leaderboard renders player frogs with visibly striped rows and dropdown ch
 test("Quickplay moves content upward and uses one selected-frog header palette", () => {
   assert.match(online, /preview:\{x:151,y:91,w:178,h:72\}/);
   assert.match(online, /enter:\{x:144,y:176,w:192,h:26\}/);
-  assert.match(online, /cancel:\{x:185,y:232,w:110,h:22\}/);
+  assert.match(online, /cancel:\{x:184,y:231,w:112,h:23\}/);
   assert.match(online, /All Online screens use one continuous header/);
   assert.match(online, /ctx\.fillRect\(40,17,400,40\)/);
 });

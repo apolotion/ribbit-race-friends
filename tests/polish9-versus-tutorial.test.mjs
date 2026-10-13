@@ -18,8 +18,8 @@ function block(start, end) {
 }
 
 test("polish-9 cache marker and tutorial seen key are synchronized", () => {
-  assert.match(engine, /TUTORIAL_BUILD = "2026\.10\.12-friends-polish-33"/);
-  assert.match(index, /game\.bundle\.js\?v=2026\.10\.12-friends-polish-33/);
+  assert.match(engine, /TUTORIAL_BUILD = "2026\.10\.12-friends-polish-35"/);
+  assert.match(index, /game\.bundle\.js\?v=2026\.10\.12-friends-polish-35/);
   assert.match(engine, /rrFriendsEngineTutorialSoloSeenV8/);
   assert.match(read("public/scripts/tutorial-preboot.js"), /rrFriendsEngineTutorialSoloSeenV8/);
 });
@@ -95,7 +95,7 @@ test("Versus fly lessons use scripted delayed reveals", () => {
   assert.match(engine, /function schedulePvpFlyReveal/);
   assert.match(engine, /performance\.now\(\) \+ safeDelay/);
   assert.match(engine, /return PVP_ONE_SECOND_FLY_SETUPS\.has[\s\S]{0,80}\? 1000 : 0/);
-  assert.match(engine, /if \(setup === "pvpIntercept"\) return 0/);
+  assert.match(engine, /\["pvpIntercept", "pvpDemoDinnerSteal", "pvpDinnerSteal"\]\.includes\(setup\)\) return 0/);
 });
 
 test("Versus tutorial button opens the tutorial instead of Coming Soon", () => {
