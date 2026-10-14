@@ -484,18 +484,17 @@ function configurePvpStep(index) {
       break;
     }
     case "pvpDemoBufferedBonk": {
-      // One continuous charge into a buffered platform drop: the target waits
-      // at true stage center and Ember approaches from beneath the right perch.
+      // Match the screenshot's red arrow: P1 waits slightly left of center.
+      // Ember still launches from below the rightmost low platform.
       const lowRight = PARK_PLATFORMS[6];
-      positionPvp(p1, Math.round((W-p1.w)/2), CONFIG.groundY-p1.h, 1);
+      positionPvp(p1, Math.round((W-p1.w)/2) - 24, CONFIG.groundY-p1.h, 1);
       positionPvp(ember, lowRight.x+(lowRight.w-ember.w)/2, CONFIG.groundY-ember.h, -1);
       break;
     }
     case "pvpBufferedBonk": {
-      // Polish 58: swap the frogs' previous starting spots, matching the
-      // supplied buffer-drop screenshot. P1 now approaches from the left.
+      // Player practices from the left; move Ember right to the red arrow.
       positionPvp(p1, 64, CONFIG.groundY-p1.h, 1);
-      positionPvp(ember, Math.round((W-ember.w)/2), CONFIG.groundY-ember.h, -1);
+      positionPvp(ember, Math.round((W-ember.w)/2) + 24, CONFIG.groundY-ember.h, -1);
       break;
     }
     case "pvpDemoSkyBonk":
@@ -563,13 +562,14 @@ function configurePvpStep(index) {
       // Under-bonk demo: player initially faces RIGHT as requested.
       // Ember is waiting on the right-middle perch facing the player.
       positionPvp(p1, 210, CONFIG.groundY - p1.h, 1);
-      positionPvpOnPlatform(ember, middleRight, -1, middleRight.w - ember.w - 8);
+      positionPvpOnPlatform(ember, middleRight, -1, middleRight.w - ember.w - 2);
       break;
     }
     case "pvpUnderBonkTwo": {
-      // Place P1 ON the middle-left perch at the marked star. Ember uses a
-      // genuine jump from the right ground into the player's underside.
-      positionPvpOnPlatform(p1, middleLeft, 1);
+      // Start near the RIGHT edge of the middle-left perch. A buffered drop
+      // carries P1 to the middle of the lower-middle perch; waiting on this
+      // higher ledge is deliberately too high for Ember's half-charge jump.
+      positionPvpOnPlatform(p1, middleLeft, 1, middleLeft.w - p1.w - 2);
       positionPvp(ember, 238, CONFIG.groundY - ember.h, -1);
       break;
     }
@@ -583,8 +583,10 @@ function configurePvpStep(index) {
       // New picture: P1 starts from the RIGHT, facing left, and slips beneath
       // the lower-middle perch without rising to its top.
       const perch = PARK_PLATFORMS[3];
-      positionPvp(p1, 343, CONFIG.groundY - p1.h, -1);
-      positionPvpOnPlatform(ember, perch, 1);
+      // Start directly at the screenshot arrow's leftward approach point.
+      // Ember stays on the lower-middle perch, facing LEFT.
+      positionPvp(p1, 222, CONFIG.groundY - p1.h, -1);
+      positionPvpOnPlatform(ember, perch, -1);
       break;
     }
     case "pvpDemoRebound":
@@ -612,10 +614,11 @@ function configurePvpStep(index) {
       break;
     }
     case "pvpDemoIntercept":
-      // Use the ground-level first-rebound reference positions.
+      // Mirror the demo fly to the far RIGHT of the Park stage. The player's
+      // subsequent practice fly intentionally retains its existing side.
       positionPvp(p1, 150, CONFIG.groundY - p1.h, 1);
       positionPvp(ember, 300, CONFIG.groundY - ember.h, -1);
-      addPvpTutorialFly(90, PARK_PLATFORMS[4].y - 2, 0, 0);
+      addPvpTutorialFly(W - 90, PARK_PLATFORMS[4].y - 2, 0, 0);
       break;
     case "pvpIntercept":
       positionPvp(p1, 150, CONFIG.groundY - p1.h, 1);
@@ -627,9 +630,14 @@ function configurePvpStep(index) {
       // Rebound occurs near center. The fly is close enough on Ember's
       // *outgoing* rebound arc to be caught in the very same jump, but far
       // enough from her starting pose that she cannot eat it beforehand.
-      positionPvp(p1, 118, CONFIG.groundY - p1.h, 1);
+      // Mirror Ember's world x exactly: the two frogs begin equally far
+      // from the midline while she retains her original ground position.
+      positionPvp(p1, W - 305 - p1.w, CONFIG.groundY - p1.h, 1);
       positionPvp(ember, 305, CONFIG.groundY - ember.h, -1);
-      addPvpTutorialFly(348, PARK_PLATFORMS[4].y + 4, 0, 0);
+      // Position the fly ABOVE the right-middle perch. Ember meets the other
+      // frog on her way up, rebounds right, catches at tongue/body height,
+      // and lands on this mid-height platform instead of undershooting.
+      addPvpTutorialFly(320, PARK_PLATFORMS[5].y - 12, 0, 0);
       break;
     case "pvpDinnerSteal":
       // Switch ownership of the same opposing approach lanes: P1 starts LEFT,
@@ -828,10 +836,12 @@ function beginPvpDemoMotion(setup) {
       scriptPvpQuickDrop(1, 0);
       break;
     case "pvpDemoBufferedBonk":
-      // One charge to pass through the lower-middle platform and bonk P1.
+      // The target moved 24px left. At 120Hz a .80 charge crosses the
+      // lower-middle ledge and meets the target on the way down. This is a
+      // genuine buffered platform drop, not a midair steering correction.
       tutorial.pvpDemoStage = 0;
       armPvpScriptedBuffer(1, PARK_PLATFORMS[3]);
-      scriptPvpChargedJump(1, .70, -1, 0);
+      scriptPvpChargedJump(1, .80, -1, 0);
       break;
     case "pvpDemoSkyBonk":
       // Full charge reaches the mirrored lower-left target after the natural
@@ -881,20 +891,20 @@ function beginPvpDemoMotion(setup) {
       scriptPvpChargedJump(1, 1, -1, 0);
       break;
     case "pvpDemoIntercept":
-      // Start together: Ember must climb to the middle-height platform, not
-      // undershoot while the player has already crossed the middle lane.
-      // Nearly matched arc heights allow the genuine midair rebound before
-      // Ember turns toward and descends onto the right mid-height perch.
+      // Ember launches LEFT and upward from her actual ground position, with
+      // enough charge to reach a mid-height perch. Any later change of facing
+      // must be earned from a physical rebound/wall hit, not a scripted turn.
       scriptPvpChargedJump(0, .85, 1, 0);
-      scriptPvpChargedJump(1, .92, -1, 40);
+      scriptPvpChargedJump(1, .95, -1, 40);
       break;
     case "pvpDemoDinnerSteal":
-      // The two frogs each get ONE charged jump. The rebound turns Ember
-      // toward the fly; no scripted second jump is allowed after landing.
-      // Launch together at matching height. A 100ms stagger put Ember below
-      // P1 at their crossing, causing a miss and endless poof retries.
-      scriptPvpChargedJump(0, 1, 1, 0);
-      scriptPvpChargedJump(1, 1, -1, 0);
+      // P1 starts charging first. Ember begins a little later and releases
+      // when the player is partway up their real jump arc. The actual
+      // side-by-side collision near x=259 sends Ember toward the fly;
+      // she can then come down on the right-middle perch near x=329.
+      // No forced direction change, second jump, or teleport.
+      scriptPvpChargedJump(0, .70, 1, 0);
+      scriptPvpChargedJump(1, .83, -1, 100);
       break;
     default:
       break;
@@ -1111,18 +1121,17 @@ function updatePvpDemonstration() {
   // Dinner Steal intentionally has NO follow-up jump: rebound and catch
   // must occur before the very first leap ends for each frog.
 
-  // After Ember's introductory bonk, hold both frogs exactly where the real
-  // physics left them. The next scene performs its authored poof immediately
-  // before “Now you try.”
+  // "Bonk!" begins as soon as Ember lands from the FIRST hit. The stunned
+  // player remains in place and keeps his real stun + recovery animation
+  // running underneath her dialogue (nextStep defers the scene poof).
   if (setup === "pvpDemoBonk" && tutorial.pvpDemoBonkAt > 0 &&
-      p1.grounded && !p1.bonked && p1.stunTimer <= 0 &&
-      (p1.recoveryFlipTimer || 0) <= 0 &&
-      now - tutorial.pvpDemoBonkAt >= 1000 && !tutorial.pvpDemoBonkHandled) {
+      ember.grounded && !ember.bonked &&
+      now - tutorial.pvpDemoBonkAt >= 75 && !tutorial.pvpDemoBonkHandled) {
     tutorial.pvpDemoBonkHandled = true;
     tutorial.pvpDemoActive = false;
-    tutorial.pvpPlayerScriptLocked = false;
+    tutorial.pvpPlayerScriptLocked = true;
     clearPvpScriptActions();
-    freezeControlledEntity();
+    clearHeldInput();
     passStep();
     return;
   }
@@ -1130,17 +1139,12 @@ function updatePvpDemonstration() {
   let completed = false;
   if (["pvpDemoDropLow","pvpDemoDropHigh","pvpDemoBufferedBonk","pvpDemoSkyBonk","pvpDemoBufferedSky","pvpDemoHighGround"].includes(setup)) {
     const bonkImpactReady = tutorial.pvpDemoBonkAt > 0 && now - tutorial.pvpDemoBonkAt >= 100;
-    // Sky-bonk narration starts once the bonking frog LANDS, even if the
-    // victim is still stunned. Ground/low-drop tutorials instead visibly
-    // complete the stunned frog's full flip recovery before advancing.
-    completed = bonkImpactReady &&
-      (setup === "pvpDemoSkyBonk" || setup === "pvpDemoBufferedSky"
-        ? ember.grounded && !ember.bonked
-        : now - tutorial.pvpDemoBonkAt >= 950 && p1.grounded && !p1.bonked &&
-          p1.stunTimer <= 0 && (p1.recoveryFlipTimer || 0) <= 0) &&
-      (setup !== "pvpDemoBufferedSky" || (p1.grounded && p1.y + p1.h >= CONFIG.groundY - 1)) &&
-      (setup !== "pvpDemoHighGround" || (p1.grounded && p1.y + p1.h >= CONFIG.groundY - 1)) &&
-      (setup !== "pvpDemoBufferedSky" || ember.grounded);
+    // All bonk narration begins when the ATTACKER lands, not when the
+    // stunned victim recovers. The victim finishes the flip under dialogue;
+    // the next chapter cannot poof until that animation is complete.
+    completed = bonkImpactReady && ember.grounded && !ember.bonked &&
+      (setup !== "pvpDemoBufferedSky" || (ember.y + ember.h >= CONFIG.groundY - 1)) &&
+      (setup !== "pvpDemoHighGround" || (p1.grounded && p1.y + p1.h >= CONFIG.groundY - 1));
   } else if (setup === "pvpDemoBonkCatch" || setup === "pvpDemoReboundCatch" || setup === "pvpDemoDinnerSteal") {
     const techniqueSeen = setup === "pvpDemoBonkCatch" ? tutorial.pvpDemoBonkCount > 0 : tutorial.pvpReboundCount > 0;
     completed = techniqueSeen && tutorial.pvpPracticeCatchCount >= 1 && now - tutorial.pvpLastPracticeEventAt >= 650;
@@ -1209,12 +1213,34 @@ function startPvpFinalMatch() {
   game.pvpRoundWins = [0, 0];
   game.pvpRoundNumber = 1;
   game.pvpMatchWinnerIndex = null;
+  game.pvpRoundAwardedToken = null;
   game.selectedLevelId = "park";
   game.pvpSetupLevelId = "park";
   game.pvpSetupSkinIds[1] = "ember";
   applySelectedLevel();
   resetPvpGame();
-  if (!Number.isInteger(game.targetVocabIndex)) setPrompt(0);
+  // Chapter-select jumps may reuse a previous match's last-second and round
+  // completion flags. Final Versus always starts as ONE fresh 30s round.
+  game.pvpRoundGoalMode = "endless";
+  game.pvpBestOf = 1;
+  game.pvpRoundNumber = 1;
+  game.pvpRoundWins = [0,0];
+  game.pvpRoundAwardedToken = null;
+  game.pvpTimeRemaining = 30;
+  game.pvpTimeExpiredAt = null;
+  game.pvpTimeExpiredRealAt = null;
+  game.pvpTimerGraceActive = false;
+  game.pvpTimedOutcomePending = false;
+  game.pvpWinPendingIndex = null;
+  game.pvpCriticalCatchFlyVisual = null;
+  game.pvpCriticalCatchActive = false;
+  if (!Number.isInteger(game.targetVocabIndex)) {
+    const nextTicket = game.spawnQueue.find((ticket) => Number.isInteger(ticket?.vocabIndex));
+    setPrompt(nextTicket?.vocabIndex ?? 0);
+  }
+  // Unlike authored tutorial lessons, the real 1v1 always reveals its
+  // English target from countdown onward, including before the first fly.
+  tutorial.promptHidden = false;
   for (const fly of flies) {
     if (fly && fly.state === "active" && !Number.isInteger(fly.vocabIndex))
       fly.vocabIndex = game.targetVocabIndex;

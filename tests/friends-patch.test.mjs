@@ -36,8 +36,8 @@ test("PIN hashing stays within Cloudflare PBKDF2 limit and matches 100000 rounds
 });
 
 test("Friends release exposes the new build marker",()=>{
-  assert.equal(BUILD,"2026.10.13-friends-polish-58");
-  assert.match(browserSource,/2026\.10\.13\-friends\-polish\-58/);
+  assert.equal(BUILD,"2026.10.13-friends-polish-62");
+  assert.match(browserSource,/2026\.10\.13\-friends\-polish\-62/);
 });
 
 test("server vocabulary is exactly the requested 15 entries",()=>{
@@ -324,8 +324,8 @@ test("Friends first-place notice is a world-record notice with hover details",()
   assert.doesNotMatch(indexHtml,/MIGRATE OLD PRIVATE-KEY ACCOUNT/);
 });
 
-test("version 1.7.46 remains in settings and the How To Play book footer",()=>{
-  assert.match(html,/const RIBBIT_DISPLAY_VERSION = "VERSION 1\.7\.46"/);
+test("version 1.7.50 remains in settings and the How To Play book footer",()=>{
+  assert.match(html,/const RIBBIT_DISPLAY_VERSION = "VERSION 1\.7\.50"/);
   assert.match(html,/drawVersionLabel\(panel\.x \+ panel\.w \/ 2, panel\.y \+ panel\.h - 14, "center"/);
   assert.doesNotMatch(html,/drawVersionLabel\(399, 218, "right"\)/);
   assert.match(html,/function getPauseBookTheme/);
@@ -384,7 +384,8 @@ test("fast-moving frogs use swept collision detection instead of tunneling throu
 test("Versus collision code cannot silently ignore overlapping frogs",()=>{
   const block=extractFunctionSource(html,"resolvePvpCollision");
   assert.match(block,/let overlapMetrics = getPvpOverlapMetrics\(a, b\)/);
-  assert.match(block,/if \(a\.collisionCooldown > 0 \|\| b\.collisionCooldown > 0\) \{\s*separatePvpPlayersAlongAxis\(a, b, overlapMetrics\)/);
+  assert.match(block,/if \(a\.collisionCooldown > 0 \|\| b\.collisionCooldown > 0\) \{[\s\S]*?separatePvpPlayersAlongAxis\(a, b, overlapMetrics\)/);
+  assert.match(block,/rising\.y = Math\.max\(rising\.y, anchorY \+ supported\.h \+ 0\.5\)/, 'cooldown separation may not pop a frog standing on a platform');
   assert.doesNotMatch(block,/separatePvpPlayersWithoutRebound/);
   assert.match(block,/resolvePvpOverlapByAxis\(a, b, overlapMetrics\)/);
   assert.match(html,/else \{\s*const reboundSpeed = CONFIG\.minimumJumpX \* 0\.55;/);

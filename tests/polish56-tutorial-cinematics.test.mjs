@@ -101,13 +101,16 @@ test('end of final 1v1 removes all flies, spawn tickets and matching term before
   const ctx={
     tutorial:{pvpFinalOutcome:null,dynamicDialogueLines:null,kind:'pvp',active:true,promptHidden:false},
     pvpPlayers:[{score:7},{score:0}],
-    game:{state:'won',pvpWinnerIndex:0,pvpMatchWinnerIndex:0,pvpCpuEnabled:true,
+    game:{state:'won',pvpWinnerIndex:0,pvpMatchWinnerIndex:0,pvpCpuEnabled:true,pvpSetupSkinIds:['pink','ember'],
       targetVocabIndex:7,spawnQueue:[{vocabIndex:5}],pvpCriticalCatchActive:false},
     performance:{now:()=>4000},
     despawnTutorialFlies:()=>{ctx.flies.length=0;return 3;},
     flies:[{id:1},{id:2},{id:3}],
     PVP_WIN_DIALOGUE:['win'],PVP_LOSE_DIALOGUE:['lose'],
-    openDynamicDialogue:()=>{},Number
+    beginPoofTransition(opts){ctx.finalPoofOptions=opts;return true;},
+    positionPvp(player,x,y,dir){Object.assign(player,{x,y,dir})},
+    CONFIG:{groundY:214},
+    openDynamicDialogue:()=>{ctx.spokeAfterPoof=true;},Number
   };
   vm.createContext(ctx);vm.runInContext(source,ctx);ctx.beginPvpTutorialEnding();
   assert.equal(ctx.flies.length,0);
@@ -115,6 +118,9 @@ test('end of final 1v1 removes all flies, spawn tickets and matching term before
   assert.equal(ctx.game.targetVocabIndex,null);
   assert.equal(ctx.tutorial.promptHidden,true);
   assert.equal(ctx.tutorial.pvpFinalOutcome,'win');
+  assert.equal(ctx.finalPoofOptions.reason,'pvp-final-post-victory');
+  ctx.finalPoofOptions.action();
+  assert.equal(ctx.spokeAfterPoof,true);
 });
 test('only tutorial final countdown advances scenery clock; simulation remains paused',()=>{
   assert.match(tutorialHooks,/game\.state === "countdown" && tutorial\.kind === "pvp"[\s\S]{0,145}setup === "pvpFinalMatch"/);

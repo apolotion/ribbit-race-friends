@@ -14,7 +14,7 @@ const config = read('client/game/120-tutorial-config.js');
 test('maximum-height bonk is five actual seconds from landing and recovery starts on the exact final tick',()=>{
   assert.match(physics, /dropDistance\s*>=\s*CONFIG\.pvpBonkMaxDropDistance\s*-\s*0\.1\)\s*return CONFIG\.pvpBonkMaxStunSeconds/);
   assert.match(physics, /if\s*\(player\.y \+ player\.h >= CONFIG\.groundY\)[\s\S]{0,310}player\.stunTimer = appliedBonkDuration/);
-  assert.match(physics, /player\.stunTimer <= 1e-8\)[\s\S]{0,200}player\.recoveryFlipTimer = \.24/);
+  assert.match(physics, /player\.stunTimer <= 1e-8\)[\s\S]{0,440}player\.recoveryFlipTimer = player\.recoveryFlipDuration/);
   assert.match(hooks, /\["pvpDemoSkyBonk", "pvpSkyBonk", "pvpDemoBufferedSky", "pvpBufferedSky"\]/);
   assert.match(hooks, /victim\.bonkStunDuration = CONFIG\.pvpBonkMaxStunSeconds/);
   assert.doesNotMatch(hooks,/victim\.bonkStunDuration\s*=\s*4\.7/);
@@ -35,8 +35,8 @@ test('second recovery bonk is accepted only within one second of actual recovery
 test('screen-reference poses face the requested directions',()=>{
   assert.match(scenes,/case "pvpBufferedBonk"[\s\S]*?positionPvp\(p1, 64, CONFIG\.groundY-p1\.h, 1\)/);
   assert.match(scenes,/case "pvpDemoUnderBonk"[\s\S]*?positionPvp\(p1, 210, CONFIG\.groundY - p1\.h, 1\)/);
-  assert.match(scenes,/case "pvpUnderBonkTwo"[\s\S]*?positionPvpOnPlatform\(p1, middleLeft, 1\);[\s\S]*?positionPvp\(ember, 238, CONFIG\.groundY - ember\.h, -1\)/);
-  assert.match(scenes,/case "pvpAvoidUnder"[\s\S]*?positionPvp\(p1, 343, CONFIG\.groundY - p1\.h, -1\)/);
+  assert.match(scenes,/case "pvpUnderBonkTwo"[\s\S]*?positionPvpOnPlatform\(p1, middleLeft, 1, middleLeft\.w - p1\.w - 2\);[\s\S]*?positionPvp\(ember, 238, CONFIG\.groundY - ember\.h, -1\)/);
+  assert.match(scenes,/case "pvpAvoidUnder"[\s\S]*?positionPvp\(p1, 222, CONFIG\.groundY - p1\.h, -1\)/);
   assert.match(scenes,/positionPvpReboundPracticeLayout\(completed = 0\)[\s\S]*?positionPvp\(p1, 145,[\s\S]*?positionPvp\(ember, 305/);
 });
 

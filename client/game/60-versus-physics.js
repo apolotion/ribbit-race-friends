@@ -20,6 +20,7 @@
       player.landingSquash = 0;
       player.bonkLandingPopTimer = 0;
       player.recoveryFlipTimer = 0;
+      player.recoveryFlipDuration = .24;
       player.blinkTimer = 1.2 + player.index;
       player.blinking = false;
       clearFrogAfterimages(player);
@@ -71,6 +72,8 @@
       flies.length = 0;
       nextFlyId = 1;
       game.spawnQueue = [];
+      game.pvpTutorialGraceHeld = [false, false];
+      game.pvpTutorialGraceFromHeld = false;
       game.completedVocabIndices = new Set();
       game.promptSerial = 1;
       game.targetVocabIndex = 0;
@@ -316,7 +319,9 @@
       const player = pvpPlayers[index];
       if (!player || !player.inputHeld) return;
       if (source === "human" && index === getPvpCpuIndex() && game.pvpCpuEnabled) return;
-      if (game.pvpTimerGraceActive || game.pvpTimedOutcomePending) {
+      const heldFinalCharge = Boolean(game.pvpTimerGraceActive &&
+        game.pvpTutorialGraceHeld?.[index] && player.grounded && player.charging);
+      if ((game.pvpTimerGraceActive || game.pvpTimedOutcomePending) && !heldFinalCharge) {
         const saved = Array.isArray(game.pvpPreservedCharges) ? game.pvpPreservedCharges[index] : null;
         if (saved?.charging) saved.releasedDuringGrace = true;
         player.inputHeld = false;
@@ -357,6 +362,7 @@
       player.vy = velocity.vy;
       player.grounded = false;
       player.charging = false;
+      if (heldFinalCharge) game.pvpTutorialGraceHeld[index] = false;
       player.landingSquash = 0;
       player.airTime = 0;
       player.jumpStartY = player.y;
@@ -482,9 +488,15 @@
       if (player.stunTimer > 0 && player.stunCountdownStarted) {
         const prevStun = player.stunTimer;
         player.stunTimer = Math.max(0, player.stunTimer - dt);
-        const heldThroughStun = player.index === getPvpCpuIndex() && game.pvpCpuEnabled
+        // The standard hold-to-buffer control must never bypass the scripted
+        // tutorial's input lock after Ember bonks the player's frog.
+        const lockedByTutorial = typeof tutorial !== "undefined" && tutorial.active &&
+          tutorial.kind === "pvp" &&
+          (tutorial.pvpDemoActive || tutorial.pvpPlayerScriptLocked ||
+           tutorial.dialogueOpen || tutorial.pvpAwaitRecoveryAdvance || tutorial.resetPending);
+        const heldThroughStun = !lockedByTutorial && (player.index === getPvpCpuIndex() && game.pvpCpuEnabled
           ? player.inputHeld
-          : isPvpPhysicalJumpHeld(player.index);
+          : isPvpPhysicalJumpHeld(player.index));
         player.inputHeld = heldThroughStun;
         // Floating-point residue after exactly five seconds must not add
         // another simulation frame to the stun or skip the recovery animation.
@@ -492,7 +504,11 @@
           player.stunTimer = 0;
           player.stunCountdownStarted = false;
           player.lastStunEndAt = game.pvpElapsed;
-          player.recoveryFlipTimer = .24;
+          // Tutorial recoveries remain visible and cannot be skipped by text;
+          // ordinary Versus retains its original 0.24-second recovery.
+          player.recoveryFlipDuration = typeof tutorial !== "undefined" &&
+            tutorial.active && tutorial.kind === "pvp" ? .56 : .24;
+          player.recoveryFlipTimer = player.recoveryFlipDuration;
           player.landingSquash = 0;
           player.bonkLandingPopTimer = 0;
           if (heldThroughStun) startPvpCharge(player);
@@ -1204,6 +1220,23 @@
       // A prior collision cooldown suppresses duplicate sounds/stats, but never
       // permits the frogs to remain embedded or phase through one another.
       if (a.collisionCooldown > 0 || b.collisionCooldown > 0) {
+        // A rising under-bonker must NEVER lift the opponent off a platform,
+        // even for a single frame during the collision cooldown. Generic
+        // vertical separation moves the upper (grounded) frog upwards and is
+        // the cause of the sporadic 'platform frog shoots into the sky' bug.
+        const supported = (a.grounded && a.y + a.h < CONFIG.groundY - 1) ? a
+          : (b.grounded && b.y + b.h < CONFIG.groundY - 1) ? b : null;
+        const rising = supported === a ? b : a;
+        if (supported && !rising.grounded && rising.vy <= 14 &&
+            rising.y + rising.h / 2 > supported.y + supported.h / 2) {
+          const perch = getPvpStandingPlatform(supported);
+          const anchorY = perch && !perch.ground ? perch.y - supported.h : supported.y;
+          // Move only the airborne frog out of the platform frog's underside.
+          // Never add y-velocity or clear grounded on the supported frog.
+          rising.y = Math.max(rising.y, anchorY + supported.h + 0.5);
+          supported.y = anchorY;
+          return;
+        }
         separatePvpPlayersAlongAxis(a, b, overlapMetrics);
         return;
       }
@@ -1286,7 +1319,12 @@
           risingFromBelow &&
           (topCrossedUnderbelly || alreadyInsideLowerHurtbox);
 
-        if (platformUnderbonk) {
+        if (platformUnderbonk ||
+            (standingOnPlatform && risingFromBelow && meaningfulUnderlap &&
+             airborne.vy < 0 && airborne.y >= grounded.y)) {
+          // Under-bonking a PLATFORM occupant always anchors the occupant.
+          // Do not route a slightly late hit to the generic vertical bonk:
+          // that incorrectly launches the standing frog straight upward.
           bonkPvpPlayerFromBelow(grounded, airborne);
           return;
         }
@@ -1296,6 +1334,15 @@
         }
         if (similarHeightSideHit) {
           bouncePvpPlayersSideways(grounded, airborne);
+          return;
+        }
+        // An airborne frog climbing from BELOW a grounded frog is never
+        // a downward stomper. Resolve a glancing overlap sideways so the
+        // platform frog is not given a footstool boost or popped skyward.
+        if (airborne.vy < -1 && airborneCenterY > groundedCenterY + 1) {
+          // Horizontal separation preserves the platform frog's exact y.
+          // Generic vertical separation would lift it above the platform.
+          bouncePvpPlayersSideways(grounded, airborne, { ...overlapMetrics, axis: "horizontal" });
           return;
         }
         resolvePvpOverlapByAxis(a, b, overlapMetrics);

@@ -2,8 +2,8 @@
 // Responsibilities: runtime bridge, deterministic PvP event telemetry, mobile
 // input support hooks, palette operations, post-hat progression, and replay state.
 
-const RIBBIT_FRIENDS_DISPLAY_VERSION = "1.7.46";
-const RIBBIT_FRIENDS_BUILD = "2026.10.13-friends-polish-58";
+const RIBBIT_FRIENDS_DISPLAY_VERSION = "1.7.50";
+const RIBBIT_FRIENDS_BUILD = "2026.10.13-friends-polish-62";
 
 function rr14Number(value, fallback = 0) {
   const parsed = Number(value);

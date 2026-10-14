@@ -59,15 +59,22 @@
         }
       }
       if (tutorial.active && tutorial.kind === "pvp" && tutorialStep()?.setup === "pvpFinalMatch" &&
-          game.state === "playing" && !game.pvpTimedOutcomePending && !game.pvpCriticalCatchActive) {
-        const activeFlyPool = flies.filter((fly) => fly?.state === "active" && Number.isInteger(fly.vocabIndex));
-        // Never display EASY (or any clue) with four unrelated flies onscreen.
-        // If the next matching fly is queued, first target one already alive.
+          game.state === "playing" && !game.pvpCriticalCatchActive) {
+        const activeFlyPool = typeof flies !== "undefined" ? flies.filter((fly) => fly?.state === "active" && Number.isInteger(fly.vocabIndex)) : [];
         if (activeFlyPool.length && !activeFlyPool.some((fly) => fly.vocabIndex === game.targetVocabIndex)) {
-          game.targetVocabIndex = activeFlyPool[0].vocabIndex;
-          game.promptSerial += 1;
+          // First priority is a fly already on-screen, so no impossible quiz.
+          setPrompt(activeFlyPool[0].vocabIndex);
           game.completedVocabIndices.delete(game.targetVocabIndex);
+        } else if (!activeFlyPool.length && !game.pvpTimedOutcomePending) {
+          // A fast opening catch must not leave an empty arena while the
+          // remaining introductory flies are waiting for their spawn spacing.
+          if (game.spawnQueue?.length) {
+            game.spawnQueue[0].dueAt = Math.min(game.spawnQueue[0].dueAt, game.elapsed + STEP);
+            const nextVocab = game.spawnQueue[0].vocabIndex;
+            if (Number.isInteger(nextVocab) && game.targetVocabIndex !== nextVocab) setPrompt(nextVocab);
+          }
         }
+        if (tutorial.pvpFinalOutcome === null) tutorial.promptHidden = false;
       }
       updatePvpCpuInput(dt);
       pvpPlayers.forEach((player) => updatePvpPlayer(player, dt));
@@ -87,9 +94,11 @@
           !game.pvpCriticalCatchActive && game.pvpTimeRemaining <= 0 &&
           (!game.pvpTimerGraceActive ||
            (Number.isFinite(game.pvpTimeExpiredRealAt) &&
-            performance.now() - game.pvpTimeExpiredRealAt >= 2000) ||
+            performance.now() - game.pvpTimeExpiredRealAt >=
+              (game.pvpTutorialGraceFromHeld ? 6500 : 2000)) ||
            (Number.isFinite(game.pvpTimeExpiredAt) &&
-            game.pvpElapsed - game.pvpTimeExpiredAt >= 2))) {
+            game.pvpElapsed - game.pvpTimeExpiredAt >=
+              (game.pvpTutorialGraceFromHeld ? 6.5 : 2)))) {
         // One grace-period outcome, never an endless zero-second match.
         resolvePvpTimedOutcomeAfterJump();
         return;
@@ -284,7 +293,8 @@
       // restarted at the stun end when recoveryFlipTimer was set, showing two
       // full rotations (and occasionally a visible inverted snap).
       const recoveringFlip = (player.recoveryFlipTimer || 0) > 0;
-      const recoveryProgress = recoveringFlip ? clamp(1 - player.recoveryFlipTimer / .24, 0, 1) : 0;
+      const recoveryDuration = Number(player.recoveryFlipDuration) > 0 ? player.recoveryFlipDuration : .24;
+      const recoveryProgress = recoveringFlip ? clamp(1 - player.recoveryFlipTimer / recoveryDuration, 0, 1) : 0;
       const upsideDown = player.bonked || player.stunTimer > 0 || recoveringFlip;
       const sx = 1 + player.landingSquash * 0.18 + (player.charging ? player.charge * 0.20 : 0);
       const sy = 1 / Math.sqrt(sx);
@@ -587,7 +597,10 @@
       ].forEach(({ player, x, label, palette }) => {
         // The Current Goal occupies Ember's right HUD position until the
         // final completion poof. Show the labeled EMBER meter afterwards.
-        if (tutorialPvp && player.index === 1 && !tutorial.completeScreen) return;
+        if (tutorialPvp && player.index === 1 && !tutorial.completeScreen &&
+            !(tutorialFinalMatch && (game.state === "countdown" ||
+              (tutorial.pvpFinalMatchStarted && !tutorial.dialogueOpen &&
+                !tutorial.pvpFinalMatchCountdownUntil)))) return;
         const meterW = 112;
         ctx.fillStyle = COLORS.ink;
         ctx.fillRect(x - 2, meterY - 2, meterW + 4, meterH + 4);
@@ -1420,7 +1433,7 @@
           !flies.some(f=>f?.id===game.pvpCriticalCatchFlyVisual.id)) {
         const catcher=pvpPlayers[game.pvpCriticalCatchWinnerIndex];
         if(catcher)drawSlowMotionFlyPull(game.pvpCriticalCatchFlyVisual,getPvpMouth(catcher),
-          game.pvpCriticalCatchElapsed,game.pvpCriticalCatchDuration);
+          game.pvpCriticalCatchElapsed,game.pvpCriticalCatchDuration,catcher);
       }
       pvpPlayers.forEach(p => drawEntity(p, drawFrogAfterimages));
       if (!["pvpCelebration", "won"].includes(game.state)) pvpPlayers.forEach((player)=>drawAirShadowForEntity(OnlineVersus.displayPlayer(player),getPvpSkinPalette(player.skinId,player.index===0?"azure":"crimson")));

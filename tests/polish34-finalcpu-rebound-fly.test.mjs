@@ -13,7 +13,7 @@ const catches = read('client/game/61-versus-catches-rounds.js');
 
 test('final tutorial CPU bypasses scripted practice controller',()=>{
  const m=monitor.slice(monitor.indexOf('function monitorPvp()'),monitor.indexOf('function tutorialMovementLocked'));
- assert.match(m,/if \(setup === "pvpFinalMatch"\) \{[\s\S]{0,2400}return;[\s\S]{0,40}\}\s*drivePvpPracticeCpu/);
+ assert.match(m,/if \(setup === "pvpFinalMatch"\) \{[\s\S]{0,3400}return;[\s\S]{0,40}\}\s*drivePvpPracticeCpu/);
  assert.match(hooks,/const finalCpu = tutorial\.active/);
 });
 test('CPU cannot be stranded charging with its virtual key released',()=>{
@@ -25,9 +25,9 @@ test('Versus queues replacement flies until four are in the arena',()=>{
  assert.match(render,/source: "pvp-fill"/);
  assert.match(render,/!game\.onlineMode && !authoredTraining/);
 });
-test('authored airborne catch demos use physically reachable synchronized launch timing',()=>{
+test('authored airborne catch demos use physically reachable staggered launch timing',()=>{
  assert.match(scene,/case "pvpDemoReboundCatch"[\s\S]{0,350}positionPvp\(ember, 273,/);
- assert.match(scene,/case "pvpDemoDinnerSteal"[\s\S]{0,600}scriptPvpChargedJump\(0, 1, 1, 0\);[\s\S]{0,90}scriptPvpChargedJump\(1, 1, -1, 0\)/);
+ assert.match(scene,/case "pvpDemoDinnerSteal"[\s\S]{0,600}scriptPvpChargedJump\(0, \.70, 1, 0\);[\s\S]{0,90}scriptPvpChargedJump\(1, \.83, -1, 100\)/);
  assert.match(scene,/"pvpDemoDinnerSteal", "pvpDinnerSteal"\]\.includes\(setup\)\) return 0/);
 });
 test('unchanged fly is retained and eaten fly reappears at matching authored location',()=>{

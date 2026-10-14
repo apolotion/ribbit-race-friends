@@ -56,8 +56,8 @@ test('poof before quick-drop and sky-bonk practice dialogue',()=>{
 test('after high drop Ember uses the dazed portrait',()=>{
  assert.match(scenes,/pvpDropHigh/);assert.match(lifecycle,/dazed/);
 });
-test('buffered-bonk is authored as a single 70-percent jump into ground-center frog',()=>{
- assert.match(scenes,/scriptPvpChargedJump\(1, \.70, -1, 0\)/);
+test('buffered-bonk uses a re-aimed 80-percent charge for target moved left',()=>{
+ assert.match(scenes,/scriptPvpChargedJump\(1, \.80, -1, 0\)/);
  assert.match(scenes,/PVP_START_X\[0\]/);
  assert.match(monitor,/setup === "pvpBufferedBonk"/);
 });
@@ -66,6 +66,6 @@ test('buffered sky bonk launches top center to proven target facing left',()=>{
  assert.match(scenes,/rightMiddle\.x \+ rightMiddle\.w - p1\.w \+ 2/);
 });
 test('sky bonk dialogue only waits for impact plus attacker landing',()=>{
- assert.match(scenes,/setup === "pvpDemoSkyBonk" \|\| setup === "pvpDemoBufferedSky"/);
+ assert.match(scenes,/const bonkImpactReady = tutorial\.pvpDemoBonkAt > 0/);
  assert.match(monitor,/pvpPracticeEventReady\(100, now\)/);
 });

@@ -126,7 +126,7 @@
       if(criticalCatch && game.soloCriticalCatchFlyVisual &&
           !flies.some(f=>f?.id===game.soloCriticalCatchFlyVisual.id)) {
         drawSlowMotionFlyPull(game.soloCriticalCatchFlyVisual,getFrogMouth(),
-          game.soloCriticalCatchElapsed,game.soloCriticalCatchDuration);
+          game.soloCriticalCatchElapsed,game.soloCriticalCatchDuration,{tongue,dir:frog.dir});
       }
       drawFrogAfterimages(frog);
       drawAirShadowForEntity(frog, getFrogPalette());

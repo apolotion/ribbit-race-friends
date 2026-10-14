@@ -44,10 +44,10 @@ test('high drop mirrors the player turn onto the right-side landing lane',()=>{
  assert.match(s,/case "pvpDropHigh"[\s\S]{0,220}positionPvpOnPlatform\(p1, top, 1, 4\)/);
  assert.match(s,/case "pvpDropHigh"[\s\S]{0,260}positionPvp\(ember, PARK_PLATFORMS\[3\]\.x \+ PARK_PLATFORMS\[3\]\.w \+ 4, CONFIG\.groundY - ember\.h, -1\)/);
 });
-test('buffered-bonk starts with the player in the true ground-center bonk lane',()=>{
+test('buffered-bonk demonstration places P1 at screenshot arrow left of center',()=>{
  const c=geometry();c.setup('pvpDemoBufferedBonk');
  assert.equal(c.pvpPlayers[0].y,200);
- assert.equal(c.pvpPlayers[0].x+c.pvpPlayers[0].w/2,240);
+ assert.equal(c.pvpPlayers[0].x+c.pvpPlayers[0].w/2,216);
  assert.equal(c.pvpPlayers[1].x+c.pvpPlayers[1].w/2,408);
  assert.equal(c.pvpPlayers[1].dir,-1);
 });

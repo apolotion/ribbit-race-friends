@@ -26,12 +26,12 @@ const setupBody = (source, id, nextSetup) => {
 test("under-bonk demonstration spawns player facing right, Ember facing left on middle-right", () => {
   const block = caseBody(scene, "pvpDemoUnderBonk", 'case "pvpUnderBonkTwo"');
   assert.match(block, /positionPvp\(p1, 210, CONFIG\.groundY - p1\.h, 1\)/);
-  assert.match(block, /positionPvpOnPlatform\(ember, middleRight, -1, middleRight\.w - ember\.w - 8\)/);
+  assert.match(block, /positionPvpOnPlatform\(ember, middleRight, -1, middleRight\.w - ember\.w - 2\)/);
 });
 
 test("switch-places lesson swaps screenshot ground positions and needs one bonk", () => {
   const block = caseBody(scene, "pvpUnderBonkTwo", 'case "pvpDemoAvoidUnder"');
-  assert.match(block, /positionPvpOnPlatform\(p1, middleLeft, 1\)/);
+  assert.match(block, /positionPvpOnPlatform\(p1, middleLeft, 1, middleLeft\.w - p1\.w - 2\)/);
   assert.match(block, /positionPvp\(ember, 238, CONFIG\.groundY - ember\.h, -1\)/);
   assert.match(config, /Give me one clean under bonk/);
   assert.match(monitor, /if \(tutorial\.pvpUnderBonks >= 1\)/);
@@ -39,7 +39,7 @@ test("switch-places lesson swaps screenshot ground positions and needs one bonk"
 
 test("single under-bonk uses a real jump and no second scripted contact or poof", () => {
   const block = setupBody(monitor, "pvpUnderBonkTwo", "pvpReboundThree");
-  assert.match(block, /scriptPvpChargedJump\(1, \.89, -1, 0\)/);
+  assert.match(block, /scriptPvpChargedJump\(1, \.50, -1, 0\)/);
   assert.doesNotMatch(block, /addTutorialPoof\(|positionPvp\(/);
   assert.doesNotMatch(block, /second-under-bonk-straight-up/);
 });
@@ -55,8 +55,8 @@ test("low-profile demonstration uses exactly four completed jumps", () => {
 
 test("low-profile player spawns right of perch and finishes at the left edge", () => {
   const start = caseBody(scene, "pvpAvoidUnder", 'case "pvpDemoRebound"');
-  assert.match(start, /positionPvp\(p1, 343, CONFIG\.groundY - p1\.h, -1\)/);
-  assert.match(start, /positionPvpOnPlatform\(ember, perch, 1\)/);
+  assert.match(start, /positionPvp\(p1, 222, CONFIG\.groundY - p1\.h, -1\)/);
+  assert.match(start, /positionPvpOnPlatform\(ember, perch, -1\)/);
   const finish = setupBody(monitor, "pvpAvoidUnder", "pvpReboundThree");
   assert.match(finish, /pvpAvoidUnderPassedBeneath = true/);
   assert.match(finish, /p1\.x <= platform\.x - p1\.w \+ 1/);
@@ -64,7 +64,7 @@ test("low-profile player spawns right of perch and finishes at the left edge", (
 
 test("grounded landing squash advances during PvP dialogue and lesson state resets", () => {
   assert.match(hooks, /if \(tutorial\.kind === "pvp" &&\s*\(tutorial\.dialogueOpen \|\| tutorial\.pvpAwaitRecoveryAdvance\)/);
-  const locked = hooks.slice(hooks.indexOf('if (tutorial.kind === "pvp" &&'), hooks.indexOf('updatePvpImpactEffects(dt);'));
+  const locked = hooks.slice(hooks.indexOf('(tutorial.dialogueOpen || tutorial.pvpAwaitRecoveryAdvance)'), hooks.indexOf('    } else {\n      freezeControlledEntity();', hooks.indexOf('(tutorial.dialogueOpen || tutorial.pvpAwaitRecoveryAdvance)')));
   assert.match(locked, /for \(const player of pvpPlayers\)/);
   assert.match(locked, /updatePvpPlayer\(player, dt\)/);
   assert.doesNotMatch(locked, /if \(!player\.grounded \|\| player\.bonked/);

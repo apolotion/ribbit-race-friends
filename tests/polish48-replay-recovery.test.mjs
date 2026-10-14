@@ -9,12 +9,12 @@ const physics = read('client/game/60-versus-physics.js');
 const rendering = read('client/game/63-versus-rendering-ui.js');
 const hud = read('client/game/71-rendering-entities-hud.js');
 
-const version = '1.7.46';
-const marker = '2026.10.13-friends-polish-58';
+const version = '1.7.50';
+const marker = '2026.10.13-friends-polish-62';
 
 test('Polish 48 version and cache marker agree across source, browser and Worker', () => {
   assert.equal(JSON.parse(read('package.json')).version,version);
-  assert.match(read('client/game/10-core-config.js'), /VERSION 1\.7\.46/);
+  assert.match(read('client/game/10-core-config.js'), /VERSION 1\.7\.50/);
   assert.ok(read('src/common.js').includes(marker));
   assert.ok(read('client/game/120-tutorial-config.js').includes(marker));
   assert.ok(read('public/index.html').includes(marker));
@@ -72,7 +72,7 @@ test('Ember jump-strength solver adjusts charges to actual travel distance and r
 });
 
 test('Bonk recovery now rotates once, only AFTER stun ends, without a squash or stale timer',()=>{
-  assert.match(physics,/if \(prevStun > 0 && player\.stunTimer <= 1e-8\) \{[\s\S]{0,220}player\.recoveryFlipTimer = \.24;/);
+  assert.match(physics,/if \(prevStun > 0 && player\.stunTimer <= 1e-8\) \{[\s\S]{0,440}player\.recoveryFlipTimer = player\.recoveryFlipDuration;/);
   assert.match(physics,/player\.landingSquash = 0;\s*player\.bonkLandingPopTimer = 0;/);
   assert.match(physics,/victim\.recoveryFlipTimer = 0;/);
   assert.match(rendering,/const recoveringFlip = \(player\.recoveryFlipTimer \|\| 0\) > 0;/);

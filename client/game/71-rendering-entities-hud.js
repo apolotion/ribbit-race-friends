@@ -361,19 +361,37 @@
     // state immediately, but remains a visible, foreground sprite as the
     // tongue reels it into the frog. Uses zoom time rather than tongue.active,
     // which can end long before the two-second slow-motion camera finishes.
-    function drawSlowMotionFlyPull(visual, mouth, elapsed, duration) {
+    function drawSlowMotionFlyPull(visual, mouth, elapsed, duration, catcher = null) {
       if (!visual || !mouth) return;
       const fromX=Number(visual.baseX ?? visual.x);
       const fromY=Number(visual.baseY ?? visual.y);
       if (![fromX,fromY,mouth.x,mouth.y].every(Number.isFinite)) return;
       const progress=clamp((Number(elapsed)||0)/Math.max(.001,Number(duration)||2),0,1);
       const amount=clamp((progress-.07)/.78,0,1);
-      if (amount>=1) return; // has entered the frog's mouth, not vanished on catch
+      const t = catcher?.tongue;
+      const matchingTongue = Boolean(t?.active && (t.targetFlyId === visual.id || t.captured));
+      const tongueProgress = matchingTongue
+        ? clamp(Number(t.elapsed) / Math.max(.001, Number(t.duration) || .25), 0, 1) : 0;
+      // Before the tongue grabs the fly, it remains at its original point.
+      // After capture the fly must sit at the EXACT rendered tongue tip, using
+      // the same sin() extension as drawPvpTongue/drawTongue every frame.
+      const caughtOnTongue = matchingTongue && t.captured;
+      if (!matchingTongue && catcher && t && !t.active && t.captured) return;
+      if (amount>=1 && !matchingTongue) return;
       const ease=amount*amount*(3-2*amount);
-      const x=lerp(fromX,mouth.x,ease);
-      const y=lerp(fromY,mouth.y,ease);
+      let x=lerp(fromX,mouth.x,ease), y=lerp(fromY,mouth.y,ease);
+      if (matchingTongue) {
+        if (!caughtOnTongue) { x=fromX; y=fromY; }
+        else {
+          const extension=Math.sin(tongueProgress*Math.PI);
+          const rawX=lerp(mouth.x,Number(t.targetX),extension);
+          x=Number(catcher.dir)>=0 ? Math.max(mouth.x,rawX) : Math.min(mouth.x,rawX);
+          y=lerp(mouth.y,Number(t.targetY),extension);
+        }
+      }
+      const actualEase=matchingTongue ? (caughtOnTongue ? 1-Math.sin(tongueProgress*Math.PI) : 0) : ease;
       ctx.save();
-      ctx.globalAlpha=clamp((1-ease)/.14,0,1);
+      ctx.globalAlpha=matchingTongue ? 1 : clamp((1-ease)/.14,0,1);
       const dx=x-mouth.x,dy=y-mouth.y;
       const points=Math.max(1,Math.ceil(Math.hypot(dx,dy)/3));
       for(let index=0;index<=points;index++){
@@ -383,7 +401,7 @@
         ctx.fillStyle="#ef819e";ctx.fillRect(px,py-1,2,2);
       }
       // Always draw fly AFTER the tongue; it needs to sit on top visually.
-      drawFlyAt(x,y,Math.max(.34,1-.5*ease));
+      drawFlyAt(x,y,Math.max(.34,1-.5*actualEase));
       ctx.restore();
     }
 

@@ -6,7 +6,7 @@ const read=(p)=>readFileSync(p,"utf8");
 const core=read("client/game/110-online-mobile-polish.js");
 const pkg=JSON.parse(read("package.json"));
 const index=read("public/index.html");
-test("version and build are 1.7.46",()=>{assert.equal(pkg.version,"1.7.46");assert.match(core,/friends-polish-58/)});
+test("version and build are 1.7.50",()=>{assert.equal(pkg.version,"1.7.50");assert.match(core,/friends-polish-62/)});
 test("touch menus activate on release",()=>{assert.match(core,/pointerup/);assert.match(core,/menuTouch/);assert.match(core,/pointerType!=="touch"/)});
 test("countdown touch precharge has separate pointers",()=>{assert.match(core,/chargeTouch/);assert.match(core,/ShiftLeft/);assert.match(core,/ShiftRight/)});
 test("cinematic labels never stay permanently hidden",()=>{assert.match(core,/RibbitV160ShouldHideFlyLabels=\(\)=>false/);assert.doesNotMatch(core,/finalCatchLabelsGone/);assert.match(core,/RibbitV160FlyLabelAlpha/)});

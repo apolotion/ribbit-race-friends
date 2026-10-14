@@ -77,8 +77,9 @@ bouncePvpPlayersSideways = function(a, b, ...rest) {
       performance.now() - tutorial.pvpLastPracticeEventAt > 120) {
     tutorial.pvpReboundCount += 1;
     tutorial.pvpReboundAt = performance.now();
-    if (!a.grounded && !b.grounded && ["pvpDemoRebound", "pvpReboundThree", "pvpDemoReboundCatch", "pvpReboundCatch", "pvpDemoDinnerSteal", "pvpDinnerSteal"].includes(tutorialStep()?.setup)) {
-      // Use the game's existing fly-catch sparkle effect on BOTH frogs.
+    if (!a.grounded && !b.grounded && tutorialStep()?.setup === "pvpReboundThree") {
+      // The first Ember DEMO rebound is deliberately plain. Only the three
+      // rebounds under the PLAYER'S control produce the paired sparkles.
       a.catchSparkleTimer = Math.max(Number(a.catchSparkleTimer)||0, CONFIG.catchSparkleDuration);
       b.catchSparkleTimer = Math.max(Number(b.catchSparkleTimer)||0, CONFIG.catchSparkleDuration);
       // Match the normal correct-fly-catch feedback; both frogs participated.
@@ -142,7 +143,10 @@ attemptPvpFlyCatch = function(player, targetFly, source = "body", ...rest) {
 // achievement while it is active; only the dedicated completion achievement
 // may pass through when the tutorial itself awards it.
 window.RibbitTutorialShouldHidePvpCatchTitle = () => Boolean(
-  tutorial.active && tutorial.kind === "pvp"
+  tutorial.active && tutorial.kind === "pvp" &&
+  // The final one-second catch is a real CLUTCH CATCH, not a scripted
+  // practice zoom. Show its title even while normal tutorial titles are hidden.
+  !(tutorialStep()?.setup === "pvpFinalMatch" && game.pvpCriticalCatchKind === "clutch")
 );
 
 const originalMarkAchievementEarnedForTutorial = markAchievementEarned;
@@ -483,6 +487,11 @@ pressPvpButton = function(index, source = "human", ...rest) {
   const finalCpu = tutorial.active && tutorial.kind === "pvp" &&
     tutorialStep()?.setup === "pvpFinalMatch" && index === getPvpCpuIndex() && source === "cpu";
   if (!finalCpu && tutorialBlocksLiveInput()) return;
+  // Chapter 12 awards ONE human jump per rebound attempt. Waiting on the
+  // landing/poof must not give the player a second charge on the same layout.
+  if (tutorial.active && tutorial.kind === "pvp" &&
+      tutorialStep()?.setup === "pvpReboundThree" && index === 0 &&
+      source === "human" && pvpPlayers[0]?.firstJumpMade && pvpPlayers[0]?.grounded) return;
   return originalPressPvpButtonForTutorial.call(this, index, source, ...rest);
 };
 
@@ -491,6 +500,9 @@ releasePvpButton = function(index, source = "human", ...rest) {
   const finalCpu = tutorial.active && tutorial.kind === "pvp" &&
     tutorialStep()?.setup === "pvpFinalMatch" && index === getPvpCpuIndex() && source === "cpu";
   if (!finalCpu && tutorialBlocksLiveInput()) return;
+  if (tutorial.active && tutorial.kind === "pvp" &&
+      tutorialStep()?.setup === "pvpReboundThree" && index === 0 &&
+      source === "human" && pvpPlayers[0]?.firstJumpMade && pvpPlayers[0]?.grounded) return;
   const lesson = tutorial.active && tutorial.kind === "pvp" && index === 0 && source === "human"
     ? tutorialStep()?.setup : "";
   const quickTapAllowed = new Set([
@@ -598,7 +610,15 @@ update = function(dt, ...rest) {
   // only the controlled frog. Flies stay still during a poof transition.
   if (tutorial.active && tutorialMovementLocked()) {
     updateTutorialAmbient(dt, { animateFlies: true });
-    if (tutorial.kind === "pvp" &&
+    // On a P1-only retry poof, Ember stays visible and continues her REAL
+    // landing, stun and upright rotation rather than freezing for the poof.
+    if (tutorial.kind === "pvp" && tutorial.resetPending &&
+        !tutorial.resetPvpPoofPlayers?.includes(1) && pvpPlayers[1]) {
+      pvpPlayers[1].inputHeld = false;
+      pvpPlayers[1].charging = false;
+      updatePvpPlayer(pvpPlayers[1], dt);
+      updatePvpImpactEffects(dt);
+    } else if (tutorial.kind === "pvp" &&
         (tutorial.dialogueOpen || tutorial.pvpAwaitRecoveryAdvance) && !tutorial.resetPending &&
         !tutorial.pvpFrogsHidden && game.state === "playing") {
       // Dialogue blocks controls, not gravity. A surprise bonk or wall rebound

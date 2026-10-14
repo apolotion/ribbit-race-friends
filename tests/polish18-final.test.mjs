@@ -24,7 +24,7 @@ function between(text, start, end) {
 
 test("polish 18 build marker is wired through client and Worker", () => {
   for (const text of [tutorial, common, read("client/game/90-extended-features.js"), read("client/game/110-online-mobile-polish.js"), read("public/scripts/cloud-client.js")]) {
-    assert.match(text, /2026\.10\.13-friends-polish-58/);
+    assert.match(text, /2026\.10\.13-friends-polish-62/);
   }
 });
 

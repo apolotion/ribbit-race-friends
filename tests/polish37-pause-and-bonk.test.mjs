@@ -69,15 +69,15 @@ test('Your Turn keeps both frog positions but moves fly to opposite side',()=>{
 test('buffered drop tutorial now targets Ember waiting at left ground',()=>{
  const positions=authoredPositions();
  const demo=positions.capture('pvpDemoBufferedBonk').players;
- assert.equal(demo[0].x+11,240); // grounded player dead center
+ assert.equal(demo[0].x+11,216); // player moved 24px left to the arrow
  assert.equal(demo[1].x+11,408); // Ember below lower-right perch
  assert.equal(demo[0].y,200);
  assert.equal(demo[1].y,200);
  const player=positions.capture('pvpBufferedBonk').players;
  assert.equal(player[0].x+11,75); // player begins on the left facing right
- assert.equal(player[1].x+11,240); // Ember waits at center ground
+ assert.equal(player[1].x+11,264); // Ember moved 24px right to the arrow
  const motion=section(scene,'function beginPvpDemoMotion','function updatePvpDemonstration');
- assert.match(motion,/case "pvpDemoBufferedBonk"[\s\S]{0,310}scriptPvpChargedJump\(1, \.70, -1, 0\)/);
+ assert.match(motion,/case "pvpDemoBufferedBonk"[\s\S]{0,490}scriptPvpChargedJump\(1, \.80, -1, 0\)/);
  assert.match(motion,/armPvpScriptedBuffer\(1, PARK_PLATFORMS\[3\]\)/);
 });
 
@@ -89,8 +89,8 @@ test('third practice bonk waits until Ember falls and finishes her stun rotation
 test('sky bonk narration follows the attacking frog landing rather than victim recovery',()=>{
  assert.match(monitor,/setup === "pvpSkyBonk"[\s\S]{0,380}pvpPracticeEventReady\(100, now\)/);
  assert.match(monitor,/setup === "pvpBufferedSky"[\s\S]{0,350}pvpPracticeEventReady\(100, now\)/);
- assert.match(scene,/setup === "pvpDemoSkyBonk" \|\| setup === "pvpDemoBufferedSky"/);
- assert.match(scene,/setup !== "pvpDemoBufferedSky" \|\| ember\.grounded/);
+ assert.match(scene,/const bonkImpactReady = tutorial\.pvpDemoBonkAt > 0/);
+ assert.match(scene,/completed = bonkImpactReady && ember\.grounded && !ember\.bonked/);
 });
 
 test('platforms dialogue says these instead of those',()=>{

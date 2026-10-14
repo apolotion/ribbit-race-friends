@@ -83,9 +83,9 @@ test('Ember starts buffered sky drop centered atop the high platform and practic
 });
 
 test('player and Ember switch ground positions for one natural under bonk', () => {
-  assert.match(scenes, /case "pvpUnderBonkTwo"[\s\S]{0,550}positionPvpOnPlatform\(p1, middleLeft, 1\)/);
+  assert.match(scenes, /case "pvpUnderBonkTwo"[\s\S]{0,550}positionPvpOnPlatform\(p1, middleLeft, 1, middleLeft\.w - p1\.w - 2\)/);
   assert.match(scenes, /positionPvp\(ember, 238, CONFIG\.groundY - ember\.h, -1\)/);
-  assert.match(monitoring, /scriptPvpChargedJump\(1, \.89, -1, 0\)/);
+  assert.match(monitoring, /scriptPvpChargedJump\(1, \.50, -1, 0\)/);
   assert.match(monitoring, /tutorial\.pvpUnderBonks >= 1/);
   assert.doesNotMatch(monitoring, /second-under-bonk-straight-up/);
   assert.match(config, /Give me one clean under bonk/);

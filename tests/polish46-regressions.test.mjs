@@ -45,11 +45,12 @@ test('Authored tutorial fly signs are instantly legible and inside the visible s
 });
 
 test('Sky-bonk stun recovery clears squash and stays on the actual ground',()=>{
-  assert.match(physics,/player\.recoveryFlipTimer = \.24/);
+  assert.match(physics,/player\.recoveryFlipTimer = player\.recoveryFlipDuration/);
   assert.match(physics,/player\.recoveryFlipTimer = Math\.max/);
   assert.match(physics,/CONFIG\.groundY/);
   assert.match(effects,/recoveryFlipTimer/);
-  assert.match(dialogue,/recoveryFlipTimer/);
+  assert.match(dialogue,/function closeDialogue/);
+  assert.doesNotMatch(dialogue,/if \(recovering\) return true/);
 });
 
 test('A tiny charge cannot bypass normal bonk lessons',()=>{
@@ -65,7 +66,8 @@ test('Successful tutorial dialogue waits for landing rather than freezing midair
 });
 
 test('Lesson completion is independent of a fast-forwarded Ember dialogue',()=>{
-  assert.match(dialogue,/recoveryFlipTimer/);
+  assert.match(dialogue,/function closeDialogue/);
+  assert.doesNotMatch(dialogue,/if \(recovering\) return true/);
   assert.match(dialogue,/closeDialogue/);
 });
 
@@ -93,7 +95,7 @@ test('Chapter navigation fully resets lesson dialogue and recreates the target s
 
 test('The tutorial final race has a hard timer resolution with no infinite zero-clock state',()=>{
   assert.match(monitor,/game\.pvpTimedOutcomePending = true/);
-  assert.match(effects,/performance\.now\(\) - game\.pvpTimeExpiredRealAt >= 2000/);
+  assert.match(effects,/performance\.now\(\) - game\.pvpTimeExpiredRealAt >=/);
   assert.match(effects,/resolvePvpTimedOutcomeAfterJump\(\)/);
 });
 

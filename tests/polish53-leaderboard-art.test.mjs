@@ -69,7 +69,7 @@ test('ten unique 20x20 transparent refresh icon concepts are included, while ori
 });
 
 test('version and built runtime stay synchronized',()=>{
-  assert.equal(JSON.parse(read('package.json')).version,'1.7.46');
-  assert.match(read('public/scripts/game.bundle.js'),/const RIBBIT_DISPLAY_VERSION = "VERSION 1\.7\.46"/);
-  assert.match(read('public/index.html'),/2026\.10\.13-friends-polish-58/);
+  assert.equal(JSON.parse(read('package.json')).version,'1.7.50');
+  assert.match(read('public/scripts/game.bundle.js'),/const RIBBIT_DISPLAY_VERSION = "VERSION 1\.7\.50"/);
+  assert.match(read('public/index.html'),/2026\.10\.13-friends-polish-62/);
 });

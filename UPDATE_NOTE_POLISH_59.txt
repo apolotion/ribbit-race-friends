@@ -1,0 +1,24 @@
+RIBBIT RACE FRIENDS — POLISH 59 (VERSION 1.7.47)
+Build: 2026.10.13-friends-polish-59
+Based on Polish 58 (1.7.46); full GitHub/Cloudflare Worker source package.
+
+VERSUS TUTORIAL — BONK TIMING AND RECOVERY
+* In the opening bonk demonstration, Ember begins the "Bonk!" success dialogue when she lands, not after the player's stun/recovery timer expires. The player remains on-screen, stunned, then performs the full upright recovery rotation.
+* Drop-bonk, buffered-drop, sky-bonk, and buffered-sky demonstrations likewise advance narration when the attacker lands. The stunned victim continues the genuine physics, stun countdown and recovery during the dialogue.
+* Tutorial recovery rotation is 0.56 seconds and renders continuously from inverted to upright. Ordinary Versus retains the original 0.24-second recovery. Neither rotation happens twice.
+* Pressed/held Space no longer bypasses the player's tutorial-controlled stun by buffering a jump through the demonstration/dialogue input lock. Normal non-tutorial Versus jump controls are unchanged.
+* If the player alone poofs after a failed Bonk & Catch attempt, Ember continues her landing/stun/recovery during the poof. Her live post-poof state is preserved instead of snapping back to an older pose.
+
+BUFFERED DROP BONK POSITION AND JUMP
+* During Ember's demonstration, the player is moved 24 world pixels left of the previous middle-ground spot, per the screenshot arrow.
+* Ember's authentic charged buffered drop jump increases from 70% to 80% so its real arc reaches the new player location via the middle-lower platform.
+* During player practice, Ember is moved 24 world pixels right of the former middle-ground position, matching the second screenshot arrow.
+
+COMPATIBILITY AND DEPLOYMENT
+* No backend schema / database migration is required. Full game and replay compatibility code is retained, including historic replays and Frog Tags replays.
+* This is a complete source package for updating the GitHub repository. Replace repository contents and deploy normally; no code.gs changes.
+
+TESTS
+* Original 565 automated checks retained, with expectations updated for new timing and position.
+* Six additional Polish 59 tests cover physical stun, one continuous recovery rotation, normal Versus stun duration, landing-triggered demo success, positions/charge, and Ember's live-state preservation across a player-only retry.
+* Runtime tests use the game's original source in a Node VM. A complete deployed playthrough (including all six reported video scenes) was not possible in this environment and is still recommended after deployment.

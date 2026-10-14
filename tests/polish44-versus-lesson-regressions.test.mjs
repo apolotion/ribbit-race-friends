@@ -70,10 +70,9 @@ test('Final entrance reserves one second AFTER poof without starting CPU or game
   assert.match(render,/pvpTimeExpiredRealAt = performance\.now\(\)/);
 });
 
-test('Player can begin sky-bonk dialogue on landing while stun flip-back remains unskippable', () => {
+test('Sky-bonk dialogue begins on landing, and a player may skip recovery with Space', () => {
   assert.match(monitor,/setup === "pvpBufferedSky"[\s\S]{0,280}p1\.grounded/);
-  assert.match(dialogue,/const recovering = pvpPlayers\.some/);
-  assert.match(dialogue,/if \(recovering\) return true/);
+  assert.doesNotMatch(dialogue,/if \(recovering\) return true/);
   assert.match(hooks,/updatePvpPlayer\(player, dt\)/);
   assert.match(lifecycle,/if \(tutorial\.kind === "pvp"\) clearHeldInput\(\)/);
 });

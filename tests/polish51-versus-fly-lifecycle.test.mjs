@@ -55,8 +55,8 @@ function flyHarness(mode = 'pvp') {
 }
 
 test('Polish 51 uses a distinct Versus spawn cadence and leaves Solo timings unchanged', () => {
-  assert.equal(JSON.parse(read('package.json')).version,'1.7.46');
-  assert.match(common,/2026\.10\.13-friends-polish-58/);
+  assert.equal(JSON.parse(read('package.json')).version,'1.7.50');
+  assert.match(common,/2026\.10\.13-friends-polish-62/);
   assert.equal(CONFIG.flyRespawnDelay,2);
   assert.equal(CONFIG.flySpawnMinimumSpacing,1);
   assert.equal(CONFIG.secondFlySpawnDelay,2);

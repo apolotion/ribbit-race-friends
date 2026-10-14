@@ -67,7 +67,7 @@ function startRibbitRaceGame() {
     const canvas = document.getElementById("game");
     const gameFrame = document.getElementById("game-frame");
     const friendsGameInputLocked = () => window.RibbitFriendsGameInputLocked?.() === true;
-    const RIBBIT_DISPLAY_VERSION = "VERSION 1.7.46";
+    const RIBBIT_DISPLAY_VERSION = "VERSION 1.7.50";
     const RIBBIT_CREDIT_TEXT = "MADE BY NICK M.";
     const RIBBIT_CREDIT_Y = 228;
     const rgbValueEditor = document.getElementById("rgb-value-editor");
@@ -8208,6 +8208,7 @@ function startRibbitRaceGame() {
       player.landingSquash = 0;
       player.bonkLandingPopTimer = 0;
       player.recoveryFlipTimer = 0;
+      player.recoveryFlipDuration = .24;
       player.blinkTimer = 1.2 + player.index;
       player.blinking = false;
       clearFrogAfterimages(player);
@@ -8258,6 +8259,8 @@ function startRibbitRaceGame() {
       flies.length = 0;
       nextFlyId = 1;
       game.spawnQueue = [];
+      game.pvpTutorialGraceHeld = [false, false];
+      game.pvpTutorialGraceFromHeld = false;
       game.completedVocabIndices = new Set();
       game.promptSerial = 1;
       game.targetVocabIndex = 0;
@@ -8488,7 +8491,9 @@ function startRibbitRaceGame() {
       const player = pvpPlayers[index];
       if (!player || !player.inputHeld) return;
       if (source === "human" && index === getPvpCpuIndex() && game.pvpCpuEnabled) return;
-      if (game.pvpTimerGraceActive || game.pvpTimedOutcomePending) {
+      const heldFinalCharge = Boolean(game.pvpTimerGraceActive &&
+        game.pvpTutorialGraceHeld?.[index] && player.grounded && player.charging);
+      if ((game.pvpTimerGraceActive || game.pvpTimedOutcomePending) && !heldFinalCharge) {
         const saved = Array.isArray(game.pvpPreservedCharges) ? game.pvpPreservedCharges[index] : null;
         if (saved?.charging) saved.releasedDuringGrace = true;
         player.inputHeld = false;
@@ -8529,6 +8534,7 @@ function startRibbitRaceGame() {
       player.vy = velocity.vy;
       player.grounded = false;
       player.charging = false;
+      if (heldFinalCharge) game.pvpTutorialGraceHeld[index] = false;
       player.landingSquash = 0;
       player.airTime = 0;
       player.jumpStartY = player.y;
@@ -8644,15 +8650,21 @@ function startRibbitRaceGame() {
       if (player.stunTimer > 0 && player.stunCountdownStarted) {
         const prevStun = player.stunTimer;
         player.stunTimer = Math.max(0, player.stunTimer - dt);
-        const heldThroughStun = player.index === getPvpCpuIndex() && game.pvpCpuEnabled
+        const lockedByTutorial = typeof tutorial !== "undefined" && tutorial.active &&
+          tutorial.kind === "pvp" &&
+          (tutorial.pvpDemoActive || tutorial.pvpPlayerScriptLocked ||
+           tutorial.dialogueOpen || tutorial.pvpAwaitRecoveryAdvance || tutorial.resetPending);
+        const heldThroughStun = !lockedByTutorial && (player.index === getPvpCpuIndex() && game.pvpCpuEnabled
           ? player.inputHeld
-          : isPvpPhysicalJumpHeld(player.index);
+          : isPvpPhysicalJumpHeld(player.index));
         player.inputHeld = heldThroughStun;
         if (prevStun > 0 && player.stunTimer <= 1e-8) {
           player.stunTimer = 0;
           player.stunCountdownStarted = false;
           player.lastStunEndAt = game.pvpElapsed;
-          player.recoveryFlipTimer = .24;
+          player.recoveryFlipDuration = typeof tutorial !== "undefined" &&
+            tutorial.active && tutorial.kind === "pvp" ? .56 : .24;
+          player.recoveryFlipTimer = player.recoveryFlipDuration;
           player.landingSquash = 0;
           player.bonkLandingPopTimer = 0;
           if (heldThroughStun) startPvpCharge(player);
@@ -9309,6 +9321,17 @@ function startRibbitRaceGame() {
         if (!overlapMetrics) return;
       }
       if (a.collisionCooldown > 0 || b.collisionCooldown > 0) {
+        const supported = (a.grounded && a.y + a.h < CONFIG.groundY - 1) ? a
+          : (b.grounded && b.y + b.h < CONFIG.groundY - 1) ? b : null;
+        const rising = supported === a ? b : a;
+        if (supported && !rising.grounded && rising.vy <= 14 &&
+            rising.y + rising.h / 2 > supported.y + supported.h / 2) {
+          const perch = getPvpStandingPlatform(supported);
+          const anchorY = perch && !perch.ground ? perch.y - supported.h : supported.y;
+          rising.y = Math.max(rising.y, anchorY + supported.h + 0.5);
+          supported.y = anchorY;
+          return;
+        }
         separatePvpPlayersAlongAxis(a, b, overlapMetrics);
         return;
       }
@@ -9383,7 +9406,9 @@ function startRibbitRaceGame() {
           meaningfulUnderlap &&
           risingFromBelow &&
           (topCrossedUnderbelly || alreadyInsideLowerHurtbox);
-        if (platformUnderbonk) {
+        if (platformUnderbonk ||
+            (standingOnPlatform && risingFromBelow && meaningfulUnderlap &&
+             airborne.vy < 0 && airborne.y >= grounded.y)) {
           bonkPvpPlayerFromBelow(grounded, airborne);
           return;
         }
@@ -9393,6 +9418,10 @@ function startRibbitRaceGame() {
         }
         if (similarHeightSideHit) {
           bouncePvpPlayersSideways(grounded, airborne);
+          return;
+        }
+        if (airborne.vy < -1 && airborneCenterY > groundedCenterY + 1) {
+          bouncePvpPlayersSideways(grounded, airborne, { ...overlapMetrics, axis: "horizontal" });
           return;
         }
         resolvePvpOverlapByAxis(a, b, overlapMetrics);
@@ -9786,6 +9815,8 @@ function startRibbitRaceGame() {
         Number(game.pvpTimeRemaining) > 0 && Number(game.pvpTimeRemaining) <= 1.0
       );
       if (reachedTarget) return "final";
+      if (lastSecondCatch && typeof tutorial !== "undefined" && tutorial.active && tutorial.kind === "pvp" &&
+          tutorialStep()?.setup === "pvpFinalMatch") return "clutch";
       if (pvpFlyContestIsClose(player, targetFly)) return "contest";
       if (lastSecondCatch) return "clutch";
       return "";
@@ -9858,6 +9889,12 @@ function startRibbitRaceGame() {
       return true;
     }
     function attemptPvpFlyCatch(player, targetFly, source = "body") {
+      if (tutorial.active && tutorial.kind === "pvp" &&
+          tutorialStep()?.setup === "pvpFinalMatch" &&
+          ((game.pvpCriticalCatchActive &&
+            targetFly?.id !== game.pvpCriticalCatchFlyVisual?.id) ||
+           tutorial.pvpFinalOutcome !== null || game.state === "pvpCelebration" ||
+           game.state === "won")) return false;
       if(OnlineVersus.isGuestActive() && player?.index===1 && game.state==='playing') return OnlineVersus.predictCatch(player,targetFly,source);
       if (!targetFly || targetFly.state !== "active") return false;
       registerPvpFlyPursuit(player, targetFly);
@@ -10014,6 +10051,8 @@ function startRibbitRaceGame() {
       game.pvpWinPendingIndex = null;
       game.pvpTimedOutcomePending = false;
       game.pvpTimerGraceActive = false;
+      game.pvpTutorialGraceHeld = [false, false];
+      game.pvpTutorialGraceFromHeld = false;
       game.pvpTimerGraceEligible = [false, false];
       game.pvpTimerGracePromptSerial = -1;
       game.pvpBonusEligible = false;
@@ -10110,6 +10149,8 @@ function startRibbitRaceGame() {
       game.pvpWinPendingIndex = null;
       game.pvpTimedOutcomePending = false;
       game.pvpTimerGraceActive = false;
+      game.pvpTutorialGraceHeld = [false, false];
+      game.pvpTutorialGraceFromHeld = false;
       game.pvpTimerGraceEligible = [false, false];
       game.pvpTimeRemaining = 0;
       game.pvpLastUrgentSecond = null;
@@ -10179,22 +10220,40 @@ function startRibbitRaceGame() {
       game.pvpPreservedCharges = [null, null];
     }
     function beginPvpTimerJumpGrace() {
-      pvpPlayers.forEach((player, index) => {
-        if (player && player.grounded && player.charging && !player.bonked && player.stunTimer <= 0) {
-          player.inputHeld = true;
-          releasePvpButton(index, "system");
-        }
-      });
-      const eligible = pvpPlayers.map((player) => Boolean(
-        player && (!player.grounded || player.landedThisFrame || player.tongue.active)
+      const tutorialFinal = Boolean(tutorial.active && tutorial.kind === "pvp" &&
+        tutorialStep()?.setup === "pvpFinalMatch");
+      const heldAtBuzzer = pvpPlayers.map((player) => Boolean(tutorialFinal &&
+        player && player.grounded && player.charging && !player.bonked && player.stunTimer <= 0));
+      if (!tutorialFinal) {
+        pvpPlayers.forEach((player, index) => {
+          if (player && player.grounded && player.charging && !player.bonked && player.stunTimer <= 0) {
+            player.inputHeld = true;
+            releasePvpButton(index, "system");
+          }
+        });
+      }
+      const eligible = pvpPlayers.map((player, index) => Boolean(
+        player && (!player.grounded || player.landedThisFrame || player.tongue.active || heldAtBuzzer[index])
       ));
+      game.pvpTutorialGraceHeld = heldAtBuzzer;
+      game.pvpTutorialGraceFromHeld = heldAtBuzzer.some(Boolean);
       game.pvpTimerGraceEligible = eligible;
       game.pvpTimerGracePromptSerial = game.promptSerial;
       game.pvpTimerGraceActive = eligible.some(Boolean);
       game.pvpTimedOutcomePending = true;
       game.spawnQueue = [];
       preservePvpChargedJumpsAtTimeLimit();
-      cancelPvpChargedJumpsAtTimeLimit(false);
+      if (tutorialFinal) {
+        game.pvpCpuPlan = null;
+        pvpPlayers.forEach((player, index) => {
+          if (!heldAtBuzzer[index]) { player.inputHeld = false; player.charging = false; }
+        });
+        const cpuIndex = getPvpCpuIndex();
+        if (game.pvpCpuEnabled && heldAtBuzzer[cpuIndex]) {
+          pvpPlayers[cpuIndex].inputHeld = true;
+          releasePvpButton(cpuIndex, "cpu");
+        }
+      } else cancelPvpChargedJumpsAtTimeLimit(false);
       pvpPlayers.forEach((player, index) => {
         if (!eligible[index] && player?.tongue) {
           player.tongue.active = false;
@@ -10212,6 +10271,7 @@ function startRibbitRaceGame() {
       if (!game.pvpTimerGraceActive) return true;
       return pvpPlayers.every((player, index) => {
         if (!game.pvpTimerGraceEligible[index]) return true;
+        if (game.pvpTutorialGraceHeld?.[index] && player.charging) return false;
         return player.grounded && !player.landedThisFrame && !player.tongue.active;
       });
     }
@@ -10220,6 +10280,8 @@ function startRibbitRaceGame() {
       game.pvpTimerGraceEligible = [false, false];
       game.pvpTimerGracePromptSerial = -1;
       game.pvpTimedOutcomePending = false;
+      game.pvpTutorialGraceHeld = [false, false];
+      game.pvpTutorialGraceFromHeld = false;
       if (pvpPlayers[0].score === pvpPlayers[1].score) {
         beginPvpSuddenDeath();
         return;
@@ -10893,13 +10955,19 @@ function startRibbitRaceGame() {
         }
       }
       if (tutorial.active && tutorial.kind === "pvp" && tutorialStep()?.setup === "pvpFinalMatch" &&
-          game.state === "playing" && !game.pvpTimedOutcomePending && !game.pvpCriticalCatchActive) {
-        const activeFlyPool = flies.filter((fly) => fly?.state === "active" && Number.isInteger(fly.vocabIndex));
+          game.state === "playing" && !game.pvpCriticalCatchActive) {
+        const activeFlyPool = typeof flies !== "undefined" ? flies.filter((fly) => fly?.state === "active" && Number.isInteger(fly.vocabIndex)) : [];
         if (activeFlyPool.length && !activeFlyPool.some((fly) => fly.vocabIndex === game.targetVocabIndex)) {
-          game.targetVocabIndex = activeFlyPool[0].vocabIndex;
-          game.promptSerial += 1;
+          setPrompt(activeFlyPool[0].vocabIndex);
           game.completedVocabIndices.delete(game.targetVocabIndex);
+        } else if (!activeFlyPool.length && !game.pvpTimedOutcomePending) {
+          if (game.spawnQueue?.length) {
+            game.spawnQueue[0].dueAt = Math.min(game.spawnQueue[0].dueAt, game.elapsed + STEP);
+            const nextVocab = game.spawnQueue[0].vocabIndex;
+            if (Number.isInteger(nextVocab) && game.targetVocabIndex !== nextVocab) setPrompt(nextVocab);
+          }
         }
+        if (tutorial.pvpFinalOutcome === null) tutorial.promptHidden = false;
       }
       updatePvpCpuInput(dt);
       pvpPlayers.forEach((player) => updatePvpPlayer(player, dt));
@@ -10916,9 +10984,11 @@ function startRibbitRaceGame() {
           !game.pvpCriticalCatchActive && game.pvpTimeRemaining <= 0 &&
           (!game.pvpTimerGraceActive ||
            (Number.isFinite(game.pvpTimeExpiredRealAt) &&
-            performance.now() - game.pvpTimeExpiredRealAt >= 2000) ||
+            performance.now() - game.pvpTimeExpiredRealAt >=
+              (game.pvpTutorialGraceFromHeld ? 6500 : 2000)) ||
            (Number.isFinite(game.pvpTimeExpiredAt) &&
-            game.pvpElapsed - game.pvpTimeExpiredAt >= 2))) {
+            game.pvpElapsed - game.pvpTimeExpiredAt >=
+              (game.pvpTutorialGraceFromHeld ? 6.5 : 2)))) {
         resolvePvpTimedOutcomeAfterJump();
         return;
       }
@@ -11092,7 +11162,8 @@ function startRibbitRaceGame() {
       const popOffset = player.bonkLandingPopTimer > 0 ? Math.round(Math.sin(popProgress * Math.PI) * 3) : 0;
       const baseY = Math.round(player.y + player.h - popOffset);
       const recoveringFlip = (player.recoveryFlipTimer || 0) > 0;
-      const recoveryProgress = recoveringFlip ? clamp(1 - player.recoveryFlipTimer / .24, 0, 1) : 0;
+      const recoveryDuration = Number(player.recoveryFlipDuration) > 0 ? player.recoveryFlipDuration : .24;
+      const recoveryProgress = recoveringFlip ? clamp(1 - player.recoveryFlipTimer / recoveryDuration, 0, 1) : 0;
       const upsideDown = player.bonked || player.stunTimer > 0 || recoveringFlip;
       const sx = 1 + player.landingSquash * 0.18 + (player.charging ? player.charge * 0.20 : 0);
       const sy = 1 / Math.sqrt(sx);
@@ -11368,7 +11439,10 @@ function startRibbitRaceGame() {
           ? (game.onlineMode ? (OnlineVersus.localIndex() === 1 ? "YOU - TAP METER" : (window.RibbitOpponentName?.() || "OPPONENT")) : game.pvpCpuEnabled ? `CPU LV ${game.pvpCpuDifficulty}` : "P2 JUMP")
           : (game.onlineMode ? (OnlineVersus.localIndex() === 1 ? "YOU - SPACE" : (window.RibbitOpponentName?.() || "OPPONENT")) : game.pvpCpuEnabled ? `CPU LV ${game.pvpCpuDifficulty}` : "RIGHT SHIFT"), palette: p2Palette }
       ].forEach(({ player, x, label, palette }) => {
-        if (tutorialPvp && player.index === 1 && !tutorial.completeScreen) return;
+        if (tutorialPvp && player.index === 1 && !tutorial.completeScreen &&
+            !(tutorialFinalMatch && (game.state === "countdown" ||
+              (tutorial.pvpFinalMatchStarted && !tutorial.dialogueOpen &&
+                !tutorial.pvpFinalMatchCountdownUntil)))) return;
         const meterW = 112;
         ctx.fillStyle = COLORS.ink;
         ctx.fillRect(x - 2, meterY - 2, meterW + 4, meterH + 4);
@@ -12147,7 +12221,7 @@ function startRibbitRaceGame() {
           !flies.some(f=>f?.id===game.pvpCriticalCatchFlyVisual.id)) {
         const catcher=pvpPlayers[game.pvpCriticalCatchWinnerIndex];
         if(catcher)drawSlowMotionFlyPull(game.pvpCriticalCatchFlyVisual,getPvpMouth(catcher),
-          game.pvpCriticalCatchElapsed,game.pvpCriticalCatchDuration);
+          game.pvpCriticalCatchElapsed,game.pvpCriticalCatchDuration,catcher);
       }
       pvpPlayers.forEach(p => drawEntity(p, drawFrogAfterimages));
       if (!["pvpCelebration", "won"].includes(game.state)) pvpPlayers.forEach((player)=>drawAirShadowForEntity(OnlineVersus.displayPlayer(player),getPvpSkinPalette(player.skinId,player.index===0?"azure":"crimson")));
@@ -13963,19 +14037,34 @@ function startRibbitRaceGame() {
       });
       ctx.restore();
     }
-    function drawSlowMotionFlyPull(visual, mouth, elapsed, duration) {
+    function drawSlowMotionFlyPull(visual, mouth, elapsed, duration, catcher = null) {
       if (!visual || !mouth) return;
       const fromX=Number(visual.baseX ?? visual.x);
       const fromY=Number(visual.baseY ?? visual.y);
       if (![fromX,fromY,mouth.x,mouth.y].every(Number.isFinite)) return;
       const progress=clamp((Number(elapsed)||0)/Math.max(.001,Number(duration)||2),0,1);
       const amount=clamp((progress-.07)/.78,0,1);
-      if (amount>=1) return; // has entered the frog's mouth, not vanished on catch
+      const t = catcher?.tongue;
+      const matchingTongue = Boolean(t?.active && (t.targetFlyId === visual.id || t.captured));
+      const tongueProgress = matchingTongue
+        ? clamp(Number(t.elapsed) / Math.max(.001, Number(t.duration) || .25), 0, 1) : 0;
+      const caughtOnTongue = matchingTongue && t.captured;
+      if (!matchingTongue && catcher && t && !t.active && t.captured) return;
+      if (amount>=1 && !matchingTongue) return;
       const ease=amount*amount*(3-2*amount);
-      const x=lerp(fromX,mouth.x,ease);
-      const y=lerp(fromY,mouth.y,ease);
+      let x=lerp(fromX,mouth.x,ease), y=lerp(fromY,mouth.y,ease);
+      if (matchingTongue) {
+        if (!caughtOnTongue) { x=fromX; y=fromY; }
+        else {
+          const extension=Math.sin(tongueProgress*Math.PI);
+          const rawX=lerp(mouth.x,Number(t.targetX),extension);
+          x=Number(catcher.dir)>=0 ? Math.max(mouth.x,rawX) : Math.min(mouth.x,rawX);
+          y=lerp(mouth.y,Number(t.targetY),extension);
+        }
+      }
+      const actualEase=matchingTongue ? (caughtOnTongue ? 1-Math.sin(tongueProgress*Math.PI) : 0) : ease;
       ctx.save();
-      ctx.globalAlpha=clamp((1-ease)/.14,0,1);
+      ctx.globalAlpha=matchingTongue ? 1 : clamp((1-ease)/.14,0,1);
       const dx=x-mouth.x,dy=y-mouth.y;
       const points=Math.max(1,Math.ceil(Math.hypot(dx,dy)/3));
       for(let index=0;index<=points;index++){
@@ -13984,7 +14073,7 @@ function startRibbitRaceGame() {
         ctx.fillStyle="#923c61";ctx.fillRect(px-1,py,3,2);
         ctx.fillStyle="#ef819e";ctx.fillRect(px,py-1,2,2);
       }
-      drawFlyAt(x,y,Math.max(.34,1-.5*ease));
+      drawFlyAt(x,y,Math.max(.34,1-.5*actualEase));
       ctx.restore();
     }
     function drawTongue() {
@@ -17860,7 +17949,7 @@ function startRibbitRaceGame() {
       if(criticalCatch && game.soloCriticalCatchFlyVisual &&
           !flies.some(f=>f?.id===game.soloCriticalCatchFlyVisual.id)) {
         drawSlowMotionFlyPull(game.soloCriticalCatchFlyVisual,getFrogMouth(),
-          game.soloCriticalCatchElapsed,game.soloCriticalCatchDuration);
+          game.soloCriticalCatchElapsed,game.soloCriticalCatchDuration,{tongue,dir:frog.dir});
       }
       drawFrogAfterimages(frog);
       drawAirShadowForEntity(frog, getFrogPalette());
@@ -19881,8 +19970,8 @@ function startRibbitRaceGame() {
     requestAnimationFrame(frame);
 
     /* ===== client/game/90-extended-features.js ===== */
-const RIBBIT_FRIENDS_DISPLAY_VERSION = "1.7.46";
-const RIBBIT_FRIENDS_BUILD = "2026.10.13-friends-polish-58";
+const RIBBIT_FRIENDS_DISPLAY_VERSION = "1.7.50";
+const RIBBIT_FRIENDS_BUILD = "2026.10.13-friends-polish-62";
 function rr14Number(value, fallback = 0) {
   const parsed = Number(value);
   return Number.isFinite(parsed) ? parsed : fallback;
@@ -20361,10 +20450,10 @@ window.RibbitRaceMobileDiagnostics = () => ({
  */
 (() => {
   "use strict";
-  const BUILD = "2026.10.13-friends-polish-58";
+  const BUILD = "2026.10.13-friends-polish-62";
   const RR_V160_CANDIDATES = {"catchFly":["attemptFlyCatch","attemptPvpFlyCatch","catchSandboxFly","getPvpImminentCatchFly","recordFlyEaten","scheduleFlyReplacementFromCatch"],"jumpSound":["playJumpSound"],"beep":["playCountdownGoSound","playCountdownSound"],"replayUpload":["saveRecordDate"],"restart":["resetGame","resetPvpGame","resetPvpPlayer","resetRoundLifecycle","resetRoundNetwork","restartCurrentLevel"],"drop":[],"render":["drawPvpScene","drawScene"],"worldRecord":[],"fullscreen":["getFullscreenElement","hideFullscreenFallback","showFullscreenFallback","syncFullscreenButton","toggleRibbitFullscreen"],"onlineSubmit":[],"leaderboard":["isSoloEndlessLeaderboardEligible","savePvpMatchWinsForLeaderboard"]};
   const RR_V160_VARS = {"onlineSelect":[],"achievementSelect":["activeAchievementIndex","hoveredAchievementCard"],"backRect":[]};
-  const VERSION = "1.7.46";
+  const VERSION = "1.7.50";
   const V = {
     menuTouch: new Map(), chargeTouch: new Map(), achievementPinned: -1,
     cpuTakeoverUntil: 0, cpuTakeoverStarted: 0, cpuSnapshot: null,
@@ -21248,7 +21337,7 @@ window.RibbitRaceMobileDiagnostics = () => ({
 "use strict";
 const SOLO_SEEN_KEY = "rrFriendsEngineTutorialSoloSeenV8";
 const PVP_SEEN_KEY = "rrFriendsEngineTutorialPvpSeenV8";
-const TUTORIAL_BUILD = "2026.10.13-friends-polish-58";
+const TUTORIAL_BUILD = "2026.10.13-friends-polish-62";
 const TUTORIAL_ACHIEVEMENT_ID = "tutorial-graduate";
 const PVP_TUTORIAL_ACHIEVEMENT_ID = "versus-tutorial-graduate";
 const TYPEWRITER_MS_PER_CHARACTER = 28;
@@ -22218,7 +22307,7 @@ const PVP_STEPS = Object.freeze([
     ],
     "dialogue": [
       "Now let's switch places.",
-      "I'll drop to the ground. Climb onto the lower-middle platform before I jump beneath you.",
+      "I'll drop to the ground. Jump onto the LOWER-MIDDLE platform before I jump beneath you.",
       "Hold your perch while I jump underneath you.",
       "Give me one clean under bonk without giving up your perch!"
     ],
@@ -22791,7 +22880,8 @@ function openDialogue() {
   tutorial.dialogueOpen = true;
   tutorial.scenePositionedDuringDialogue = false;
   beginDialogueLine(0);
-  tutorial.blockJumpUntilRelease = false;
+  tutorial.blockJumpUntilRelease = tutorial.blockJumpUntilRelease ||
+    (tutorial.kind === "pvp" && typeof isPvpPhysicalJumpHeld === "function" && isPvpPhysicalJumpHeld(0));
   game.state = "playing";
   game.pauseHelpOpen = false;
   clearHeldInput();
@@ -22806,7 +22896,8 @@ function openDynamicDialogue(lines, portraitKey = "thumbsup", postSuccessAdvance
   tutorial.dialogueOpen = true;
   tutorial.scenePositionedDuringDialogue = false;
   beginDialogueLine(0);
-  tutorial.blockJumpUntilRelease = false;
+  tutorial.blockJumpUntilRelease = tutorial.blockJumpUntilRelease ||
+    (tutorial.kind === "pvp" && typeof isPvpPhysicalJumpHeld === "function" && isPvpPhysicalJumpHeld(0));
   game.state = "playing";
   game.pauseHelpOpen = false;
   clearHeldInput();
@@ -23009,13 +23100,8 @@ function closeDialogue(source = "keyboard") {
     return true;
   }
   const step = tutorialStep();
-  if (tutorial.kind === "pvp" && tutorial.dynamicDialogueLines && tutorial.postSuccessAdvance) {
-    const recovering = pvpPlayers.some((player) => player && (player.bonked ||
-      (player.stunCountdownStarted && player.stunTimer > 0) ||
-      (player.recoveryFlipTimer || 0) > 0));
-    if (recovering) return true;
-  }
-  const keepJumpBlockedUntilRelease = source === "space-keydown" && tutorial.blockJumpUntilRelease;
+  const keepJumpBlockedUntilRelease = tutorial.blockJumpUntilRelease ||
+    (source === "space-keydown") || (tutorial.kind === "pvp" && typeof isPvpPhysicalJumpHeld === "function" && isPvpPhysicalJumpHeld(0));
   tutorial.dialogueOpen = false;
   tutorial.dialogueLineIndex = 0;
   tutorial.dialogueForceComplete = false;
@@ -23158,6 +23244,8 @@ function clearScenarioState() {
   tutorial.pvpUnderBonkAttemptAirborne = false;
   tutorial.pvpUnderBonkChargePrimed = false;
   tutorial.pvpUnderBonkEmberAirborne = false;
+  tutorial.pvpUnderBonkAttemptStartedAt = 0;
+  tutorial.pvpUnderBonkPlayerAirborne = false;
   tutorial.pvpUnderBonkDismountQueued = false;
   tutorial.pvpUnderBonkEmberDismounted = false;
   tutorial.pvpAvoidUnderPassedBeneath = false;
@@ -23642,13 +23730,13 @@ function configurePvpStep(index) {
     }
     case "pvpDemoBufferedBonk": {
       const lowRight = PARK_PLATFORMS[6];
-      positionPvp(p1, Math.round((W-p1.w)/2), CONFIG.groundY-p1.h, 1);
+      positionPvp(p1, Math.round((W-p1.w)/2) - 24, CONFIG.groundY-p1.h, 1);
       positionPvp(ember, lowRight.x+(lowRight.w-ember.w)/2, CONFIG.groundY-ember.h, -1);
       break;
     }
     case "pvpBufferedBonk": {
       positionPvp(p1, 64, CONFIG.groundY-p1.h, 1);
-      positionPvp(ember, Math.round((W-ember.w)/2), CONFIG.groundY-ember.h, -1);
+      positionPvp(ember, Math.round((W-ember.w)/2) + 24, CONFIG.groundY-ember.h, -1);
       break;
     }
     case "pvpDemoSkyBonk":
@@ -23699,11 +23787,11 @@ function configurePvpStep(index) {
       break;
     case "pvpDemoUnderBonk": {
       positionPvp(p1, 210, CONFIG.groundY - p1.h, 1);
-      positionPvpOnPlatform(ember, middleRight, -1, middleRight.w - ember.w - 8);
+      positionPvpOnPlatform(ember, middleRight, -1, middleRight.w - ember.w - 2);
       break;
     }
     case "pvpUnderBonkTwo": {
-      positionPvpOnPlatform(p1, middleLeft, 1);
+      positionPvpOnPlatform(p1, middleLeft, 1, middleLeft.w - p1.w - 2);
       positionPvp(ember, 238, CONFIG.groundY - ember.h, -1);
       break;
     }
@@ -23713,8 +23801,8 @@ function configurePvpStep(index) {
       break;
     case "pvpAvoidUnder": {
       const perch = PARK_PLATFORMS[3];
-      positionPvp(p1, 343, CONFIG.groundY - p1.h, -1);
-      positionPvpOnPlatform(ember, perch, 1);
+      positionPvp(p1, 222, CONFIG.groundY - p1.h, -1);
+      positionPvpOnPlatform(ember, perch, -1);
       break;
     }
     case "pvpDemoRebound":
@@ -23739,7 +23827,7 @@ function configurePvpStep(index) {
     case "pvpDemoIntercept":
       positionPvp(p1, 150, CONFIG.groundY - p1.h, 1);
       positionPvp(ember, 300, CONFIG.groundY - ember.h, -1);
-      addPvpTutorialFly(90, PARK_PLATFORMS[4].y - 2, 0, 0);
+      addPvpTutorialFly(W - 90, PARK_PLATFORMS[4].y - 2, 0, 0);
       break;
     case "pvpIntercept":
       positionPvp(p1, 150, CONFIG.groundY - p1.h, 1);
@@ -23747,9 +23835,9 @@ function configurePvpStep(index) {
       addPvpTutorialFly(90, PARK_PLATFORMS[4].y - 2, 0, 0);
       break;
     case "pvpDemoDinnerSteal":
-      positionPvp(p1, 118, CONFIG.groundY - p1.h, 1);
+      positionPvp(p1, W - 305 - p1.w, CONFIG.groundY - p1.h, 1);
       positionPvp(ember, 305, CONFIG.groundY - ember.h, -1);
-      addPvpTutorialFly(348, PARK_PLATFORMS[4].y + 4, 0, 0);
+      addPvpTutorialFly(320, PARK_PLATFORMS[5].y - 12, 0, 0);
       break;
     case "pvpDinnerSteal":
       positionPvp(p1, 118, CONFIG.groundY - p1.h, 1);
@@ -23926,7 +24014,7 @@ function beginPvpDemoMotion(setup) {
     case "pvpDemoBufferedBonk":
       tutorial.pvpDemoStage = 0;
       armPvpScriptedBuffer(1, PARK_PLATFORMS[3]);
-      scriptPvpChargedJump(1, .70, -1, 0);
+      scriptPvpChargedJump(1, .80, -1, 0);
       break;
     case "pvpDemoSkyBonk":
       scriptPvpChargedJump(1, 1, -1, 0);
@@ -23962,11 +24050,11 @@ function beginPvpDemoMotion(setup) {
       break;
     case "pvpDemoIntercept":
       scriptPvpChargedJump(0, .85, 1, 0);
-      scriptPvpChargedJump(1, .92, -1, 40);
+      scriptPvpChargedJump(1, .95, -1, 40);
       break;
     case "pvpDemoDinnerSteal":
-      scriptPvpChargedJump(0, 1, 1, 0);
-      scriptPvpChargedJump(1, 1, -1, 0);
+      scriptPvpChargedJump(0, .70, 1, 0);
+      scriptPvpChargedJump(1, .83, -1, 100);
       break;
     default:
       break;
@@ -24130,28 +24218,22 @@ function updatePvpDemonstration() {
     }
   }
   if (setup === "pvpDemoBonk" && tutorial.pvpDemoBonkAt > 0 &&
-      p1.grounded && !p1.bonked && p1.stunTimer <= 0 &&
-      (p1.recoveryFlipTimer || 0) <= 0 &&
-      now - tutorial.pvpDemoBonkAt >= 1000 && !tutorial.pvpDemoBonkHandled) {
+      ember.grounded && !ember.bonked &&
+      now - tutorial.pvpDemoBonkAt >= 75 && !tutorial.pvpDemoBonkHandled) {
     tutorial.pvpDemoBonkHandled = true;
     tutorial.pvpDemoActive = false;
-    tutorial.pvpPlayerScriptLocked = false;
+    tutorial.pvpPlayerScriptLocked = true;
     clearPvpScriptActions();
-    freezeControlledEntity();
+    clearHeldInput();
     passStep();
     return;
   }
   let completed = false;
   if (["pvpDemoDropLow","pvpDemoDropHigh","pvpDemoBufferedBonk","pvpDemoSkyBonk","pvpDemoBufferedSky","pvpDemoHighGround"].includes(setup)) {
     const bonkImpactReady = tutorial.pvpDemoBonkAt > 0 && now - tutorial.pvpDemoBonkAt >= 100;
-    completed = bonkImpactReady &&
-      (setup === "pvpDemoSkyBonk" || setup === "pvpDemoBufferedSky"
-        ? ember.grounded && !ember.bonked
-        : now - tutorial.pvpDemoBonkAt >= 950 && p1.grounded && !p1.bonked &&
-          p1.stunTimer <= 0 && (p1.recoveryFlipTimer || 0) <= 0) &&
-      (setup !== "pvpDemoBufferedSky" || (p1.grounded && p1.y + p1.h >= CONFIG.groundY - 1)) &&
-      (setup !== "pvpDemoHighGround" || (p1.grounded && p1.y + p1.h >= CONFIG.groundY - 1)) &&
-      (setup !== "pvpDemoBufferedSky" || ember.grounded);
+    completed = bonkImpactReady && ember.grounded && !ember.bonked &&
+      (setup !== "pvpDemoBufferedSky" || (ember.y + ember.h >= CONFIG.groundY - 1)) &&
+      (setup !== "pvpDemoHighGround" || (p1.grounded && p1.y + p1.h >= CONFIG.groundY - 1));
   } else if (setup === "pvpDemoBonkCatch" || setup === "pvpDemoReboundCatch" || setup === "pvpDemoDinnerSteal") {
     const techniqueSeen = setup === "pvpDemoBonkCatch" ? tutorial.pvpDemoBonkCount > 0 : tutorial.pvpReboundCount > 0;
     completed = techniqueSeen && tutorial.pvpPracticeCatchCount >= 1 && now - tutorial.pvpLastPracticeEventAt >= 650;
@@ -24213,12 +24295,30 @@ function startPvpFinalMatch() {
   game.pvpRoundWins = [0, 0];
   game.pvpRoundNumber = 1;
   game.pvpMatchWinnerIndex = null;
+  game.pvpRoundAwardedToken = null;
   game.selectedLevelId = "park";
   game.pvpSetupLevelId = "park";
   game.pvpSetupSkinIds[1] = "ember";
   applySelectedLevel();
   resetPvpGame();
-  if (!Number.isInteger(game.targetVocabIndex)) setPrompt(0);
+  game.pvpRoundGoalMode = "endless";
+  game.pvpBestOf = 1;
+  game.pvpRoundNumber = 1;
+  game.pvpRoundWins = [0,0];
+  game.pvpRoundAwardedToken = null;
+  game.pvpTimeRemaining = 30;
+  game.pvpTimeExpiredAt = null;
+  game.pvpTimeExpiredRealAt = null;
+  game.pvpTimerGraceActive = false;
+  game.pvpTimedOutcomePending = false;
+  game.pvpWinPendingIndex = null;
+  game.pvpCriticalCatchFlyVisual = null;
+  game.pvpCriticalCatchActive = false;
+  if (!Number.isInteger(game.targetVocabIndex)) {
+    const nextTicket = game.spawnQueue.find((ticket) => Number.isInteger(ticket?.vocabIndex));
+    setPrompt(nextTicket?.vocabIndex ?? 0);
+  }
+  tutorial.promptHidden = false;
   for (const fly of flies) {
     if (fly && fly.state === "active" && !Number.isInteger(fly.vocabIndex))
       fly.vocabIndex = game.targetVocabIndex;
@@ -24494,6 +24594,11 @@ function beginPoofTransition(options = {}) {
     : null;
   tutorial.resetReason = String(options.reason || "reset");
   tutorial.preservePromptDuringReset = options.preservePrompt === true;
+  if (tutorial.kind === "pvp" && !tutorial.dialogueOpen &&
+      (options.reason === "failed-attempt" || String(options.reason || "").startsWith("retry-"))) {
+    tutorial.pvpCaption = "YOUR TURN!";
+    tutorial.pvpCaptionUntil = Number.POSITIVE_INFINITY;
+  }
   tutorial.frogHidden = tutorial.kind !== "pvp" || pvpPoofPlayers.includes(0);
   tutorial.goalHovered = false;
   clearHeldInput();
@@ -24680,6 +24785,11 @@ function completePendingReset() {
     tutorial.failureMessageUntil = tutorial.failureFlashStartedAt + tutorial.failureFlashDuration;
   }
   tutorial.enteredAt = performance.now();
+  if (tutorial.kind === "pvp" && !tutorial.dialogueOpen &&
+      completedResetReason === "failed-attempt") {
+    tutorial.pvpCaption = "YOUR TURN!";
+    tutorial.pvpCaptionUntil = Number.POSITIVE_INFINITY;
+  }
   game.state = "playing";
   game.pauseHelpOpen = false;
 }
@@ -24688,7 +24798,7 @@ function failAttempt(message) {
   const setup = tutorialStep()?.setup || "";
   const emberStaysPut = tutorial.kind === "pvp" &&
     PVP_RETRY_EMBER_STATIONARY_SETUPS.has(setup);
-  const emberPose = emberStaysPut ? capturePvpTutorialPoses()?.[1] : null;
+  const preserveEmberLiveState = emberStaysPut;
   const retainedFlyObjects = setup === "pvpReboundCatch"
     ? flies.filter((fly) => fly?.tutorialAuthored && fly.state === "active" && fly.tutorialArmed !== false)
     : [];
@@ -24700,7 +24810,11 @@ function failAttempt(message) {
     preservePrompt: true,
     pvpPoofPlayers: emberStaysPut ? [0] : [0, 1],
     action: () => {
+      const liveEmberState = preserveEmberLiveState && pvpPlayers[1]
+        ? { ...pvpPlayers[1], tongue:{ ...pvpPlayers[1].tongue } }
+        : null;
       rebuildCurrentScenarioForRetry();
+      if (liveEmberState && pvpPlayers[1]) Object.assign(pvpPlayers[1], liveEmberState);
       if (retainedFlyObjects.length) {
         flies.length = 0;
         for (const fly of retainedFlyObjects) {
@@ -24709,7 +24823,6 @@ function failAttempt(message) {
           nextFlyId = Math.max(nextFlyId, Number(fly.id) + 1);
         }
       }
-      if (emberPose && pvpPlayers[1]) applyControlledPose(emberPose, pvpPlayers[1]);
     }
   });
 }
@@ -24735,14 +24848,21 @@ function finalizePassedStep() {
 }
 function passStep() {
   if (!tutorial.active || tutorial.passed || tutorial.passPending) return;
-  const skyBonkLandingDialogue = tutorial.kind === "pvp" &&
-    ["pvpDemoSkyBonk", "pvpSkyBonk", "pvpDemoBufferedSky", "pvpBufferedSky"].includes(tutorialStep()?.setup);
+  const setup = tutorialStep()?.setup || "";
+  const bonkLandingDialogue = tutorial.kind === "pvp" && [
+    "pvpDemoBonk", "pvpDemoDropLow", "pvpDemoDropHigh", "pvpDemoBufferedBonk",
+    "pvpDemoSkyBonk", "pvpDemoBufferedSky",
+    "pvpDropLow", "pvpDropHigh", "pvpBufferedBonk", "pvpSkyBonk", "pvpBufferedSky"
+  ].includes(setup);
+  const attacker = tutorialStep()?.demonstration ? pvpPlayers[1] : pvpPlayers[0];
   if ((tutorial.kind === "solo" && (!frog.grounded || tongue.active || game.soloCriticalCatchActive)) ||
-      (tutorial.kind === "pvp" && tutorialStep()?.setup !== "pvpFinalMatch" &&
-       (!pvpPlayers[0].grounded || (!skyBonkLandingDialogue && pvpPlayers[0].bonked) ||
-        pvpPlayers[0].tongue?.active || game.pvpCriticalCatchActive ||
-        (!skyBonkLandingDialogue && pvpPlayers[1].bonked) ||
-        (!pvpPlayers[1].grounded && !tutorialStep()?.demonstration)))) {
+      (tutorial.kind === "pvp" && setup !== "pvpFinalMatch" &&
+       (bonkLandingDialogue
+         ? (!attacker?.grounded || attacker?.bonked || game.pvpCriticalCatchActive)
+         : (!pvpPlayers[0].grounded || pvpPlayers[0].bonked ||
+            pvpPlayers[0].tongue?.active || game.pvpCriticalCatchActive ||
+            pvpPlayers[1].bonked ||
+            (!pvpPlayers[1].grounded && !tutorialStep()?.demonstration))))) {
     tutorial.passPending = true;
     tutorial.passPendingAt = performance.now();
     clearHeldInput();
@@ -24960,12 +25080,6 @@ function pvpTutorialRecoveryIsPlaying() {
       (player.recoveryFlipTimer || 0) > 0));
 }
 function nextStep() {
-  if (tutorial.active && !tutorial.resetPending && pvpTutorialRecoveryIsPlaying()) {
-    tutorial.pvpAwaitRecoveryAdvance = true;
-    tutorial.pvpPlayerScriptLocked = true;
-    clearHeldInput();
-    return;
-  }
   tutorial.pvpAwaitRecoveryAdvance = false;
   const steps = tutorial.kind === "pvp" ? PVP_STEPS : SOLO_STEPS;
   if (tutorial.step >= steps.length - 1) {
@@ -25374,8 +25488,9 @@ function drivePvpPracticeCpu(setup, now) {
     return;
   }
   if (setup === "pvpUnderBonkTwo") {
-    const perch = PARK_PLATFORMS[2];
-    const onPerch = p1.grounded && getPvpStandingPlatform(p1) === perch;
+    const perch = PARK_PLATFORMS[3];
+    const standing = p1.grounded ? getPvpStandingPlatform(p1) : null;
+    const onPerch = standing && standing.x === perch.x && standing.y === perch.y;
     if (!onPerch || now - tutorial.enteredAt < 900 ||
         tutorial.pvpUnderBonkPendingSecond || tutorial.dialogueOpen ||
         tutorial.pvpUnderBonks >= 1 || ember.bonked || ember.stunTimer > 0 ||
@@ -25383,7 +25498,8 @@ function drivePvpPracticeCpu(setup, now) {
     tutorial.pvpUnderBonkAttemptAirborne = true;
     tutorial.pvpUnderBonkPendingSecond = true;
     tutorial.pvpUnderBonkEmberAirborne = false;
-    scriptPvpChargedJump(1, .89, -1, 0);
+    tutorial.pvpUnderBonkAttemptStartedAt = now;
+    scriptPvpChargedJump(1, .50, -1, 0);
     return;
   }
   if (setup === "pvpReboundThree") {
@@ -25417,12 +25533,33 @@ function beginPvpTutorialEnding() {
   game.spawnQueue.length = 0;
   game.pvpCriticalCatchFlyVisual = null;
   game.pvpCriticalCatchActive = false;
+  game.pvpCriticalCatchKind = "";
+  game.pvpCriticalCatchElapsed = 0;
+  game.pvpWinPendingIndex = null;
+  game.pvpTimedOutcomePending = false;
+  game.pvpTimerGraceActive = false;
+  game.pvpTutorialGraceHeld = [false,false];
+  game.pvpTutorialGraceFromHeld = false;
+  game.pvpTimeExpiredAt = null;
+  game.pvpTimeExpiredRealAt = null;
   game.targetVocabIndex = null;
   tutorial.promptHidden = true;
   game.pvpCpuEnabled = false;
   tutorial.pvpCaption = playerWon ? "YOU WIN!" : "EMBER WINS!";
   tutorial.pvpCaptionUntil = performance.now() + 2400;
-  openDynamicDialogue(playerWon ? PVP_WIN_DIALOGUE : PVP_LOSE_DIALOGUE, playerWon ? "shocked" : "happy", false);
+  const afterVictoryPoof = () => {
+    positionPvp(pvpPlayers[0], 150, CONFIG.groundY - pvpPlayers[0].h, 1);
+    positionPvp(pvpPlayers[1], 300, CONFIG.groundY - pvpPlayers[1].h, -1);
+    pvpPlayers[1].skinId = "ember";
+    game.pvpSetupSkinIds[1] = "ember";
+    openDynamicDialogue(playerWon ? PVP_WIN_DIALOGUE : PVP_LOSE_DIALOGUE,
+      playerWon ? "shocked" : "happy", false);
+  };
+  if (!beginPoofTransition({
+    reason: "pvp-final-post-victory",
+    showFailure: false, armFlies: false, preserveExistingFlies: false,
+    waitForEffects: false, action: afterVictoryPoof
+  })) afterVictoryPoof();
 }
 function monitorPvp() {
   const setup = PVP_STEPS[tutorial.step]?.setup;
@@ -25430,6 +25567,12 @@ function monitorPvp() {
   const ember = pvpPlayers[1];
   const now = performance.now();
   if (setup === "pvpFinalMatch") {
+    if (tutorial.pvpFinalOutcome === null && !Number.isInteger(game.targetVocabIndex)) {
+      const available = typeof flies !== "undefined" ? flies.find((fly) => fly?.state === "active" && Number.isInteger(fly.vocabIndex)) : null;
+      const waiting = game.spawnQueue?.find((ticket) => Number.isInteger(ticket?.vocabIndex));
+      if (typeof setPrompt === "function") setPrompt(available?.vocabIndex ?? waiting?.vocabIndex ?? 0);
+    }
+    if (tutorial.pvpFinalOutcome === null) tutorial.promptHidden = false;
     if (tutorial.pvpFinalMatchCountdownUntil && now >= tutorial.pvpFinalMatchCountdownUntil) {
       tutorial.pvpFinalMatchCountdownUntil = 0;
       tutorial.pvpPlayerScriptLocked = false;
@@ -25442,7 +25585,8 @@ function monitorPvp() {
         (Number.isFinite(game.pvpTimeExpiredRealAt) || Number.isFinite(game.pvpTimeExpiredAt))) {
       if (!Number.isFinite(tutorial.pvpZeroClockObservedAt) || tutorial.pvpZeroClockObservedAt <= 0)
         tutorial.pvpZeroClockObservedAt = now;
-      if (now - tutorial.pvpZeroClockObservedAt > 2800) {
+      if (now - tutorial.pvpZeroClockObservedAt >
+          (game.pvpTimerGraceActive && game.pvpTutorialGraceFromHeld ? 6500 : 2800)) {
         game.pvpCriticalCatchActive = false;
         game.pvpTimerGraceActive = false;
         game.pvpTimedOutcomePending = true;
@@ -25454,10 +25598,17 @@ function monitorPvp() {
     return;
   }
   if (tutorial.passPending) {
-    const earlySkyBonkDialogue = ["pvpDemoSkyBonk", "pvpSkyBonk", "pvpDemoBufferedSky", "pvpBufferedSky"].includes(setup);
-    if (p1?.grounded && (earlySkyBonkDialogue || !p1.bonked) && !p1.tongue?.active &&
-        (earlySkyBonkDialogue || !ember?.bonked) && !game.pvpCriticalCatchActive &&
-        (ember?.grounded || tutorialStep()?.demonstration)) finalizePassedStep();
+    const landingBonkDialogue = [
+      "pvpDemoBonk", "pvpDemoDropLow", "pvpDemoDropHigh", "pvpDemoBufferedBonk",
+      "pvpDemoSkyBonk", "pvpDemoBufferedSky",
+      "pvpDropLow", "pvpDropHigh", "pvpBufferedBonk", "pvpSkyBonk", "pvpBufferedSky"
+    ].includes(setup);
+    const attacker = tutorialStep()?.demonstration ? ember : p1;
+    if (landingBonkDialogue
+          ? (attacker?.grounded && !attacker?.bonked && !game.pvpCriticalCatchActive)
+          : (p1?.grounded && !p1.bonked && !p1.tongue?.active &&
+             !ember?.bonked && !game.pvpCriticalCatchActive &&
+             (ember?.grounded || tutorialStep()?.demonstration))) finalizePassedStep();
     return;
   }
   drivePvpPracticeCpu(setup, now);
@@ -25524,7 +25675,7 @@ function monitorPvp() {
   }
   if (setup === "pvpDropLow" || setup === "pvpDropHigh") {
     if (tutorial.pvpBonks >= 1 && tutorial.pvpLastBonkQuickDrop) {
-      if (pvpPracticeEventReady(1000, now)) passStep();
+      if (p1.grounded && pvpPracticeEventReady(80, now)) passStep();
     } else if (tutorial.pvpBonks >= 1 && !tutorial.pvpLastBonkQuickDrop) {
       failAttempt("USE A QUICK PLATFORM DROP FOR THE BONK");
     } else if (playerLanded && now - tutorial.enteredAt > 400) {
@@ -25534,7 +25685,7 @@ function monitorPvp() {
   }
   if (setup === "pvpBufferedBonk") {
     if (tutorial.pvpBufferedBonkSeen) {
-      if (pvpPracticeEventReady(1000, now)) passStep();
+      if (p1.grounded && pvpPracticeEventReady(80, now)) passStep();
     } else if (tutorial.pvpBonks >= 1) {
       failAttempt("BUFFER THROUGH THE PLATFORM BEFORE THE BONK");
     } else if (playerLanded && now - tutorial.enteredAt > 500) {
@@ -25589,14 +25740,26 @@ function monitorPvp() {
     return;
   }
   if (setup === "pvpUnderBonkTwo") {
+    const platform = PARK_PLATFORMS[3];
+    const standing = p1.grounded ? getPvpStandingPlatform(p1) : null;
+    const onLowMiddle = Boolean(standing && standing.x === platform.x && standing.y === platform.y);
     if (tutorial.pvpUnderBonks >= 1) {
       if (pvpPracticeEventReady(250, now) && ember.stunTimer <= 0 &&
           ember.grounded && !ember.bonked && (ember.recoveryFlipTimer || 0) <= 0) passStep();
     } else if (tutorial.pvpUnderBonkPendingSecond) {
       if (!ember.grounded && ember.firstJumpMade) tutorial.pvpUnderBonkEmberAirborne = true;
       if (tutorial.pvpUnderBonkEmberAirborne && ember.grounded &&
-          !ember.bonked && ember.stunTimer <= 0 && now - tutorial.pvpPracticeStartedAt > 600) {
-        failAttempt("GET ON THE CENTER PERCH AND UNDER BONK EMBER");
+          !ember.bonked && ember.stunTimer <= 0) {
+        failAttempt("EMBER JUMPED PAST YOU — TRY THE UNDER BONK AGAIN");
+      } else if (!tutorial.pvpUnderBonkEmberAirborne &&
+                 now - (tutorial.pvpUnderBonkAttemptStartedAt || now) > 1800) {
+        failAttempt("LET EMBER JUMP UNDER YOUR PLATFORM");
+      }
+    }
+    if (!tutorial.resetPending && tutorial.pvpUnderBonks === 0) {
+      if (!p1.grounded && p1.firstJumpMade) tutorial.pvpUnderBonkPlayerAirborne = true;
+      if (tutorial.pvpUnderBonkPlayerAirborne && p1.grounded && !onLowMiddle) {
+        failAttempt("LAND ON THE LOWER-MIDDLE PLATFORM");
       }
     }
     return;
@@ -25622,6 +25785,7 @@ function monitorPvp() {
     return;
   }
   if (setup === "pvpReboundThree") {
+    updatePvpLessonLandings();
     const settled = pvpTutorialSettled();
     if (!settled) tutorial.pvpReboundLandingHoldAt = 0;
     else if (!tutorial.pvpReboundLandingHoldAt) tutorial.pvpReboundLandingHoldAt = now;
@@ -25646,7 +25810,8 @@ function monitorPvp() {
       });
     } else if (restedAfterLanding && tutorial.pvpReboundCount === tutorial.pvpPracticeCount &&
                now - tutorial.enteredAt > 500 && !tutorial.resetPending &&
-               (tutorial.pvpLessonLanded?.[0] || p1.firstJumpMade)) {
+               (tutorial.pvpLessonLanded?.[0] || tutorial.pvpLessonLanded?.[1] ||
+                p1.firstJumpMade || ember.firstJumpMade)) {
       const completed = tutorial.pvpReboundCount;
       beginPoofTransition({
         reason: "retry-pvp-rebound-without-losing-progress",
@@ -26601,7 +26766,7 @@ function currentGoalHowToLines() {
     pvpHighGround: ["START ON THE LOWER-LEFT PERCH", "KNOCK EMBER OFF THE TOP"],
     pvpRecoveryBonk: ["BONK, THEN HIT THE WALL", "BONK ONLY AFTER SHE RECOVERS"],
     pvpBoostBonk: ["BONK JUST AS EMBER LAUNCHES", "USE THE BOOST TO REACH A FLY"],
-    pvpUnderBonkTwo: ["CLIMB ONTO THE CENTER PERCH", "UNDER-BONK EMBER ONCE"],
+    pvpUnderBonkTwo: ["BUFFER DROP OFF THE RIGHT EDGE", "LAND LOWER-MIDDLE, THEN UNDER-BONK"],
     pvpAvoidUnder: ["USE SHORT QUICK-TAP HOPS", "STAY BELOW THE PERCH TOP"],
     pvpReboundThree: ["MEET EMBER SIDEWAYS IN THE AIR", "LAND THREE REBOUNDS TOTAL"],
     pvpReboundCatch: ["REBOUND FROM STATIONARY EMBER", "CATCH MATCHING FLY IN ONE JUMP"],
@@ -26782,6 +26947,14 @@ function applyTutorialChapterPreview() {
   tutorial.pvpCaptionUntil = 0;
   tutorial.deferredPoofOptions = null;
   tutorial.resetPending = false;
+  tutorial.resetAction = null;
+  tutorial.resetAt = 0;
+  tutorial.resetReason = "";
+  tutorial.resetPvpPoofPlayers = [];
+  tutorial.pvpHiddenPlayerIndices = [];
+  tutorial.pvpFrogsHidden = false;
+  tutorial.frogHidden = false;
+  tutorial.smokeClouds.length = 0;
   tutorial.dialogueHiddenDuringPoof = false;
   tutorial.passed = false;
   tutorial.passPending = false;
@@ -26798,6 +26971,13 @@ function applyTutorialChapterPreview() {
   else configureSoloStep(tutorial.step);
   tutorial.pendingStartPose = captureControlledPose();
   tutorial.pendingPvpTargetPoses = tutorial.kind === "pvp" ? capturePvpTutorialPoses() : null;
+  if (tutorial.kind === "pvp" && target.setup === "pvpDemoSkyBonk") {
+    const player = pvpPlayers[0], ember = pvpPlayers[1];
+    const right = PARK_PLATFORMS[6];
+    positionPvp(player, Math.round((W - player.w) / 2) - 24, CONFIG.groundY - player.h, 1);
+    positionPvp(ember, right.x + (right.w - ember.w) / 2,
+      CONFIG.groundY - ember.h, -1);
+  }
   restoreStepSequence();
   clearHeldInput();
   openDialogue();
@@ -26896,7 +27076,9 @@ function drawTutorialOverlay() {
     if (tutorial.dialogueOpen) drawTutorialDialogue();
     return;
   }
-  drawCurrentGoalHud();
+  if (!(tutorial.kind === "pvp" && tutorialStep()?.setup === "pvpFinalMatch" &&
+        tutorial.pvpFinalMatchStarted && !tutorial.dialogueOpen &&
+        !tutorial.pvpFinalMatchCountdownUntil)) drawCurrentGoalHud();
   drawTutorialFlyDespawnEffects();
   drawTutorialSmoke();
   drawPvpTutorialCaption();
@@ -27020,6 +27202,11 @@ drawVocabularyPrompt = function(...args) {
     tutorialStep()?.setup === "rangeCatch" &&
     (game.soloCriticalCatchActive || tongue.active || tutorial.rangeTongueCaught)
   );
+  if (tutorial.active && tutorial.kind === "pvp" &&
+      tutorialStep()?.setup === "pvpFinalMatch" && tutorial.pvpFinalOutcome === null &&
+      Number.isInteger(game.targetVocabIndex)) {
+    return originalDrawVocabularyPromptForTutorial.apply(this, args);
+  }
   const displayedFlies = tutorial.active ? tutorialDisplayedFlies() : [];
   const anyVisible = displayedFlies.length > 0;
   const earlyClue = tutorial.active && tutorial.kind === "pvp" &&
@@ -27114,7 +27301,7 @@ bouncePvpPlayersSideways = function(a, b, ...rest) {
       performance.now() - tutorial.pvpLastPracticeEventAt > 120) {
     tutorial.pvpReboundCount += 1;
     tutorial.pvpReboundAt = performance.now();
-    if (!a.grounded && !b.grounded && ["pvpDemoRebound", "pvpReboundThree", "pvpDemoReboundCatch", "pvpReboundCatch", "pvpDemoDinnerSteal", "pvpDinnerSteal"].includes(tutorialStep()?.setup)) {
+    if (!a.grounded && !b.grounded && tutorialStep()?.setup === "pvpReboundThree") {
       a.catchSparkleTimer = Math.max(Number(a.catchSparkleTimer)||0, CONFIG.catchSparkleDuration);
       b.catchSparkleTimer = Math.max(Number(b.catchSparkleTimer)||0, CONFIG.catchSparkleDuration);
       if (tutorialStep()?.setup === "pvpReboundThree") {
@@ -27165,7 +27352,8 @@ attemptPvpFlyCatch = function(player, targetFly, source = "body", ...rest) {
   return result;
 };
 window.RibbitTutorialShouldHidePvpCatchTitle = () => Boolean(
-  tutorial.active && tutorial.kind === "pvp"
+  tutorial.active && tutorial.kind === "pvp" &&
+  !(tutorialStep()?.setup === "pvpFinalMatch" && game.pvpCriticalCatchKind === "clutch")
 );
 const originalMarkAchievementEarnedForTutorial = markAchievementEarned;
 markAchievementEarned = function(id, ...rest) {
@@ -27450,6 +27638,9 @@ pressPvpButton = function(index, source = "human", ...rest) {
   const finalCpu = tutorial.active && tutorial.kind === "pvp" &&
     tutorialStep()?.setup === "pvpFinalMatch" && index === getPvpCpuIndex() && source === "cpu";
   if (!finalCpu && tutorialBlocksLiveInput()) return;
+  if (tutorial.active && tutorial.kind === "pvp" &&
+      tutorialStep()?.setup === "pvpReboundThree" && index === 0 &&
+      source === "human" && pvpPlayers[0]?.firstJumpMade && pvpPlayers[0]?.grounded) return;
   return originalPressPvpButtonForTutorial.call(this, index, source, ...rest);
 };
 const originalReleasePvpButtonForTutorial = releasePvpButton;
@@ -27457,6 +27648,9 @@ releasePvpButton = function(index, source = "human", ...rest) {
   const finalCpu = tutorial.active && tutorial.kind === "pvp" &&
     tutorialStep()?.setup === "pvpFinalMatch" && index === getPvpCpuIndex() && source === "cpu";
   if (!finalCpu && tutorialBlocksLiveInput()) return;
+  if (tutorial.active && tutorial.kind === "pvp" &&
+      tutorialStep()?.setup === "pvpReboundThree" && index === 0 &&
+      source === "human" && pvpPlayers[0]?.firstJumpMade && pvpPlayers[0]?.grounded) return;
   const lesson = tutorial.active && tutorial.kind === "pvp" && index === 0 && source === "human"
     ? tutorialStep()?.setup : "";
   const quickTapAllowed = new Set([
@@ -27540,7 +27734,13 @@ update = function(dt, ...rest) {
   }
   if (tutorial.active && tutorialMovementLocked()) {
     updateTutorialAmbient(dt, { animateFlies: true });
-    if (tutorial.kind === "pvp" &&
+    if (tutorial.kind === "pvp" && tutorial.resetPending &&
+        !tutorial.resetPvpPoofPlayers?.includes(1) && pvpPlayers[1]) {
+      pvpPlayers[1].inputHeld = false;
+      pvpPlayers[1].charging = false;
+      updatePvpPlayer(pvpPlayers[1], dt);
+      updatePvpImpactEffects(dt);
+    } else if (tutorial.kind === "pvp" &&
         (tutorial.dialogueOpen || tutorial.pvpAwaitRecoveryAdvance) && !tutorial.resetPending &&
         !tutorial.pvpFrogsHidden && game.state === "playing") {
       for (const player of pvpPlayers) {
@@ -30617,7 +30817,7 @@ function ribbitReplayExportCurrent(){
     : frames[frames.length-1].t;
   return {
     version:RIBBIT_REPLAY_SCHEMA_VERSION,kind:"ribbit-engine-frames",fps:capture.fps||RIBBIT_REPLAY_FPS,
-    compatibility:{frameSchema:RIBBIT_REPLAY_SCHEMA_VERSION,minimumPlayerVersion:1,recordedBy:"1.7.46"},
+    compatibility:{frameSchema:RIBBIT_REPLAY_SCHEMA_VERSION,minimumPlayerVersion:1,recordedBy:"1.7.50"},
     mode:capture.mode,level:capture.level,recordedAt:capture.recordedAt,
     recordedTimeZone:capture.recordedTimeZone,timeOfDay:capture.timeOfDay,
     moonPhaseIndex:capture.moonPhaseIndex,skinId:capture.skinId,vocab:capture.vocab,

@@ -272,6 +272,13 @@ function beginPoofTransition(options = {}) {
     : null;
   tutorial.resetReason = String(options.reason || "reset");
   tutorial.preservePromptDuringReset = options.preservePrompt === true;
+  // A retry is still the player's turn. Do not let the caption disappear as
+  // soon as the smoke begins (dialogue itself still clears captions).
+  if (tutorial.kind === "pvp" && !tutorial.dialogueOpen &&
+      (options.reason === "failed-attempt" || String(options.reason || "").startsWith("retry-"))) {
+    tutorial.pvpCaption = "YOUR TURN!";
+    tutorial.pvpCaptionUntil = Number.POSITIVE_INFINITY;
+  }
   tutorial.frogHidden = tutorial.kind !== "pvp" || pvpPoofPlayers.includes(0);
   tutorial.goalHovered = false;
   clearHeldInput();
@@ -471,6 +478,11 @@ function completePendingReset() {
     tutorial.failureMessageUntil = tutorial.failureFlashStartedAt + tutorial.failureFlashDuration;
   }
   tutorial.enteredAt = performance.now();
+  if (tutorial.kind === "pvp" && !tutorial.dialogueOpen &&
+      completedResetReason === "failed-attempt") {
+    tutorial.pvpCaption = "YOUR TURN!";
+    tutorial.pvpCaptionUntil = Number.POSITIVE_INFINITY;
+  }
   game.state = "playing";
   game.pauseHelpOpen = false;
   // Tutorial retries replay Ember's scene dialogue and return without a
@@ -482,7 +494,9 @@ function failAttempt(message) {
   const setup = tutorialStep()?.setup || "";
   const emberStaysPut = tutorial.kind === "pvp" &&
     PVP_RETRY_EMBER_STATIONARY_SETUPS.has(setup);
-  const emberPose = emberStaysPut ? capturePvpTutorialPoses()?.[1] : null;
+  // Save Ember's LIVE state at reset completion, not before her half-second
+  // recovery animation has progressed through the one-frog poof.
+  const preserveEmberLiveState = emberStaysPut;
   const retainedFlyObjects = setup === "pvpReboundCatch"
     ? flies.filter((fly) => fly?.tutorialAuthored && fly.state === "active" && fly.tutorialArmed !== false)
     : [];
@@ -494,7 +508,11 @@ function failAttempt(message) {
     preservePrompt: true,
     pvpPoofPlayers: emberStaysPut ? [0] : [0, 1],
     action: () => {
+      const liveEmberState = preserveEmberLiveState && pvpPlayers[1]
+        ? { ...pvpPlayers[1], tongue:{ ...pvpPlayers[1].tongue } }
+        : null;
       rebuildCurrentScenarioForRetry();
+      if (liveEmberState && pvpPlayers[1]) Object.assign(pvpPlayers[1], liveEmberState);
       if (retainedFlyObjects.length) {
         // configurePvpStep may rebuild its list, but visible authored flies
         // remain the SAME objects/IDs and stay fully grown across the poof.
@@ -505,7 +523,8 @@ function failAttempt(message) {
           nextFlyId = Math.max(nextFlyId, Number(fly.id) + 1);
         }
       }
-      if (emberPose && pvpPlayers[1]) applyControlledPose(emberPose, pvpPlayers[1]);
+      // Ember was not poofed; retain her progressed stun and recovery timers.
+      // Reapplying the earlier pre-poof pose would snap her back mid-flip.
     }
   });
 }
@@ -538,21 +557,25 @@ function finalizePassedStep() {
 
 function passStep() {
   if (!tutorial.active || tutorial.passed || tutorial.passPending) return;
-  // Techniques such as wall rebounds can succeed in mid-air. Let the real
-  // engine finish the landing before Ember freezes the pose for dialogue.
-  // Exception: sky-bonk lessons start the next SPOKEN line when the attacker
-  // lands, with the victim still completing their legitimate five-second stun
-  // and upright recovery behind the dialogue. Waiting for !victim.bonked
-  // here would silently reintroduce the five-second narration delay.
-  const skyBonkLandingDialogue = tutorial.kind === "pvp" &&
-    ["pvpDemoSkyBonk", "pvpSkyBonk", "pvpDemoBufferedSky", "pvpBufferedSky"].includes(tutorialStep()?.setup);
+  // When a bonk succeeds, speak after the ATTACKER lands. The stunned frog
+  // is deliberately allowed to finish falling, counting down, and rotating
+  // upright behind Ember's dialogue. Pressing Space may advance and poof
+  // immediately even while the victim is stunned; watching does not skip recovery.
+  const setup = tutorialStep()?.setup || "";
+  const bonkLandingDialogue = tutorial.kind === "pvp" && [
+    "pvpDemoBonk", "pvpDemoDropLow", "pvpDemoDropHigh", "pvpDemoBufferedBonk",
+    "pvpDemoSkyBonk", "pvpDemoBufferedSky",
+    "pvpDropLow", "pvpDropHigh", "pvpBufferedBonk", "pvpSkyBonk", "pvpBufferedSky"
+  ].includes(setup);
+  const attacker = tutorialStep()?.demonstration ? pvpPlayers[1] : pvpPlayers[0];
   if ((tutorial.kind === "solo" && (!frog.grounded || tongue.active || game.soloCriticalCatchActive)) ||
-      (tutorial.kind === "pvp" && tutorialStep()?.setup !== "pvpFinalMatch" &&
-       (!pvpPlayers[0].grounded || (!skyBonkLandingDialogue && pvpPlayers[0].bonked) ||
-        pvpPlayers[0].tongue?.active || game.pvpCriticalCatchActive ||
-        // The other frog must reach a perch/ground, but their stun can remain.
-        (!skyBonkLandingDialogue && pvpPlayers[1].bonked) ||
-        (!pvpPlayers[1].grounded && !tutorialStep()?.demonstration)))) {
+      (tutorial.kind === "pvp" && setup !== "pvpFinalMatch" &&
+       (bonkLandingDialogue
+         ? (!attacker?.grounded || attacker?.bonked || game.pvpCriticalCatchActive)
+         : (!pvpPlayers[0].grounded || pvpPlayers[0].bonked ||
+            pvpPlayers[0].tongue?.active || game.pvpCriticalCatchActive ||
+            pvpPlayers[1].bonked ||
+            (!pvpPlayers[1].grounded && !tutorialStep()?.demonstration))))) {
     tutorial.passPending = true;
     tutorial.passPendingAt = performance.now();
     clearHeldInput();
@@ -787,15 +810,9 @@ function pvpTutorialRecoveryIsPlaying() {
 }
 
 function nextStep() {
-  // Fast-forwarding text may close a success line in a split second. Keep the
-  // current frogs and their genuine stun/recovery motion visible before the
-  // NEXT chapter's poof; do not reset away the recovery animation.
-  if (tutorial.active && !tutorial.resetPending && pvpTutorialRecoveryIsPlaying()) {
-    tutorial.pvpAwaitRecoveryAdvance = true;
-    tutorial.pvpPlayerScriptLocked = true;
-    clearHeldInput();
-    return;
-  }
+  // Never hold a finished line hostage until a five-second stun expires.
+  // While the player watches, the engine continues the recovery animation;
+  // a deliberate advance may immediately poof into the next authored scene.
   tutorial.pvpAwaitRecoveryAdvance = false;
   const steps = tutorial.kind === "pvp" ? PVP_STEPS : SOLO_STEPS;
   if (tutorial.step >= steps.length - 1) {

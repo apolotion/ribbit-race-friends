@@ -298,7 +298,10 @@ function openDialogue() {
   tutorial.dialogueOpen = true;
   tutorial.scenePositionedDuringDialogue = false;
   beginDialogueLine(0);
-  tutorial.blockJumpUntilRelease = false;
+  // A held Space during fast-forward belongs to dialogue, not to an
+  // airborne buffered drop or charged jump on the next simulation frame.
+  tutorial.blockJumpUntilRelease = tutorial.blockJumpUntilRelease ||
+    (tutorial.kind === "pvp" && typeof isPvpPhysicalJumpHeld === "function" && isPvpPhysicalJumpHeld(0));
   game.state = "playing";
   game.pauseHelpOpen = false;
   clearHeldInput();
@@ -316,7 +319,8 @@ function openDynamicDialogue(lines, portraitKey = "thumbsup", postSuccessAdvance
   tutorial.dialogueOpen = true;
   tutorial.scenePositionedDuringDialogue = false;
   beginDialogueLine(0);
-  tutorial.blockJumpUntilRelease = false;
+  tutorial.blockJumpUntilRelease = tutorial.blockJumpUntilRelease ||
+    (tutorial.kind === "pvp" && typeof isPvpPhysicalJumpHeld === "function" && isPvpPhysicalJumpHeld(0));
   game.state = "playing";
   game.pauseHelpOpen = false;
   clearHeldInput();
@@ -550,16 +554,11 @@ function closeDialogue(source = "keyboard") {
   }
 
   const step = tutorialStep();
-  // Spoken success may start promptly after the attacker's landing, but the
-  // bonked frog must be allowed to finish the upside-down recovery animation
-  // before advancing to a new stage. Ignore a rushed final-line dismissal.
-  if (tutorial.kind === "pvp" && tutorial.dynamicDialogueLines && tutorial.postSuccessAdvance) {
-    const recovering = pvpPlayers.some((player) => player && (player.bonked ||
-      (player.stunCountdownStarted && player.stunTimer > 0) ||
-      (player.recoveryFlipTimer || 0) > 0));
-    if (recovering) return true;
-  }
-  const keepJumpBlockedUntilRelease = source === "space-keydown" && tutorial.blockJumpUntilRelease;
+  // The victim continues its full normal stun and one recovery flip while
+  // Ember talks. Deliberately pressing Space must ALSO be able to advance
+  // immediately (and poof the frogs) instead of being blocked for five seconds.
+  const keepJumpBlockedUntilRelease = tutorial.blockJumpUntilRelease ||
+    (source === "space-keydown") || (tutorial.kind === "pvp" && typeof isPvpPhysicalJumpHeld === "function" && isPvpPhysicalJumpHeld(0));
   tutorial.dialogueOpen = false;
   tutorial.dialogueLineIndex = 0;
   tutorial.dialogueForceComplete = false;
@@ -709,6 +708,8 @@ function clearScenarioState() {
   tutorial.pvpUnderBonkAttemptAirborne = false;
   tutorial.pvpUnderBonkChargePrimed = false;
   tutorial.pvpUnderBonkEmberAirborne = false;
+  tutorial.pvpUnderBonkAttemptStartedAt = 0;
+  tutorial.pvpUnderBonkPlayerAirborne = false;
   tutorial.pvpUnderBonkDismountQueued = false;
   tutorial.pvpUnderBonkEmberDismounted = false;
   tutorial.pvpAvoidUnderPassedBeneath = false;

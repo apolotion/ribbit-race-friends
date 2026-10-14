@@ -38,33 +38,35 @@ test('sky and buffered-sky dialogue starts at attacker landing even while victim
     assert.equal(result.pending,false,setup);
   }
   const ordinary=bonkDialogueHarness('pvpDropLow',true);
-  assert.equal(ordinary.finalized,0);
-  assert.equal(ordinary.pending,true);
+  // Drop-bonk narration now also follows the attacker's landing.
+  assert.equal(ordinary.finalized,1);
+  assert.equal(ordinary.pending,false);
 });
 test('sky-victim recovery is still played throughout ensuing dialogue',()=>{
   assert.match(hooks,/tutorial\.dialogueOpen \|\| tutorial\.pvpAwaitRecoveryAdvance/);
   assert.match(hooks,/updatePvpPlayer\(player, dt\)/);
-  assert.match(steps,/function nextStep\(\)[\s\S]*?pvpTutorialRecoveryIsPlaying\(\)/);
+  assert.doesNotMatch(steps.slice(steps.indexOf("function nextStep()"),steps.indexOf("function skipToNextTutorialScene")),/pvpTutorialRecoveryIsPlaying\(\)/);
   assert.match(checks,/setup === "pvpSkyBonk"[\s\S]*?p1\.grounded && ember\.grounded && pvpPracticeEventReady\(100, now\)/);
   assert.match(checks,/setup === "pvpBufferedSky"[\s\S]*?p1\.grounded && ember\.grounded && pvpPracticeEventReady\(100, now\)/);
 });
-test('first bonk and low-drop demos do not advance until recovery completes',()=>{
-  assert.match(scenes,/setup === "pvpDemoBonk"[\s\S]*?p1\.stunTimer <= 0 &&[\s\S]*?p1\.recoveryFlipTimer \|\| 0\) <= 0/);
-  assert.match(scenes,/setup === "pvpDemoSkyBonk" \|\| setup === "pvpDemoBufferedSky"[\s\S]*?p1\.recoveryFlipTimer/);
+test('first bonk and drop-bonk demo speak on attacker landing and hold poofs until recovery',()=>{
+  assert.match(scenes,/setup === "pvpDemoBonk"[\s\S]*?ember\.grounded && !ember\.bonked/);
+  assert.match(scenes,/completed = bonkImpactReady && ember\.grounded && !ember\.bonked/);
+  assert.doesNotMatch(steps.slice(steps.indexOf("function nextStep()"),steps.indexOf("function skipToNextTutorialScene")),/pvpTutorialRecoveryIsPlaying\(\)/);
 });
 test('buffer-drop starts swapped; under-bonk, avoiding under-bonk and rebound practice use requested poses',()=>{
   const section=(id,end)=>extract(scenes,`case "${id}"`,`case "${end}"`);
   assert.match(section('pvpBufferedBonk','pvpDemoSkyBonk'),/positionPvp\(p1, 64, CONFIG\.groundY-p1\.h, 1\)/);
-  assert.match(section('pvpBufferedBonk','pvpDemoSkyBonk'),/positionPvp\(ember, Math\.round\(\(W-ember\.w\)\/2\), CONFIG\.groundY-ember\.h, -1\)/);
-  assert.match(section('pvpUnderBonkTwo','pvpDemoAvoidUnder'),/positionPvpOnPlatform\(p1, middleLeft, 1\)/);
-  assert.match(section('pvpAvoidUnder','pvpDemoRebound'),/positionPvp\(p1, 343, CONFIG\.groundY - p1\.h, -1\)/);
+  assert.match(section('pvpBufferedBonk','pvpDemoSkyBonk'),/positionPvp\(ember, Math\.round\(\(W-ember\.w\)\/2\) \+ 24, CONFIG\.groundY-ember\.h, -1\)/);
+  assert.match(section('pvpUnderBonkTwo','pvpDemoAvoidUnder'),/positionPvpOnPlatform\(p1, middleLeft, 1, middleLeft\.w - p1\.w - 2\)/);
+  assert.match(section('pvpAvoidUnder','pvpDemoRebound'),/positionPvp\(p1, 222, CONFIG\.groundY - p1\.h, -1\)/);
   assert.match(section('pvpReboundThree','pvpDemoReboundCatch'),/positionPvpReboundPracticeLayout\(0\)/);
 });
 test('grumpy-wall and Not So Fast prompt exceptions, fly flipped and coached middle platform attempt',()=>{
   assert.match(render,/pvpReboundCatch[\s\S]*?pvpIntercept|pvpIntercept[\s\S]*?pvpReboundCatch/);
-  assert.match(scenes,/case "pvpDemoIntercept"[\s\S]{0,350}addPvpTutorialFly\(90/);
+  assert.match(scenes,/case "pvpDemoIntercept"[\s\S]{0,350}addPvpTutorialFly\(W - 90/);
   assert.match(scenes,/case "pvpIntercept"[\s\S]{0,350}addPvpTutorialFly\(90/);
-  assert.match(scenes,/case "pvpDemoIntercept"[\s\S]*?scriptPvpChargedJump\(1, \.92, -1, 40\)/);
+  assert.match(scenes,/case "pvpDemoIntercept"[\s\S]*?scriptPvpChargedJump\(1, \.95, -1, 40\)/);
 });
 test('Dinner Steal slows down Ember demo but not player-turn accidental Ember catches',()=>{
   assert.match(catches,/lesson === "pvpDinnerSteal" && player\.index !== 0/);
@@ -131,9 +133,9 @@ test('Not So Fast demonstration has compatible rebound arcs and can reach the mi
   const xe=300-jumpX(eP)*te, ye=200-jumpY(eP)*te+g*te*te/2;
   assert.ok(x1 < xe+22 && xe < x1+22, 'frogs overlap horizontally at rebound');
   assert.ok(y1 < ye+14 && ye < y1+14, 'frogs overlap vertically at rebound');
-  // After the real horizontal rebound Ember travels right and descends across
-  // the y=126 perch; this check prevents another too-weak/too-short jump.
-  const landingT=(jumpY(eP)+Math.sqrt(jumpY(eP)**2-2*g*(214-126)))/g;
-  const landX=xe+jumpX(eP)*(landingT-te);
-  assert.ok(landX+22>281 && landX<351, `Ember would hit the right middle perch (x=${landX.toFixed(1)})`);
+  // New choreography begins with a leftward jump, high enough to clear the
+  // middle-left perch (y=126), BEFORE the genuine sideways rebound reverses her.
+  const apexY=200-jumpY(eP)**2/(2*g);
+  assert.ok(apexY+14<126, `Ember must clear the mid-height perch from below (apex ${apexY})`);
+  assert.ok(300-jumpX(eP)*.42<219, 'Ember actually advances LEFT towards the mid-height platform');
 });

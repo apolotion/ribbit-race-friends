@@ -3,7 +3,7 @@
 
 const SOLO_SEEN_KEY = "rrFriendsEngineTutorialSoloSeenV8";
 const PVP_SEEN_KEY = "rrFriendsEngineTutorialPvpSeenV8";
-const TUTORIAL_BUILD = "2026.10.13-friends-polish-58";
+const TUTORIAL_BUILD = "2026.10.13-friends-polish-62";
 const TUTORIAL_ACHIEVEMENT_ID = "tutorial-graduate";
 const PVP_TUTORIAL_ACHIEVEMENT_ID = "versus-tutorial-graduate";
 const TYPEWRITER_MS_PER_CHARACTER = 28;
@@ -982,7 +982,7 @@ const PVP_STEPS = Object.freeze([
     ],
     "dialogue": [
       "Now let's switch places.",
-      "I'll drop to the ground. Climb onto the lower-middle platform before I jump beneath you.",
+      "I'll drop to the ground. Jump onto the LOWER-MIDDLE platform before I jump beneath you.",
       "Hold your perch while I jump underneath you.",
       "Give me one clean under bonk without giving up your perch!"
     ],

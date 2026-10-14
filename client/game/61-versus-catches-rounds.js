@@ -410,6 +410,10 @@
       // A contested fly or a last-second catch still gets the same zoom and
       // slow motion, without claiming the level has ended.
       if (reachedTarget) return "final";
+      // In Ember's final tutorial match a genuine last-second catch must say
+      // CLUTCH CATCH! even when it is also a close contest.
+      if (lastSecondCatch && typeof tutorial !== "undefined" && tutorial.active && tutorial.kind === "pvp" &&
+          tutorialStep()?.setup === "pvpFinalMatch") return "clutch";
       if (pvpFlyContestIsClose(player, targetFly)) return "contest";
       if (lastSecondCatch) return "clutch";
       // The buzzer-grace catch is resolved as a regular contested catch; it
@@ -488,6 +492,15 @@
     }
 
     function attemptPvpFlyCatch(player, targetFly, source = "body") {
+      // Final-match slow-motion owns the one caught fly until the cinematic
+      // resolves. A second body/tongue collision during those frozen frames
+      // used to score another fly and strand the tutorial in a stale round.
+      if (tutorial.active && tutorial.kind === "pvp" &&
+          tutorialStep()?.setup === "pvpFinalMatch" &&
+          ((game.pvpCriticalCatchActive &&
+            targetFly?.id !== game.pvpCriticalCatchFlyVisual?.id) ||
+           tutorial.pvpFinalOutcome !== null || game.state === "pvpCelebration" ||
+           game.state === "won")) return false;
       if(OnlineVersus.isGuestActive() && player?.index===1 && game.state==='playing') return OnlineVersus.predictCatch(player,targetFly,source);
       if (!targetFly || targetFly.state !== "active") return false;
       registerPvpFlyPursuit(player, targetFly);
@@ -657,6 +670,8 @@
       game.pvpWinPendingIndex = null;
       game.pvpTimedOutcomePending = false;
       game.pvpTimerGraceActive = false;
+      game.pvpTutorialGraceHeld = [false, false];
+      game.pvpTutorialGraceFromHeld = false;
       game.pvpTimerGraceEligible = [false, false];
       game.pvpTimerGracePromptSerial = -1;
       game.pvpBonusEligible = false;
@@ -764,6 +779,8 @@
       game.pvpWinPendingIndex = null;
       game.pvpTimedOutcomePending = false;
       game.pvpTimerGraceActive = false;
+      game.pvpTutorialGraceHeld = [false, false];
+      game.pvpTutorialGraceFromHeld = false;
       game.pvpTimerGraceEligible = [false, false];
       game.pvpTimeRemaining = 0;
       game.pvpLastUrgentSecond = null;
@@ -840,24 +857,47 @@
     }
 
     function beginPvpTimerJumpGrace() {
-      // A grounded frog holding a charge automatically releases at the buzzer,
-      // then receives the same final-jump grace as an already-airborne frog.
-      pvpPlayers.forEach((player, index) => {
-        if (player && player.grounded && player.charging && !player.bonked && player.stunTimer <= 0) {
-          player.inputHeld = true;
-          releasePvpButton(index, "system");
-        }
-      });
-      const eligible = pvpPlayers.map((player) => Boolean(
-        player && (!player.grounded || player.landedThisFrame || player.tongue.active)
+      // A tutorial-final frog may FINISH holding an already-started charge
+      // after the buzzer and release one last jump. No new charge can begin.
+      // Ordinary Versus retains its original automatic buzzer release.
+      const tutorialFinal = Boolean(tutorial.active && tutorial.kind === "pvp" &&
+        tutorialStep()?.setup === "pvpFinalMatch");
+      const heldAtBuzzer = pvpPlayers.map((player) => Boolean(tutorialFinal &&
+        player && player.grounded && player.charging && !player.bonked && player.stunTimer <= 0));
+      if (!tutorialFinal) {
+        pvpPlayers.forEach((player, index) => {
+          if (player && player.grounded && player.charging && !player.bonked && player.stunTimer <= 0) {
+            player.inputHeld = true;
+            releasePvpButton(index, "system");
+          }
+        });
+      }
+      const eligible = pvpPlayers.map((player, index) => Boolean(
+        player && (!player.grounded || player.landedThisFrame || player.tongue.active || heldAtBuzzer[index])
       ));
+      game.pvpTutorialGraceHeld = heldAtBuzzer;
+      game.pvpTutorialGraceFromHeld = heldAtBuzzer.some(Boolean);
       game.pvpTimerGraceEligible = eligible;
       game.pvpTimerGracePromptSerial = game.promptSerial;
       game.pvpTimerGraceActive = eligible.some(Boolean);
       game.pvpTimedOutcomePending = true;
       game.spawnQueue = [];
       preservePvpChargedJumpsAtTimeLimit();
-      cancelPvpChargedJumpsAtTimeLimit(false);
+      if (tutorialFinal) {
+        // Keep ONLY the charges that were active at 0. New charges remain
+        // disabled by startPvpCharge and pressPvpButton during grace.
+        game.pvpCpuPlan = null;
+        pvpPlayers.forEach((player, index) => {
+          if (!heldAtBuzzer[index]) { player.inputHeld = false; player.charging = false; }
+        });
+        // The CPU has no human key-up after the buzzer. Release her existing
+        // charged jump now instead of waiting six seconds for grace to expire.
+        const cpuIndex = getPvpCpuIndex();
+        if (game.pvpCpuEnabled && heldAtBuzzer[cpuIndex]) {
+          pvpPlayers[cpuIndex].inputHeld = true;
+          releasePvpButton(cpuIndex, "cpu");
+        }
+      } else cancelPvpChargedJumpsAtTimeLimit(false);
       pvpPlayers.forEach((player, index) => {
         if (!eligible[index] && player?.tongue) {
           player.tongue.active = false;
@@ -877,6 +917,9 @@
       if (!game.pvpTimerGraceActive) return true;
       return pvpPlayers.every((player, index) => {
         if (!game.pvpTimerGraceEligible[index]) return true;
+        // Holding an existing final charge is an unfinished attempt, never
+        // grounds for resolving the result at exactly 0 seconds.
+        if (game.pvpTutorialGraceHeld?.[index] && player.charging) return false;
         return player.grounded && !player.landedThisFrame && !player.tongue.active;
       });
     }
@@ -886,6 +929,8 @@
       game.pvpTimerGraceEligible = [false, false];
       game.pvpTimerGracePromptSerial = -1;
       game.pvpTimedOutcomePending = false;
+      game.pvpTutorialGraceHeld = [false, false];
+      game.pvpTutorialGraceFromHeld = false;
 
       if (pvpPlayers[0].score === pvpPlayers[1].score) {
         beginPvpSuddenDeath();

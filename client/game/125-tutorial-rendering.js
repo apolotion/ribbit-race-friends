@@ -889,7 +889,7 @@ function currentGoalHowToLines() {
     pvpHighGround: ["START ON THE LOWER-LEFT PERCH", "KNOCK EMBER OFF THE TOP"],
     pvpRecoveryBonk: ["BONK, THEN HIT THE WALL", "BONK ONLY AFTER SHE RECOVERS"],
     pvpBoostBonk: ["BONK JUST AS EMBER LAUNCHES", "USE THE BOOST TO REACH A FLY"],
-    pvpUnderBonkTwo: ["CLIMB ONTO THE CENTER PERCH", "UNDER-BONK EMBER ONCE"],
+    pvpUnderBonkTwo: ["BUFFER DROP OFF THE RIGHT EDGE", "LAND LOWER-MIDDLE, THEN UNDER-BONK"],
     pvpAvoidUnder: ["USE SHORT QUICK-TAP HOPS", "STAY BELOW THE PERCH TOP"],
     pvpReboundThree: ["MEET EMBER SIDEWAYS IN THE AIR", "LAND THREE REBOUNDS TOTAL"],
     pvpReboundCatch: ["REBOUND FROM STATIONARY EMBER", "CATCH MATCHING FLY IN ONE JUMP"],
@@ -1093,6 +1093,14 @@ function applyTutorialChapterPreview() {
   tutorial.pvpCaptionUntil = 0;
   tutorial.deferredPoofOptions = null;
   tutorial.resetPending = false;
+  tutorial.resetAction = null;
+  tutorial.resetAt = 0;
+  tutorial.resetReason = "";
+  tutorial.resetPvpPoofPlayers = [];
+  tutorial.pvpHiddenPlayerIndices = [];
+  tutorial.pvpFrogsHidden = false;
+  tutorial.frogHidden = false;
+  tutorial.smokeClouds.length = 0;
   tutorial.dialogueHiddenDuringPoof = false;
   tutorial.passed = false;
   tutorial.passPending = false;
@@ -1110,6 +1118,16 @@ function applyTutorialChapterPreview() {
   else configureSoloStep(tutorial.step);
   tutorial.pendingStartPose = captureControlledPose();
   tutorial.pendingPvpTargetPoses = tutorial.kind === "pvp" ? capturePvpTutorialPoses() : null;
+  // Direct chapter selection must reproduce the original scene transition:
+  // start on the ground as shown in the prior buffered-bonk scene, and poof
+  // ONCE to the high platforms before the sky-bonk explanation's third line.
+  if (tutorial.kind === "pvp" && target.setup === "pvpDemoSkyBonk") {
+    const player = pvpPlayers[0], ember = pvpPlayers[1];
+    const right = PARK_PLATFORMS[6];
+    positionPvp(player, Math.round((W - player.w) / 2) - 24, CONFIG.groundY - player.h, 1);
+    positionPvp(ember, right.x + (right.w - ember.w) / 2,
+      CONFIG.groundY - ember.h, -1);
+  }
   restoreStepSequence();
   clearHeldInput();
   openDialogue();
@@ -1124,9 +1142,9 @@ function applyTutorialChapterPreview() {
   game.pauseHelpOpen = false;
   game.pauseSelection = "continue";
   try { if (typeof tutorialClockSuspendedAt !== "undefined") tutorialClockSuspendedAt = null; } catch (_) {}
-  // This chapter's frogs were already rebuilt at their authored positions.
-  // Skipping again through a poof would make them vanish and delay the
-  // first sentence despite nothing moving.
+  // This chapter's frogs are rebuilt before the opening dialogue. The sky
+  // bonk specifically begins on the prior ground staging and saves its real
+  // platform poses for the ONE scripted poof on dialogue line three.
   tutorial.scenePositionedDuringDialogue = true;
   tutorial.dialogueLineStartedAt = performance.now();
   tutorial.dialoguePreLineDelayUntil = tutorial.dialogueLineStartedAt;
@@ -1225,7 +1243,11 @@ function drawTutorialOverlay() {
     if (tutorial.dialogueOpen) drawTutorialDialogue();
     return;
   }
-  drawCurrentGoalHud();
+  // As soon as the final countdown begins the bottom-right slot belongs to
+  // EMBER's actual jump meter, not the lesson card.
+  if (!(tutorial.kind === "pvp" && tutorialStep()?.setup === "pvpFinalMatch" &&
+        tutorial.pvpFinalMatchStarted && !tutorial.dialogueOpen &&
+        !tutorial.pvpFinalMatchCountdownUntil)) drawCurrentGoalHud();
   drawTutorialFlyDespawnEffects();
   drawTutorialSmoke();
   drawPvpTutorialCaption();
@@ -1374,6 +1396,14 @@ drawVocabularyPrompt = function(...args) {
     tutorialStep()?.setup === "rangeCatch" &&
     (game.soloCriticalCatchActive || tongue.active || tutorial.rangeTongueCaught)
   );
+  // The *real* final Versus match is a continuous vocabulary quiz. The
+  // target may be reserved in the pending spawn queue but its English clue
+  // must already be readable, even before the first fly has spawned.
+  if (tutorial.active && tutorial.kind === "pvp" &&
+      tutorialStep()?.setup === "pvpFinalMatch" && tutorial.pvpFinalOutcome === null &&
+      Number.isInteger(game.targetVocabIndex)) {
+    return originalDrawVocabularyPromptForTutorial.apply(this, args);
+  }
   // Only spawned flies count. An authored fly can be in the engine's array
   // for a full second before it poofs in, and must not reveal the answer then.
   const displayedFlies = tutorial.active ? tutorialDisplayedFlies() : [];
