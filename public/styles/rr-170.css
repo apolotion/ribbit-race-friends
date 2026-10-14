@@ -1,5 +1,5 @@
 
-/* Ribbit Race Friends 1.7.54 — account modal, mobile touch, tutorials, and UI polish. */
+/* Ribbit Race Friends 1.7.55 — account modal, mobile touch, tutorials, and UI polish. */
 html, body {
   -webkit-touch-callout: none;
   -webkit-user-select: none;
@@ -537,4 +537,261 @@ body.rr-engine-replay-active #cloud-status-pill {display:none!important;}
   #rr-spectator-toolbar .rr-replay-speed{flex-basis:44px;width:44px;height:38px;}
   #rr-spectator-toolbar .rr-replay-speed .rr-speed-value{font-size:9px;}
   #rr-spectator-toolbar .rr-replay-volume-popover{height:138px;}
+}
+
+/* Polish 69 — requested replay transport skin only.
+   Keeps the recorded game canvas/HUD untouched and replaces only the HTML
+   playback controls below it with the approved scrubber layout. */
+#game-frame.rr-replay-layout #rr-spectator-toolbar{
+  position:relative;
+  display:flex;
+  align-items:center;
+  gap:clamp(7px,1vw,14px);
+  padding:clamp(6px,.72vw,10px) clamp(10px,1.25vw,18px);
+  background:#182b33;
+  border:clamp(3px,.34vw,5px) solid #30444b;
+  box-shadow:inset 0 clamp(2px,.22vw,4px) 0 #43575e;
+  color:#f7fdff;
+  overflow:visible;
+}
+#rr-spectator-toolbar button{
+  border:clamp(3px,.3vw,5px) solid #9fb2b8;
+  background:#21353d;
+  color:#f7fdff;
+  box-shadow:inset 0 0 0 clamp(1px,.12vw,2px) #dce8eb;
+}
+#rr-spectator-toolbar button:hover,#rr-spectator-toolbar button:focus-visible{
+  background:#2a414a;
+  color:#f7fdff;
+  filter:brightness(1.08);
+}
+#rr-spectator-toolbar .rr-replay-icon-button{
+  order:0;
+  flex:0 0 clamp(44px,5vw,66px);
+  width:clamp(44px,5vw,66px);
+  height:clamp(40px,5vw,62px);
+  padding:clamp(3px,.35vw,5px);
+}
+#rr-spectator-toolbar .rr-replay-icon-button svg{
+  width:clamp(22px,2.2vw,30px);
+  height:clamp(22px,2.2vw,30px);
+}
+#rr-spectator-toolbar .rr-replay-volume{
+  order:1;
+  position:relative;
+  display:flex;
+  align-items:center;
+  justify-content:flex-start;
+  flex:0 0 clamp(170px,20vw,270px);
+  width:clamp(170px,20vw,270px);
+  height:clamp(40px,5vw,62px);
+  min-width:0;
+  overflow:visible;
+  z-index:5;
+  border:clamp(3px,.3vw,5px) solid #53666d;
+  background:#21353d;
+  box-shadow:inset 0 0 0 clamp(1px,.12vw,2px) #394c54;
+}
+#rr-spectator-toolbar .rr-replay-volume-button{
+  flex:0 0 clamp(42px,4.4vw,58px);
+  width:clamp(42px,4.4vw,58px);
+  height:100%;
+  border:0!important;
+  border-right:clamp(2px,.22vw,3px) solid #53666d!important;
+  box-shadow:none!important;
+  background:transparent!important;
+  color:#f7fdff!important;
+  padding:clamp(4px,.45vw,7px)!important;
+}
+#rr-spectator-toolbar .rr-replay-volume-button svg{
+  width:clamp(21px,2.2vw,29px);
+  height:clamp(21px,2.2vw,29px);
+}
+#rr-spectator-toolbar .rr-replay-volume-popover{
+  position:static;
+  transform:none;
+  display:flex;
+  flex:1 1 auto;
+  flex-direction:row;
+  align-items:center;
+  justify-content:center;
+  width:auto;
+  height:100%;
+  min-width:0;
+  padding:0 clamp(8px,.8vw,12px);
+  border:0;
+  box-shadow:none;
+  background:transparent;
+  color:#f7fdff;
+  visibility:visible;
+  opacity:1;
+  pointer-events:auto;
+  transition:none;
+}
+#rr-spectator-toolbar .rr-replay-volume-popover input{
+  position:static;
+  transform:none;
+  display:block;
+  width:100%;
+  min-width:44px;
+  height:clamp(18px,2vw,25px);
+  padding:0;
+  margin:0;
+  appearance:none;
+  -webkit-appearance:none;
+  background:transparent;
+  accent-color:#ee4762;
+  cursor:ew-resize;
+  touch-action:none;
+}
+#rr-spectator-toolbar .rr-replay-volume-popover input::-webkit-slider-runnable-track{
+  height:clamp(7px,.72vw,10px);
+  background:linear-gradient(to right,#ee4762 calc(var(--rr-volume-progress,100%)),#536f77 calc(var(--rr-volume-progress,100%)));
+  border:clamp(1px,.12vw,2px) solid #14242b;
+}
+#rr-spectator-toolbar .rr-replay-volume-popover input::-webkit-slider-thumb{
+  -webkit-appearance:none;
+  appearance:none;
+  width:clamp(13px,1.25vw,18px);
+  height:clamp(25px,2.7vw,32px);
+  margin-top:calc((clamp(7px,.72vw,10px) - clamp(25px,2.7vw,32px))/2);
+  border:clamp(2px,.2vw,3px) solid #15262d;
+  background:#f7fdff;
+  border-radius:0;
+}
+#rr-spectator-toolbar .rr-replay-volume-popover input::-moz-range-track{
+  height:8px;background:#536f77;border:2px solid #14242b;
+}
+#rr-spectator-toolbar .rr-replay-volume-popover input::-moz-range-progress{
+  height:8px;background:#ee4762;
+}
+#rr-spectator-toolbar .rr-replay-volume-popover input::-moz-range-thumb{
+  width:14px;height:27px;border:2px solid #15262d;background:#f7fdff;border-radius:0;
+}
+#rr-spectator-toolbar .rr-replay-volume-label{display:none!important;}
+#rr-spectator-toolbar .rr-replay-time{
+  order:2;
+  flex:0 0 auto;
+  min-width:clamp(112px,11vw,155px);
+  font-size:clamp(10px,1.12vw,18px);
+  line-height:1;
+  letter-spacing:.035em;
+  color:#f7fdff;
+  text-align:center;
+  white-space:nowrap;
+  font-variant-numeric:tabular-nums;
+}
+#rr-spectator-toolbar .rr-replay-progress{
+  order:3;
+  min-width:80px;
+  flex:1 1 auto;
+  display:flex;
+  align-items:center;
+}
+#rr-spectator-toolbar .rr-replay-progress input{
+  width:100%;
+  min-width:80px;
+  height:clamp(18px,2.7vw,30px);
+  margin:0;
+  padding:0;
+  border:0;
+  background:transparent;
+  appearance:none;
+  -webkit-appearance:none;
+  cursor:ew-resize;
+  touch-action:none;
+}
+#rr-spectator-toolbar .rr-replay-progress input::-webkit-slider-runnable-track{
+  height:clamp(9px,.9vw,13px);
+  background:linear-gradient(to right,#ee4762 var(--rr-replay-progress,0%),#536f77 var(--rr-replay-progress,0%));
+  border:clamp(2px,.18vw,3px) solid #13242c;
+  box-shadow:inset 0 clamp(1px,.1vw,2px) 0 #6e8289;
+}
+#rr-spectator-toolbar .rr-replay-progress input::-webkit-slider-thumb{
+  -webkit-appearance:none;
+  appearance:none;
+  width:clamp(15px,1.35vw,20px);
+  height:clamp(28px,3vw,36px);
+  margin-top:calc((clamp(9px,.9vw,13px) - clamp(28px,3vw,36px))/2);
+  border:clamp(2px,.2vw,3px) solid #15262d;
+  background:#f7fdff;
+  border-radius:0;
+}
+#rr-spectator-toolbar .rr-replay-progress input::-moz-range-track{
+  height:10px;background:#536f77;border:2px solid #13242c;
+}
+#rr-spectator-toolbar .rr-replay-progress input::-moz-range-progress{
+  height:10px;background:#ee4762;
+}
+#rr-spectator-toolbar .rr-replay-progress input::-moz-range-thumb{
+  width:16px;height:30px;border:2px solid #15262d;background:#f7fdff;border-radius:0;
+}
+#rr-spectator-toolbar .rr-replay-speed{
+  order:4;
+  position:relative;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:clamp(5px,.55vw,9px);
+  flex:0 0 clamp(116px,13vw,175px);
+  width:clamp(116px,13vw,175px);
+  height:clamp(40px,5vw,62px);
+  padding:clamp(3px,.35vw,6px) clamp(11px,1vw,16px)!important;
+  border:clamp(3px,.3vw,5px) solid #53666d!important;
+  background:#21353d!important;
+  color:#f7fdff!important;
+  box-shadow:inset 0 0 0 clamp(1px,.12vw,2px) #394c54!important;
+}
+#rr-spectator-toolbar .rr-replay-speed .rr-stopwatch-frame{
+  position:static;
+  transform:none;
+  width:clamp(27px,2.7vw,38px);
+  height:clamp(27px,2.7vw,38px);
+  flex:0 0 auto;
+}
+#rr-spectator-toolbar .rr-replay-speed .rr-speed-value{
+  position:static;
+  display:block;
+  width:auto;
+  min-width:3ch;
+  margin:0;
+  color:#f7fdff;
+  text-shadow:1px 1px #132630;
+  font-size:clamp(12px,1.25vw,19px);
+  font-weight:900;
+  text-align:center;
+  letter-spacing:0;
+}
+#rr-spectator-toolbar .rr-replay-speed::after{
+  content:"";
+  width:0;height:0;
+  border-left:clamp(5px,.45vw,7px) solid transparent;
+  border-right:clamp(5px,.45vw,7px) solid transparent;
+  border-top:clamp(7px,.55vw,9px) solid #f7fdff;
+  margin-left:auto;
+}
+/* The requested transport has no redundant fullscreen control. The existing
+   Exit action remains available without changing replay behavior. */
+#rr-spectator-toolbar [data-replay-action="fullscreen"]{display:none!important;}
+#rr-spectator-toolbar [data-replay-action="exit"]{
+  order:5;
+  flex:0 0 auto;
+}
+@media(max-width:790px){
+  #game-frame.rr-replay-layout #rr-spectator-toolbar{gap:5px;padding:4px 6px;}
+  #rr-spectator-toolbar .rr-replay-volume{flex-basis:145px;width:145px;}
+  #rr-spectator-toolbar .rr-replay-time{min-width:92px;font-size:10px;}
+  #rr-spectator-toolbar .rr-replay-speed{flex-basis:92px;width:92px;}
+}
+@media(max-width:620px){
+  #game-frame.rr-replay-layout #rr-spectator-toolbar{gap:3px;padding:2px 4px;}
+  #rr-spectator-toolbar .rr-replay-icon-button{flex-basis:34px;width:34px;height:32px;}
+  #rr-spectator-toolbar .rr-replay-volume{flex-basis:112px;width:112px;height:32px;}
+  #rr-spectator-toolbar .rr-replay-volume-button{flex-basis:30px;width:30px;height:100%;border-width:0 2px 0 0!important;}
+  #rr-spectator-toolbar .rr-replay-volume-popover{height:100%;padding:0 5px;}
+  #rr-spectator-toolbar .rr-replay-time{display:block;min-width:72px;font-size:8px;}
+  #rr-spectator-toolbar .rr-replay-speed{flex-basis:72px;width:72px;height:32px;padding:2px 6px!important;}
+  #rr-spectator-toolbar .rr-replay-speed .rr-stopwatch-frame{width:22px;height:22px;}
+  #rr-spectator-toolbar .rr-replay-speed .rr-speed-value{font-size:9px;}
+  #rr-spectator-toolbar [data-replay-action="exit"]{font-size:8px;padding:5px 4px;}
 }

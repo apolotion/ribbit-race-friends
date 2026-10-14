@@ -1,4 +1,4 @@
-# Ribbit Race Friends — Polish 67 / 1.7.54
+# Ribbit Race Friends — Polish 68 / 1.7.55
 
 This is the GitHub-ready Cloudflare Worker + static game repository. Replace the previous repo files with the contents of this ZIP.
 

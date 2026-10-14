@@ -1,4 +1,4 @@
-// Ribbit Race — Polish 67: responsive pixel-art study cards and vocabulary browser.
+// Ribbit Race — Polish 68: responsive pixel-art study cards and vocabulary browser.
 // This DOM layer sits inside the existing game frame so keyboard, touch, swipes,
 // bookmarks, sorting and editable notes work without changing the game simulation.
 window.RibbitStudyUI = (() => {

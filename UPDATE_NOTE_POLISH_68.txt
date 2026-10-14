@@ -1,0 +1,14 @@
+RIBBIT RACE FRIENDS — POLISH 68 / VERSION 1.7.55
+
+Flash card visual polish
+- Restyled the flash card overlay to match the main Ribbit Race menu window.
+- Added beveled pixel-window corners, matching border weights, and stronger menu-style shadows.
+- Updated the FLASH CARDS header to match the menu header treatment.
+- Softened the flash card stack shape so the cards match the rounded pixel-art card mockup more closely.
+- Tuned the counter, progress bar, button boxes, and card text to better match the approved mockup.
+- Kept the flash cards as an overlay on the game scene.
+- No language-pair dropdowns are shown on the flash card study screen.
+
+Verification
+- npm run check
+- npm test

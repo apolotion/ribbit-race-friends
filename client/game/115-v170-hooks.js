@@ -1,5 +1,5 @@
 
-// Ribbit Race Friends 1.7.54 — compatibility hooks, safety guards, and runtime polish.
+// Ribbit Race Friends 1.7.55 — compatibility hooks, safety guards, and runtime polish.
 // This module is bundled last so it can observe the established private game scope.
 (() => {
   "use strict";

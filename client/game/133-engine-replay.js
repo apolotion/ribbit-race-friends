@@ -203,7 +203,7 @@ function ribbitReplayExportCurrent(){
     : frames[frames.length-1].t;
   return {
     version:RIBBIT_REPLAY_SCHEMA_VERSION,kind:"ribbit-engine-frames",fps:capture.fps||RIBBIT_REPLAY_FPS,
-    compatibility:{frameSchema:RIBBIT_REPLAY_SCHEMA_VERSION,minimumPlayerVersion:1,recordedBy:"1.7.54"},
+    compatibility:{frameSchema:RIBBIT_REPLAY_SCHEMA_VERSION,minimumPlayerVersion:1,recordedBy:"1.7.55"},
     mode:capture.mode,level:capture.level,recordedAt:capture.recordedAt,
     recordedTimeZone:capture.recordedTimeZone,timeOfDay:capture.timeOfDay,
     moonPhaseIndex:capture.moonPhaseIndex,skinId:capture.skinId,vocab:capture.vocab,
@@ -402,7 +402,7 @@ function ribbitReplayCreateControls(){
     <button type="button" data-replay-action="fullscreen" title="Fullscreen (F)">⛶</button>
     <button type="button" data-replay-action="exit">EXIT</button>`;
   host.append(header,footer);
-  const seek=footer.querySelector("input");
+  const seek=footer.querySelector(".rr-replay-progress input");
   const startScrub=event=>{
     const view=ribbitReplayView;if(!view?.data)return;
     event.stopPropagation();
@@ -488,9 +488,17 @@ function ribbitReplayUpdateControls(){
   const controls=ribbitReplayControls,view=ribbitReplayView;
   if(!controls||!view)return;
   const duration=view.data?.duration||0;
-  const format=ms=>{
-    const value=Math.max(0,Math.floor(ms/1000));
-    return `${Math.floor(value/60)}:${String(value%60).padStart(2,"0")}`;
+  const format=(ms,precise=false)=>{
+    const total=Math.max(0,Number(ms)||0)/1000;
+    const minutes=Math.floor(total/60);
+    const seconds=total-minutes*60;
+    if(precise){
+      const tenths=Math.floor(seconds*10+1e-6)/10;
+      const whole=Math.floor(tenths);
+      const decimal=Math.floor((tenths-whole)*10+1e-6);
+      return `${minutes}:${String(whole).padStart(2,"0")}.${decimal}`;
+    }
+    return `${minutes}:${String(Math.floor(seconds)).padStart(2,"0")}`;
   };
   const playState=view.data && view.position>=duration-1
     ? "replay" : view.paused ? "play" : "pause";
@@ -507,6 +515,7 @@ function ribbitReplayUpdateControls(){
   controls.speed.querySelector(".rr-speed-value").textContent=`${view.spaceFastForwardHeld?2:view.rate}x`;
   const effectiveVolume=view.muted?0:view.volume;
   controls.volume.value=String(Math.round(view.volume*100));
+  controls.volume.style.setProperty("--rr-volume-progress",`${Math.round(view.volume*100)}%`);
   controls.volume.setAttribute("aria-valuetext",`${Math.round(effectiveVolume*100)} percent`);
   controls.volumeLabel.textContent=`${Math.round(effectiveVolume*100)}%`;
   controls.volumeButton.setAttribute("aria-pressed",String(!!view.muted));
@@ -515,7 +524,7 @@ function ribbitReplayUpdateControls(){
     const glyph=controls.volumeButton.querySelector(selector);
     glyph.hidden=!show;glyph.style.display=show?"":"none";
   }
-  controls.time.textContent=`${format(view.position)} / ${format(duration)}`;
+  controls.time.textContent=`${format(view.position,true)} / ${format(duration)}`;
   const collection=view.collection;
   controls.browse.hidden=!collection;
   controls.previous.hidden=!collection;
