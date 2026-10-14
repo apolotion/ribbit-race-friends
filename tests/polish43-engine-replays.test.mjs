@@ -51,7 +51,7 @@ test('Frog Tags play saved frame data on stage and never construct a video popup
   assert.doesNotMatch(online, /createElement\("video"\)/);
 });
 test('unexpected in-air bonks settle normally while Ember dialogue blocks input',()=>{
-  assert.match(hooks,/tutorial\.kind === "pvp" &&\s*\(tutorial\.dialogueOpen \|\| tutorial\.pvpAwaitRecoveryAdvance\)/);
+  assert.match(hooks,/tutorial\.kind === "pvp" && !tutorial\.resetPending/);
   assert.match(hooks,/updatePvpPlayer\(player, dt\)/);
   assert.match(hooks,/player\.charging = false/);
   assert.match(hooks,/updatePvpImpactEffects\(dt\)/);

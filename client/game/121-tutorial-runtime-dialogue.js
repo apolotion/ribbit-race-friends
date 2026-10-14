@@ -221,6 +221,9 @@ function currentDialogueLine() {
 }
 
 function currentEmberPortraitKey() {
+  if (Array.isArray(tutorial.dynamicPortraitKey) && tutorial.dynamicPortraitKey.length) {
+    return tutorial.dynamicPortraitKey[tutorial.dialogueLineIndex % tutorial.dynamicPortraitKey.length] || tutorial.dynamicPortraitKey[0] || "thumbsup";
+  }
   if (tutorial.dynamicPortraitKey) return tutorial.dynamicPortraitKey;
   if (tutorial.finalDialogueActive) return "thumbsup";
   const step = tutorialStep();

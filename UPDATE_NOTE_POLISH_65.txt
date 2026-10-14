@@ -1,0 +1,22 @@
+RIBBIT RACE FRIENDS — POLISH 65 — VERSION 1.7.52
+
+Replay playback & user-interface improvements
+- The first-jump “hold Space / release to jump” tutorial speech bubble is suppressed during both Solo and Versus tutorial play.
+- Top-right in-game replay pause icon is replaced by a pink X inside the same box. The X exits replay playback.
+- Clicking anywhere in gameplay while replay is playing pauses it. Interacting with replay toolbar remains separate.
+- K toggles replay playback. Holding Space advances the replay temporarily at 2×; releasing restores its prior playback/paused state. Paused fast-forward stays silent. Playing fast-forward retains audio.
+- Replay toolbar has left-aligned play/pause/replay symbol and a speaker button. Clicking the speaker toggles mute; hovering opens a draggable vertical volume slider.
+- Up/Down arrow keys adjust replay volume in 5% steps. M toggles mute.
+- Playback speed shows in a fixed-size pixel stopwatch with a transparent center and text ranging from 0.25× to 4×. Speed controls retain frame stepping and jumps.
+- Replays end with LEVEL COMPLETE! rather than REPLAY COMPLETE!.
+- Replay BEST values now refer to the worldwide leaderboard records for that level/category where available; unavailable data has an honest placeholder and never impersonates a player's own best.
+- Replay countdowns from both new and older saved replay formats avoid cross-phase interpolation and reconstruct missing countdown frames with stable 60 FPS timing.
+- Existing replay format and archive compatibility retained. No Cloudflare database migration required.
+
+Verification
+- Project and runtime bundle parse/build checks pass.
+- 610 / 610 automated tests pass, including six added replay input, presentation and compatibility checks.
+- Headless Chromium replay viewer interaction check: guest app boot, K, Space held while paused, volume hover/mute, canvas click, top-right X, no JavaScript errors.
+- Live Cloudflare multiplayer deployment remains untested in this environment.
+
+Deploy: replace repository files and redeploy. No code.gs changes required.

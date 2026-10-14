@@ -580,13 +580,12 @@ function configurePvpStep(index) {
       positionPvp(ember, PARK_PLATFORMS[3].x + PARK_PLATFORMS[3].w + 8, CONFIG.groundY - ember.h, -1);
       break;
     case "pvpAvoidUnder": {
-      // New picture: P1 starts from the RIGHT, facing left, and slips beneath
-      // the lower-middle perch without rising to its top.
+      // Match screenshot 1: P1 starts centered on the lower-middle platform,
+      // facing RIGHT; Ember is standing on the ground to the left.
+      // The lesson is to drop safely and cross under the perch.
       const perch = PARK_PLATFORMS[3];
-      // Start directly at the screenshot arrow's leftward approach point.
-      // Ember stays on the lower-middle perch, facing LEFT.
-      positionPvp(p1, 222, CONFIG.groundY - p1.h, -1);
-      positionPvpOnPlatform(ember, perch, -1);
+      positionPvpOnPlatform(p1, perch, 1);
+      positionPvp(ember, perch.x - ember.w - 12, CONFIG.groundY - ember.h, 1);
       break;
     }
     case "pvpDemoRebound":
@@ -895,7 +894,9 @@ function beginPvpDemoMotion(setup) {
       // enough charge to reach a mid-height perch. Any later change of facing
       // must be earned from a physical rebound/wall hit, not a scripted turn.
       scriptPvpChargedJump(0, .85, 1, 0);
-      scriptPvpChargedJump(1, .95, -1, 40);
+      // Charging slightly less means the release coincides with P1's, not
+      // forty milliseconds plus a stronger charge behind it.
+      scriptPvpChargedJump(1, .85, -1, 0);
       break;
     case "pvpDemoDinnerSteal":
       // P1 starts charging first. Ember begins a little later and releases
@@ -1191,6 +1192,9 @@ function startPvpFinalMatch() {
   tutorial.pvpFinalMatchStarted = true;
   tutorial.pvpFinalMatchPoofStarted = false;
   tutorial.pvpFinalMatchCountdownUntil = 0;
+  tutorial.pvpAutoReleaseAtZero = true;
+  tutorial.pvpRestartCountdownOnResume = false;
+  tutorial.pvpDinnerStealChargeBonus = .08;
   try { window.RibbitRaceResetFinalCatchLabels?.(); } catch (_) {}
   tutorial.pvpFinalOutcome = null;
   tutorial.pvpDemoActive = false;

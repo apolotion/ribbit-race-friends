@@ -62,6 +62,18 @@ function polish19PvpRuntimeCorrection(dt=0){
     game.pvpCpuEnabled=true;game.pvpCpuDifficulty=5;game.pvpCpuLevel=5;game.pvpTimeLimitSeconds=30;game.pvpBestOf=1;game.pvpRoundGoalMode='endless';
     ember.cpu=true;ember.cpuLevel=5;ember.skinId='ember';ember.hatId='crown';
   }
+  // Latest polish tweaks: move the dinner-steal demonstration fly to the
+  // starred upper-right spot, and center the player practice fly over the
+  // bottom-left platform without changing its height.
+  const setup=String(step.setup||'');
+  if((tutorial.pvpDemoActive && setup==='pvpDemoDinnerSteal') || setup==='pvpDinnerSteal'){
+    const demo=Boolean(tutorial.pvpDemoActive && setup==='pvpDemoDinnerSteal');
+    const targetX=demo?404:Math.round(PARK_PLATFORMS[1].x + PARK_PLATFORMS[1].w / 2) - 8;
+    const targetY=demo?112:(PARK_PLATFORMS[4].y + 4);
+    for(const fly of flies||[]){
+      if(fly?.tutorialAuthored && fly.state==='active'){ fly.x=targetX; fly.y=targetY; break; }
+    }
+  }
 }
 const polish19OriginalUpdateTutorial=updateTutorial;
 updateTutorial=function(...args){const out=polish19OriginalUpdateTutorial.apply(this,args);polish19PvpRuntimeCorrection(Number(args[0]||0));return out;};

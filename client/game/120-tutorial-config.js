@@ -3,7 +3,7 @@
 
 const SOLO_SEEN_KEY = "rrFriendsEngineTutorialSoloSeenV8";
 const PVP_SEEN_KEY = "rrFriendsEngineTutorialPvpSeenV8";
-const TUTORIAL_BUILD = "2026.10.13-friends-polish-62";
+const TUTORIAL_BUILD = "2026.10.14-friends-polish-65";
 const TUTORIAL_ACHIEVEMENT_ID = "tutorial-graduate";
 const PVP_TUTORIAL_ACHIEVEMENT_ID = "versus-tutorial-graduate";
 const TYPEWRITER_MS_PER_CHARACTER = 28;
@@ -1022,8 +1022,8 @@ const PVP_STEPS = Object.freeze([
     ],
     "dialogue": [
       "Now I'll take the platform.",
-      "Start from the ground to my left and quick-tap right beneath my platform.",
-      "Pass my platform's right edge without getting bonked—no extra distance needed!"
+      "Drop off the lower-middle platform, then use a quick tap to stay below its edge.",
+      "Slip across beneath the platform without getting bonked—keep that jump low!"
     ],
     "successDialogue": [
       "Not even a bump!",

@@ -1,5 +1,5 @@
 
-/* Ribbit Race Friends 1.7.50 — account modal, mobile touch, tutorials, and UI polish. */
+/* Ribbit Race Friends 1.7.52 — account modal, mobile touch, tutorials, and UI polish. */
 html, body {
   -webkit-touch-callout: none;
   -webkit-user-select: none;
@@ -461,4 +461,80 @@ body.rr-engine-replay-active #cloud-status-pill {display:none!important;}
   #rr-spectator-toolbar .rr-replay-speed {flex-basis:53px;width:53px;gap:1px;}
   #rr-spectator-toolbar .rr-replay-speed svg {width:13px;height:13px;}
   #rr-spectator-toolbar .rr-replay-icon-button{width:34px;height:32px;}
+}
+
+/* Polish 65: compact spectator transport, hover/focus volume control, and
+   a fixed-size pixel stopwatch with an intentionally CLEAR watch face. */
+#rr-spectator-toolbar .rr-replay-icon-button{order:0;flex:0 0 clamp(36px,4.2vw,56px);}
+#rr-spectator-toolbar .rr-replay-volume{
+  position:relative;order:1;display:flex;align-items:center;justify-content:center;
+  flex:0 0 clamp(36px,4.2vw,48px);width:clamp(36px,4.2vw,48px);
+  min-width:0;overflow:visible;z-index:5;
+}
+#rr-spectator-toolbar .rr-replay-volume-button{
+  display:grid;place-items:center;width:clamp(36px,4.2vw,48px);height:clamp(36px,4.2vw,48px);
+  padding:3px!important;border:3px solid #e8f4f7;cursor:pointer;
+  background:#253b45;color:#b8f5dc;
+}
+#rr-spectator-toolbar .rr-replay-volume-button svg{width:clamp(20px,2vw,26px);height:clamp(20px,2vw,26px);}
+#rr-spectator-toolbar .rr-replay-volume-button [hidden]{display:none!important;}
+#rr-spectator-toolbar .rr-replay-volume-popover{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  position:absolute;bottom:100%;left:50%;transform:translateX(-50%);
+  width:40px;height:150px;box-sizing:border-box;border:3px solid #e8f4f7;
+  box-shadow:3px 3px 0 #091a24;background:#253b45;color:#f7fdff;
+  visibility:hidden;opacity:0;pointer-events:none;
+  transition:opacity .12s ease,visibility .12s ease;
+}
+#rr-spectator-toolbar .rr-replay-volume:hover .rr-replay-volume-popover,
+#rr-spectator-toolbar .rr-replay-volume:focus-within .rr-replay-volume-popover{
+  visibility:visible;opacity:1;pointer-events:auto;
+}
+#rr-spectator-toolbar .rr-replay-volume-popover input{
+  flex:none;display:block;position:absolute;top:53px;left:50%;
+  transform:translate(-50%,-50%) rotate(-90deg);
+  width:94px;min-width:94px;height:20px;padding:0;margin:0;
+  appearance:auto;-webkit-appearance:auto;accent-color:#49dce9;
+  cursor:pointer;touch-action:none;
+}
+#rr-spectator-toolbar .rr-replay-volume-popover input::-webkit-slider-runnable-track{
+  height:6px;background:#536f77;
+}
+#rr-spectator-toolbar .rr-replay-volume-popover input::-webkit-slider-thumb{
+  -webkit-appearance:auto;appearance:auto;margin-top:0;
+  width:12px;height:18px;border:2px solid #a4dce7;background:#f7fdff;
+}
+#rr-spectator-toolbar .rr-replay-volume-label{
+  position:absolute;bottom:7px;left:0;width:100%;font-size:11px;text-align:center;
+}
+#rr-spectator-toolbar .rr-replay-progress{order:2;}
+#rr-spectator-toolbar .rr-replay-time{order:3;}
+#rr-spectator-toolbar .rr-replay-speed{
+  order:4;position:relative;display:grid;place-items:center;isolation:isolate;
+  box-sizing:border-box;flex:0 0 clamp(50px,6.2vw,68px);
+  width:clamp(50px,6.2vw,68px);height:clamp(40px,5.4vw,59px);
+  border:0!important;background:transparent!important;color:#f7fdff!important;
+  box-shadow:none;padding:0!important;
+}
+#rr-spectator-toolbar .rr-replay-speed:hover{filter:brightness(1.18);}
+#rr-spectator-toolbar .rr-replay-speed .rr-stopwatch-frame{
+  display:block;position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
+  width:100%;height:100%;min-width:0;min-height:0;
+  pointer-events:none;
+}
+#rr-spectator-toolbar .rr-replay-speed .rr-speed-value{
+  position:relative;z-index:1;display:block;margin:5px 0 0;
+  color:#effcff;text-shadow:1px 1px #132630;
+  font-size:clamp(9px,.98vw,15px);font-weight:900;
+  min-width:0;width:100%;text-align:center;letter-spacing:-.04em;
+  font-variant-numeric:tabular-nums;
+}
+#rr-spectator-toolbar [data-replay-action="fullscreen"]{order:5;}
+#rr-spectator-toolbar [data-replay-action="exit"]{order:6;}
+@media(max-width:620px){
+  #rr-spectator-toolbar .rr-replay-volume{flex-basis:30px;width:30px;}
+  #rr-spectator-toolbar .rr-replay-volume-button{width:30px;height:30px;border-width:2px;padding:1px!important;}
+  #rr-spectator-toolbar .rr-replay-speed{flex-basis:44px;width:44px;height:38px;}
+  #rr-spectator-toolbar .rr-replay-speed .rr-speed-value{font-size:9px;}
+  #rr-spectator-toolbar .rr-replay-volume-popover{height:138px;}
 }

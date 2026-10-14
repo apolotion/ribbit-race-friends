@@ -404,9 +404,13 @@ function drivePvpPracticeCpu(setup, now) {
     }
     if (!tutorial.pvpEmberLaunchStarted && now >= tutorial.pvpEmberJumpScheduledAt && ember.grounded) {
       tutorial.pvpEmberLaunchStarted = true;
-      const launchDirection = setup === "pvpDinnerSteal" ? -1 : 1;
+      // Not So Fast: aim LEFT at the middle-left perch shown in the screenshot.
+      // .86 clears its top and lands on the platform on the descent; .72
+      // previously aimed right and undershot/turned toward the other perch.
+      const launchDirection = -1;
       ember.dir = launchDirection;
-      scriptPvpChargedJump(1, setup === "pvpDinnerSteal" ? .82 : .72, launchDirection, 0);
+      tutorial.pvpEmberFacingLock = launchDirection;
+      scriptPvpChargedJump(1, setup === "pvpDinnerSteal" ? .82 : .86, launchDirection, 0);
     }
     return;
   }
@@ -446,6 +450,9 @@ function beginPvpTutorialEnding() {
     game.pvpSetupSkinIds[1] = "ember";
     openDynamicDialogue(playerWon ? PVP_WIN_DIALOGUE : PVP_LOSE_DIALOGUE,
       playerWon ? "shocked" : "happy", false);
+    tutorial.dynamicPortraitKey = playerWon
+      ? ["shocked", "questioning", "thumbsup", "happy", "determined", "peace"]
+      : ["laughing", "happy", "thumbsup", "questioning", "peace", "determined", "happy"];
   };
   if (!beginPoofTransition({
     reason: "pvp-final-post-victory",
@@ -493,7 +500,10 @@ function monitorPvp() {
         tutorial.pvpZeroClockObservedAt = 0;
       }
     } else tutorial.pvpZeroClockObservedAt = 0;
-    if (tutorial.pvpFinalMatchStarted && game.state === "won") beginPvpTutorialEnding();
+    if (tutorial.pvpFinalMatchStarted && game.state === "won") {
+      if (!Number.isFinite(tutorial.pvpFinalWinObservedAt) || tutorial.pvpFinalWinObservedAt <= 0) tutorial.pvpFinalWinObservedAt = now;
+      if (now - tutorial.pvpFinalWinObservedAt >= 3000) beginPvpTutorialEnding();
+    } else tutorial.pvpFinalWinObservedAt = 0;
     return;
   }
   if (tutorial.passPending) {
@@ -692,7 +702,10 @@ function monitorPvp() {
       failAttempt("USE A QUICK TAP TO STAY LOW");
       return;
     }
-    if (!p1.grounded && p1.y + p1.h <= platform.y + 0.5)
+    // Jumping ABOVE the platform after leaving the starting perch is a miss;
+    // an intentional fall/buffer drop from its surface is not.
+    if (p1.firstJumpMade && !p1.grounded && p1.vy < -20 &&
+        p1.y + p1.h <= platform.y + 0.5)
       tutorial.pvpAvoidUnderTooHigh = true;
     if (tutorial.pvpAvoidUnderTooHigh) {
       // Let the player land normally; the failure poof is not mid-jump.
@@ -703,8 +716,10 @@ function monitorPvp() {
     const underPerch = p1.x + p1.w > platform.x && p1.x < platform.x + platform.w &&
       p1.y >= platform.y + platform.h - 2;
     if (underPerch) tutorial.pvpAvoidUnderPassedBeneath = true;
-    // P1 now runs from the right side toward the LEFT edge, as pictured.
-    if (tutorial.pvpAvoidUnderPassedBeneath && p1.x <= platform.x - p1.w + 1)
+    // The pictured starting pose is ON the perch; only a genuine drop below
+    // its underside can arm completion. Crossing the RIGHT edge completes it.
+    if (tutorial.pvpAvoidUnderPassedBeneath &&
+        p1.x >= platform.x + platform.w - p1.w - 1)
       passStep();
     return;
   }
@@ -734,7 +749,11 @@ function monitorPvp() {
         action: () => {
           positionPvpReboundPracticeLayout(completed);
           tutorial.pvpPlayerAttemptWasAirborne = false;
-          tutorial.pvpPracticeStartedAt = performance.now();
+          tutorial.pvpLessonAirborneSeen = [false, false];
+          tutorial.pvpLessonLanded = [false, false];
+          tutorial.pvpReboundLandingHoldAt = 0;
+          tutorial.enteredAt = performance.now();
+          tutorial.pvpPracticeStartedAt = tutorial.enteredAt;
           clearHeldInput();
         }
       });
@@ -756,7 +775,11 @@ function monitorPvp() {
           tutorial.pvpRebounds = completed;
           tutorial.pvpPracticeCount = completed;
           tutorial.pvpPlayerAttemptWasAirborne = false;
-          tutorial.pvpPracticeStartedAt = performance.now();
+          tutorial.pvpLessonAirborneSeen = [false, false];
+          tutorial.pvpLessonLanded = [false, false];
+          tutorial.pvpReboundLandingHoldAt = 0;
+          tutorial.enteredAt = performance.now();
+          tutorial.pvpPracticeStartedAt = tutorial.enteredAt;
           clearHeldInput();
         }
       });
@@ -799,7 +822,10 @@ function monitorPvp() {
   }
 
   if (setup === "pvpFinalMatch") {
-    if (tutorial.pvpFinalMatchStarted && game.state === "won") beginPvpTutorialEnding();
+    if (tutorial.pvpFinalMatchStarted && game.state === "won") {
+      if (!Number.isFinite(tutorial.pvpFinalWinObservedAt) || tutorial.pvpFinalWinObservedAt <= 0) tutorial.pvpFinalWinObservedAt = now;
+      if (now - tutorial.pvpFinalWinObservedAt >= 3000) beginPvpTutorialEnding();
+    } else tutorial.pvpFinalWinObservedAt = 0;
     return;
   }
 }

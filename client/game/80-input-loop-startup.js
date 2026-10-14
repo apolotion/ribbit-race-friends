@@ -648,6 +648,10 @@
     }
 
     function pauseGame() {
+      if (typeof tutorial !== "undefined" && tutorial.active && tutorial.kind === "pvp" &&
+          typeof tutorialStep === "function" && tutorialStep()?.setup === "pvpFinalMatch") {
+        tutorial.pvpRestartCountdownOnResume = true;
+      }
       if (OnlineVersus.isActive()) {
         OnlineVersus.showExitMenu();
         return;

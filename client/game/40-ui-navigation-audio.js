@@ -2675,9 +2675,16 @@
     }
 
     function resumePausedGame() {
-      if (game.mode === "pvp" && !game.pvpUnpauseCountdown &&
-          !(typeof tutorial !== "undefined" && tutorial.active && tutorial.kind === "pvp" &&
-            typeof tutorialStep === "function" && tutorialStep()?.setup === "pvpFinalMatch")) {
+      const tutorialFinalMatch = typeof tutorial !== "undefined" && tutorial.active && tutorial.kind === "pvp" &&
+        typeof tutorialStep === "function" && tutorialStep()?.setup === "pvpFinalMatch";
+      if (tutorialFinalMatch && tutorial.pvpRestartCountdownOnResume) {
+        tutorial.pvpRestartCountdownOnResume = false;
+        tutorial.pvpFinalMatchCountdownUntil = 0;
+        game.resumeChargeAfterCountdown = false;
+        startResumeCountdown(false);
+        return;
+      }
+      if (game.mode === "pvp" && !game.pvpUnpauseCountdown && !tutorialFinalMatch) {
         game.state = "playing";
         game.countdownNumber = 0;
         game.countdownTimer = 0;

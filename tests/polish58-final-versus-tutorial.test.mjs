@@ -59,14 +59,14 @@ test('buffer-drop starts swapped; under-bonk, avoiding under-bonk and rebound pr
   assert.match(section('pvpBufferedBonk','pvpDemoSkyBonk'),/positionPvp\(p1, 64, CONFIG\.groundY-p1\.h, 1\)/);
   assert.match(section('pvpBufferedBonk','pvpDemoSkyBonk'),/positionPvp\(ember, Math\.round\(\(W-ember\.w\)\/2\) \+ 24, CONFIG\.groundY-ember\.h, -1\)/);
   assert.match(section('pvpUnderBonkTwo','pvpDemoAvoidUnder'),/positionPvpOnPlatform\(p1, middleLeft, 1, middleLeft\.w - p1\.w - 2\)/);
-  assert.match(section('pvpAvoidUnder','pvpDemoRebound'),/positionPvp\(p1, 222, CONFIG\.groundY - p1\.h, -1\)/);
+  assert.match(section('pvpAvoidUnder','pvpDemoRebound'),/positionPvpOnPlatform\(p1, perch, 1\)/);
   assert.match(section('pvpReboundThree','pvpDemoReboundCatch'),/positionPvpReboundPracticeLayout\(0\)/);
 });
 test('grumpy-wall and Not So Fast prompt exceptions, fly flipped and coached middle platform attempt',()=>{
   assert.match(render,/pvpReboundCatch[\s\S]*?pvpIntercept|pvpIntercept[\s\S]*?pvpReboundCatch/);
   assert.match(scenes,/case "pvpDemoIntercept"[\s\S]{0,350}addPvpTutorialFly\(W - 90/);
   assert.match(scenes,/case "pvpIntercept"[\s\S]{0,350}addPvpTutorialFly\(90/);
-  assert.match(scenes,/case "pvpDemoIntercept"[\s\S]*?scriptPvpChargedJump\(1, \.95, -1, 40\)/);
+  assert.match(scenes,/case "pvpDemoIntercept"[\s\S]*?scriptPvpChargedJump\(1, \.85, -1, 0\)/);
 });
 test('Dinner Steal slows down Ember demo but not player-turn accidental Ember catches',()=>{
   assert.match(catches,/lesson === "pvpDinnerSteal" && player\.index !== 0/);

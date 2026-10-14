@@ -36,7 +36,7 @@ test('screen-reference poses face the requested directions',()=>{
   assert.match(scenes,/case "pvpBufferedBonk"[\s\S]*?positionPvp\(p1, 64, CONFIG\.groundY-p1\.h, 1\)/);
   assert.match(scenes,/case "pvpDemoUnderBonk"[\s\S]*?positionPvp\(p1, 210, CONFIG\.groundY - p1\.h, 1\)/);
   assert.match(scenes,/case "pvpUnderBonkTwo"[\s\S]*?positionPvpOnPlatform\(p1, middleLeft, 1, middleLeft\.w - p1\.w - 2\);[\s\S]*?positionPvp\(ember, 238, CONFIG\.groundY - ember\.h, -1\)/);
-  assert.match(scenes,/case "pvpAvoidUnder"[\s\S]*?positionPvp\(p1, 222, CONFIG\.groundY - p1\.h, -1\)/);
+  assert.match(scenes,/case "pvpAvoidUnder"[\s\S]*?positionPvpOnPlatform\(p1, perch, 1\)/);
   assert.match(scenes,/positionPvpReboundPracticeLayout\(completed = 0\)[\s\S]*?positionPvp\(p1, 145,[\s\S]*?positionPvp\(ember, 305/);
 });
 
@@ -66,7 +66,7 @@ test('the rebound catch retry preserves original fly objects through the poof',(
 });
 
 test('tongues draw behind active/caught fly sprites in Versus, solo and slow motion',()=>{
-  const pvpTonguePos = render.indexOf('pvpPlayers.forEach(p => drawEntity(p, drawPvpTongue))');
+  const pvpTonguePos = render.indexOf('pvpPlayers.filter(visibleInTutorial).forEach(p => drawEntity(p, drawPvpTongue))');
   const pvpFlyPos = render.indexOf('drawFlyAt(fly.x, fly.y');
   assert.ok(pvpTonguePos >= 0 && pvpFlyPos >= 0 && pvpTonguePos < pvpFlyPos);
   assert.ok(soloRender.indexOf('drawTongue(); // Draw beneath flies') < soloRender.indexOf('for (const currentFly of flies)'));

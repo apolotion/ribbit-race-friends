@@ -786,7 +786,7 @@
     }
 
     function drawSpeechBubble() {
-      if (frog.firstJumpMade || game.state !== "playing" || (game.sandboxMode && sandboxPreview.mode !== "play")) return;
+      if ((tutorial.active || game.tutorialActive) || frog.firstJumpMade || game.state !== "playing" || (game.sandboxMode && sandboxPreview.mode !== "play")) return;
 
       const x = 10;
       const y = 126;
@@ -904,7 +904,7 @@
         drawPixelText(formatTime(getTimerTime()), 463, 234, 10, "right", COLORS.white);
         drawPixelText("JUMPS", 329, 247, 7, "left", "#cdeff5");
         drawPixelText(String(game.jumps), 463, 247, 8, "right", getSelectedSkin().light);
-        drawPixelText("BEST", 329, 259, 7, "left", "#cdeff5");
+        drawPixelText(window.RibbitEngineReplay?.active?.() ? "WR" : "BEST", 329, 259, 7, "left", "#cdeff5");
         const bestTimeLabel = game.bestTime === null ? "--:--.-" : formatTime(game.bestTime);
         const bestJumpLabel = game.bestJumps === null ? "--" : String(game.bestJumps);
         drawMiniStopwatchIcon(377, 263, getSelectedSkin(), 0.48);

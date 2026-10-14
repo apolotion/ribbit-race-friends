@@ -53,18 +53,18 @@ test("low-profile demonstration uses exactly four completed jumps", () => {
   assert.doesNotMatch(scene, /tutorial\.pvpLowProfileJumpCount < 5/);
 });
 
-test("low-profile player spawns right of perch and finishes at the left edge", () => {
+test("low-profile player starts on central lower perch, faces right and finishes at the right edge", () => {
   const start = caseBody(scene, "pvpAvoidUnder", 'case "pvpDemoRebound"');
-  assert.match(start, /positionPvp\(p1, 222, CONFIG\.groundY - p1\.h, -1\)/);
-  assert.match(start, /positionPvpOnPlatform\(ember, perch, -1\)/);
+  assert.match(start, /positionPvpOnPlatform\(p1, perch, 1\)/);
+  assert.match(start, /positionPvp\(ember, perch\.x - ember\.w - 12, CONFIG\.groundY - ember\.h, 1\)/);
   const finish = setupBody(monitor, "pvpAvoidUnder", "pvpReboundThree");
   assert.match(finish, /pvpAvoidUnderPassedBeneath = true/);
-  assert.match(finish, /p1\.x <= platform\.x - p1\.w \+ 1/);
+  assert.match(finish, /p1\.x >= platform\.x \+ platform\.w - p1\.w - 1/);
 });
 
 test("grounded landing squash advances during PvP dialogue and lesson state resets", () => {
-  assert.match(hooks, /if \(tutorial\.kind === "pvp" &&\s*\(tutorial\.dialogueOpen \|\| tutorial\.pvpAwaitRecoveryAdvance\)/);
-  const locked = hooks.slice(hooks.indexOf('(tutorial.dialogueOpen || tutorial.pvpAwaitRecoveryAdvance)'), hooks.indexOf('    } else {\n      freezeControlledEntity();', hooks.indexOf('(tutorial.dialogueOpen || tutorial.pvpAwaitRecoveryAdvance)')));
+  assert.match(hooks, /if \(tutorial\.kind === "pvp" && !tutorial\.resetPending/);
+  const locked = hooks.slice(hooks.indexOf('tutorial.dialogueOpen || tutorial.pvpAwaitRecoveryAdvance ||'), hooks.indexOf('    } else {\n      freezeControlledEntity();', hooks.indexOf('tutorial.dialogueOpen || tutorial.pvpAwaitRecoveryAdvance ||')));
   assert.match(locked, /for \(const player of pvpPlayers\)/);
   assert.match(locked, /updatePvpPlayer\(player, dt\)/);
   assert.doesNotMatch(locked, /if \(!player\.grounded \|\| player\.bonked/);

@@ -468,7 +468,7 @@
 
     function drawPvpSpeechBubble(player) {
       if (OnlineVersus.isActive() && player.index !== OnlineVersus.localIndex()) return;
-      if (player.firstJumpMade || game.state !== "playing") return;
+      if (tutorial.active || game.tutorialActive || player.firstJumpMade || game.state !== "playing") return;
       if (game.pvpCpuEnabled && player.index === 1) return;
       const x = player.index === 0 ? 10 : W - 136;
       const y = 126;
@@ -541,7 +541,7 @@
       const tutorialFinalMatch = tutorialPvp && tutorialStep()?.setup === "pvpFinalMatch";
       const boxes = [
         { player: pvpPlayers[0], x: 8, label: "P1", mirror: false },
-        { player: pvpPlayers[1], x: W - 84, label: game.pvpCpuEnabled ? "CPU" : "P2", mirror: true }
+        { player: pvpPlayers[1], x: W - 84, label: tutorialFinalMatch ? "EMB" : (game.pvpCpuEnabled ? "CPU" : "P2"), mirror: true }
       ];
       boxes.forEach(({ player, x, label, mirror }) => {
         const palette = getPvpSkinPalette(player.skinId, player.index === 0 ? "azure" : "crimson", player.index);
@@ -1250,11 +1250,15 @@
       const loser = pvpPlayers[winner.index === 0 ? 1 : 0];
       const palette = getPvpSkinPalette(winner.skinId, winner.index === 0 ? "azure" : "crimson", winner.index);
       const matchWon = game.pvpMatchWinnerIndex !== null;
-      const earnedAchievements = getPvpRoundAchievementDefinitions();
+      const finalTutorialMatch = tutorial.active && tutorial.kind === "pvp" && tutorialStep()?.setup === "pvpFinalMatch";
+      const earnedAchievements = finalTutorialMatch ? [] : getPvpRoundAchievementDefinitions();
       const hasAchievements = earnedAchievements.length > 0;
-      const panel = hasAchievements
-        ? { x: 30, y: 10, w: 420, h: 238 }
-        : { x: 68, y: 38, w: 344, h: 168 };
+      const panel = finalTutorialMatch
+        ? { x: 82, y: 36, w: 316, h: 120 }
+        : hasAchievements
+          ? { x: 30, y: 10, w: 420, h: 238 }
+          : { x: 68, y: 38, w: 344, h: 168 };
+      if (finalTutorialMatch && typeof drawTutorialSmoke === "function") drawTutorialSmoke();
 
       ctx.fillStyle = "rgba(12,26,33,0.38)";
       ctx.fillRect(panel.x + 5, panel.y + 7, panel.w, panel.h);
@@ -1271,7 +1275,6 @@
       ctx.fillRect(panel.x + 14, panel.y + 12, panel.w - 28, 35);
       ctx.fillStyle = palette.light;
       ctx.fillRect(panel.x + 17, panel.y + 14, panel.w - 34, 4);
-      const finalTutorialMatch = tutorial.active && tutorial.kind === "pvp" && tutorialStep()?.setup === "pvpFinalMatch";
       if (finalTutorialMatch) {
         drawBitmapText(winner.index === 1 ? "EMBER WINS!" : "YOU WIN!", W / 2, panel.y + 22, 1.5, "center", COLORS.white, palette.dark);
       } else {
@@ -1281,11 +1284,11 @@
       const badgeX = winner.index === 0 ? panel.x + 29 : panel.x + panel.w - 29;
       drawMiniFrogSwatchFacing(badgeX, panel.y + 23, palette, 0.82, winner.index === 1 ? -1 : 1);
 
-      const p1X = 144;
-      const p2X = 336;
+      const p1X = finalTutorialMatch ? 152 : 144;
+      const p2X = finalTutorialMatch ? 328 : 336;
       const p1Palette = getPvpSkinPalette(pvpPlayers[0].skinId, "azure", 0);
       const p2Palette = getPvpSkinPalette(pvpPlayers[1].skinId, "crimson", 1);
-      const showRoundCrowns = !(tutorial.active && tutorial.kind === "pvp" && tutorialStep?.()?.setup !== "pvpFinalMatch");
+      const showRoundCrowns = !finalTutorialMatch && !(tutorial.active && tutorial.kind === "pvp" && tutorialStep?.()?.setup !== "pvpFinalMatch");
       const roundsToWin = getPvpRoundsToWin();
       const crownScale = 1.55;
       const crownStep = 19;
@@ -1303,8 +1306,8 @@
         drawBitmapText("-", W / 2, crownY + 5, 1.25, "center", "#48555a");
       }
 
-      const frogGround = panel.y + 116;
-      const resultFrogScale = 1.78;
+      const frogGround = finalTutorialMatch ? panel.y + 88 : panel.y + 116;
+      const resultFrogScale = finalTutorialMatch ? 1.56 : 1.78;
       if (winner.index === 0) {
         drawPvpHappyDanceFrog(p1X, frogGround, pvpPlayers[0], resultFrogScale);
         drawPvpSadCryingFrog(p2X, frogGround, pvpPlayers[1], resultFrogScale);
@@ -1312,11 +1315,11 @@
         drawPvpSadCryingFrog(p1X, frogGround, pvpPlayers[0], resultFrogScale);
         drawPvpHappyDanceFrog(p2X, frogGround, pvpPlayers[1], resultFrogScale);
       }
-      drawBitmapText(`${pvpPlayers[0].score} - ${pvpPlayers[1].score}`, W / 2, panel.y + 88, 1.05, "center", "#48555a");
+      drawBitmapText(`${pvpPlayers[0].score} - ${pvpPlayers[1].score}`, W / 2, panel.y + (finalTutorialMatch ? 66 : 88), 1.05, "center", "#48555a");
       const displayedRoundTime = Number.isFinite(game.pvpFinalDisplayTime)
         ? game.pvpFinalDisplayTime
         : game.pvpElapsed;
-      drawBitmapText(`TIME ${formatTime(displayedRoundTime)}`, W / 2, panel.y + 103, 0.82, "center", palette.dark);
+      drawBitmapText(`TIME ${formatTime(displayedRoundTime)}`, W / 2, panel.y + (finalTutorialMatch ? 80 : 103), 0.82, "center", palette.dark);
       if(OnlineVersus.isQuickplay()&&matchWon){
         const message=OnlineVersus.quickVictoryMessage();
         const scale=Math.min(.56,310/Math.max(1,measureBitmapText(message,1)));
@@ -1372,7 +1375,7 @@
         }
       }
 
-      drawPvpVictoryButtons();
+      if (!finalTutorialMatch) drawPvpVictoryButtons();
     }
 
     function drawPvpGameplayCelebrationFrogs() {
@@ -1405,6 +1408,10 @@
 
     function drawPvpScene() {
       const criticalCatch = game.pvpCriticalCatchActive;
+      const visibleInTutorial = (player) => !(
+        tutorial.active && tutorial.kind === "pvp" &&
+        (tutorial.pvpFrogsHidden || tutorial.pvpHiddenPlayerIndices?.includes(player.index))
+      );
       const drawEntity = (player, renderer) => {
         ctx.save();
         if (OnlineVersus.isGuestActive() && game.state === "playing") {
@@ -1417,10 +1424,10 @@
       drawBackground();
       for (const platform of platforms) drawPlatform(platform);
       drawTimeOfDayWorldTint();
-      pvpPlayers.forEach(p => drawEntity(p, drawPvpArcPreview));
+      pvpPlayers.filter(visibleInTutorial).forEach(p => drawEntity(p, drawPvpArcPreview));
       // Tongue is rendered behind the fly, including a fly travelling along
       // the tongue during a slow-motion catch.
-      pvpPlayers.forEach(p => drawEntity(p, drawPvpTongue));
+      pvpPlayers.filter(visibleInTutorial).forEach(p => drawEntity(p, drawPvpTongue));
       for (const fly of flies) {
         drawFlySpawnSparks(fly);
         drawFlyAt(fly.x, fly.y, getFlySpawnScale(fly));
@@ -1435,8 +1442,8 @@
         if(catcher)drawSlowMotionFlyPull(game.pvpCriticalCatchFlyVisual,getPvpMouth(catcher),
           game.pvpCriticalCatchElapsed,game.pvpCriticalCatchDuration,catcher);
       }
-      pvpPlayers.forEach(p => drawEntity(p, drawFrogAfterimages));
-      if (!["pvpCelebration", "won"].includes(game.state)) pvpPlayers.forEach((player)=>drawAirShadowForEntity(OnlineVersus.displayPlayer(player),getPvpSkinPalette(player.skinId,player.index===0?"azure":"crimson")));
+      pvpPlayers.filter(visibleInTutorial).forEach(p => drawEntity(p, drawFrogAfterimages));
+      if (!["pvpCelebration", "won"].includes(game.state)) pvpPlayers.filter(visibleInTutorial).forEach((player)=>drawAirShadowForEntity(OnlineVersus.displayPlayer(player),getPvpSkinPalette(player.skinId,player.index===0?"azure":"crimson")));
       if (game.state === "pvpCelebration") {
         drawPvpRoundCelebration();
       } else if (game.state === "won") {
@@ -1450,7 +1457,7 @@
         pvpPlayers.forEach(p => drawEntity(p, drawPvpPlayer));
       }
       if (!['pvpCelebration', 'won'].includes(game.state)) {
-        pvpPlayers.forEach(drawPvpOffscreenIndicator);
+        pvpPlayers.filter(visibleInTutorial).forEach(drawPvpOffscreenIndicator);
         pvpPlayers.forEach(p => drawEntity(p, drawPvpSpeechBubble));
       }
       drawPvpImpactEffects();

@@ -425,7 +425,8 @@ function tutorialBlocksLiveInput() {
   return Boolean(
     tutorial.active && game.state === "playing" &&
     (tutorialMovementLocked() || tutorial.pvpDemoActive || tutorial.pvpPlayerScriptLocked ||
-      tutorial.pvpFrogsHidden || tutorial.passPending || tutorial.blockJumpUntilRelease)
+      tutorial.pvpFrogsHidden || tutorial.passPending || tutorial.blockJumpUntilRelease ||
+      (tutorial.kind === "pvp" && performance.now() < (tutorial.pvpInputGuardUntil || 0)))
   );
 }
 
@@ -618,9 +619,12 @@ update = function(dt, ...rest) {
       pvpPlayers[1].charging = false;
       updatePvpPlayer(pvpPlayers[1], dt);
       updatePvpImpactEffects(dt);
-    } else if (tutorial.kind === "pvp" &&
-        (tutorial.dialogueOpen || tutorial.pvpAwaitRecoveryAdvance) && !tutorial.resetPending &&
-        !tutorial.pvpFrogsHidden && game.state === "playing") {
+    } else if (tutorial.kind === "pvp" && !tutorial.resetPending &&
+        !tutorial.pvpFrogsHidden && game.state === "playing" &&
+        (tutorial.dialogueOpen || tutorial.pvpAwaitRecoveryAdvance ||
+         tutorial.passed || tutorial.passPending ||
+         pvpPlayers.some((player) => player &&
+           (player.bonked || player.stunTimer > 0 || (player.recoveryFlipTimer || 0) > 0)))) {
       // Dialogue blocks controls, not gravity. A surprise bonk or wall rebound
       // may leave either frog airborne when Ember begins speaking. Finish that
       // fall using the normal per-frog platform/ground physics, without running
@@ -649,6 +653,9 @@ update = function(dt, ...rest) {
 };
 
 window.addEventListener("keydown", (event) => {
+  // The replay viewer owns the keyboard even if entered from a tutorial
+  // chapter with Ember's dialogue still open.
+  if (window.RibbitEngineReplay?.active?.()) return;
   if (tutorial.active && !event.metaKey && !event.ctrlKey && !event.altKey && /^[a-z]$/i.test(String(event.key || ""))) {
     tutorial.debugSkipBuffer = `${tutorial.debugSkipBuffer}${String(event.key).toLowerCase()}`.slice(-24);
     if (tutorial.debugSkipBuffer.endsWith("tutorialskip")) {
@@ -719,6 +726,7 @@ window.addEventListener("keydown", (event) => {
 }, { capture:true, passive:false });
 
 window.addEventListener("keyup", (event) => {
+  if (window.RibbitEngineReplay?.active?.()) return;
   if (tutorial.active && tutorial.kind === "pvp" && event.code === "ShiftRight") {
     event.preventDefault();
     event.stopImmediatePropagation();
@@ -752,6 +760,7 @@ window.addEventListener("keyup", (event) => {
 }, { capture:true, passive:false });
 
 canvas.addEventListener("pointerdown", (event) => {
+  if (window.RibbitEngineReplay?.active?.()) return;
   if (tutorial.active && game.state === "paused" && !game.pauseHelpOpen) {
     const point = getCanvasPoint(event);
     const chapterRects = getTutorialPauseChapterRects();

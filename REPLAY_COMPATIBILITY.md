@@ -57,3 +57,9 @@ changing the saved source or adding events that were never recorded.
   Missing visual states in legacy clips do not invalidate playback.
 - Keep the exact original recorder frame schema (`version:2`) until a future
   additive version needs to be introduced. Always maintain v1 and v2 readers.
+
+## Polish 63 (1.7.51)
+
+- Versus tutorial stun, player-position and poof timing changes do not alter the
+  stored replay schema. Maintain full v1/v2 reader support and historical
+  recording timestamps, stage layouts, and audio as described above.

@@ -158,20 +158,20 @@ test('At 1 second of jumping, the score appears in the CENTER and the frog keeps
   const {ctx,seen,drawn}=viewingContext();
   ctx.ribbitReplayBegin(record(2),'TEST');
   ctx.ribbitReplaySeek(5.9);ctx.paintRibbitReplayStage();
-  assert.ok(!drawn.some(a=>a[0]==='REPLAY COMPLETE!'));
+  assert.ok(!drawn.some(a=>a[0]==='LEVEL COMPLETE!'));
   ctx.ribbitReplaySeek(6.01);ctx.paintRibbitReplayStage();
-  assert.ok(drawn.some(a=>a[0]==='REPLAY COMPLETE!' && a[1]===240));
+  assert.ok(drawn.some(a=>a[0]==='LEVEL COMPLETE!' && a[1]===240));
   assert.ok(drawn.some(a=>a[0]==='rect' && a[1]===44 && a[2]===51));
   ctx.ribbitReplaySeek(8.98);ctx.paintRibbitReplayStage();
   assert.ok(seen.at(-1).dance>=3.9,`expected an animated final frame; actual ${seen.at(-1).dance}`);
   assert.ok(seen.at(-1).state==='won');
 });
 
-test('Space or replay button at the end rewinds to countdown and restarts its first sound',()=>{
+test('K or replay button at the end rewinds to countdown and restarts its first sound',()=>{
   const {ctx}=viewingContext();
   ctx.ribbitReplayBegin(record(2),'TEST');
   ctx.ribbitReplaySeek(9);ctx.activeReplay().paused=true;
-  ctx.handleRibbitReplayKey({code:'Space',repeat:false,preventDefault(){},stopImmediatePropagation(){}});
+  ctx.handleRibbitReplayKey({code:'KeyK',repeat:false,preventDefault(){},stopImmediatePropagation(){}});
   assert.equal(ctx.activeReplay().position,0);
   assert.equal(ctx.activeReplay().soundIndex,0);
   assert.equal(ctx.activeReplay().paused,false);

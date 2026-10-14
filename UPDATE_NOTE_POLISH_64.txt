@@ -1,0 +1,14 @@
+Ribbit Race Friends — Polish 64 (tutorial follow-up)
+
+Included changes:
+- Dinner Steal demo fly moved to the starred upper-right location.
+- Dinner Steal player-practice fly shifted slightly left so it is centered above the bottom-left platform.
+- Player-turn Dinner Steal Ember jump gets extra effective charge.
+- Final 1v1 transition keeps the FIND THE MATCH prompt visible and uses Ember's jump meter through the transition.
+- Final 1v1 result screen now holds for 3 seconds before poofing back.
+- Tutorial final-match pause/unpause now restarts a 3-2-1 countdown, including if paused during the opening countdown.
+- Final tutorial match now forces jump release at 0 like regular Versus.
+- Tutorial final-match score box uses EMB instead of CPU in the top-right HUD.
+- Tutorial end-card/home layout adjusted so the Home button sits inside the completion window.
+- Final Ember post-match dialogue rotates through multiple portrait emotions.
+- Poof smoke draws under the final 1v1 result card.

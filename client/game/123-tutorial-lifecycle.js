@@ -263,6 +263,10 @@ function beginPoofTransition(options = {}) {
 
   tutorial.resetPending = true;
   tutorial.resetAt = performance.now() + POOF_TRANSITION_MS;
+  // A key used to skip speech/trigger this poof belongs to the OLD scene.
+  // Ignore its held/repeat events until the new pose has settled.
+  tutorial.pvpInputGuardUntil = tutorial.kind === "pvp"
+    ? tutorial.resetAt + 220 : 0;
   tutorial.resetMessage = String(options.message || "");
   tutorial.resetAction = typeof options.action === "function" ? options.action : null;
   tutorial.resetShowFailure = options.showFailure !== false;
@@ -297,7 +301,9 @@ function rebuildCurrentScenarioForRetry() {
   tutorial.pendingStartPose = captureControlledPose();
   tutorial.dialogueOpen = false;
   tutorial.dialoguePointerId = null;
-  tutorial.blockJumpUntilRelease = false;
+  // Preserve the Space-release barrier set by the previous dialogue/poof.
+  tutorial.blockJumpUntilRelease = tutorial.blockJumpUntilRelease ||
+    (tutorial.kind === "pvp" && typeof isPvpPhysicalJumpHeld === "function" && isPvpPhysicalJumpHeld(0));
   restoreStepSequence();
   game.pauseHelpOpen = false;
   game.state = "playing";
@@ -478,6 +484,15 @@ function completePendingReset() {
     tutorial.failureMessageUntil = tutorial.failureFlashStartedAt + tutorial.failureFlashDuration;
   }
   tutorial.enteredAt = performance.now();
+  if (tutorial.kind === "pvp") {
+    tutorial.pvpInputGuardUntil = tutorial.enteredAt + 220;
+    // A fresh poof starts a fresh physical attempt, never reuse the prior
+    // landing event (which could trigger another poof immediately).
+    tutorial.pvpLessonAirborneSeen = [false, false];
+    tutorial.pvpLessonLanded = [false, false];
+    tutorial.pvpReboundLandingHoldAt = 0;
+    tutorial.pvpPlayerAttemptWasAirborne = false;
+  }
   if (tutorial.kind === "pvp" && !tutorial.dialogueOpen &&
       completedResetReason === "failed-attempt") {
     tutorial.pvpCaption = "YOUR TURN!";
@@ -490,7 +505,11 @@ function completePendingReset() {
 }
 
 function failAttempt(message) {
-  if (!tutorial.active || tutorial.passed || tutorial.resetPending) return;
+  const retryClock = typeof performance !== "undefined" ? performance.now() : Date.now();
+  if (!tutorial.active || tutorial.passed || tutorial.resetPending ||
+      (tutorial.kind === "pvp" && retryClock < (tutorial.pvpRetryGraceUntil || 0))) return;
+  if (tutorial.kind === "pvp") tutorial.pvpRetryGraceUntil =
+    retryClock + (typeof POOF_TRANSITION_MS === "number" ? POOF_TRANSITION_MS : 400) + 360;
   const setup = tutorialStep()?.setup || "";
   const emberStaysPut = tutorial.kind === "pvp" &&
     PVP_RETRY_EMBER_STATIONARY_SETUPS.has(setup);

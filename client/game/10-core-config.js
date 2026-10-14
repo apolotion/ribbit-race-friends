@@ -45,7 +45,7 @@
       achievementItemsPerPage: 3 * 5,
       victoryNoticesPerPage: 2,
       pvpTargetScore: 5,
-      pvpBonkMinStunSeconds: 1.0,
+      pvpBonkMinStunSeconds: 2.0,
       pvpBonkMaxStunSeconds: 5.0,
       pvpBonkGravity: 180,
       pvpBonkMaxFallSpeed: 125,
@@ -69,7 +69,7 @@
     const canvas = document.getElementById("game");
     const gameFrame = document.getElementById("game-frame");
     const friendsGameInputLocked = () => window.RibbitFriendsGameInputLocked?.() === true;
-    const RIBBIT_DISPLAY_VERSION = "VERSION 1.7.50";
+    const RIBBIT_DISPLAY_VERSION = "VERSION 1.7.52";
     const RIBBIT_CREDIT_TEXT = "MADE BY NICK M.";
     const RIBBIT_CREDIT_Y = 228;
     const rgbValueEditor = document.getElementById("rgb-value-editor");

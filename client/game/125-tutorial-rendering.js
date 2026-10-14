@@ -1236,6 +1236,8 @@ function drawTutorialPauseOverlay() {
 
 function drawTutorialOverlay() {
   if (!tutorial.active || game.state === "countdown") return;
+  const finalMatchLiveHud = tutorial.kind === "pvp" && tutorialStep()?.setup === "pvpFinalMatch" &&
+    tutorial.pvpFinalMatchStarted && !tutorial.dialogueOpen;
   // The Current Goal card remains visible while paused. It sits below the
   // pause panel, so the pause menu still owns the top visual layer.
   if (game.state === "paused") {
@@ -1243,13 +1245,11 @@ function drawTutorialOverlay() {
     if (tutorial.dialogueOpen) drawTutorialDialogue();
     return;
   }
-  // As soon as the final countdown begins the bottom-right slot belongs to
-  // EMBER's actual jump meter, not the lesson card.
-  if (!(tutorial.kind === "pvp" && tutorialStep()?.setup === "pvpFinalMatch" &&
-        tutorial.pvpFinalMatchStarted && !tutorial.dialogueOpen &&
-        !tutorial.pvpFinalMatchCountdownUntil)) drawCurrentGoalHud();
+  // Once the final race takes over, the bottom-right slot belongs to Ember's
+  // real jump meter throughout the whole transition, including the pre-countdown hold.
+  if (!finalMatchLiveHud) drawCurrentGoalHud();
   drawTutorialFlyDespawnEffects();
-  drawTutorialSmoke();
+  if (!(finalMatchLiveHud && game.state === "won")) drawTutorialSmoke();
   drawPvpTutorialCaption();
   drawTutorialReferenceHighlights();
   // Chapter navigation belongs in the pause menu; no badge above Find the Match.
@@ -1287,33 +1287,38 @@ function drawCompletionScreen() {
   const skin = getSelectedSkin();
   // Center within the PLAYFIELD (0..playBottom), not the entire canvas HUD.
   const panel = { x: 72, y: Math.round((CONFIG.playBottom - 106) / 2), w: 336, h: 106 };
+  const useInsetHomeButton = tutorial.kind === "pvp";
+  const layoutPanel = useInsetHomeButton ? { x: 72, y: Math.round((CONFIG.playBottom - 122) / 2), w: 336, h: 122 } : panel;
 
   ctx.save();
   // Match the normal level-complete card: offset shadow, cross-shaped dark
   // frame, white paper interior, and a frog-themed header band.
   ctx.fillStyle = "rgba(12,26,33,0.38)";
-  ctx.fillRect(panel.x + 4, panel.y + 8, panel.w - 8, panel.h);
+  ctx.fillRect(layoutPanel.x + 4, layoutPanel.y + 8, layoutPanel.w - 8, layoutPanel.h);
   ctx.fillStyle = COLORS.ink;
-  ctx.fillRect(panel.x + 4, panel.y, panel.w - 8, panel.h);
-  ctx.fillRect(panel.x, panel.y + 4, panel.w, panel.h - 8);
+  ctx.fillRect(layoutPanel.x + 4, layoutPanel.y, layoutPanel.w - 8, layoutPanel.h);
+  ctx.fillRect(layoutPanel.x, layoutPanel.y + 4, layoutPanel.w, layoutPanel.h - 8);
   ctx.fillStyle = "#f7fdff";
-  ctx.fillRect(panel.x + 7, panel.y + 4, panel.w - 14, panel.h - 8);
-  ctx.fillRect(panel.x + 4, panel.y + 8, panel.w - 8, panel.h - 16);
+  ctx.fillRect(layoutPanel.x + 7, layoutPanel.y + 4, layoutPanel.w - 14, layoutPanel.h - 8);
+  ctx.fillRect(layoutPanel.x + 4, layoutPanel.y + 8, layoutPanel.w - 8, layoutPanel.h - 16);
 
   ctx.fillStyle = skin.dark;
-  ctx.fillRect(panel.x + 12, panel.y + 9, panel.w - 24, 43);
+  ctx.fillRect(layoutPanel.x + 12, layoutPanel.y + 9, layoutPanel.w - 24, 43);
   ctx.fillStyle = skin.mid;
-  ctx.fillRect(panel.x + 14, panel.y + 11, panel.w - 28, 38);
+  ctx.fillRect(layoutPanel.x + 14, layoutPanel.y + 11, layoutPanel.w - 28, 38);
   ctx.fillStyle = skin.light;
-  ctx.fillRect(panel.x + 17, panel.y + 13, panel.w - 34, 4);
+  ctx.fillRect(layoutPanel.x + 17, layoutPanel.y + 13, layoutPanel.w - 34, 4);
   const title = "TUTORIAL COMPLETE!";
-  const titleScale = Math.min(2.25, (panel.w - 28) / Math.max(1, measureBitmapText(title, 1)));
-  drawBitmapText(title, W / 2, panel.y + 21, titleScale, "center", COLORS.white, skin.dark);
+  const titleScale = Math.min(2.25, (layoutPanel.w - 28) / Math.max(1, measureBitmapText(title, 1)));
+  drawBitmapText(title, W / 2, layoutPanel.y + 21, titleScale, "center", COLORS.white, skin.dark);
 
-  drawBitmapText("RIBBIT READY!", W / 2, panel.y + 62, 1.25, "center", skin.dark);
-  drawBitmapText("TRAINING COMPLETE", W / 2, panel.y + 82, .82, "center", "#59666b");
+  drawBitmapText("RIBBIT READY!", W / 2, layoutPanel.y + 60, 1.25, "center", skin.dark);
+  drawBitmapText("TRAINING COMPLETE", W / 2, layoutPanel.y + 78, .82, "center", "#59666b");
 
-  drawTutorialCompletionHomeButton(getTutorialCompletionButtonRects().homeButton);
+  const homeRect = useInsetHomeButton
+    ? { x: Math.round(W / 2 - 60), y: layoutPanel.y + 90, w: 120, h: 22 }
+    : getTutorialCompletionButtonRects().homeButton;
+  drawTutorialCompletionHomeButton(homeRect);
   ctx.restore();
 }
 
@@ -1325,7 +1330,16 @@ drawVictoryScreen = function(...args) {
 
 const originalGetVictoryButtonRectsForTutorial = getVictoryButtonRects;
 getVictoryButtonRects = function(...args) {
-  if (tutorial.completeScreen) return getTutorialCompletionButtonRects();
+  if (tutorial.completeScreen) {
+    if (tutorial.kind === "pvp") {
+      const panel = { x: 72, y: Math.round((CONFIG.playBottom - 122) / 2), w: 336, h: 122 };
+      return {
+        replayButton: { x: -300, y: -300, w: 1, h: 1 },
+        homeButton: { x: Math.round(W / 2 - 60), y: panel.y + 90, w: 120, h: 22 }
+      };
+    }
+    return getTutorialCompletionButtonRects();
+  }
   return originalGetVictoryButtonRectsForTutorial.apply(this, args);
 };
 

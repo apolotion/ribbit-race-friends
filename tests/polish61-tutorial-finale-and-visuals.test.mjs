@@ -23,8 +23,8 @@ test('under-bonk starts at right edge and Ember cannot reach the high perch on a
 
 test('avoid-under starts at indicated x with Ember facing left',()=>{
   const b=cut(scenarios,'case "pvpAvoidUnder"','case "pvpDemoRebound"');
-  assert.match(b,/positionPvp\(p1, 222, CONFIG\.groundY - p1\.h, -1\)/);
-  assert.match(b,/positionPvpOnPlatform\(ember, perch, -1\)/);
+  assert.match(b,/positionPvpOnPlatform\(p1, perch, 1\)/);
+  assert.match(b,/positionPvp\(ember, perch\.x - ember\.w - 12, CONFIG\.groundY - ember\.h, 1\)/);
 });
 
 test('first demonstration rebound has no artificial paired catch sparkles',()=>{

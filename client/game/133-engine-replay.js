@@ -203,7 +203,7 @@ function ribbitReplayExportCurrent(){
     : frames[frames.length-1].t;
   return {
     version:RIBBIT_REPLAY_SCHEMA_VERSION,kind:"ribbit-engine-frames",fps:capture.fps||RIBBIT_REPLAY_FPS,
-    compatibility:{frameSchema:RIBBIT_REPLAY_SCHEMA_VERSION,minimumPlayerVersion:1,recordedBy:"1.7.50"},
+    compatibility:{frameSchema:RIBBIT_REPLAY_SCHEMA_VERSION,minimumPlayerVersion:1,recordedBy:"1.7.52"},
     mode:capture.mode,level:capture.level,recordedAt:capture.recordedAt,
     recordedTimeZone:capture.recordedTimeZone,timeOfDay:capture.timeOfDay,
     moonPhaseIndex:capture.moonPhaseIndex,skinId:capture.skinId,vocab:capture.vocab,
@@ -293,15 +293,19 @@ function ribbitReplayEnsureCountdown(data) {
   const missing=phase==='countdown' && firstCount>0 && firstCount<3 ? 3-firstCount : 3;
   const lead=missing*RIBBIT_REPLAY_COUNTDOWN_STEP_MS;
   const prefix=[];
+  // Smooth playback-only countdown: use a stable frozen stage with 60 Hz
+  // countdown frames rather than two widely spaced snapshots that the
+  // replay interpolator could blend across at a digit/phase boundary.
   for(let i=0;i<missing;i++) {
     const number=3-i;
-    for(const frameOffset of [0,RIBBIT_REPLAY_COUNTDOWN_STEP_MS-17]) {
+    for(let frame=0;frame<Math.ceil(RIBBIT_REPLAY_COUNTDOWN_STEP_MS/(1000/60));frame++) {
+      const frameOffset=Math.min(RIBBIT_REPLAY_COUNTDOWN_STEP_MS-1,Math.round(frame*(1000/60)));
       prefix.push({...first,t:i*RIBBIT_REPLAY_COUNTDOWN_STEP_MS+frameOffset,
         phase:'countdown',flies:[],
-        player:{...first.player,charging:false},
-        players:(first.players||[]).map(player=>({...player,charging:false})),
+        player:{...first.player,charging:false,vx:0,vy:0},
+        players:(first.players||[]).map(player=>({...player,charging:false,vx:0,vy:0})),
         gameState:{...first.gameState,state:'countdown',countdownNumber:number,
-          countdownTimer:Math.max(.017,(RIBBIT_REPLAY_COUNTDOWN_STEP_MS-frameOffset)/1000),
+          countdownTimer:Math.max(.001,(RIBBIT_REPLAY_COUNTDOWN_STEP_MS-frameOffset)/1000),
           soloCriticalCatchActive:false,pvpCriticalCatchActive:false}});
     }
   }
@@ -366,20 +370,34 @@ function ribbitReplayCreateControls(){
     <button type="button" data-replay-action="previous" title="Previous Frog Tags set (Shift+B)" hidden>◀</button>
     <button type="button" data-replay-action="browse" title="Browse Frog Tags replays" hidden>REPLAYS</button>
     <button type="button" data-replay-action="next" title="Next Frog Tags set (Shift+N)" hidden>▶</button>
-    <button type="button" data-replay-action="play" class="rr-replay-icon-button" aria-label="Pause playback" title="Pause playback (Space)">
+    <button type="button" data-replay-action="play" class="rr-replay-icon-button" aria-label="Pause playback" title="Pause/play (K)">
       <svg aria-hidden="true" viewBox="0 0 24 24" width="25" height="25" fill="currentColor"><path class="rr-play-triangle" d="M7 4v16l13-8z" hidden/><path class="rr-play-bars" d="M5 4h5v16H5zm9 0h5v16h-5z"/><path class="rr-replay-arrow" d="M12 3a9 9 0 1 1-8.7 11.4h3.1A6 6 0 1 0 8.4 6.1L11 9H3V1l3.2 3.2A8.9 8.9 0 0 1 12 3z" hidden/></svg>
     </button>
+    <div class="rr-replay-volume" title="Volume (M to mute, ↑/↓ for 5%)">
+      <button type="button" class="rr-replay-volume-button" data-replay-action="mute" aria-label="Mute replay (M)" aria-pressed="false" title="Mute/unmute (M)">
+        <svg aria-hidden="true" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="square" stroke-linejoin="miter">
+          <path d="M3 9h5l6-5v16l-6-5H3z"/>
+          <path class="rr-speaker-normal" d="M17 8q4 4 0 8m2-11q7 7 0 14"/>
+          <path class="rr-speaker-muted" d="M17 9l5 6m0-6l-5 6" hidden/>
+        </svg>
+      </button>
+      <div class="rr-replay-volume-popover"><input type="range" min="0" max="100" step="1" value="100" aria-label="Replay volume" title="Drag to adjust volume" /><span class="rr-replay-volume-label">100%</span></div>
+    </div>
     <label class="rr-replay-progress" aria-label="Timeline">
       <input type="range" min="0" max="10000" step="1" value="0" aria-label="Seek replay timeline" />
     </label>
     <span class="rr-replay-time" aria-live="off">0:00 / 0:00</span>
-    <label class="rr-replay-volume" title="Replay volume" aria-label="Replay volume">
-      <svg aria-hidden="true" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M4 9h4l5-4v14l-5-4H4zM17 9q4 3 0 6"/></svg>
-      <input type="range" min="0" max="100" step="1" value="100" aria-label="Replay volume" />
-    </label>
     <button type="button" data-replay-action="speed" class="rr-replay-speed" aria-label="Change playback speed" title="Playback speed (0.25x–4x)">
-      <svg aria-hidden="true" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="13" r="8"/><path d="M12 5V2m-4 0h8m4 2 2-2M12 8v5l3 2"/></svg>
-      <span class="rr-speed-value">1×</span>
+      <svg class="rr-stopwatch-frame" viewBox="0 0 64 64" width="54" height="54" aria-hidden="true" shape-rendering="crispEdges">
+        <path d="M25 3h14v5H25zM22 0h20v4H22zM28 8h8v7h-8zM13 10h7v7h-7zM9 14h7v6H9z" fill="#18242a"/>
+        <path d="M27 4h10v4H27zM29 8h6v5h-6zM12 12h7v5h-7z" fill="#748b90"/>
+        <path d="M16 16h7v4h-7zM22 12h20v4H22zM42 16h7v4h-7zM49 20h5v5h-5zM54 25h4v14h-4zM49 39h5v6h-5zM43 45h6v5h-6zM20 46h23v4H20zM15 39h5v7h-5zM10 25h5v14h-5zM15 20h5v5h-5z" fill="#18242a"/>
+        <path d="M22 16h20v3H22zM20 19h29v4H20zM16 23h37v4H16zM15 27h41v12H15zM20 39h34v5H20zM21 44h28v3H21zM23 47h20v2H23z" fill="none" stroke="#26383f" stroke-width="2"/>
+        <path d="M23 18h19v3H23zM18 23h33v3H18zM15 28h41v10H15zM19 39h34v4H19zM24 44h24v3H24z" fill="#a7bec5"/>
+        <path d="M25 20h15v2H25zM19 25h28v2H19zM16 29h38v3H16z" fill="#e0f3f7"/>
+        <path d="M25 24h18v3H25zM21 27h28v16H21zM25 43h18v2H25z" fill="#12252d"/>
+      </svg>
+      <span class="rr-speed-value">1x</span>
     </button>
     <button type="button" data-replay-action="fullscreen" title="Fullscreen (F)">⛶</button>
     <button type="button" data-replay-action="exit">EXIT</button>`;
@@ -407,8 +425,11 @@ function ribbitReplayCreateControls(){
   volume.addEventListener("input",event=>{
     if(!ribbitReplayView)return;
     ribbitReplayView.volume=clamp(Number(event.target.value)/100,0,1);
+    if(ribbitReplayView.volume>0)ribbitReplayView.lastNonzeroVolume=ribbitReplayView.volume;
+    ribbitReplayView.muted=ribbitReplayView.volume<=0;
     ribbitReplayUpdateControls();
   });
+  volume.addEventListener("pointerdown",event=>event.stopPropagation());
   footer.addEventListener("click",event=>{
     const action=event.target.closest("button")?.dataset.replayAction;
     if(!action||!ribbitReplayView)return;
@@ -418,6 +439,7 @@ function ribbitReplayCreateControls(){
     else if(action==="next")ribbitReplayCollectionStep(1);
     else if(action==="browse")ribbitReplayView.collection?.openBrowser?.();
     else if(action==="play")ribbitReplayTogglePlayback();
+    else if(action==="mute")ribbitReplayToggleMute();
     else if(action==="speed"){
       const rates=[.25,.5,.75,1,1.25,1.5,1.75,2,4];
       const index=rates.findIndex(n=>n===ribbitReplayView.rate);
@@ -436,7 +458,9 @@ function ribbitReplayCreateControls(){
     badge:header.querySelector(".rr-spectator-badge small"),
     play:footer.querySelector('[data-replay-action="play"]'),
     speed:footer.querySelector('[data-replay-action="speed"]'),
-    volume, time:footer.querySelector(".rr-replay-time")};
+    volumeButton:footer.querySelector('[data-replay-action="mute"]'),
+    volume, volumeLabel:footer.querySelector(".rr-replay-volume-label"),
+    time:footer.querySelector(".rr-replay-time")};
   return ribbitReplayControls;
 }
 function ribbitReplayShowControls(){
@@ -472,7 +496,7 @@ function ribbitReplayUpdateControls(){
     ? "replay" : view.paused ? "play" : "pause";
   controls.play.dataset.state=playState;
   controls.play.setAttribute("aria-label",`${playState.charAt(0).toUpperCase()}${playState.slice(1)} playback`);
-  controls.play.title=playState==="replay"?"Watch again (Space)":`${playState} (Space)`;
+  controls.play.title=playState==="replay"?"Watch again (K)":`${playState} (K)`;
   for(const [selector,kind] of [[".rr-play-triangle","play"],[".rr-play-bars","pause"],[".rr-replay-arrow","replay"]]) {
     const glyph=controls.play.querySelector(selector);
     // SVG paths do not consistently implement HTMLElement.hidden. Toggle the
@@ -480,9 +504,17 @@ function ribbitReplayUpdateControls(){
     glyph.toggleAttribute("hidden",playState!==kind);
     glyph.style.display=playState===kind?"":"none";
   }
-  controls.speed.querySelector(".rr-speed-value").textContent=`${view.rate}×`;
+  controls.speed.querySelector(".rr-speed-value").textContent=`${view.spaceFastForwardHeld?2:view.rate}x`;
+  const effectiveVolume=view.muted?0:view.volume;
   controls.volume.value=String(Math.round(view.volume*100));
-  controls.volume.setAttribute("aria-valuetext",`${Math.round(view.volume*100)} percent`);
+  controls.volume.setAttribute("aria-valuetext",`${Math.round(effectiveVolume*100)} percent`);
+  controls.volumeLabel.textContent=`${Math.round(effectiveVolume*100)}%`;
+  controls.volumeButton.setAttribute("aria-pressed",String(!!view.muted));
+  controls.volumeButton.setAttribute("aria-label",view.muted?"Unmute replay (M)":"Mute replay (M)");
+  for(const [selector,show] of [[".rr-speaker-normal",!view.muted],[".rr-speaker-muted",!!view.muted]]){
+    const glyph=controls.volumeButton.querySelector(selector);
+    glyph.hidden=!show;glyph.style.display=show?"":"none";
+  }
   controls.time.textContent=`${format(view.position)} / ${format(duration)}`;
   const collection=view.collection;
   controls.browse.hidden=!collection;
@@ -495,6 +527,63 @@ function ribbitReplayUpdateControls(){
     controls.seek.value=String(Math.round(10000*progress));
     controls.seek.style.setProperty("--rr-replay-progress",`${(progress*100).toFixed(2)}%`);
   }
+}
+function ribbitReplayToggleMute(){
+  const view=ribbitReplayView;if(!view)return;
+  if(view.muted){
+    view.muted=false;
+    if(view.volume<=0)view.volume=view.lastNonzeroVolume||1;
+  }else{
+    if(view.volume>0)view.lastNonzeroVolume=view.volume;
+    view.muted=true;
+  }
+  ribbitReplayUpdateControls();
+}
+function ribbitReplayChangeVolume(delta){
+  const view=ribbitReplayView;if(!view)return;
+  const previous=view.muted?0:view.volume;
+  const next=clamp(Math.round((previous+delta)*100)/100,0,1);
+  view.volume=next;view.muted=next<=0;
+  if(next>0)view.lastNonzeroVolume=next;
+  ribbitReplayUpdateControls();
+}
+// World records are scoped to the recorded level. Never use the viewing
+// player's local best as a substitute for the global leaderboard record.
+function ribbitReplayExtractWorldRecords(payload,level){
+  const source=Array.isArray(payload)?payload:
+    ["entries","leaderboard","rows","records","results","data"].map(key=>payload?.[key]).find(Array.isArray)||[];
+  const result={time:null,jumps:null};
+  const consider=(metric,value)=>{
+    const number=Number(value);
+    if(Number.isFinite(number)&&number>0&&(result[metric]===null||number<result[metric]))result[metric]=number;
+  };
+  for(const entry of source){
+    const record=entry?.records?.[level];
+    if(record && typeof record==="object"){
+      consider("time",record.time);consider("jumps",record.jumps);
+      continue;
+    }
+    const rowLevel=String(entry?.level??entry?.resultLevel??"").toLowerCase();
+    if(rowLevel!==level)continue;
+    const metric=String(entry?.metric??entry?.category??"").toLowerCase();
+    if(metric==="time")consider("time",entry.value??entry.time??entry.score);
+    if(metric==="jumps")consider("jumps",entry.value??entry.jumps??entry.score);
+  }
+  return result;
+}
+async function ribbitReplayLoadWorldRecords(view){
+  if(!view?.data || view.data.mode!=="solo")return;
+  const cloud=typeof RibbitCloud!=="undefined"?RibbitCloud:window.RibbitCloud;
+  let payload=null;
+  try{payload=await cloud?.getLeaderboardData?.();}catch(_){}
+  if(!payload?.entries?.length){
+    try{
+      const response=await fetch("/api/leaderboard?limit=100",{credentials:"include",cache:"no-store"});
+      if(response.ok)payload=await response.json();
+    }catch(_){}
+  }
+  if(ribbitReplayView!==view)return;
+  view.worldRecords=ribbitReplayExtractWorldRecords(payload,String(view.data.level||"park").toLowerCase());
 }
 function ribbitReplayBegin(data,caption="REPLAY",options={}){
   const validated=ribbitReplayAdaptLegacy(data);
@@ -510,11 +599,16 @@ function ribbitReplayBegin(data,caption="REPLAY",options={}){
     position:0,lastTick:performance.now(),paused:false,rate:1,
     scrubbing:false,wasPaused:false,soundIndex:0,
     volume:ribbitReplayView?.volume ?? 1,
+    muted:ribbitReplayView?.muted ?? false,
+    lastNonzeroVolume:ribbitReplayView?.lastNonzeroVolume ?? 1,
+    spaceFastForwardHeld:false,spaceStartedPaused:false,
+    worldRecords:{time:null,jumps:null},
     restore:previousRestore||{state:game.state,mode:game.mode},error:""
   };
   game.state="rrEngineReplay";
   document.body.classList.add("rr-engine-replay-active");
   ribbitReplayShowControls();
+  ribbitReplayLoadWorldRecords(ribbitReplayView);
   clearHeldInput();
   return true;
 }
@@ -544,6 +638,7 @@ function ribbitReplayCollectionStep(delta){
 function ribbitReplayClose(){
   if(!ribbitReplayView)return false;
   const restore=ribbitReplayView.restore;
+  ribbitReplaySpaceRelease();
   ribbitReplayView=null;
   document.body.classList.remove("rr-engine-replay-active");
   ribbitReplayControls?.host?.classList.remove("rr-replay-layout");
@@ -583,9 +678,13 @@ function ribbitReplayTick(now=performance.now()){
   if(!ribbitReplayView){ribbitReplayCaptureTick(now);return;}
   const view=ribbitReplayView,dt=Math.max(0,Math.min(now-view.lastTick,120));
   view.lastTick=now;
-  if(view.data&&!view.paused&&!view.scrubbing){
+  // Space is a temporary 2x transport. When the replay was paused at keydown,
+  // the playhead still scrubs forward silently and stays paused on release.
+  const advancing=view.spaceFastForwardHeld||!view.paused;
+  if(view.data&&advancing&&!view.scrubbing){
     const prior=view.position;
-    view.position=clamp(prior+dt*view.rate,0,view.data.duration);
+    const speed=view.spaceFastForwardHeld?2:view.rate;
+    view.position=clamp(prior+dt*speed,0,view.data.duration);
     const sounds=view.data.sounds||[];
     while(view.soundIndex<sounds.length && sounds[view.soundIndex].t<=view.position){
       const sound=sounds[view.soundIndex++];
@@ -593,7 +692,8 @@ function ribbitReplayTick(now=performance.now()){
       // Sound is not re-triggered by scrub, seeking, or frame-stepping.
       if(Number.isFinite(sound.f)&&sound.f>=45&&sound.f<=20000&&
         Number.isFinite(sound.d)&&sound.d>0&&sound.d<=3&&
-        Number.isFinite(sound.v)&&sound.v>=0&&sound.v<=.5 && view.volume>0){
+        Number.isFinite(sound.v)&&sound.v>=0&&sound.v<=.5 &&
+        view.volume>0&&!view.muted&&!(view.spaceFastForwardHeld&&view.spaceStartedPaused)){
         // Replay volume is independent of the currently loaded game save.
         // Restore its mute and volume preferences immediately after each tone.
         const formerVolume=game.volume,formerMute=game.muted;
@@ -611,7 +711,12 @@ function replayFrameAt(position,frames){
   let low=0,high=frames.length-1;
   while(low<high){const mid=(low+high+1)>>1;if(frames[mid].t<=position)low=mid;else high=mid-1;}
   const a=frames[low],b=frames[Math.min(low+1,frames.length-1)];
-  const factor=clamp((position-a.t)/Math.max(1,b.t-a.t),0,1);
+  const aPhase=a.phase||a.gameState?.state;
+  const bPhase=b.phase||b.gameState?.state;
+  const stableCountdown=aPhase==="countdown" && bPhase==="countdown" &&
+    Number(a.gameState?.countdownNumber)===Number(b.gameState?.countdownNumber);
+  const factor=(aPhase!==bPhase || (aPhase==="countdown"&&!stableCountdown))
+    ? 0 : clamp((position-a.t)/Math.max(1,b.t-a.t),0,1);
   const lerpPosition=(p,q)=>{
     if(!p)return p;
     const out={...p};
@@ -627,6 +732,8 @@ function replayFrameAt(position,frames){
     ? {...a.tongue,elapsed:a.tongue.elapsed+(b.tongue.elapsed-a.tongue.elapsed)*factor}
     : a.tongue;
   return {...a,phase:a.phase||a.gameState?.state||"playing",gameState:a.gameState||{},
+    world:Number(a.world)+(Number(b.world||a.world)-Number(a.world))*factor,
+    visual:Number(a.visual)+(Number(b.visual||a.visual)-Number(a.visual))*factor,
     tongue:soloTongue,player:lerpPosition(a.player,b.player),
     players:(a.players||[]).map((p,i)=>lerpPosition(p,b.players?.[i])),
     flies:(a.flies||[]).map(f=>{const next=alternate.get(f.id);return next?
@@ -663,7 +770,7 @@ function paintRibbitReplayStage(){
     return;
   }
   const state=replayFrameAt(view.position,data.frames);
-  const gameOld={};for(const field of RIBBIT_REPLAY_GAME_FIELDS)gameOld[field]=game[field];
+  const gameOld={};for(const field of [...RIBBIT_REPLAY_GAME_FIELDS,"bestTime","bestJumps","newBestTime","newFewestJumps"])gameOld[field]=game[field];
   const frogOld={...frog},tongueOld={...tongue};
   const tutorialOld={active:tutorial.active,completeScreen:tutorial.completeScreen,dialogueOpen:tutorial.dialogueOpen};
   const pvpOld=pvpPlayers.map(p=>({...p,tongue:{...p.tongue}}));
@@ -684,6 +791,9 @@ function paintRibbitReplayStage(){
     game.moonPhaseIndex=data.moonPhaseIndex;game.skinId=data.skinId;
     game.worldTime=state.world;game.visualTime=state.visual;game.elapsed=state.clock;
     game.targetVocabIndex=state.target;game.score=state.score;game.jumps=state.jumps;
+    game.bestTime=view.worldRecords?.time??null;
+    game.bestJumps=view.worldRecords?.jumps??null;
+    game.newBestTime=false;game.newFewestJumps=false;
     game.pvpRoundNumber=state.round||1;game.pvpTimeRemaining=state.roundTime||0;
     game.pvpElapsed=state.pvpElapsed||0;game.onlineMode=false;game.sandboxMode=false;
     game.pvpRoundWins=state.roundWins||[0,0];
@@ -700,6 +810,11 @@ function paintRibbitReplayStage(){
     // normally instead of borrowing opacity from the current live match.
     game.flyLabelReturnAlpha=1;
     if(state.gameState)Object.assign(game,state.gameState);
+    // A replay never celebrates this player's personal previous best: show
+    // authoritative world records (or -- when offline), not local save state.
+    game.bestTime=view.worldRecords?.time??null;
+    game.bestJumps=view.worldRecords?.jumps??null;
+    game.newBestTime=false;game.newFewestJumps=false;
     if (!Number.isFinite(state.gameState?.flyLabelReturnAlpha) &&
         !game.pvpCriticalCatchActive && !game.soloCriticalCatchActive) {
       game.flyLabelReturnAlpha=legacyReplayFlyLabelReturnAlpha(view.position,data.frames);
@@ -733,6 +848,17 @@ function paintRibbitReplayStage(){
       // Gameplay state is deliberately rendered as playing for safety; the
       // recorded countdown must therefore be overlaid explicitly.
       game.state = "countdown";
+      // Reconstruct timer from the digit's first frame instead of trusting
+      // irregular / rounded capture tick intervals, eliminating pulse jitter.
+      const sourceFrames=data.frames;
+      let lo=0,hi=sourceFrames.length-1;
+      while(lo<hi){const mid=(lo+hi+1)>>1;if(sourceFrames[mid].t<=view.position)lo=mid;else hi=mid-1;}
+      const digit=Number(state.gameState?.countdownNumber)||3;
+      let start=lo;
+      while(start>0&&sourceFrames[start-1].phase==="countdown" &&
+        Number(sourceFrames[start-1].gameState?.countdownNumber)===digit)start--;
+      game.countdownNumber=digit;
+      game.countdownTimer=Math.max(.001,(RIBBIT_REPLAY_COUNTDOWN_STEP_MS-Math.max(0,view.position-sourceFrames[start].t))/1000);
       drawResumeCountdown();
       game.state = "playing";
     }
@@ -759,7 +885,7 @@ function paintRibbitReplayStage(){
       ctx.fillRect(rect.x+15,rect.y+13,rect.w-30,40);
       ctx.fillStyle="#f57b91";
       ctx.fillRect(rect.x+21,rect.y+16,rect.w-42,4);
-      drawBitmapText("REPLAY COMPLETE!",W/2,rect.y+29,1.7,"center",COLORS.white,"#711b29");
+      drawBitmapText("LEVEL COMPLETE!",W/2,rect.y+29,1.7,"center",COLORS.white,"#711b29");
       const fmt=typeof formatTime==="function"?formatTime(final.time):`${Number(final.time).toFixed(2)}S`;
       drawBitmapText(`FINAL TIME ${fmt}`,W/2,rect.y+75,1.0,"center","#34484f");
       drawBitmapText(`${final.jumps} JUMPS  •  ${final.score} FLIES`,W/2,rect.y+101,.95,"center","#34484f");
@@ -776,6 +902,27 @@ function paintRibbitReplayStage(){
 }
 // Replays suppress ONLY the standard win modal. Our centered score overlay
 // appears one second into the dance, while the frog continues hopping below.
+if (typeof drawHudPausePlaySprite === "function") {
+const ribbitReplayOriginalHudPause=drawHudPausePlaySprite;
+drawHudPausePlaySprite=function(rect,paused=false,palette=getSelectedSkin()){
+  if(!ribbitReplayView)return ribbitReplayOriginalHudPause(rect,paused,palette);
+  if(!rect)return;
+  const x=Math.round(rect.x),y=Math.round(rect.y),w=Math.round(rect.w),h=Math.round(rect.h);
+  const theme=palette||getSelectedSkin();
+  ctx.save();
+  ctx.fillStyle="rgba(30,49,55,0.25)";ctx.fillRect(x+1,y+2,w,h);
+  ctx.fillStyle=COLORS.ink;ctx.fillRect(x,y,w,h);
+  ctx.fillStyle=theme.belly;ctx.fillRect(x+2,y+2,w-4,h-4);
+  ctx.fillStyle=theme.light;ctx.fillRect(x+3,y+2,w-6,2);
+  ctx.fillStyle=theme.dark;
+  // Pixel X instead of a pause/play icon; its original box is unchanged.
+  for(let i=0;i<15;i++){
+    ctx.fillRect(x+Math.round((w-16)/2)+i,y+Math.round((h-16)/2)+i,2,2);
+    ctx.fillRect(x+Math.round((w-16)/2)+14-i,y+Math.round((h-16)/2)+i,2,2);
+  }
+  ctx.restore();
+};
+}
 const ribbitReplayPreviousDrawVictoryScreen=drawVictoryScreen;
 drawVictoryScreen=function(...args){
   if(ribbitReplayView?.data)return;
@@ -795,20 +942,44 @@ function ribbitReplayAdjustRate(step){
   if(!ribbitReplayView)return;
   ribbitReplayView.rate=clamp(Math.round((ribbitReplayView.rate+step)*4)/4,.25,2);
 }
+function ribbitReplaySpacePress(event){
+  const view=ribbitReplayView;
+  if(!view?.data || view.spaceFastForwardHeld)return;
+  if(view.position>=view.data.duration-1)return;
+  view.spaceFastForwardHeld=true;
+  view.spaceStartedPaused=!!view.paused;
+  view.lastTick=performance.now();
+  ribbitReplayUpdateControls();
+}
+function ribbitReplaySpaceRelease(){
+  const view=ribbitReplayView;
+  if(!view?.spaceFastForwardHeld)return;
+  view.spaceFastForwardHeld=false;
+  view.spaceStartedPaused=false;
+  view.lastTick=performance.now();
+  ribbitReplayUpdateControls();
+}
 function handleRibbitReplayKey(event){
   if(!ribbitReplayView || window.RibbitFrogTagReplayBrowser?.isOpen?.())return;
   const key=event.code;
   const supported=["Escape","Backspace","Space","ArrowLeft","ArrowRight","ArrowUp","ArrowDown",
-    "Equal","Minus","KeyF","KeyJ","KeyL","KeyX","KeyZ","KeyN","KeyB","KeyR","Home","End","Comma","Period",
+    "Equal","Minus","KeyF","KeyJ","KeyL","KeyX","KeyZ","KeyN","KeyB","KeyR","KeyK","KeyM","Home","End","Comma","Period",
     ...Array.from({length:10},(_,i)=>`Digit${i}`),...Array.from({length:10},(_,i)=>`Numpad${i}`)];
   if(!supported.includes(key)){
     event.preventDefault();event.stopImmediatePropagation();return;
   }
   event.preventDefault();event.stopImmediatePropagation();
-  if(event.repeat && !["ArrowLeft","ArrowRight","KeyJ","KeyL","KeyX","KeyZ","Comma","Period"].includes(key))return;
+  if(key==="Space"){
+    if(!event.repeat)ribbitReplaySpacePress(event);
+    return;
+  }
+  if(event.repeat && !["ArrowUp","ArrowDown","ArrowLeft","ArrowRight","KeyJ","KeyL","KeyX","KeyZ","Comma","Period"].includes(key))return;
   const view=ribbitReplayView;
   if(key==="Escape"||key==="Backspace")ribbitReplayClose();
-  else if(key==="Space")ribbitReplayTogglePlayback();
+  else if(key==="KeyK")ribbitReplayTogglePlayback();
+  else if(key==="KeyM")ribbitReplayToggleMute();
+  else if(key==="ArrowUp")ribbitReplayChangeVolume(.05);
+  else if(key==="ArrowDown")ribbitReplayChangeVolume(-.05);
   else if(key==="ArrowLeft")ribbitReplaySeek(view.position/1000-5);
   else if(key==="ArrowRight")ribbitReplaySeek(view.position/1000+5);
   else if(key==="KeyJ")ribbitReplaySeek(view.position/1000-10);
@@ -820,8 +991,8 @@ function handleRibbitReplayKey(event){
   else if(key==="KeyR")view.rate=view.rate===4?1:4;
   else if(key==="Home")ribbitReplaySeek(0);
   else if(key==="End")ribbitReplaySeek(view.data?.duration/1000||0);
-  else if(key==="Comma"&&event.shiftKey||key==="ArrowDown"||key==="Minus")ribbitReplayAdjustRate(-.25);
-  else if(key==="Period"&&event.shiftKey||key==="ArrowUp"||key==="Equal")ribbitReplayAdjustRate(.25);
+  else if((key==="Comma"&&event.shiftKey)||key==="Minus")ribbitReplayAdjustRate(-.25);
+  else if((key==="Period"&&event.shiftKey)||key==="Equal")ribbitReplayAdjustRate(.25);
   else if(key==="Comma")ribbitReplaySeek((view.position-(1000/RIBBIT_REPLAY_FPS))/1000);
   else if(key==="Period")ribbitReplaySeek((view.position+(1000/RIBBIT_REPLAY_FPS))/1000);
   else if(/^Digit[0-9]$/.test(key)||/^Numpad[0-9]$/.test(key)){
@@ -831,10 +1002,24 @@ function handleRibbitReplayKey(event){
   ribbitReplayUpdateControls();
 }
 window.addEventListener("keydown",handleRibbitReplayKey,true);
+window.addEventListener("keyup",event=>{
+  if(!ribbitReplayView||event.code!=="Space")return;
+  event.preventDefault();event.stopImmediatePropagation();
+  ribbitReplaySpaceRelease();
+},true);
+window.addEventListener("blur",ribbitReplaySpaceRelease);
 canvas.addEventListener("pointerdown",event=>{
   if(!ribbitReplayView)return;
-  // On the replay canvas all clicks are spectator-only; the toolbar owns input.
   event.preventDefault();event.stopImmediatePropagation();
+  // Preserve the pause icon's native shape, but use it as an Exit X in replay.
+  const point=getCanvasPoint(event);
+  const rect=HUD_UI.pauseButton;
+  if(point.x>=rect.x&&point.x<=rect.x+rect.w&&point.y>=rect.y&&point.y<=rect.y+rect.h){
+    ribbitReplayClose();return;
+  }
+  // Clicking the gameplay scene pauses without accidentally resuming a paused
+  // video; K or the transport button remains the explicit resume action.
+  if(!ribbitReplayView.paused){ribbitReplayView.paused=true;ribbitReplayView.lastTick=performance.now();ribbitReplayUpdateControls();}
 },true);
 window.RibbitEngineReplay=Object.freeze({
   mime:RIBBIT_ENGINE_REPLAY_MIME,fps:RIBBIT_REPLAY_FPS,

@@ -30,7 +30,7 @@ test("Solo pause icon shares the new mint framed pause/play glyph", () => {
 
 test("PvP tutorial now supports offscreen frog indicators", () => {
   assert.match(pvpUi, /function drawPvpOffscreenIndicator\(player\)/);
-  assert.match(pvpUi, /pvpPlayers\.forEach\(drawPvpOffscreenIndicator\)/);
+  assert.match(pvpUi, /pvpPlayers\.filter\(visibleInTutorial\)\.forEach\(drawPvpOffscreenIndicator\)/);
 });
 
 test("Requested tutorial copy and layouts were updated", () => {

@@ -44,7 +44,7 @@ function startRibbitRaceGame() {
       achievementItemsPerPage: 3 * 5,
       victoryNoticesPerPage: 2,
       pvpTargetScore: 5,
-      pvpBonkMinStunSeconds: 1.0,
+      pvpBonkMinStunSeconds: 2.0,
       pvpBonkMaxStunSeconds: 5.0,
       pvpBonkGravity: 180,
       pvpBonkMaxFallSpeed: 125,
@@ -67,7 +67,7 @@ function startRibbitRaceGame() {
     const canvas = document.getElementById("game");
     const gameFrame = document.getElementById("game-frame");
     const friendsGameInputLocked = () => window.RibbitFriendsGameInputLocked?.() === true;
-    const RIBBIT_DISPLAY_VERSION = "VERSION 1.7.50";
+    const RIBBIT_DISPLAY_VERSION = "VERSION 1.7.52";
     const RIBBIT_CREDIT_TEXT = "MADE BY NICK M.";
     const RIBBIT_CREDIT_Y = 228;
     const rgbValueEditor = document.getElementById("rgb-value-editor");
@@ -6929,9 +6929,16 @@ function startRibbitRaceGame() {
       }
     }
     function resumePausedGame() {
-      if (game.mode === "pvp" && !game.pvpUnpauseCountdown &&
-          !(typeof tutorial !== "undefined" && tutorial.active && tutorial.kind === "pvp" &&
-            typeof tutorialStep === "function" && tutorialStep()?.setup === "pvpFinalMatch")) {
+      const tutorialFinalMatch = typeof tutorial !== "undefined" && tutorial.active && tutorial.kind === "pvp" &&
+        typeof tutorialStep === "function" && tutorialStep()?.setup === "pvpFinalMatch";
+      if (tutorialFinalMatch && tutorial.pvpRestartCountdownOnResume) {
+        tutorial.pvpRestartCountdownOnResume = false;
+        tutorial.pvpFinalMatchCountdownUntil = 0;
+        game.resumeChargeAfterCountdown = false;
+        startResumeCountdown(false);
+        return;
+      }
+      if (game.mode === "pvp" && !game.pvpUnpauseCountdown && !tutorialFinalMatch) {
         game.state = "playing";
         game.countdownNumber = 0;
         game.countdownTimer = 0;
@@ -10222,28 +10229,29 @@ function startRibbitRaceGame() {
     function beginPvpTimerJumpGrace() {
       const tutorialFinal = Boolean(tutorial.active && tutorial.kind === "pvp" &&
         tutorialStep()?.setup === "pvpFinalMatch");
-      const heldAtBuzzer = pvpPlayers.map((player) => Boolean(tutorialFinal &&
+      const forceAutoRelease = Boolean(tutorialFinal && tutorial.pvpAutoReleaseAtZero);
+      const heldAtBuzzer = pvpPlayers.map((player) => Boolean((tutorialFinal || forceAutoRelease) &&
         player && player.grounded && player.charging && !player.bonked && player.stunTimer <= 0));
-      if (!tutorialFinal) {
+      if (forceAutoRelease || !tutorialFinal) {
         pvpPlayers.forEach((player, index) => {
           if (player && player.grounded && player.charging && !player.bonked && player.stunTimer <= 0) {
             player.inputHeld = true;
-            releasePvpButton(index, "system");
+            releasePvpButton(index, index === getPvpCpuIndex() && game.pvpCpuEnabled ? "cpu" : "system");
           }
         });
       }
       const eligible = pvpPlayers.map((player, index) => Boolean(
         player && (!player.grounded || player.landedThisFrame || player.tongue.active || heldAtBuzzer[index])
       ));
-      game.pvpTutorialGraceHeld = heldAtBuzzer;
-      game.pvpTutorialGraceFromHeld = heldAtBuzzer.some(Boolean);
+      game.pvpTutorialGraceHeld = forceAutoRelease ? [false, false] : heldAtBuzzer;
+      game.pvpTutorialGraceFromHeld = forceAutoRelease ? false : heldAtBuzzer.some(Boolean);
       game.pvpTimerGraceEligible = eligible;
       game.pvpTimerGracePromptSerial = game.promptSerial;
       game.pvpTimerGraceActive = eligible.some(Boolean);
       game.pvpTimedOutcomePending = true;
       game.spawnQueue = [];
       preservePvpChargedJumpsAtTimeLimit();
-      if (tutorialFinal) {
+      if (tutorialFinal && !forceAutoRelease) {
         game.pvpCpuPlan = null;
         pvpPlayers.forEach((player, index) => {
           if (!heldAtBuzzer[index]) { player.inputHeld = false; player.charging = false; }
@@ -11326,7 +11334,7 @@ function startRibbitRaceGame() {
     }
     function drawPvpSpeechBubble(player) {
       if (OnlineVersus.isActive() && player.index !== OnlineVersus.localIndex()) return;
-      if (player.firstJumpMade || game.state !== "playing") return;
+      if (tutorial.active || game.tutorialActive || player.firstJumpMade || game.state !== "playing") return;
       if (game.pvpCpuEnabled && player.index === 1) return;
       const x = player.index === 0 ? 10 : W - 136;
       const y = 126;
@@ -11390,7 +11398,7 @@ function startRibbitRaceGame() {
       const tutorialFinalMatch = tutorialPvp && tutorialStep()?.setup === "pvpFinalMatch";
       const boxes = [
         { player: pvpPlayers[0], x: 8, label: "P1", mirror: false },
-        { player: pvpPlayers[1], x: W - 84, label: game.pvpCpuEnabled ? "CPU" : "P2", mirror: true }
+        { player: pvpPlayers[1], x: W - 84, label: tutorialFinalMatch ? "EMB" : (game.pvpCpuEnabled ? "CPU" : "P2"), mirror: true }
       ];
       boxes.forEach(({ player, x, label, mirror }) => {
         const palette = getPvpSkinPalette(player.skinId, player.index === 0 ? "azure" : "crimson", player.index);
@@ -12052,11 +12060,15 @@ function startRibbitRaceGame() {
       const loser = pvpPlayers[winner.index === 0 ? 1 : 0];
       const palette = getPvpSkinPalette(winner.skinId, winner.index === 0 ? "azure" : "crimson", winner.index);
       const matchWon = game.pvpMatchWinnerIndex !== null;
-      const earnedAchievements = getPvpRoundAchievementDefinitions();
+      const finalTutorialMatch = tutorial.active && tutorial.kind === "pvp" && tutorialStep()?.setup === "pvpFinalMatch";
+      const earnedAchievements = finalTutorialMatch ? [] : getPvpRoundAchievementDefinitions();
       const hasAchievements = earnedAchievements.length > 0;
-      const panel = hasAchievements
-        ? { x: 30, y: 10, w: 420, h: 238 }
-        : { x: 68, y: 38, w: 344, h: 168 };
+      const panel = finalTutorialMatch
+        ? { x: 82, y: 36, w: 316, h: 120 }
+        : hasAchievements
+          ? { x: 30, y: 10, w: 420, h: 238 }
+          : { x: 68, y: 38, w: 344, h: 168 };
+      if (finalTutorialMatch && typeof drawTutorialSmoke === "function") drawTutorialSmoke();
       ctx.fillStyle = "rgba(12,26,33,0.38)";
       ctx.fillRect(panel.x + 5, panel.y + 7, panel.w, panel.h);
       ctx.fillStyle = COLORS.ink;
@@ -12071,7 +12083,6 @@ function startRibbitRaceGame() {
       ctx.fillRect(panel.x + 14, panel.y + 12, panel.w - 28, 35);
       ctx.fillStyle = palette.light;
       ctx.fillRect(panel.x + 17, panel.y + 14, panel.w - 34, 4);
-      const finalTutorialMatch = tutorial.active && tutorial.kind === "pvp" && tutorialStep()?.setup === "pvpFinalMatch";
       if (finalTutorialMatch) {
         drawBitmapText(winner.index === 1 ? "EMBER WINS!" : "YOU WIN!", W / 2, panel.y + 22, 1.5, "center", COLORS.white, palette.dark);
       } else {
@@ -12080,11 +12091,11 @@ function startRibbitRaceGame() {
       }
       const badgeX = winner.index === 0 ? panel.x + 29 : panel.x + panel.w - 29;
       drawMiniFrogSwatchFacing(badgeX, panel.y + 23, palette, 0.82, winner.index === 1 ? -1 : 1);
-      const p1X = 144;
-      const p2X = 336;
+      const p1X = finalTutorialMatch ? 152 : 144;
+      const p2X = finalTutorialMatch ? 328 : 336;
       const p1Palette = getPvpSkinPalette(pvpPlayers[0].skinId, "azure", 0);
       const p2Palette = getPvpSkinPalette(pvpPlayers[1].skinId, "crimson", 1);
-      const showRoundCrowns = !(tutorial.active && tutorial.kind === "pvp" && tutorialStep?.()?.setup !== "pvpFinalMatch");
+      const showRoundCrowns = !finalTutorialMatch && !(tutorial.active && tutorial.kind === "pvp" && tutorialStep?.()?.setup !== "pvpFinalMatch");
       const roundsToWin = getPvpRoundsToWin();
       const crownScale = 1.55;
       const crownStep = 19;
@@ -12101,8 +12112,8 @@ function startRibbitRaceGame() {
         }
         drawBitmapText("-", W / 2, crownY + 5, 1.25, "center", "#48555a");
       }
-      const frogGround = panel.y + 116;
-      const resultFrogScale = 1.78;
+      const frogGround = finalTutorialMatch ? panel.y + 88 : panel.y + 116;
+      const resultFrogScale = finalTutorialMatch ? 1.56 : 1.78;
       if (winner.index === 0) {
         drawPvpHappyDanceFrog(p1X, frogGround, pvpPlayers[0], resultFrogScale);
         drawPvpSadCryingFrog(p2X, frogGround, pvpPlayers[1], resultFrogScale);
@@ -12110,11 +12121,11 @@ function startRibbitRaceGame() {
         drawPvpSadCryingFrog(p1X, frogGround, pvpPlayers[0], resultFrogScale);
         drawPvpHappyDanceFrog(p2X, frogGround, pvpPlayers[1], resultFrogScale);
       }
-      drawBitmapText(`${pvpPlayers[0].score} - ${pvpPlayers[1].score}`, W / 2, panel.y + 88, 1.05, "center", "#48555a");
+      drawBitmapText(`${pvpPlayers[0].score} - ${pvpPlayers[1].score}`, W / 2, panel.y + (finalTutorialMatch ? 66 : 88), 1.05, "center", "#48555a");
       const displayedRoundTime = Number.isFinite(game.pvpFinalDisplayTime)
         ? game.pvpFinalDisplayTime
         : game.pvpElapsed;
-      drawBitmapText(`TIME ${formatTime(displayedRoundTime)}`, W / 2, panel.y + 103, 0.82, "center", palette.dark);
+      drawBitmapText(`TIME ${formatTime(displayedRoundTime)}`, W / 2, panel.y + (finalTutorialMatch ? 80 : 103), 0.82, "center", palette.dark);
       if(OnlineVersus.isQuickplay()&&matchWon){
         const message=OnlineVersus.quickVictoryMessage();
         const scale=Math.min(.56,310/Math.max(1,measureBitmapText(message,1)));
@@ -12168,7 +12179,7 @@ function startRibbitRaceGame() {
           drawBitmapText(`${(game.pvpVictoryAchievementPage || 0) + 1}/${pageCount}`, W / 2, panel.y + 191, 0.62, "center", "#617177");
         }
       }
-      drawPvpVictoryButtons();
+      if (!finalTutorialMatch) drawPvpVictoryButtons();
     }
     function drawPvpGameplayCelebrationFrogs() {
       const winnerIndex = game.pvpCelebrationWinnerIndex ?? game.pvpWinnerIndex ?? 0;
@@ -12198,6 +12209,10 @@ function startRibbitRaceGame() {
     }
     function drawPvpScene() {
       const criticalCatch = game.pvpCriticalCatchActive;
+      const visibleInTutorial = (player) => !(
+        tutorial.active && tutorial.kind === "pvp" &&
+        (tutorial.pvpFrogsHidden || tutorial.pvpHiddenPlayerIndices?.includes(player.index))
+      );
       const drawEntity = (player, renderer) => {
         ctx.save();
         if (OnlineVersus.isGuestActive() && game.state === "playing") {
@@ -12210,8 +12225,8 @@ function startRibbitRaceGame() {
       drawBackground();
       for (const platform of platforms) drawPlatform(platform);
       drawTimeOfDayWorldTint();
-      pvpPlayers.forEach(p => drawEntity(p, drawPvpArcPreview));
-      pvpPlayers.forEach(p => drawEntity(p, drawPvpTongue));
+      pvpPlayers.filter(visibleInTutorial).forEach(p => drawEntity(p, drawPvpArcPreview));
+      pvpPlayers.filter(visibleInTutorial).forEach(p => drawEntity(p, drawPvpTongue));
       for (const fly of flies) {
         drawFlySpawnSparks(fly);
         drawFlyAt(fly.x, fly.y, getFlySpawnScale(fly));
@@ -12223,8 +12238,8 @@ function startRibbitRaceGame() {
         if(catcher)drawSlowMotionFlyPull(game.pvpCriticalCatchFlyVisual,getPvpMouth(catcher),
           game.pvpCriticalCatchElapsed,game.pvpCriticalCatchDuration,catcher);
       }
-      pvpPlayers.forEach(p => drawEntity(p, drawFrogAfterimages));
-      if (!["pvpCelebration", "won"].includes(game.state)) pvpPlayers.forEach((player)=>drawAirShadowForEntity(OnlineVersus.displayPlayer(player),getPvpSkinPalette(player.skinId,player.index===0?"azure":"crimson")));
+      pvpPlayers.filter(visibleInTutorial).forEach(p => drawEntity(p, drawFrogAfterimages));
+      if (!["pvpCelebration", "won"].includes(game.state)) pvpPlayers.filter(visibleInTutorial).forEach((player)=>drawAirShadowForEntity(OnlineVersus.displayPlayer(player),getPvpSkinPalette(player.skinId,player.index===0?"azure":"crimson")));
       if (game.state === "pvpCelebration") {
         drawPvpRoundCelebration();
       } else if (game.state === "won") {
@@ -12237,7 +12252,7 @@ function startRibbitRaceGame() {
         pvpPlayers.forEach(p => drawEntity(p, drawPvpPlayer));
       }
       if (!['pvpCelebration', 'won'].includes(game.state)) {
-        pvpPlayers.forEach(drawPvpOffscreenIndicator);
+        pvpPlayers.filter(visibleInTutorial).forEach(drawPvpOffscreenIndicator);
         pvpPlayers.forEach(p => drawEntity(p, drawPvpSpeechBubble));
       }
       drawPvpImpactEffects();
@@ -14409,7 +14424,7 @@ function startRibbitRaceGame() {
       ctx.restore();
     }
     function drawSpeechBubble() {
-      if (frog.firstJumpMade || game.state !== "playing" || (game.sandboxMode && sandboxPreview.mode !== "play")) return;
+      if ((tutorial.active || game.tutorialActive) || frog.firstJumpMade || game.state !== "playing" || (game.sandboxMode && sandboxPreview.mode !== "play")) return;
       const x = 10;
       const y = 126;
       const w = 126;
@@ -14509,7 +14524,7 @@ function startRibbitRaceGame() {
         drawPixelText(formatTime(getTimerTime()), 463, 234, 10, "right", COLORS.white);
         drawPixelText("JUMPS", 329, 247, 7, "left", "#cdeff5");
         drawPixelText(String(game.jumps), 463, 247, 8, "right", getSelectedSkin().light);
-        drawPixelText("BEST", 329, 259, 7, "left", "#cdeff5");
+        drawPixelText(window.RibbitEngineReplay?.active?.() ? "WR" : "BEST", 329, 259, 7, "left", "#cdeff5");
         const bestTimeLabel = game.bestTime === null ? "--:--.-" : formatTime(game.bestTime);
         const bestJumpLabel = game.bestJumps === null ? "--" : String(game.bestJumps);
         drawMiniStopwatchIcon(377, 263, getSelectedSkin(), 0.48);
@@ -18415,6 +18430,10 @@ function startRibbitRaceGame() {
       game.muted = game.volume <= 0.001;
     }
     function pauseGame() {
+      if (typeof tutorial !== "undefined" && tutorial.active && tutorial.kind === "pvp" &&
+          typeof tutorialStep === "function" && tutorialStep()?.setup === "pvpFinalMatch") {
+        tutorial.pvpRestartCountdownOnResume = true;
+      }
       if (OnlineVersus.isActive()) {
         OnlineVersus.showExitMenu();
         return;
@@ -19970,8 +19989,8 @@ function startRibbitRaceGame() {
     requestAnimationFrame(frame);
 
     /* ===== client/game/90-extended-features.js ===== */
-const RIBBIT_FRIENDS_DISPLAY_VERSION = "1.7.50";
-const RIBBIT_FRIENDS_BUILD = "2026.10.13-friends-polish-62";
+const RIBBIT_FRIENDS_DISPLAY_VERSION = "1.7.52";
+const RIBBIT_FRIENDS_BUILD = "2026.10.14-friends-polish-65";
 function rr14Number(value, fallback = 0) {
   const parsed = Number(value);
   return Number.isFinite(parsed) ? parsed : fallback;
@@ -20450,10 +20469,10 @@ window.RibbitRaceMobileDiagnostics = () => ({
  */
 (() => {
   "use strict";
-  const BUILD = "2026.10.13-friends-polish-62";
+  const BUILD = "2026.10.14-friends-polish-65";
   const RR_V160_CANDIDATES = {"catchFly":["attemptFlyCatch","attemptPvpFlyCatch","catchSandboxFly","getPvpImminentCatchFly","recordFlyEaten","scheduleFlyReplacementFromCatch"],"jumpSound":["playJumpSound"],"beep":["playCountdownGoSound","playCountdownSound"],"replayUpload":["saveRecordDate"],"restart":["resetGame","resetPvpGame","resetPvpPlayer","resetRoundLifecycle","resetRoundNetwork","restartCurrentLevel"],"drop":[],"render":["drawPvpScene","drawScene"],"worldRecord":[],"fullscreen":["getFullscreenElement","hideFullscreenFallback","showFullscreenFallback","syncFullscreenButton","toggleRibbitFullscreen"],"onlineSubmit":[],"leaderboard":["isSoloEndlessLeaderboardEligible","savePvpMatchWinsForLeaderboard"]};
   const RR_V160_VARS = {"onlineSelect":[],"achievementSelect":["activeAchievementIndex","hoveredAchievementCard"],"backRect":[]};
-  const VERSION = "1.7.50";
+  const VERSION = "1.7.52";
   const V = {
     menuTouch: new Map(), chargeTouch: new Map(), achievementPinned: -1,
     cpuTakeoverUntil: 0, cpuTakeoverStarted: 0, cpuSnapshot: null,
@@ -21337,7 +21356,7 @@ window.RibbitRaceMobileDiagnostics = () => ({
 "use strict";
 const SOLO_SEEN_KEY = "rrFriendsEngineTutorialSoloSeenV8";
 const PVP_SEEN_KEY = "rrFriendsEngineTutorialPvpSeenV8";
-const TUTORIAL_BUILD = "2026.10.13-friends-polish-62";
+const TUTORIAL_BUILD = "2026.10.14-friends-polish-65";
 const TUTORIAL_ACHIEVEMENT_ID = "tutorial-graduate";
 const PVP_TUTORIAL_ACHIEVEMENT_ID = "versus-tutorial-graduate";
 const TYPEWRITER_MS_PER_CHARACTER = 28;
@@ -22347,8 +22366,8 @@ const PVP_STEPS = Object.freeze([
     ],
     "dialogue": [
       "Now I'll take the platform.",
-      "Start from the ground to my left and quick-tap right beneath my platform.",
-      "Pass my platform's right edge without getting bonked—no extra distance needed!"
+      "Drop off the lower-middle platform, then use a quick tap to stay below its edge.",
+      "Slip across beneath the platform without getting bonked—keep that jump low!"
     ],
     "successDialogue": [
       "Not even a bump!",
@@ -22816,6 +22835,9 @@ function currentDialogueLine() {
   return String(lines[Math.min(tutorial.dialogueLineIndex, lines.length - 1)] || "");
 }
 function currentEmberPortraitKey() {
+  if (Array.isArray(tutorial.dynamicPortraitKey) && tutorial.dynamicPortraitKey.length) {
+    return tutorial.dynamicPortraitKey[tutorial.dialogueLineIndex % tutorial.dynamicPortraitKey.length] || tutorial.dynamicPortraitKey[0] || "thumbsup";
+  }
   if (tutorial.dynamicPortraitKey) return tutorial.dynamicPortraitKey;
   if (tutorial.finalDialogueActive) return "thumbsup";
   const step = tutorialStep();
@@ -23801,8 +23823,8 @@ function configurePvpStep(index) {
       break;
     case "pvpAvoidUnder": {
       const perch = PARK_PLATFORMS[3];
-      positionPvp(p1, 222, CONFIG.groundY - p1.h, -1);
-      positionPvpOnPlatform(ember, perch, -1);
+      positionPvpOnPlatform(p1, perch, 1);
+      positionPvp(ember, perch.x - ember.w - 12, CONFIG.groundY - ember.h, 1);
       break;
     }
     case "pvpDemoRebound":
@@ -24050,7 +24072,7 @@ function beginPvpDemoMotion(setup) {
       break;
     case "pvpDemoIntercept":
       scriptPvpChargedJump(0, .85, 1, 0);
-      scriptPvpChargedJump(1, .95, -1, 40);
+      scriptPvpChargedJump(1, .85, -1, 0);
       break;
     case "pvpDemoDinnerSteal":
       scriptPvpChargedJump(0, .70, 1, 0);
@@ -24273,6 +24295,9 @@ function startPvpFinalMatch() {
   tutorial.pvpFinalMatchStarted = true;
   tutorial.pvpFinalMatchPoofStarted = false;
   tutorial.pvpFinalMatchCountdownUntil = 0;
+  tutorial.pvpAutoReleaseAtZero = true;
+  tutorial.pvpRestartCountdownOnResume = false;
+  tutorial.pvpDinnerStealChargeBonus = .08;
   try { window.RibbitRaceResetFinalCatchLabels?.(); } catch (_) {}
   tutorial.pvpFinalOutcome = null;
   tutorial.pvpDemoActive = false;
@@ -24585,6 +24610,8 @@ function beginPoofTransition(options = {}) {
   }
   tutorial.resetPending = true;
   tutorial.resetAt = performance.now() + POOF_TRANSITION_MS;
+  tutorial.pvpInputGuardUntil = tutorial.kind === "pvp"
+    ? tutorial.resetAt + 220 : 0;
   tutorial.resetMessage = String(options.message || "");
   tutorial.resetAction = typeof options.action === "function" ? options.action : null;
   tutorial.resetShowFailure = options.showFailure !== false;
@@ -24616,7 +24643,8 @@ function rebuildCurrentScenarioForRetry() {
   tutorial.pendingStartPose = captureControlledPose();
   tutorial.dialogueOpen = false;
   tutorial.dialoguePointerId = null;
-  tutorial.blockJumpUntilRelease = false;
+  tutorial.blockJumpUntilRelease = tutorial.blockJumpUntilRelease ||
+    (tutorial.kind === "pvp" && typeof isPvpPhysicalJumpHeld === "function" && isPvpPhysicalJumpHeld(0));
   restoreStepSequence();
   game.pauseHelpOpen = false;
   game.state = "playing";
@@ -24785,6 +24813,13 @@ function completePendingReset() {
     tutorial.failureMessageUntil = tutorial.failureFlashStartedAt + tutorial.failureFlashDuration;
   }
   tutorial.enteredAt = performance.now();
+  if (tutorial.kind === "pvp") {
+    tutorial.pvpInputGuardUntil = tutorial.enteredAt + 220;
+    tutorial.pvpLessonAirborneSeen = [false, false];
+    tutorial.pvpLessonLanded = [false, false];
+    tutorial.pvpReboundLandingHoldAt = 0;
+    tutorial.pvpPlayerAttemptWasAirborne = false;
+  }
   if (tutorial.kind === "pvp" && !tutorial.dialogueOpen &&
       completedResetReason === "failed-attempt") {
     tutorial.pvpCaption = "YOUR TURN!";
@@ -24794,7 +24829,11 @@ function completePendingReset() {
   game.pauseHelpOpen = false;
 }
 function failAttempt(message) {
-  if (!tutorial.active || tutorial.passed || tutorial.resetPending) return;
+  const retryClock = typeof performance !== "undefined" ? performance.now() : Date.now();
+  if (!tutorial.active || tutorial.passed || tutorial.resetPending ||
+      (tutorial.kind === "pvp" && retryClock < (tutorial.pvpRetryGraceUntil || 0))) return;
+  if (tutorial.kind === "pvp") tutorial.pvpRetryGraceUntil =
+    retryClock + (typeof POOF_TRANSITION_MS === "number" ? POOF_TRANSITION_MS : 400) + 360;
   const setup = tutorialStep()?.setup || "";
   const emberStaysPut = tutorial.kind === "pvp" &&
     PVP_RETRY_EMBER_STATIONARY_SETUPS.has(setup);
@@ -25518,9 +25557,10 @@ function drivePvpPracticeCpu(setup, now) {
     }
     if (!tutorial.pvpEmberLaunchStarted && now >= tutorial.pvpEmberJumpScheduledAt && ember.grounded) {
       tutorial.pvpEmberLaunchStarted = true;
-      const launchDirection = setup === "pvpDinnerSteal" ? -1 : 1;
+      const launchDirection = -1;
       ember.dir = launchDirection;
-      scriptPvpChargedJump(1, setup === "pvpDinnerSteal" ? .82 : .72, launchDirection, 0);
+      tutorial.pvpEmberFacingLock = launchDirection;
+      scriptPvpChargedJump(1, setup === "pvpDinnerSteal" ? .82 : .86, launchDirection, 0);
     }
     return;
   }
@@ -25554,6 +25594,9 @@ function beginPvpTutorialEnding() {
     game.pvpSetupSkinIds[1] = "ember";
     openDynamicDialogue(playerWon ? PVP_WIN_DIALOGUE : PVP_LOSE_DIALOGUE,
       playerWon ? "shocked" : "happy", false);
+    tutorial.dynamicPortraitKey = playerWon
+      ? ["shocked", "questioning", "thumbsup", "happy", "determined", "peace"]
+      : ["laughing", "happy", "thumbsup", "questioning", "peace", "determined", "happy"];
   };
   if (!beginPoofTransition({
     reason: "pvp-final-post-victory",
@@ -25594,7 +25637,10 @@ function monitorPvp() {
         tutorial.pvpZeroClockObservedAt = 0;
       }
     } else tutorial.pvpZeroClockObservedAt = 0;
-    if (tutorial.pvpFinalMatchStarted && game.state === "won") beginPvpTutorialEnding();
+    if (tutorial.pvpFinalMatchStarted && game.state === "won") {
+      if (!Number.isFinite(tutorial.pvpFinalWinObservedAt) || tutorial.pvpFinalWinObservedAt <= 0) tutorial.pvpFinalWinObservedAt = now;
+      if (now - tutorial.pvpFinalWinObservedAt >= 3000) beginPvpTutorialEnding();
+    } else tutorial.pvpFinalWinObservedAt = 0;
     return;
   }
   if (tutorial.passPending) {
@@ -25770,7 +25816,8 @@ function monitorPvp() {
       failAttempt("USE A QUICK TAP TO STAY LOW");
       return;
     }
-    if (!p1.grounded && p1.y + p1.h <= platform.y + 0.5)
+    if (p1.firstJumpMade && !p1.grounded && p1.vy < -20 &&
+        p1.y + p1.h <= platform.y + 0.5)
       tutorial.pvpAvoidUnderTooHigh = true;
     if (tutorial.pvpAvoidUnderTooHigh) {
       if (playerLanded || (p1.grounded && p1.firstJumpMade && now - tutorial.enteredAt > 300))
@@ -25780,7 +25827,8 @@ function monitorPvp() {
     const underPerch = p1.x + p1.w > platform.x && p1.x < platform.x + platform.w &&
       p1.y >= platform.y + platform.h - 2;
     if (underPerch) tutorial.pvpAvoidUnderPassedBeneath = true;
-    if (tutorial.pvpAvoidUnderPassedBeneath && p1.x <= platform.x - p1.w + 1)
+    if (tutorial.pvpAvoidUnderPassedBeneath &&
+        p1.x >= platform.x + platform.w - p1.w - 1)
       passStep();
     return;
   }
@@ -25804,7 +25852,11 @@ function monitorPvp() {
         action: () => {
           positionPvpReboundPracticeLayout(completed);
           tutorial.pvpPlayerAttemptWasAirborne = false;
-          tutorial.pvpPracticeStartedAt = performance.now();
+          tutorial.pvpLessonAirborneSeen = [false, false];
+          tutorial.pvpLessonLanded = [false, false];
+          tutorial.pvpReboundLandingHoldAt = 0;
+          tutorial.enteredAt = performance.now();
+          tutorial.pvpPracticeStartedAt = tutorial.enteredAt;
           clearHeldInput();
         }
       });
@@ -25826,7 +25878,11 @@ function monitorPvp() {
           tutorial.pvpRebounds = completed;
           tutorial.pvpPracticeCount = completed;
           tutorial.pvpPlayerAttemptWasAirborne = false;
-          tutorial.pvpPracticeStartedAt = performance.now();
+          tutorial.pvpLessonAirborneSeen = [false, false];
+          tutorial.pvpLessonLanded = [false, false];
+          tutorial.pvpReboundLandingHoldAt = 0;
+          tutorial.enteredAt = performance.now();
+          tutorial.pvpPracticeStartedAt = tutorial.enteredAt;
           clearHeldInput();
         }
       });
@@ -25860,7 +25916,10 @@ function monitorPvp() {
     return;
   }
   if (setup === "pvpFinalMatch") {
-    if (tutorial.pvpFinalMatchStarted && game.state === "won") beginPvpTutorialEnding();
+    if (tutorial.pvpFinalMatchStarted && game.state === "won") {
+      if (!Number.isFinite(tutorial.pvpFinalWinObservedAt) || tutorial.pvpFinalWinObservedAt <= 0) tutorial.pvpFinalWinObservedAt = now;
+      if (now - tutorial.pvpFinalWinObservedAt >= 3000) beginPvpTutorialEnding();
+    } else tutorial.pvpFinalWinObservedAt = 0;
     return;
   }
 }
@@ -27071,16 +27130,16 @@ function drawTutorialPauseOverlay() {
 }
 function drawTutorialOverlay() {
   if (!tutorial.active || game.state === "countdown") return;
+  const finalMatchLiveHud = tutorial.kind === "pvp" && tutorialStep()?.setup === "pvpFinalMatch" &&
+    tutorial.pvpFinalMatchStarted && !tutorial.dialogueOpen;
   if (game.state === "paused") {
     drawCurrentGoalHud();
     if (tutorial.dialogueOpen) drawTutorialDialogue();
     return;
   }
-  if (!(tutorial.kind === "pvp" && tutorialStep()?.setup === "pvpFinalMatch" &&
-        tutorial.pvpFinalMatchStarted && !tutorial.dialogueOpen &&
-        !tutorial.pvpFinalMatchCountdownUntil)) drawCurrentGoalHud();
+  if (!finalMatchLiveHud) drawCurrentGoalHud();
   drawTutorialFlyDespawnEffects();
-  drawTutorialSmoke();
+  if (!(finalMatchLiveHud && game.state === "won")) drawTutorialSmoke();
   drawPvpTutorialCaption();
   drawTutorialReferenceHighlights();
   if (!tutorial.dialogueOpen && tutorialStep()?.setup !== "normalRound") drawGoalHowToTooltip();
@@ -27113,27 +27172,32 @@ function drawCompletionScreen() {
   if (!tutorial.completeScreen || game.state !== "won") return;
   const skin = getSelectedSkin();
   const panel = { x: 72, y: Math.round((CONFIG.playBottom - 106) / 2), w: 336, h: 106 };
+  const useInsetHomeButton = tutorial.kind === "pvp";
+  const layoutPanel = useInsetHomeButton ? { x: 72, y: Math.round((CONFIG.playBottom - 122) / 2), w: 336, h: 122 } : panel;
   ctx.save();
   ctx.fillStyle = "rgba(12,26,33,0.38)";
-  ctx.fillRect(panel.x + 4, panel.y + 8, panel.w - 8, panel.h);
+  ctx.fillRect(layoutPanel.x + 4, layoutPanel.y + 8, layoutPanel.w - 8, layoutPanel.h);
   ctx.fillStyle = COLORS.ink;
-  ctx.fillRect(panel.x + 4, panel.y, panel.w - 8, panel.h);
-  ctx.fillRect(panel.x, panel.y + 4, panel.w, panel.h - 8);
+  ctx.fillRect(layoutPanel.x + 4, layoutPanel.y, layoutPanel.w - 8, layoutPanel.h);
+  ctx.fillRect(layoutPanel.x, layoutPanel.y + 4, layoutPanel.w, layoutPanel.h - 8);
   ctx.fillStyle = "#f7fdff";
-  ctx.fillRect(panel.x + 7, panel.y + 4, panel.w - 14, panel.h - 8);
-  ctx.fillRect(panel.x + 4, panel.y + 8, panel.w - 8, panel.h - 16);
+  ctx.fillRect(layoutPanel.x + 7, layoutPanel.y + 4, layoutPanel.w - 14, layoutPanel.h - 8);
+  ctx.fillRect(layoutPanel.x + 4, layoutPanel.y + 8, layoutPanel.w - 8, layoutPanel.h - 16);
   ctx.fillStyle = skin.dark;
-  ctx.fillRect(panel.x + 12, panel.y + 9, panel.w - 24, 43);
+  ctx.fillRect(layoutPanel.x + 12, layoutPanel.y + 9, layoutPanel.w - 24, 43);
   ctx.fillStyle = skin.mid;
-  ctx.fillRect(panel.x + 14, panel.y + 11, panel.w - 28, 38);
+  ctx.fillRect(layoutPanel.x + 14, layoutPanel.y + 11, layoutPanel.w - 28, 38);
   ctx.fillStyle = skin.light;
-  ctx.fillRect(panel.x + 17, panel.y + 13, panel.w - 34, 4);
+  ctx.fillRect(layoutPanel.x + 17, layoutPanel.y + 13, layoutPanel.w - 34, 4);
   const title = "TUTORIAL COMPLETE!";
-  const titleScale = Math.min(2.25, (panel.w - 28) / Math.max(1, measureBitmapText(title, 1)));
-  drawBitmapText(title, W / 2, panel.y + 21, titleScale, "center", COLORS.white, skin.dark);
-  drawBitmapText("RIBBIT READY!", W / 2, panel.y + 62, 1.25, "center", skin.dark);
-  drawBitmapText("TRAINING COMPLETE", W / 2, panel.y + 82, .82, "center", "#59666b");
-  drawTutorialCompletionHomeButton(getTutorialCompletionButtonRects().homeButton);
+  const titleScale = Math.min(2.25, (layoutPanel.w - 28) / Math.max(1, measureBitmapText(title, 1)));
+  drawBitmapText(title, W / 2, layoutPanel.y + 21, titleScale, "center", COLORS.white, skin.dark);
+  drawBitmapText("RIBBIT READY!", W / 2, layoutPanel.y + 60, 1.25, "center", skin.dark);
+  drawBitmapText("TRAINING COMPLETE", W / 2, layoutPanel.y + 78, .82, "center", "#59666b");
+  const homeRect = useInsetHomeButton
+    ? { x: Math.round(W / 2 - 60), y: layoutPanel.y + 90, w: 120, h: 22 }
+    : getTutorialCompletionButtonRects().homeButton;
+  drawTutorialCompletionHomeButton(homeRect);
   ctx.restore();
 }
 const originalDrawVictoryScreenForTutorial = drawVictoryScreen;
@@ -27143,7 +27207,16 @@ drawVictoryScreen = function(...args) {
 };
 const originalGetVictoryButtonRectsForTutorial = getVictoryButtonRects;
 getVictoryButtonRects = function(...args) {
-  if (tutorial.completeScreen) return getTutorialCompletionButtonRects();
+  if (tutorial.completeScreen) {
+    if (tutorial.kind === "pvp") {
+      const panel = { x: 72, y: Math.round((CONFIG.playBottom - 122) / 2), w: 336, h: 122 };
+      return {
+        replayButton: { x: -300, y: -300, w: 1, h: 1 },
+        homeButton: { x: Math.round(W / 2 - 60), y: panel.y + 90, w: 120, h: 22 }
+      };
+    }
+    return getTutorialCompletionButtonRects();
+  }
   return originalGetVictoryButtonRectsForTutorial.apply(this, args);
 };
 const originalSelectVictoryOptionForTutorial = selectVictoryOption;
@@ -27586,7 +27659,8 @@ function tutorialBlocksLiveInput() {
   return Boolean(
     tutorial.active && game.state === "playing" &&
     (tutorialMovementLocked() || tutorial.pvpDemoActive || tutorial.pvpPlayerScriptLocked ||
-      tutorial.pvpFrogsHidden || tutorial.passPending || tutorial.blockJumpUntilRelease)
+      tutorial.pvpFrogsHidden || tutorial.passPending || tutorial.blockJumpUntilRelease ||
+      (tutorial.kind === "pvp" && performance.now() < (tutorial.pvpInputGuardUntil || 0)))
   );
 }
 const originalPressMainButtonForTutorial = pressMainButton;
@@ -27740,9 +27814,12 @@ update = function(dt, ...rest) {
       pvpPlayers[1].charging = false;
       updatePvpPlayer(pvpPlayers[1], dt);
       updatePvpImpactEffects(dt);
-    } else if (tutorial.kind === "pvp" &&
-        (tutorial.dialogueOpen || tutorial.pvpAwaitRecoveryAdvance) && !tutorial.resetPending &&
-        !tutorial.pvpFrogsHidden && game.state === "playing") {
+    } else if (tutorial.kind === "pvp" && !tutorial.resetPending &&
+        !tutorial.pvpFrogsHidden && game.state === "playing" &&
+        (tutorial.dialogueOpen || tutorial.pvpAwaitRecoveryAdvance ||
+         tutorial.passed || tutorial.passPending ||
+         pvpPlayers.some((player) => player &&
+           (player.bonked || player.stunTimer > 0 || (player.recoveryFlipTimer || 0) > 0)))) {
       for (const player of pvpPlayers) {
         player.inputHeld = false;
         player.charging = false;
@@ -27760,6 +27837,7 @@ update = function(dt, ...rest) {
   return result;
 };
 window.addEventListener("keydown", (event) => {
+  if (window.RibbitEngineReplay?.active?.()) return;
   if (tutorial.active && !event.metaKey && !event.ctrlKey && !event.altKey && /^[a-z]$/i.test(String(event.key || ""))) {
     tutorial.debugSkipBuffer = `${tutorial.debugSkipBuffer}${String(event.key).toLowerCase()}`.slice(-24);
     if (tutorial.debugSkipBuffer.endsWith("tutorialskip")) {
@@ -27814,6 +27892,7 @@ window.addEventListener("keydown", (event) => {
   }
 }, { capture:true, passive:false });
 window.addEventListener("keyup", (event) => {
+  if (window.RibbitEngineReplay?.active?.()) return;
   if (tutorial.active && tutorial.kind === "pvp" && event.code === "ShiftRight") {
     event.preventDefault();
     event.stopImmediatePropagation();
@@ -27842,6 +27921,7 @@ window.addEventListener("keyup", (event) => {
   if (heldFor < DIALOGUE_SPACE_HOLD_THRESHOLD_MS) closeDialogue("space");
 }, { capture:true, passive:false });
 canvas.addEventListener("pointerdown", (event) => {
+  if (window.RibbitEngineReplay?.active?.()) return;
   if (tutorial.active && game.state === "paused" && !game.pauseHelpOpen) {
     const point = getCanvasPoint(event);
     const chapterRects = getTutorialPauseChapterRects();
@@ -27965,6 +28045,15 @@ function polish19PvpRuntimeCorrection(dt=0){
   if(/final|race|match/.test(key)){
     game.pvpCpuEnabled=true;game.pvpCpuDifficulty=5;game.pvpCpuLevel=5;game.pvpTimeLimitSeconds=30;game.pvpBestOf=1;game.pvpRoundGoalMode='endless';
     ember.cpu=true;ember.cpuLevel=5;ember.skinId='ember';ember.hatId='crown';
+  }
+  const setup=String(step.setup||'');
+  if((tutorial.pvpDemoActive && setup==='pvpDemoDinnerSteal') || setup==='pvpDinnerSteal'){
+    const demo=Boolean(tutorial.pvpDemoActive && setup==='pvpDemoDinnerSteal');
+    const targetX=demo?404:Math.round(PARK_PLATFORMS[1].x + PARK_PLATFORMS[1].w / 2) - 8;
+    const targetY=demo?112:(PARK_PLATFORMS[4].y + 4);
+    for(const fly of flies||[]){
+      if(fly?.tutorialAuthored && fly.state==='active'){ fly.x=targetX; fly.y=targetY; break; }
+    }
   }
 }
 const polish19OriginalUpdateTutorial=updateTutorial;
@@ -30817,7 +30906,7 @@ function ribbitReplayExportCurrent(){
     : frames[frames.length-1].t;
   return {
     version:RIBBIT_REPLAY_SCHEMA_VERSION,kind:"ribbit-engine-frames",fps:capture.fps||RIBBIT_REPLAY_FPS,
-    compatibility:{frameSchema:RIBBIT_REPLAY_SCHEMA_VERSION,minimumPlayerVersion:1,recordedBy:"1.7.50"},
+    compatibility:{frameSchema:RIBBIT_REPLAY_SCHEMA_VERSION,minimumPlayerVersion:1,recordedBy:"1.7.52"},
     mode:capture.mode,level:capture.level,recordedAt:capture.recordedAt,
     recordedTimeZone:capture.recordedTimeZone,timeOfDay:capture.timeOfDay,
     moonPhaseIndex:capture.moonPhaseIndex,skinId:capture.skinId,vocab:capture.vocab,
@@ -30895,13 +30984,14 @@ function ribbitReplayEnsureCountdown(data) {
   const prefix=[];
   for(let i=0;i<missing;i++) {
     const number=3-i;
-    for(const frameOffset of [0,RIBBIT_REPLAY_COUNTDOWN_STEP_MS-17]) {
+    for(let frame=0;frame<Math.ceil(RIBBIT_REPLAY_COUNTDOWN_STEP_MS/(1000/60));frame++) {
+      const frameOffset=Math.min(RIBBIT_REPLAY_COUNTDOWN_STEP_MS-1,Math.round(frame*(1000/60)));
       prefix.push({...first,t:i*RIBBIT_REPLAY_COUNTDOWN_STEP_MS+frameOffset,
         phase:'countdown',flies:[],
-        player:{...first.player,charging:false},
-        players:(first.players||[]).map(player=>({...player,charging:false})),
+        player:{...first.player,charging:false,vx:0,vy:0},
+        players:(first.players||[]).map(player=>({...player,charging:false,vx:0,vy:0})),
         gameState:{...first.gameState,state:'countdown',countdownNumber:number,
-          countdownTimer:Math.max(.017,(RIBBIT_REPLAY_COUNTDOWN_STEP_MS-frameOffset)/1000),
+          countdownTimer:Math.max(.001,(RIBBIT_REPLAY_COUNTDOWN_STEP_MS-frameOffset)/1000),
           soloCriticalCatchActive:false,pvpCriticalCatchActive:false}});
     }
   }
@@ -30953,20 +31043,34 @@ function ribbitReplayCreateControls(){
     <button type="button" data-replay-action="previous" title="Previous Frog Tags set (Shift+B)" hidden>◀</button>
     <button type="button" data-replay-action="browse" title="Browse Frog Tags replays" hidden>REPLAYS</button>
     <button type="button" data-replay-action="next" title="Next Frog Tags set (Shift+N)" hidden>▶</button>
-    <button type="button" data-replay-action="play" class="rr-replay-icon-button" aria-label="Pause playback" title="Pause playback (Space)">
+    <button type="button" data-replay-action="play" class="rr-replay-icon-button" aria-label="Pause playback" title="Pause/play (K)">
       <svg aria-hidden="true" viewBox="0 0 24 24" width="25" height="25" fill="currentColor"><path class="rr-play-triangle" d="M7 4v16l13-8z" hidden/><path class="rr-play-bars" d="M5 4h5v16H5zm9 0h5v16h-5z"/><path class="rr-replay-arrow" d="M12 3a9 9 0 1 1-8.7 11.4h3.1A6 6 0 1 0 8.4 6.1L11 9H3V1l3.2 3.2A8.9 8.9 0 0 1 12 3z" hidden/></svg>
     </button>
+    <div class="rr-replay-volume" title="Volume (M to mute, ↑/↓ for 5%)">
+      <button type="button" class="rr-replay-volume-button" data-replay-action="mute" aria-label="Mute replay (M)" aria-pressed="false" title="Mute/unmute (M)">
+        <svg aria-hidden="true" viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="square" stroke-linejoin="miter">
+          <path d="M3 9h5l6-5v16l-6-5H3z"/>
+          <path class="rr-speaker-normal" d="M17 8q4 4 0 8m2-11q7 7 0 14"/>
+          <path class="rr-speaker-muted" d="M17 9l5 6m0-6l-5 6" hidden/>
+        </svg>
+      </button>
+      <div class="rr-replay-volume-popover"><input type="range" min="0" max="100" step="1" value="100" aria-label="Replay volume" title="Drag to adjust volume" /><span class="rr-replay-volume-label">100%</span></div>
+    </div>
     <label class="rr-replay-progress" aria-label="Timeline">
       <input type="range" min="0" max="10000" step="1" value="0" aria-label="Seek replay timeline" />
     </label>
     <span class="rr-replay-time" aria-live="off">0:00 / 0:00</span>
-    <label class="rr-replay-volume" title="Replay volume" aria-label="Replay volume">
-      <svg aria-hidden="true" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M4 9h4l5-4v14l-5-4H4zM17 9q4 3 0 6"/></svg>
-      <input type="range" min="0" max="100" step="1" value="100" aria-label="Replay volume" />
-    </label>
     <button type="button" data-replay-action="speed" class="rr-replay-speed" aria-label="Change playback speed" title="Playback speed (0.25x–4x)">
-      <svg aria-hidden="true" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="13" r="8"/><path d="M12 5V2m-4 0h8m4 2 2-2M12 8v5l3 2"/></svg>
-      <span class="rr-speed-value">1×</span>
+      <svg class="rr-stopwatch-frame" viewBox="0 0 64 64" width="54" height="54" aria-hidden="true" shape-rendering="crispEdges">
+        <path d="M25 3h14v5H25zM22 0h20v4H22zM28 8h8v7h-8zM13 10h7v7h-7zM9 14h7v6H9z" fill="#18242a"/>
+        <path d="M27 4h10v4H27zM29 8h6v5h-6zM12 12h7v5h-7z" fill="#748b90"/>
+        <path d="M16 16h7v4h-7zM22 12h20v4H22zM42 16h7v4h-7zM49 20h5v5h-5zM54 25h4v14h-4zM49 39h5v6h-5zM43 45h6v5h-6zM20 46h23v4H20zM15 39h5v7h-5zM10 25h5v14h-5zM15 20h5v5h-5z" fill="#18242a"/>
+        <path d="M22 16h20v3H22zM20 19h29v4H20zM16 23h37v4H16zM15 27h41v12H15zM20 39h34v5H20zM21 44h28v3H21zM23 47h20v2H23z" fill="none" stroke="#26383f" stroke-width="2"/>
+        <path d="M23 18h19v3H23zM18 23h33v3H18zM15 28h41v10H15zM19 39h34v4H19zM24 44h24v3H24z" fill="#a7bec5"/>
+        <path d="M25 20h15v2H25zM19 25h28v2H19zM16 29h38v3H16z" fill="#e0f3f7"/>
+        <path d="M25 24h18v3H25zM21 27h28v16H21zM25 43h18v2H25z" fill="#12252d"/>
+      </svg>
+      <span class="rr-speed-value">1x</span>
     </button>
     <button type="button" data-replay-action="fullscreen" title="Fullscreen (F)">⛶</button>
     <button type="button" data-replay-action="exit">EXIT</button>`;
@@ -30994,8 +31098,11 @@ function ribbitReplayCreateControls(){
   volume.addEventListener("input",event=>{
     if(!ribbitReplayView)return;
     ribbitReplayView.volume=clamp(Number(event.target.value)/100,0,1);
+    if(ribbitReplayView.volume>0)ribbitReplayView.lastNonzeroVolume=ribbitReplayView.volume;
+    ribbitReplayView.muted=ribbitReplayView.volume<=0;
     ribbitReplayUpdateControls();
   });
+  volume.addEventListener("pointerdown",event=>event.stopPropagation());
   footer.addEventListener("click",event=>{
     const action=event.target.closest("button")?.dataset.replayAction;
     if(!action||!ribbitReplayView)return;
@@ -31005,6 +31112,7 @@ function ribbitReplayCreateControls(){
     else if(action==="next")ribbitReplayCollectionStep(1);
     else if(action==="browse")ribbitReplayView.collection?.openBrowser?.();
     else if(action==="play")ribbitReplayTogglePlayback();
+    else if(action==="mute")ribbitReplayToggleMute();
     else if(action==="speed"){
       const rates=[.25,.5,.75,1,1.25,1.5,1.75,2,4];
       const index=rates.findIndex(n=>n===ribbitReplayView.rate);
@@ -31021,7 +31129,9 @@ function ribbitReplayCreateControls(){
     badge:header.querySelector(".rr-spectator-badge small"),
     play:footer.querySelector('[data-replay-action="play"]'),
     speed:footer.querySelector('[data-replay-action="speed"]'),
-    volume, time:footer.querySelector(".rr-replay-time")};
+    volumeButton:footer.querySelector('[data-replay-action="mute"]'),
+    volume, volumeLabel:footer.querySelector(".rr-replay-volume-label"),
+    time:footer.querySelector(".rr-replay-time")};
   return ribbitReplayControls;
 }
 function ribbitReplayShowControls(){
@@ -31055,15 +31165,23 @@ function ribbitReplayUpdateControls(){
     ? "replay" : view.paused ? "play" : "pause";
   controls.play.dataset.state=playState;
   controls.play.setAttribute("aria-label",`${playState.charAt(0).toUpperCase()}${playState.slice(1)} playback`);
-  controls.play.title=playState==="replay"?"Watch again (Space)":`${playState} (Space)`;
+  controls.play.title=playState==="replay"?"Watch again (K)":`${playState} (K)`;
   for(const [selector,kind] of [[".rr-play-triangle","play"],[".rr-play-bars","pause"],[".rr-replay-arrow","replay"]]) {
     const glyph=controls.play.querySelector(selector);
     glyph.toggleAttribute("hidden",playState!==kind);
     glyph.style.display=playState===kind?"":"none";
   }
-  controls.speed.querySelector(".rr-speed-value").textContent=`${view.rate}×`;
+  controls.speed.querySelector(".rr-speed-value").textContent=`${view.spaceFastForwardHeld?2:view.rate}x`;
+  const effectiveVolume=view.muted?0:view.volume;
   controls.volume.value=String(Math.round(view.volume*100));
-  controls.volume.setAttribute("aria-valuetext",`${Math.round(view.volume*100)} percent`);
+  controls.volume.setAttribute("aria-valuetext",`${Math.round(effectiveVolume*100)} percent`);
+  controls.volumeLabel.textContent=`${Math.round(effectiveVolume*100)}%`;
+  controls.volumeButton.setAttribute("aria-pressed",String(!!view.muted));
+  controls.volumeButton.setAttribute("aria-label",view.muted?"Unmute replay (M)":"Mute replay (M)");
+  for(const [selector,show] of [[".rr-speaker-normal",!view.muted],[".rr-speaker-muted",!!view.muted]]){
+    const glyph=controls.volumeButton.querySelector(selector);
+    glyph.hidden=!show;glyph.style.display=show?"":"none";
+  }
   controls.time.textContent=`${format(view.position)} / ${format(duration)}`;
   const collection=view.collection;
   controls.browse.hidden=!collection;
@@ -31076,6 +31194,61 @@ function ribbitReplayUpdateControls(){
     controls.seek.value=String(Math.round(10000*progress));
     controls.seek.style.setProperty("--rr-replay-progress",`${(progress*100).toFixed(2)}%`);
   }
+}
+function ribbitReplayToggleMute(){
+  const view=ribbitReplayView;if(!view)return;
+  if(view.muted){
+    view.muted=false;
+    if(view.volume<=0)view.volume=view.lastNonzeroVolume||1;
+  }else{
+    if(view.volume>0)view.lastNonzeroVolume=view.volume;
+    view.muted=true;
+  }
+  ribbitReplayUpdateControls();
+}
+function ribbitReplayChangeVolume(delta){
+  const view=ribbitReplayView;if(!view)return;
+  const previous=view.muted?0:view.volume;
+  const next=clamp(Math.round((previous+delta)*100)/100,0,1);
+  view.volume=next;view.muted=next<=0;
+  if(next>0)view.lastNonzeroVolume=next;
+  ribbitReplayUpdateControls();
+}
+function ribbitReplayExtractWorldRecords(payload,level){
+  const source=Array.isArray(payload)?payload:
+    ["entries","leaderboard","rows","records","results","data"].map(key=>payload?.[key]).find(Array.isArray)||[];
+  const result={time:null,jumps:null};
+  const consider=(metric,value)=>{
+    const number=Number(value);
+    if(Number.isFinite(number)&&number>0&&(result[metric]===null||number<result[metric]))result[metric]=number;
+  };
+  for(const entry of source){
+    const record=entry?.records?.[level];
+    if(record && typeof record==="object"){
+      consider("time",record.time);consider("jumps",record.jumps);
+      continue;
+    }
+    const rowLevel=String(entry?.level??entry?.resultLevel??"").toLowerCase();
+    if(rowLevel!==level)continue;
+    const metric=String(entry?.metric??entry?.category??"").toLowerCase();
+    if(metric==="time")consider("time",entry.value??entry.time??entry.score);
+    if(metric==="jumps")consider("jumps",entry.value??entry.jumps??entry.score);
+  }
+  return result;
+}
+async function ribbitReplayLoadWorldRecords(view){
+  if(!view?.data || view.data.mode!=="solo")return;
+  const cloud=typeof RibbitCloud!=="undefined"?RibbitCloud:window.RibbitCloud;
+  let payload=null;
+  try{payload=await cloud?.getLeaderboardData?.();}catch(_){}
+  if(!payload?.entries?.length){
+    try{
+      const response=await fetch("/api/leaderboard?limit=100",{credentials:"include",cache:"no-store"});
+      if(response.ok)payload=await response.json();
+    }catch(_){}
+  }
+  if(ribbitReplayView!==view)return;
+  view.worldRecords=ribbitReplayExtractWorldRecords(payload,String(view.data.level||"park").toLowerCase());
 }
 function ribbitReplayBegin(data,caption="REPLAY",options={}){
   const validated=ribbitReplayAdaptLegacy(data);
@@ -31091,11 +31264,16 @@ function ribbitReplayBegin(data,caption="REPLAY",options={}){
     position:0,lastTick:performance.now(),paused:false,rate:1,
     scrubbing:false,wasPaused:false,soundIndex:0,
     volume:ribbitReplayView?.volume ?? 1,
+    muted:ribbitReplayView?.muted ?? false,
+    lastNonzeroVolume:ribbitReplayView?.lastNonzeroVolume ?? 1,
+    spaceFastForwardHeld:false,spaceStartedPaused:false,
+    worldRecords:{time:null,jumps:null},
     restore:previousRestore||{state:game.state,mode:game.mode},error:""
   };
   game.state="rrEngineReplay";
   document.body.classList.add("rr-engine-replay-active");
   ribbitReplayShowControls();
+  ribbitReplayLoadWorldRecords(ribbitReplayView);
   clearHeldInput();
   return true;
 }
@@ -31124,6 +31302,7 @@ function ribbitReplayCollectionStep(delta){
 function ribbitReplayClose(){
   if(!ribbitReplayView)return false;
   const restore=ribbitReplayView.restore;
+  ribbitReplaySpaceRelease();
   ribbitReplayView=null;
   document.body.classList.remove("rr-engine-replay-active");
   ribbitReplayControls?.host?.classList.remove("rr-replay-layout");
@@ -31161,16 +31340,19 @@ function ribbitReplayTick(now=performance.now()){
   if(!ribbitReplayView){ribbitReplayCaptureTick(now);return;}
   const view=ribbitReplayView,dt=Math.max(0,Math.min(now-view.lastTick,120));
   view.lastTick=now;
-  if(view.data&&!view.paused&&!view.scrubbing){
+  const advancing=view.spaceFastForwardHeld||!view.paused;
+  if(view.data&&advancing&&!view.scrubbing){
     const prior=view.position;
-    view.position=clamp(prior+dt*view.rate,0,view.data.duration);
+    const speed=view.spaceFastForwardHeld?2:view.rate;
+    view.position=clamp(prior+dt*speed,0,view.data.duration);
     const sounds=view.data.sounds||[];
     while(view.soundIndex<sounds.length && sounds[view.soundIndex].t<=view.position){
       const sound=sounds[view.soundIndex++];
       if(sound.t<prior||sound.t>view.data.duration)continue;
       if(Number.isFinite(sound.f)&&sound.f>=45&&sound.f<=20000&&
         Number.isFinite(sound.d)&&sound.d>0&&sound.d<=3&&
-        Number.isFinite(sound.v)&&sound.v>=0&&sound.v<=.5 && view.volume>0){
+        Number.isFinite(sound.v)&&sound.v>=0&&sound.v<=.5 &&
+        view.volume>0&&!view.muted&&!(view.spaceFastForwardHeld&&view.spaceStartedPaused)){
         const formerVolume=game.volume,formerMute=game.muted;
         try{
           game.muted=false;game.volume=1;
@@ -31186,7 +31368,12 @@ function replayFrameAt(position,frames){
   let low=0,high=frames.length-1;
   while(low<high){const mid=(low+high+1)>>1;if(frames[mid].t<=position)low=mid;else high=mid-1;}
   const a=frames[low],b=frames[Math.min(low+1,frames.length-1)];
-  const factor=clamp((position-a.t)/Math.max(1,b.t-a.t),0,1);
+  const aPhase=a.phase||a.gameState?.state;
+  const bPhase=b.phase||b.gameState?.state;
+  const stableCountdown=aPhase==="countdown" && bPhase==="countdown" &&
+    Number(a.gameState?.countdownNumber)===Number(b.gameState?.countdownNumber);
+  const factor=(aPhase!==bPhase || (aPhase==="countdown"&&!stableCountdown))
+    ? 0 : clamp((position-a.t)/Math.max(1,b.t-a.t),0,1);
   const lerpPosition=(p,q)=>{
     if(!p)return p;
     const out={...p};
@@ -31202,6 +31389,8 @@ function replayFrameAt(position,frames){
     ? {...a.tongue,elapsed:a.tongue.elapsed+(b.tongue.elapsed-a.tongue.elapsed)*factor}
     : a.tongue;
   return {...a,phase:a.phase||a.gameState?.state||"playing",gameState:a.gameState||{},
+    world:Number(a.world)+(Number(b.world||a.world)-Number(a.world))*factor,
+    visual:Number(a.visual)+(Number(b.visual||a.visual)-Number(a.visual))*factor,
     tongue:soloTongue,player:lerpPosition(a.player,b.player),
     players:(a.players||[]).map((p,i)=>lerpPosition(p,b.players?.[i])),
     flies:(a.flies||[]).map(f=>{const next=alternate.get(f.id);return next?
@@ -31235,7 +31424,7 @@ function paintRibbitReplayStage(){
     return;
   }
   const state=replayFrameAt(view.position,data.frames);
-  const gameOld={};for(const field of RIBBIT_REPLAY_GAME_FIELDS)gameOld[field]=game[field];
+  const gameOld={};for(const field of [...RIBBIT_REPLAY_GAME_FIELDS,"bestTime","bestJumps","newBestTime","newFewestJumps"])gameOld[field]=game[field];
   const frogOld={...frog},tongueOld={...tongue};
   const tutorialOld={active:tutorial.active,completeScreen:tutorial.completeScreen,dialogueOpen:tutorial.dialogueOpen};
   const pvpOld=pvpPlayers.map(p=>({...p,tongue:{...p.tongue}}));
@@ -31256,6 +31445,9 @@ function paintRibbitReplayStage(){
     game.moonPhaseIndex=data.moonPhaseIndex;game.skinId=data.skinId;
     game.worldTime=state.world;game.visualTime=state.visual;game.elapsed=state.clock;
     game.targetVocabIndex=state.target;game.score=state.score;game.jumps=state.jumps;
+    game.bestTime=view.worldRecords?.time??null;
+    game.bestJumps=view.worldRecords?.jumps??null;
+    game.newBestTime=false;game.newFewestJumps=false;
     game.pvpRoundNumber=state.round||1;game.pvpTimeRemaining=state.roundTime||0;
     game.pvpElapsed=state.pvpElapsed||0;game.onlineMode=false;game.sandboxMode=false;
     game.pvpRoundWins=state.roundWins||[0,0];
@@ -31270,6 +31462,9 @@ function paintRibbitReplayStage(){
     if(data.vocab?.length)VOCABULARY=normalizeVocabularyEntries(data.vocab);
     game.flyLabelReturnAlpha=1;
     if(state.gameState)Object.assign(game,state.gameState);
+    game.bestTime=view.worldRecords?.time??null;
+    game.bestJumps=view.worldRecords?.jumps??null;
+    game.newBestTime=false;game.newFewestJumps=false;
     if (!Number.isFinite(state.gameState?.flyLabelReturnAlpha) &&
         !game.pvpCriticalCatchActive && !game.soloCriticalCatchActive) {
       game.flyLabelReturnAlpha=legacyReplayFlyLabelReturnAlpha(view.position,data.frames);
@@ -31294,6 +31489,15 @@ function paintRibbitReplayStage(){
     ribbitReplayPreviousDrawScene();
     if (state.phase === "countdown") {
       game.state = "countdown";
+      const sourceFrames=data.frames;
+      let lo=0,hi=sourceFrames.length-1;
+      while(lo<hi){const mid=(lo+hi+1)>>1;if(sourceFrames[mid].t<=view.position)lo=mid;else hi=mid-1;}
+      const digit=Number(state.gameState?.countdownNumber)||3;
+      let start=lo;
+      while(start>0&&sourceFrames[start-1].phase==="countdown" &&
+        Number(sourceFrames[start-1].gameState?.countdownNumber)===digit)start--;
+      game.countdownNumber=digit;
+      game.countdownTimer=Math.max(.001,(RIBBIT_REPLAY_COUNTDOWN_STEP_MS-Math.max(0,view.position-sourceFrames[start].t))/1000);
       drawResumeCountdown();
       game.state = "playing";
     }
@@ -31316,7 +31520,7 @@ function paintRibbitReplayStage(){
       ctx.fillRect(rect.x+15,rect.y+13,rect.w-30,40);
       ctx.fillStyle="#f57b91";
       ctx.fillRect(rect.x+21,rect.y+16,rect.w-42,4);
-      drawBitmapText("REPLAY COMPLETE!",W/2,rect.y+29,1.7,"center",COLORS.white,"#711b29");
+      drawBitmapText("LEVEL COMPLETE!",W/2,rect.y+29,1.7,"center",COLORS.white,"#711b29");
       const fmt=typeof formatTime==="function"?formatTime(final.time):`${Number(final.time).toFixed(2)}S`;
       drawBitmapText(`FINAL TIME ${fmt}`,W/2,rect.y+75,1.0,"center","#34484f");
       drawBitmapText(`${final.jumps} JUMPS  •  ${final.score} FLIES`,W/2,rect.y+101,.95,"center","#34484f");
@@ -31330,6 +31534,26 @@ function paintRibbitReplayStage(){
     window.RibbitRaceFinalCatchLabelsGone=labelsOld;
     window.RibbitReplayClueBlank=clueOld;
   }
+}
+if (typeof drawHudPausePlaySprite === "function") {
+const ribbitReplayOriginalHudPause=drawHudPausePlaySprite;
+drawHudPausePlaySprite=function(rect,paused=false,palette=getSelectedSkin()){
+  if(!ribbitReplayView)return ribbitReplayOriginalHudPause(rect,paused,palette);
+  if(!rect)return;
+  const x=Math.round(rect.x),y=Math.round(rect.y),w=Math.round(rect.w),h=Math.round(rect.h);
+  const theme=palette||getSelectedSkin();
+  ctx.save();
+  ctx.fillStyle="rgba(30,49,55,0.25)";ctx.fillRect(x+1,y+2,w,h);
+  ctx.fillStyle=COLORS.ink;ctx.fillRect(x,y,w,h);
+  ctx.fillStyle=theme.belly;ctx.fillRect(x+2,y+2,w-4,h-4);
+  ctx.fillStyle=theme.light;ctx.fillRect(x+3,y+2,w-6,2);
+  ctx.fillStyle=theme.dark;
+  for(let i=0;i<15;i++){
+    ctx.fillRect(x+Math.round((w-16)/2)+i,y+Math.round((h-16)/2)+i,2,2);
+    ctx.fillRect(x+Math.round((w-16)/2)+14-i,y+Math.round((h-16)/2)+i,2,2);
+  }
+  ctx.restore();
+};
 }
 const ribbitReplayPreviousDrawVictoryScreen=drawVictoryScreen;
 drawVictoryScreen=function(...args){
@@ -31350,20 +31574,44 @@ function ribbitReplayAdjustRate(step){
   if(!ribbitReplayView)return;
   ribbitReplayView.rate=clamp(Math.round((ribbitReplayView.rate+step)*4)/4,.25,2);
 }
+function ribbitReplaySpacePress(event){
+  const view=ribbitReplayView;
+  if(!view?.data || view.spaceFastForwardHeld)return;
+  if(view.position>=view.data.duration-1)return;
+  view.spaceFastForwardHeld=true;
+  view.spaceStartedPaused=!!view.paused;
+  view.lastTick=performance.now();
+  ribbitReplayUpdateControls();
+}
+function ribbitReplaySpaceRelease(){
+  const view=ribbitReplayView;
+  if(!view?.spaceFastForwardHeld)return;
+  view.spaceFastForwardHeld=false;
+  view.spaceStartedPaused=false;
+  view.lastTick=performance.now();
+  ribbitReplayUpdateControls();
+}
 function handleRibbitReplayKey(event){
   if(!ribbitReplayView || window.RibbitFrogTagReplayBrowser?.isOpen?.())return;
   const key=event.code;
   const supported=["Escape","Backspace","Space","ArrowLeft","ArrowRight","ArrowUp","ArrowDown",
-    "Equal","Minus","KeyF","KeyJ","KeyL","KeyX","KeyZ","KeyN","KeyB","KeyR","Home","End","Comma","Period",
+    "Equal","Minus","KeyF","KeyJ","KeyL","KeyX","KeyZ","KeyN","KeyB","KeyR","KeyK","KeyM","Home","End","Comma","Period",
     ...Array.from({length:10},(_,i)=>`Digit${i}`),...Array.from({length:10},(_,i)=>`Numpad${i}`)];
   if(!supported.includes(key)){
     event.preventDefault();event.stopImmediatePropagation();return;
   }
   event.preventDefault();event.stopImmediatePropagation();
-  if(event.repeat && !["ArrowLeft","ArrowRight","KeyJ","KeyL","KeyX","KeyZ","Comma","Period"].includes(key))return;
+  if(key==="Space"){
+    if(!event.repeat)ribbitReplaySpacePress(event);
+    return;
+  }
+  if(event.repeat && !["ArrowUp","ArrowDown","ArrowLeft","ArrowRight","KeyJ","KeyL","KeyX","KeyZ","Comma","Period"].includes(key))return;
   const view=ribbitReplayView;
   if(key==="Escape"||key==="Backspace")ribbitReplayClose();
-  else if(key==="Space")ribbitReplayTogglePlayback();
+  else if(key==="KeyK")ribbitReplayTogglePlayback();
+  else if(key==="KeyM")ribbitReplayToggleMute();
+  else if(key==="ArrowUp")ribbitReplayChangeVolume(.05);
+  else if(key==="ArrowDown")ribbitReplayChangeVolume(-.05);
   else if(key==="ArrowLeft")ribbitReplaySeek(view.position/1000-5);
   else if(key==="ArrowRight")ribbitReplaySeek(view.position/1000+5);
   else if(key==="KeyJ")ribbitReplaySeek(view.position/1000-10);
@@ -31375,8 +31623,8 @@ function handleRibbitReplayKey(event){
   else if(key==="KeyR")view.rate=view.rate===4?1:4;
   else if(key==="Home")ribbitReplaySeek(0);
   else if(key==="End")ribbitReplaySeek(view.data?.duration/1000||0);
-  else if(key==="Comma"&&event.shiftKey||key==="ArrowDown"||key==="Minus")ribbitReplayAdjustRate(-.25);
-  else if(key==="Period"&&event.shiftKey||key==="ArrowUp"||key==="Equal")ribbitReplayAdjustRate(.25);
+  else if((key==="Comma"&&event.shiftKey)||key==="Minus")ribbitReplayAdjustRate(-.25);
+  else if((key==="Period"&&event.shiftKey)||key==="Equal")ribbitReplayAdjustRate(.25);
   else if(key==="Comma")ribbitReplaySeek((view.position-(1000/RIBBIT_REPLAY_FPS))/1000);
   else if(key==="Period")ribbitReplaySeek((view.position+(1000/RIBBIT_REPLAY_FPS))/1000);
   else if(/^Digit[0-9]$/.test(key)||/^Numpad[0-9]$/.test(key)){
@@ -31386,9 +31634,21 @@ function handleRibbitReplayKey(event){
   ribbitReplayUpdateControls();
 }
 window.addEventListener("keydown",handleRibbitReplayKey,true);
+window.addEventListener("keyup",event=>{
+  if(!ribbitReplayView||event.code!=="Space")return;
+  event.preventDefault();event.stopImmediatePropagation();
+  ribbitReplaySpaceRelease();
+},true);
+window.addEventListener("blur",ribbitReplaySpaceRelease);
 canvas.addEventListener("pointerdown",event=>{
   if(!ribbitReplayView)return;
   event.preventDefault();event.stopImmediatePropagation();
+  const point=getCanvasPoint(event);
+  const rect=HUD_UI.pauseButton;
+  if(point.x>=rect.x&&point.x<=rect.x+rect.w&&point.y>=rect.y&&point.y<=rect.y+rect.h){
+    ribbitReplayClose();return;
+  }
+  if(!ribbitReplayView.paused){ribbitReplayView.paused=true;ribbitReplayView.lastTick=performance.now();ribbitReplayUpdateControls();}
 },true);
 window.RibbitEngineReplay=Object.freeze({
   mime:RIBBIT_ENGINE_REPLAY_MIME,fps:RIBBIT_REPLAY_FPS,

@@ -18,9 +18,9 @@ test('Polish 57 reconstructs a 3-2-1 opening only when the saved replay does not
   const loaded=ctx.ribbitReplayEnsureCountdown(base);
   assert.equal(loaded.reconstructedCountdown,true);
   assert.equal(loaded.frames[0].phase,'countdown');
-  assert.deepEqual(Array.from(new Set(loaded.frames.slice(0,6).map(f=>f.gameState.countdownNumber))),[3,2,1]);
-  assert.equal(loaded.frames[6].phase,'playing');
-  assert.equal(loaded.frames[6].t,2250);
+  assert.deepEqual(Array.from(new Set(loaded.frames.slice(0,135).map(f=>f.gameState.countdownNumber))),[3,2,1]);
+  assert.equal(loaded.frames[135].phase,'playing');
+  assert.equal(loaded.frames[135].t,2250);
   assert.equal(loaded.sounds.find(s=>s.f===500).t,2250);
   assert.equal(JSON.stringify(base),original,'saved archive cannot be modified by playback repair');
   const existing={...base,frames:base.frames.map(f=>({...f,phase:'countdown',gameState:{countdownNumber:3}}))};
@@ -30,8 +30,8 @@ test('Polish 57 adds missing 3 for a replay that begins on countdown 2 without d
   const {ctx,base}=countdownVM();base.frames[0].phase='countdown';base.frames[0].gameState={state:'countdown',countdownNumber:2};
   const result=ctx.ribbitReplayEnsureCountdown(base);
   assert.equal(result.frames[0].gameState.countdownNumber,3);
-  assert.equal(result.frames[2].gameState.countdownNumber,2);
-  assert.equal(result.frames[2].t,750);
+  assert.equal(result.frames[45].gameState.countdownNumber,2);
+  assert.equal(result.frames[45].t,750);
 });
 test('Polish 57 records the original timezone and the visible solo slow-mo fly, keeping replay schema backwards compatible',()=>{
   assert.match(replay,/recordedTimeZone:Intl\.DateTimeFormat\(\)\.resolvedOptions\(\)\.timeZone/);

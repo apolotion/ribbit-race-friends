@@ -857,41 +857,35 @@
     }
 
     function beginPvpTimerJumpGrace() {
-      // A tutorial-final frog may FINISH holding an already-started charge
-      // after the buzzer and release one last jump. No new charge can begin.
-      // Ordinary Versus retains its original automatic buzzer release.
       const tutorialFinal = Boolean(tutorial.active && tutorial.kind === "pvp" &&
         tutorialStep()?.setup === "pvpFinalMatch");
-      const heldAtBuzzer = pvpPlayers.map((player) => Boolean(tutorialFinal &&
+      const forceAutoRelease = Boolean(tutorialFinal && tutorial.pvpAutoReleaseAtZero);
+      const heldAtBuzzer = pvpPlayers.map((player) => Boolean((tutorialFinal || forceAutoRelease) &&
         player && player.grounded && player.charging && !player.bonked && player.stunTimer <= 0));
-      if (!tutorialFinal) {
+      if (forceAutoRelease || !tutorialFinal) {
         pvpPlayers.forEach((player, index) => {
           if (player && player.grounded && player.charging && !player.bonked && player.stunTimer <= 0) {
             player.inputHeld = true;
-            releasePvpButton(index, "system");
+            releasePvpButton(index, index === getPvpCpuIndex() && game.pvpCpuEnabled ? "cpu" : "system");
           }
         });
       }
       const eligible = pvpPlayers.map((player, index) => Boolean(
         player && (!player.grounded || player.landedThisFrame || player.tongue.active || heldAtBuzzer[index])
       ));
-      game.pvpTutorialGraceHeld = heldAtBuzzer;
-      game.pvpTutorialGraceFromHeld = heldAtBuzzer.some(Boolean);
+      game.pvpTutorialGraceHeld = forceAutoRelease ? [false, false] : heldAtBuzzer;
+      game.pvpTutorialGraceFromHeld = forceAutoRelease ? false : heldAtBuzzer.some(Boolean);
       game.pvpTimerGraceEligible = eligible;
       game.pvpTimerGracePromptSerial = game.promptSerial;
       game.pvpTimerGraceActive = eligible.some(Boolean);
       game.pvpTimedOutcomePending = true;
       game.spawnQueue = [];
       preservePvpChargedJumpsAtTimeLimit();
-      if (tutorialFinal) {
-        // Keep ONLY the charges that were active at 0. New charges remain
-        // disabled by startPvpCharge and pressPvpButton during grace.
+      if (tutorialFinal && !forceAutoRelease) {
         game.pvpCpuPlan = null;
         pvpPlayers.forEach((player, index) => {
           if (!heldAtBuzzer[index]) { player.inputHeld = false; player.charging = false; }
         });
-        // The CPU has no human key-up after the buzzer. Release her existing
-        // charged jump now instead of waiting six seconds for grace to expire.
         const cpuIndex = getPvpCpuIndex();
         if (game.pvpCpuEnabled && heldAtBuzzer[cpuIndex]) {
           pvpPlayers[cpuIndex].inputHeld = true;
