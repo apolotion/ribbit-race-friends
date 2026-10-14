@@ -302,8 +302,11 @@
     drawPixelFlag(code,rect.x+rect.w-34,Math.round(centerY-7),1);
   }
   function drawProfileMenu() {
-    drawUtilityWindowFrame("ACCOUNT & LANGUAGE", "PLAYER SETTINGS");
-    drawBitmapText(`PLAYER: ${accountDisplayName().toUpperCase()}`,W/2,63,.55,"center","#48555a");
+    drawUtilityWindowFrame("ACCOUNT & LANGUAGE", "");
+    drawBitmapText("PLAYER SETTINGS",W/2,53,.42,"center","#6a7478");
+    const playerLabel = `PLAYER: ${accountDisplayName().toUpperCase()}`;
+    const playerScale = Math.min(.50, 215/Math.max(1, measureBitmapText(playerLabel,1)));
+    drawBitmapText(playerLabel,W/2,63,playerScale,"center","#48555a");
     const skin=getSelectedSkin();
     PROFILE_MENU_RECTS.forEach((rect,index)=>{
       const selected=index===polish.profileSelection;

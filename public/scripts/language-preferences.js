@@ -172,8 +172,11 @@
   }
 
   function scan(root = document) {
+    const insideGameFrame = (node) => node instanceof HTMLElement && node.closest?.("#game-frame");
+    for (const stale of root.querySelectorAll?.("#game-frame [data-rr-language-fields]") || []) stale.remove();
     const elements = root.querySelectorAll?.("form, [role='dialog'], [class*='account'], [class*='profile'], [class*='signup'], [id*='signup'], [id*='register']") || [];
     for (const element of elements) {
+      if (insideGameFrame(element)) continue;
       const text = String(element.textContent || "");
       if (/CREATE ACCOUNT|SIGN UP|REGISTER/i.test(text)) installFields(element, "signup");
       else if (/NAME:|SIGN OUT|MANAGE SAVE|ACCOUNT/i.test(text)) installFields(element, "profile");
