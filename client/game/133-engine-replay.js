@@ -5,8 +5,11 @@ const RIBBIT_ENGINE_REPLAY_MIME = "application/vnd.ribbit-race.frames+json";
 const RIBBIT_REPLAY_FPS = 60;
 const RIBBIT_REPLAY_FRAME_INTERVAL = 1000/RIBBIT_REPLAY_FPS;
 const RIBBIT_REPLAY_MAX_FRAMES = 30000; // Full best-of sets at 60 Hz, including countdowns and result transitions.
-const RIBBIT_REPLAY_DANCE_MILLIS = 3000;
-const RIBBIT_REPLAY_RESULT_HOLD = 2000; // animated completion overlay
+const RIBBIT_REPLAY_DANCE_MILLIS = 3000; // recorded dance frames; the last second is generated for playback
+const RIBBIT_REPLAY_SCORE_DELAY = 1000; // show the hopping frog alone for one second
+const RIBBIT_REPLAY_SCORE_HOLD = 3000; // show the centered score while the frog keeps hopping
+const RIBBIT_REPLAY_RESULT_HOLD = 1000; // one synthetic second after the recorded 3-second dance
+const RIBBIT_REPLAY_SCHEMA_VERSION = 2; // v1 recordings from Polish 44–51 remain readable
 const RIBBIT_REPLAY_SNAPSHOT_FIELDS = [
   "x","y","w","h","vx","vy","dir","grounded","charging","charge","landingSquash",
   "blinkTimer","blinking","score","skinId","bonked","stunTimer","bonkLandingPopTimer",
@@ -100,9 +103,12 @@ function ribbitReplayCaptureTick(now=performance.now()){
   // celebration and Frog Tags consequently saved only one round of a best-of.
   const continuingSet = ribbitReplayCapture?.mode === "pvp" && game.mode === "pvp";
   const initialCountdown = validRecording && game.state === "countdown" &&
+    Number(game.countdownNumber ?? 3) > 0 &&
+    !OnlineVersus.preparingStart?.() &&
     ((continuingSet && ribbitReplayCapture.frames.length > 0) ||
-      (!ribbitReplayCapture || ribbitReplayCapture.initialCountdownActive) &&
-      Number(game.elapsed || 0) < .2);
+      !ribbitReplayCapture || ribbitReplayCapture.initialCountdownActive);
+  // Do not infer new-game countdowns from elapsed time: online clients may
+  // enter the synchronized 3-2-1 with an already-updated game clock.
   const setResult = validRecording && continuingSet &&
     ["pvpCelebration","won","pvpSuddenDeathAlert"].includes(game.state);
   const normalGame = validRecording && (game.state === "playing" || initialCountdown || setResult);
@@ -125,7 +131,10 @@ function ribbitReplayCaptureTick(now=performance.now()){
         time:Number(game.finishTime??game.elapsed)||0,
         jumps:Number(game.jumps)||0,
         score:Number(game.score)||0,
-        danceMs:RIBBIT_REPLAY_DANCE_MILLIS
+        startT:Math.max(0,Math.round(now-ribbitReplayCapture.startedAt-ribbitReplayCapture.pausedMillis)),
+        danceMs:RIBBIT_REPLAY_DANCE_MILLIS,
+        scoreDelayMs:RIBBIT_REPLAY_SCORE_DELAY,
+        scoreHoldMs:RIBBIT_REPLAY_SCORE_HOLD
       };
     }
   }else{
@@ -136,10 +145,14 @@ function ribbitReplayCaptureTick(now=performance.now()){
     if(changed){
       if(ribbitReplayCapture)finishRibbitReplayCapture();
       ribbitReplayCapture={
-        v:3,kind:"ribbit-engine-frames",fps:RIBBIT_REPLAY_FPS,mode,level,recordedAt:Date.now(),
+        v:RIBBIT_REPLAY_SCHEMA_VERSION,kind:"ribbit-engine-frames",fps:RIBBIT_REPLAY_FPS,mode,level,recordedAt:Date.now(),
         timeOfDay:game.timeOfDay,moonPhaseIndex:game.moonPhaseIndex,skinId:game.skinId,
         pvpTimeLimitSeconds:game.pvpTimeLimitSeconds,pvpFirstTo:game.pvpFirstTo,
         pvpRoundGoalMode:game.pvpRoundGoalMode,pvpBestOf:game.pvpBestOf,
+        // Freeze map geometry with the recording. Newer map revisions should
+        // not move the platforms under an older recording's frog coordinates.
+        stageLayout:{platforms:(LEVELS[level]?.platforms||[]).map(p=>({...p})),
+          flySpawns:(LEVELS[level]?.flySpawns||[]).map(p=>({...p}))},
         vocab:VOCABULARY.map(e=>({english:e.english,spanish:e.spanish})),
         startedAt:now,lastAt:-Infinity,lastGameTime:0,pausedAt:0,pausedMillis:0,
         initialCountdownActive:initialCountdown,victoryAt:0,final:null,frames:[],sounds:[]
@@ -164,7 +177,7 @@ function ribbitReplayCaptureTick(now=performance.now()){
 function ribbitReplayCaptureCountdownStart(now=performance.now()) {
   if (ribbitReplayView || ribbitReplayCapture || tutorial.active || game.tutorialActive ||
       OnlineVersus.isSpectating() || game.state !== "countdown" ||
-      Number(game.elapsed || 0) > .15) return;
+      Number(game.countdownNumber ?? 3) < 1 || OnlineVersus.preparingStart?.()) return;
   ribbitReplayCaptureTick(now);
 }
 // Every in-game sound is synthesized through tone(); capture its oscillator
@@ -182,11 +195,15 @@ function ribbitReplayExportCurrent(){
   const capture=ribbitReplayCapture?.frames.length?ribbitReplayCapture:ribbitReplayLastCapture;
   if(!capture||capture.frames.length<2)return null;
   const frames=capture.frames;
-  const duration=frames[frames.length-1].t+(capture.final?RIBBIT_REPLAY_RESULT_HOLD:0);
+  const duration=capture.final
+    ? Math.max(frames[frames.length-1].t,capture.final.startT+RIBBIT_REPLAY_SCORE_DELAY+RIBBIT_REPLAY_SCORE_HOLD)
+    : frames[frames.length-1].t;
   return {
-    version:1,kind:"ribbit-engine-frames",fps:capture.fps||13,
+    version:RIBBIT_REPLAY_SCHEMA_VERSION,kind:"ribbit-engine-frames",fps:capture.fps||RIBBIT_REPLAY_FPS,
+    compatibility:{frameSchema:RIBBIT_REPLAY_SCHEMA_VERSION,minimumPlayerVersion:1,recordedBy:"1.7.40"},
     mode:capture.mode,level:capture.level,recordedAt:capture.recordedAt,timeOfDay:capture.timeOfDay,
     moonPhaseIndex:capture.moonPhaseIndex,skinId:capture.skinId,vocab:capture.vocab,
+    stageLayout:capture.stageLayout,
     pvpTimeLimitSeconds:capture.pvpTimeLimitSeconds,pvpFirstTo:capture.pvpFirstTo,
     pvpRoundGoalMode:capture.pvpRoundGoalMode,pvpBestOf:capture.pvpBestOf,
     duration,final:capture.final||undefined,
@@ -205,28 +222,67 @@ function ribbitReplayWhenComplete(){
     },4400);
   });
 }
+// Permanent, additive schema adapters. Saved v1 payloads are never rewritten:
+// they stay in IndexedDB / Cloudflare exactly as recorded, and are adapted only
+// in memory when opened. Preserve these readers in later versions of the game.
 function validateRibbitReplayData(data){
-  if(!data||data.kind!=="ribbit-engine-frames"||data.version!==1||
-    !["solo","pvp"].includes(data.mode)||!LEVELS[String(data.level||"").toLowerCase()]||
-    !Array.isArray(data.frames)||data.frames.length<2||data.frames.length>RIBBIT_REPLAY_MAX_FRAMES)return false;
+  if(!data || data.kind!=="ribbit-engine-frames" || ![1,2].includes(Number(data.version)) ||
+    !["solo","pvp"].includes(data.mode) || !LEVELS[String(data.level||"").toLowerCase()] ||
+    !Array.isArray(data.frames) || data.frames.length<2 || data.frames.length>RIBBIT_REPLAY_MAX_FRAMES)return false;
   let last=-1;
   for(const frame of data.frames){
-    if(!frame||!Number.isFinite(Number(frame.t))||frame.t<last||frame.t>3600000||
-      !Array.isArray(frame.flies)||frame.flies.length>16||
-      !frame.player||!Number.isFinite(frame.player.x)||!Number.isFinite(frame.player.y))return false;
+    if(!frame || !Number.isFinite(Number(frame.t)) || frame.t<last || frame.t>3600000 ||
+      !Array.isArray(frame.flies) || frame.flies.length>16 ||
+      !frame.player || !Number.isFinite(frame.player.x) || !Number.isFinite(frame.player.y))return false;
     last=frame.t;
   }
-  if(!Number.isFinite(data.duration)||data.duration<last||data.duration>3600000)return false;
+  // Polish 44 saved v1 records without duration, fps, recordedAt, audio or a final card.
+  // All of them are optional in the v1 adapter; v2 guarantees a duration.
+  if(Number(data.version)>=2 && !Number.isFinite(data.duration))return false;
+  if(data.duration!=null && (!Number.isFinite(data.duration) || data.duration<last || data.duration>3600000))return false;
   if(data.sounds && (!Array.isArray(data.sounds)||data.sounds.length>10000))return false;
   return true;
 }
-
+function ribbitReplayAdaptLegacy(data){
+  if(!validateRibbitReplayData(data))return null;
+  if(Number(data.version)===2)return data;
+  const lastFrame=data.frames[data.frames.length-1];
+  const playable={
+    ...data, // retain the actual archived frames/positions/skin/vocabulary as-is
+    level:String(data.level).toLowerCase(),
+    version:1,legacySchema:1,
+    fps:Number(data.fps)||13,
+    duration:Math.max(lastFrame.t,Number(data.duration)||0),
+    sounds:Array.isArray(data.sounds)?data.sounds:[],
+    vocab:Array.isArray(data.vocab)?data.vocab:[],
+    final:data.final||undefined
+  };
+  // v1 used a 3-second dance THEN a 2-second completion card. Present that
+  // existing recording with the current 1+3 timing, leaving saved bytes alone.
+  const timeline=ribbitReplayFinalTimeline(playable);
+  if(timeline)playable.duration=Math.max(lastFrame.t,timeline.finishAt);
+  return playable;
+}
+// A deterministic end-card timeline is stored with v2 replays. For archived
+// Polish 45–51 clips, infer the win instant from the existing frames, adapting
+// their old 3+2 second tail to the new 1+3 display without touching the source.
+function ribbitReplayFinalTimeline(data){
+  if(!data?.final || !Array.isArray(data.frames) || !data.frames.length)return null;
+  const frames=data.frames;
+  const winningFrame=frames.find(frame=>frame.phase==="won" || frame.gameState?.state==="won");
+  const winAt=Number.isFinite(data.final.startT)?data.final.startT:
+    (winningFrame?.t ?? frames[frames.length-1].t);
+  const start=Math.max(0,winAt);
+  const showAt=start+RIBBIT_REPLAY_SCORE_DELAY;
+  const finishAt=start+RIBBIT_REPLAY_SCORE_DELAY+RIBBIT_REPLAY_SCORE_HOLD;
+  return {start,showAt,finishAt};
+}
 // Merge historical round recordings into a single watchable set. New
 // recordings are already one continuous 60 Hz set, so only legacy groups use
 // this adapter. Frame/audio timestamps stay sorted and all source data stays
 // unchanged (safe for rewatching and seeking).
 function ribbitReplayCombineRounds(records){
-  const valid=(records||[]).filter(validateRibbitReplayData);
+  const valid=(records||[]).map(ribbitReplayAdaptLegacy).filter(Boolean);
   if(!valid.length)return null;
   if(valid.length===1)return valid[0];
   const first=valid[0];
@@ -299,7 +355,7 @@ function ribbitReplayCreateControls(){
     else if(action==="previous")ribbitReplayCollectionStep(-1);
     else if(action==="next")ribbitReplayCollectionStep(1);
     else if(action==="browse")ribbitReplayView.collection?.openBrowser?.();
-    else if(action==="play")ribbitReplayView.paused=!ribbitReplayView.paused;
+    else if(action==="play")ribbitReplayTogglePlayback();
     else if(action==="speed"){
       const rates=[.25,.5,.75,1,1.25,1.5,1.75,2,4];
       const index=rates.findIndex(n=>n===ribbitReplayView.rate);
@@ -339,7 +395,7 @@ function ribbitReplayUpdateControls(){
     const value=Math.max(0,Math.floor(ms/1000));
     return `${Math.floor(value/60)}:${String(value%60).padStart(2,"0")}`;
   };
-  controls.play.textContent=view.paused?"PLAY":"PAUSE";
+  controls.play.textContent=view.paused && view.data && view.position>=duration-1 ? "REPLAY" : view.paused?"PLAY":"PAUSE";
   controls.speed.textContent=`${view.rate}X`;
   controls.time.textContent=`${format(view.position)} / ${format(duration)}`;
   const collection=view.collection;
@@ -355,12 +411,13 @@ function ribbitReplayUpdateControls(){
   }
 }
 function ribbitReplayBegin(data,caption="REPLAY",options={}){
-  if(!validateRibbitReplayData(data))return ribbitReplayUnavailable("REPLAY UNAVAILABLE","THIS RECORD HAS NO PLAYABLE GAME-STATE DATA");
+  const playable=ribbitReplayAdaptLegacy(data);
+  if(!playable)return ribbitReplayUnavailable("REPLAY UNAVAILABLE","THIS RECORD HAS NO PLAYABLE GAME-STATE DATA");
   if(ribbitReplayCapture)finishRibbitReplayCapture();
   const previousRestore=ribbitReplayView?.restore;
   ribbitReplayView={
-    data,caption:String(caption||"REPLAY").toUpperCase().slice(0,90),
-    recordedAt:options.recordedAt||data.recordedAt||null,
+    data:playable,caption:String(caption||"REPLAY").toUpperCase().slice(0,90),
+    recordedAt:options.recordedAt||playable.recordedAt||null,
     collection:options.collection||null,
     position:0,lastTick:performance.now(),paused:false,rate:1,
     scrubbing:false,wasPaused:false,soundIndex:0,
@@ -415,7 +472,21 @@ function ribbitReplaySeek(seconds){
   if(!ribbitReplayView?.data)return;
   const view=ribbitReplayView;
   view.position=clamp(seconds*1000,0,view.data.duration||0);
-  view.soundIndex=ribbitReplaySoundAtOrAfter(view.position+1,view.data.sounds||[]);
+  view.soundIndex=ribbitReplaySoundAtOrAfter(view.position,view.data.sounds||[]);
+  view.lastTick=performance.now();
+  ribbitReplayUpdateControls();
+}
+function ribbitReplayTogglePlayback(){
+  const view=ribbitReplayView;
+  if(!view?.data)return;
+  if(view.position>=view.data.duration-1){
+    // A finished replay rewinds to the VERY FIRST 3-2-1 frame, restoring the
+    // first countdown tone as well as the visuals for Space or the PLAY button.
+    ribbitReplaySeek(0);
+    view.rate=1;
+    view.soundIndex=0;
+    view.paused=false;
+  }else view.paused=!view.paused;
   view.lastTick=performance.now();
   ribbitReplayUpdateControls();
 }
@@ -460,7 +531,8 @@ function replayFrameAt(position,frames){
   const soloTongue = a.tongue && b.tongue && a.tongue.active && b.tongue.active
     ? {...a.tongue,elapsed:a.tongue.elapsed+(b.tongue.elapsed-a.tongue.elapsed)*factor}
     : a.tongue;
-  return {...a,tongue:soloTongue,player:lerpPosition(a.player,b.player),
+  return {...a,phase:a.phase||a.gameState?.state||"playing",gameState:a.gameState||{},
+    tongue:soloTongue,player:lerpPosition(a.player,b.player),
     players:(a.players||[]).map((p,i)=>lerpPosition(p,b.players?.[i])),
     flies:(a.flies||[]).map(f=>{const next=alternate.get(f.id);return next?
       {...f,x:f.x+(next.x-f.x)*factor,y:f.y+(next.y-f.y)*factor}:f;})};
@@ -504,10 +576,11 @@ function paintRibbitReplayStage(){
   const platformsOld=platforms,flySpawnsOld=flySpawns,vocabularyOld=VOCABULARY;
   const labelsOld=window.RibbitRaceFinalCatchLabelsGone;
   const clueOld=window.RibbitReplayClueBlank;
+  const timeline=ribbitReplayFinalTimeline(data);
   const finalFrameTime=data.frames[data.frames.length-1].t;
-  const finalHold=!!data.final && view.position>=finalFrameTime;
-  const animatedTailSeconds=finalHold ? Math.max(0,(view.position-finalFrameTime)/1000) : 0;
-  const replaySceneState=(data.mode==="solo" && (state.phase==="won" || finalHold)) ||
+  const finalHold=!!timeline && view.position>=timeline.showAt;
+  const animatedTailSeconds=timeline ? Math.max(0,(view.position-finalFrameTime)/1000) : 0;
+  const replaySceneState=(data.mode==="solo" && (state.phase==="won" || !!timeline && view.position>=timeline.start)) ||
     (data.mode==="pvp" && ["won","pvpCelebration"].includes(state.phase))
     ? state.phase==="pvpCelebration" ? "pvpCelebration" : "won" : "playing";
   try{
@@ -538,9 +611,10 @@ function paintRibbitReplayStage(){
     // Never enter pause/tutorial/save screens as a side effect of rendering.
     game.state=replaySceneState;
     game.onlineMode=false;game.tutorialActive=false;game.sandboxMode=false;
-    platforms=LEVELS[data.level].platforms;flySpawns=LEVELS[data.level].flySpawns;
+    platforms=data.stageLayout?.platforms||LEVELS[data.level].platforms;
+    flySpawns=data.stageLayout?.flySpawns||LEVELS[data.level].flySpawns;
     Object.assign(frog,state.player);
-    if(finalHold && data.mode==="solo") {
+    if(animatedTailSeconds>0 && data.mode==="solo") {
       frog.danceTime=Math.max(0,Number(state.player?.danceTime)||0)+animatedTailSeconds;
       game.visualTime=(Number(state.visual)||0)+animatedTailSeconds;
       frog.grounded=true;
@@ -570,7 +644,9 @@ function paintRibbitReplayStage(){
       // Stepped white end card, bold red banner, shine and charcoal border
       // like the normal FIVE FLIES screen. It is drawn OVER the LIVE hops.
       const final=data.final;
-      const rect={x:39,y:14,w:402,h:128};
+      const rect={w:402,h:128};
+      rect.x=Math.round((W-rect.w)/2);
+      rect.y=Math.round((H-rect.h)/2);
       ctx.fillStyle="rgba(11,32,40,.38)";
       ctx.fillRect(rect.x+5,rect.y+7,rect.w,rect.h);
       ctx.fillStyle=COLORS.ink;
@@ -600,8 +676,8 @@ function paintRibbitReplayStage(){
     window.RibbitReplayClueBlank=clueOld;
   }
 }
-// Replays suppress ONLY the standard win modal, so the frog remains visible
-// and dances for all three recorded seconds. The replay's final stats follow it.
+// Replays suppress ONLY the standard win modal. Our centered score overlay
+// appears one second into the dance, while the frog continues hopping below.
 const ribbitReplayPreviousDrawVictoryScreen=drawVictoryScreen;
 drawVictoryScreen=function(...args){
   if(ribbitReplayView?.data)return;
@@ -634,7 +710,7 @@ function handleRibbitReplayKey(event){
   if(event.repeat && !["ArrowLeft","ArrowRight","KeyJ","KeyL","KeyX","KeyZ","Comma","Period"].includes(key))return;
   const view=ribbitReplayView;
   if(key==="Escape"||key==="Backspace")ribbitReplayClose();
-  else if(key==="Space")view.paused=!view.paused;
+  else if(key==="Space")ribbitReplayTogglePlayback();
   else if(key==="ArrowLeft")ribbitReplaySeek(view.position/1000-5);
   else if(key==="ArrowRight")ribbitReplaySeek(view.position/1000+5);
   else if(key==="KeyJ")ribbitReplaySeek(view.position/1000-10);
@@ -673,5 +749,6 @@ window.RibbitEngineReplay=Object.freeze({
   setPaused:value=>{if(ribbitReplayView){ribbitReplayView.paused=!!value;ribbitReplayView.lastTick=performance.now();}},
   seek:ribbitReplaySeek,unavailable:ribbitReplayUnavailable,
   combineRounds:ribbitReplayCombineRounds,
+  compatibleVersions:[1,2],adaptLegacy:ribbitReplayAdaptLegacy,
   active:()=>!!ribbitReplayView
 });

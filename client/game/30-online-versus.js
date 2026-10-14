@@ -814,7 +814,9 @@
         const number=committed&&t>=syncClock.countdownAt?Math.max(0,Math.min(3,Math.ceil((syncClock.goAt-t)/750))):3;
         game.countdownNumber=number;game.countdownTimer=Math.max(0,(syncClock.goAt-t)/1000);
         if(committed&&t>=syncClock.countdownAt&&number!==syncClock.lastNumber){
-          syncClock.lastNumber=number;if(number>0)playCountdownSound(number);
+          syncClock.lastNumber=number;
+          if(number===3)window.RibbitEngineReplay?.captureCountdownStart?.(performance.now());
+          if(number>0)playCountdownSound(number);
         }
         if(committed&&syncClock.goAt>0&&t>=syncClock.goAt){
           syncClock.complete=true;syncClock.firstPlayAt=t;

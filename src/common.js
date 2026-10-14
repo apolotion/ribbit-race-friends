@@ -1,6 +1,6 @@
 import {Buffer} from 'node:buffer';
 import {createHash, timingSafeEqual, pbkdf2Sync} from 'node:crypto';
-export const BUILD='2026.10.13-friends-polish-51';
+export const BUILD='2026.10.13-friends-polish-52';
 export const digest=v=>createHash('sha256').update(String(v)).digest('hex');
 export function randomHex(bytes=32){return [...crypto.getRandomValues(new Uint8Array(bytes))].map(v=>v.toString(16).padStart(2,'0')).join('');}
 export function equal(a,b){const x=Buffer.from(String(a)),y=Buffer.from(String(b));return x.length===y.length&&timingSafeEqual(x,y);}

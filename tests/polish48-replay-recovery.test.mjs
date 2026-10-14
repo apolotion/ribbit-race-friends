@@ -9,37 +9,35 @@ const physics = read('client/game/60-versus-physics.js');
 const rendering = read('client/game/63-versus-rendering-ui.js');
 const hud = read('client/game/71-rendering-entities-hud.js');
 
-const version = '1.7.39';
-const marker = '2026.10.13-friends-polish-51';
+const version = '1.7.40';
+const marker = '2026.10.13-friends-polish-52';
 
 test('Polish 48 version and cache marker agree across source, browser and Worker', () => {
   assert.equal(JSON.parse(read('package.json')).version,version);
-  assert.match(read('client/game/10-core-config.js'), /VERSION 1\.7\.39/);
+  assert.match(read('client/game/10-core-config.js'), /VERSION 1\.7\.40/);
   assert.ok(read('src/common.js').includes(marker));
   assert.ok(read('client/game/120-tutorial-config.js').includes(marker));
   assert.ok(read('public/index.html').includes(marker));
   assert.ok(read('public/scripts/game.bundle.js').includes(marker));
 });
 
-test('Replay holds completion card for two seconds while the victory frog continues hopping', () => {
-  assert.match(replay,/const RIBBIT_REPLAY_RESULT_HOLD = 2000;/);
-  assert.match(replay,/const animatedTailSeconds=finalHold \? Math\.max\(0,\(view\.position-finalFrameTime\)\/1000\) : 0;/);
-  assert.match(replay,/data\.mode==="solo" && \(state\.phase==="won" \|\| finalHold\)/);
-  assert.match(replay,/game\.state=replaySceneState/);
+test('Replay records three seconds of victory, displays centered stats after one second, and hops for four total', () => {
+  assert.match(replay,/const RIBBIT_REPLAY_RESULT_HOLD = 1000;/);
+  assert.match(replay,/const RIBBIT_REPLAY_SCORE_DELAY = 1000;/);
+  assert.match(replay,/const RIBBIT_REPLAY_SCORE_HOLD = 3000;/);
+  assert.match(replay,/const animatedTailSeconds=timeline \? Math\.max\(0,\(view\.position-finalFrameTime\)\/1000\) : 0;/);
+  assert.match(replay,/data\.mode==="solo" && \(state\.phase==="won" \|\| !!timeline/);
   assert.match(replay,/frog\.danceTime=Math\.max\(0,Number\(state\.player\?\.danceTime\)\|\|0\)\+animatedTailSeconds/);
-  assert.match(replay,/game\.visualTime=\(Number\(state\.visual\)\|\|0\)\+animatedTailSeconds/);
-  assert.ok(replay.indexOf('ribbitReplayPreviousDrawScene();') < replay.indexOf('if(finalHold){\n      // Stepped white end card'));
-  assert.doesNotMatch(replay,/ctx\.fillRect\(103,84,274,78\)/);
+  assert.ok(replay.indexOf('ribbitReplayPreviousDrawScene();') < replay.indexOf('if(finalHold){'));
 });
 
-test('Replay Complete card uses the wide stepped FIVE FLIES design and keeps blank matching plate', () => {
-  assert.match(replay,/const rect=\{x:39,y:14,w:402,h:128\};/);
+test('Replay Complete card is centered in both axes, with stepped FIVE FLIES styling and blank final clue', () => {
+  assert.match(replay,/const rect=\{w:402,h:128\};/);
+  assert.match(replay,/rect\.x=Math\.round\(\(W-rect\.w\)\/2\);/);
+  assert.match(replay,/rect\.y=Math\.round\(\(H-rect\.h\)\/2\);/);
   assert.match(replay,/ctx\.fillRect\(rect\.x\+5,rect\.y,rect\.w-10,rect\.h\)/);
-  assert.match(replay,/ctx\.fillRect\(rect\.x,rect\.y\+5,rect\.w,rect\.h-10\)/);
   assert.match(replay,/drawBitmapText\("REPLAY COMPLETE!"/);
-  assert.match(replay,/drawBitmapText\(`FINAL TIME \$\{fmt\}`/);
   assert.match(replay,/RibbitReplayClueBlank=finalHold \|\| view\.position/);
-  assert.match(hud,/At the end of an archived replay, retain the complete FIND THE MATCH/);
   assert.match(hud,/const prompt = window\.RibbitReplayClueBlank/);
 });
 

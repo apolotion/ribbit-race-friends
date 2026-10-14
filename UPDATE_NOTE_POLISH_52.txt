@@ -1,0 +1,31 @@
+RIBBIT RACE FRIENDS — POLISH 52
+Version: 1.7.40
+Build: 2026.10.13-friends-polish-52
+Base: Polish 51 / 1.7.39
+
+REPLAY COUNTDOWN
+- The recording starts on the first 3 of 3–2–1, before the tone is played.
+- Online Versus synchronized countdown starts now seed the recorder at the first committed 3; the prior elapsed-time cutoff has been removed.
+- New frame-based replays include 3, 2, 1, their tones, and game movement.
+- Old recordings cannot retroactively include any countdown not recorded at the time.
+
+REPLAY ENDING
+- Frog victory hops alone for the first 1.0 second after the solo win.
+- A centered, stepped REPLAY COMPLETE card shows final time/jumps/flies over the frog for the following 3.0 seconds.
+- The frog continues hopping behind the score card, including the synthetic fourth second, until playback finishes.
+- The score card is centered in both axes of the actual canvas rather than positioned near the top.
+- Space OR the replay toolbar play button restarts finished playback from 0:00, including its first countdown tone.
+- Normal pause/unpause behavior remains unchanged before the end of playback.
+
+LEGACY PLAYBACK SUPPORT
+- Explicit schema v2 for newly saved replays; archived v1 recordings remain supported through an in-memory adapter.
+- The adapter accepts earliest Polish 44 frame records missing fps, duration, phase, audio, and win metadata.
+- Polish 45–51 records remain watchable with their saved frames, skins, vocabulary, and sounds; old win timelines are adapted in memory without modifying stored data.
+- Existing Frog Tags round/group recordings can be combined with newer set recordings.
+- Original replay payloads remain unchanged in IndexedDB / cloud; replay viewing never deletes or rewrites them.
+- New replay files embed a snapshot of the stage platforms and fly spawn points, protecting archived frog movement from future stage layout edits.
+- Future replay updates should ADD new schema readers, never replace or remove v1/v2 readers. See REPLAY_COMPATIBILITY.md.
+- Source-data-less historical video-only recordings cannot be reconstructed as game-state replays.
+
+No API, Cloudflare Worker migration, or code.gs update is required.
+All client/game source changes are compiled into public/scripts/game.bundle.js by npm run build.

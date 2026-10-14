@@ -18,8 +18,8 @@ function block(start, end) {
 }
 
 test("polish-9 cache marker and tutorial seen key are synchronized", () => {
-  assert.match(engine, /TUTORIAL_BUILD = "2026\.10\.13-friends-polish-51"/);
-  assert.match(index, /game\.bundle\.js\?v=2026\.10\.13-friends-polish-51/);
+  assert.match(engine, /TUTORIAL_BUILD = "2026\.10\.13-friends-polish-52"/);
+  assert.match(index, /game\.bundle\.js\?v=2026\.10\.13-friends-polish-52/);
   assert.match(engine, /rrFriendsEngineTutorialSoloSeenV8/);
   assert.match(read("public/scripts/tutorial-preboot.js"), /rrFriendsEngineTutorialSoloSeenV8/);
 });

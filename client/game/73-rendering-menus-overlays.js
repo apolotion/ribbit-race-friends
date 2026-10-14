@@ -1653,7 +1653,7 @@
     }
 
     function drawResumeCountdown() {
-      if(OnlineVersus.preparingStart())return;
+      if(OnlineVersus.preparingStart() && !window.RibbitEngineReplay?.active?.())return;
       if (game.state !== "countdown" || game.countdownNumber < 1) return;
 
       const elapsedInStep = CONFIG.resumeCountdownStepDuration - game.countdownTimer;
