@@ -70,9 +70,9 @@ test('high-ground lesson uses one maximum jump and resets misses', () => {
 });
 
 test('wait-next-bonk demo uses physical wall rebound and never turns Ember manually', () => {
-  assert.match(scenes, /case "pvpDemoRecoveryBonk":[\s\S]{0,350}scriptPvpChargedJump\(1, \.55, -1, 0\)/);
+  assert.match(scenes, /case "pvpDemoRecoveryBonk"[\s\S]{0,500}pvpRecoveryDemoJumpPower\(travel, \.055\)/);
   assert.match(scenes, /if \(ember\.wallBouncedThisJump\) tutorial\.pvpRecoveryWallReboundSeen = true/);
-  assert.match(scenes, /scriptPvpChargedJump\(1, \.88, -1, 0\)/);
+  assert.match(scenes, /scriptPvpChargedJump\(1, returnPower, -1, 0\)/);
   assert.doesNotMatch(scenes, /scriptPvpChargedJump\(1, \.55, 1, 0\)/);
 });
 
@@ -83,8 +83,8 @@ test('Ember starts buffered sky drop centered atop the high platform and practic
 });
 
 test('Ember reacts to player release and takes two real under-bonks without a teleport', () => {
-  assert.match(scenes, /case "pvpUnderBonkTwo"[\s\S]{0,500}positionPvpOnPlatform\(p1, PARK_PLATFORMS\[2\], 1\)/);
-  assert.match(monitoring, /tutorial\.pvpUnderBonkChargePrimed = true;\s*scriptPvpPress\(1, 1\)/);
+  assert.match(scenes, /case "pvpUnderBonkTwo"[\s\S]{0,500}positionPvp\(p1, 238, CONFIG\.groundY - p1\.h, 1\)/);
+  assert.match(monitoring, /tutorial\.pvpUnderBonkEmberDismounted &&[\s\S]{0,180}tutorial\.pvpUnderBonkChargePrimed = true;\s*scriptPvpPress\(1, 1\)/);
   assert.match(monitoring, /if \(ember\.charging && tutorial\.pvpUnderBonkChargePrimed\)/);
   assert.match(monitoring, /if \(tutorial\.pvpUnderBonks > 0\)/);
   assert.match(monitoring, /second-under-bonk-straight-up/);

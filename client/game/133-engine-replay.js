@@ -4,9 +4,9 @@
 const RIBBIT_ENGINE_REPLAY_MIME = "application/vnd.ribbit-race.frames+json";
 const RIBBIT_REPLAY_FPS = 60;
 const RIBBIT_REPLAY_FRAME_INTERVAL = 1000/RIBBIT_REPLAY_FPS;
-const RIBBIT_REPLAY_MAX_FRAMES = 12000;
+const RIBBIT_REPLAY_MAX_FRAMES = 30000; // Full best-of sets at 60 Hz, including countdowns and result transitions.
 const RIBBIT_REPLAY_DANCE_MILLIS = 3000;
-const RIBBIT_REPLAY_RESULT_HOLD = 2400;
+const RIBBIT_REPLAY_RESULT_HOLD = 2000; // animated completion overlay
 const RIBBIT_REPLAY_SNAPSHOT_FIELDS = [
   "x","y","w","h","vx","vy","dir","grounded","charging","charge","landingSquash",
   "blinkTimer","blinking","score","skinId","bonked","stunTimer","bonkLandingPopTimer",
@@ -95,13 +95,19 @@ function ribbitReplayCaptureTick(now=performance.now()){
   const isSoloDance=!!(ribbitReplayCapture?.mode==="solo" && game.mode==="solo" && game.state==="won");
   const validRecording = ["solo","pvp"].includes(game.mode) && !tutorial.active &&
     !game.tutorialActive && !game.sandboxMode && !OnlineVersus.isSpectating();
+  // A Versus SET spans several rounds. The old recorder stopped at the first
+  // celebration and Frog Tags consequently saved only one round of a best-of.
+  const continuingSet = ribbitReplayCapture?.mode === "pvp" && game.mode === "pvp";
   const initialCountdown = validRecording && game.state === "countdown" &&
-    (!ribbitReplayCapture || ribbitReplayCapture.initialCountdownActive) &&
-    Number(game.elapsed || 0) < .2;
-  const normalGame = validRecording && (game.state === "playing" || initialCountdown);
+    ((continuingSet && ribbitReplayCapture.frames.length > 0) ||
+      (!ribbitReplayCapture || ribbitReplayCapture.initialCountdownActive) &&
+      Number(game.elapsed || 0) < .2);
+  const setResult = validRecording && continuingSet &&
+    ["pvpCelebration","won","pvpSuddenDeathAlert"].includes(game.state);
+  const normalGame = validRecording && (game.state === "playing" || initialCountdown || setResult);
   if(!normalGame&&!isSoloDance){
     const betweenRounds=ribbitReplayCapture?.mode==="pvp" &&
-      ["pvpCelebration","pvpSuddenDeathAlert"].includes(game.state);
+      ["pvpCelebration","pvpSuddenDeathAlert","won","countdown"].includes(game.state);
     if(ribbitReplayCapture && (["paused","countdown"].includes(game.state)||betweenRounds)){
       if(!ribbitReplayCapture.pausedAt)ribbitReplayCapture.pausedAt=now;
     }else if(ribbitReplayCapture)finishRibbitReplayCapture();
@@ -129,7 +135,7 @@ function ribbitReplayCaptureTick(now=performance.now()){
     if(changed){
       if(ribbitReplayCapture)finishRibbitReplayCapture();
       ribbitReplayCapture={
-        v:2,kind:"ribbit-engine-frames",fps:RIBBIT_REPLAY_FPS,mode,level,
+        v:3,kind:"ribbit-engine-frames",fps:RIBBIT_REPLAY_FPS,mode,level,recordedAt:Date.now(),
         timeOfDay:game.timeOfDay,moonPhaseIndex:game.moonPhaseIndex,skinId:game.skinId,
         pvpTimeLimitSeconds:game.pvpTimeLimitSeconds,pvpFirstTo:game.pvpFirstTo,
         pvpRoundGoalMode:game.pvpRoundGoalMode,pvpBestOf:game.pvpBestOf,
@@ -178,7 +184,7 @@ function ribbitReplayExportCurrent(){
   const duration=frames[frames.length-1].t+(capture.final?RIBBIT_REPLAY_RESULT_HOLD:0);
   return {
     version:1,kind:"ribbit-engine-frames",fps:capture.fps||13,
-    mode:capture.mode,level:capture.level,timeOfDay:capture.timeOfDay,
+    mode:capture.mode,level:capture.level,recordedAt:capture.recordedAt,timeOfDay:capture.timeOfDay,
     moonPhaseIndex:capture.moonPhaseIndex,skinId:capture.skinId,vocab:capture.vocab,
     pvpTimeLimitSeconds:capture.pvpTimeLimitSeconds,pvpFirstTo:capture.pvpFirstTo,
     pvpRoundGoalMode:capture.pvpRoundGoalMode,pvpBestOf:capture.pvpBestOf,
@@ -214,6 +220,30 @@ function validateRibbitReplayData(data){
   return true;
 }
 
+// Merge historical round recordings into a single watchable set. New
+// recordings are already one continuous 60 Hz set, so only legacy groups use
+// this adapter. Frame/audio timestamps stay sorted and all source data stays
+// unchanged (safe for rewatching and seeking).
+function ribbitReplayCombineRounds(records){
+  const valid=(records||[]).filter(validateRibbitReplayData);
+  if(!valid.length)return null;
+  if(valid.length===1)return valid[0];
+  const first=valid[0];
+  const frames=[],sounds=[];
+  let offset=0;
+  for(const item of valid){
+    if(item.mode!==first.mode||item.level!==first.level)continue;
+    const firstTime=item.frames[0].t;
+    for(const frame of item.frames)frames.push({...frame,t:Math.round(offset+frame.t-firstTime)});
+    for(const sound of item.sounds||[])sounds.push({...sound,t:Math.round(offset+Math.max(0,sound.t-firstTime))});
+    offset=frames.at(-1).t+650;
+  }
+  if(frames.length<2)return null;
+  // Playback validates the merged set with the same guards as single runs.
+  return {...first,recordedAt:first.recordedAt||Date.now(),
+    final:undefined,frames,sounds:sounds.sort((a,b)=>a.t-b.t),
+    duration:frames.at(-1).t+1800,legacyCombinedRounds:valid.length};
+}
 // The stage belongs to the canvas alone; the spectator toolbar is regular HTML
 // OUTSIDE the canvas. This avoids the former top/bottom overlays hiding flies,
 // fly labels, the Find the Match clue, and the bottom score panel.
@@ -224,11 +254,14 @@ function ribbitReplayCreateControls(){
   if(!host)return null;
   const header=document.createElement("header");
   header.id="rr-spectator-header";
-  header.innerHTML='<span class="rr-spectator-caption"></span><span class="rr-spectator-badge">SPECTATOR REPLAY <small>60 FPS</small></span>';
+  header.innerHTML='<span class="rr-spectator-title"><span class="rr-spectator-caption"></span><span class="rr-spectator-date"></span></span><span class="rr-spectator-badge">SPECTATOR REPLAY <small>60 FPS</small></span>';
   const footer=document.createElement("nav");
   footer.id="rr-spectator-toolbar";
   footer.setAttribute("aria-label","Replay playback controls");
   footer.innerHTML=`
+    <button type="button" data-replay-action="previous" title="Previous Frog Tags set (Shift+B)" hidden>◀</button>
+    <button type="button" data-replay-action="browse" title="Browse Frog Tags replays" hidden>REPLAYS</button>
+    <button type="button" data-replay-action="next" title="Next Frog Tags set (Shift+N)" hidden>▶</button>
     <button type="button" data-replay-action="play" aria-label="Pause or play">PAUSE</button>
     <button type="button" data-replay-action="speed" aria-label="Change playback speed">1X</button>
     <label class="rr-replay-progress" aria-label="Timeline">
@@ -262,6 +295,9 @@ function ribbitReplayCreateControls(){
     if(!action||!ribbitReplayView)return;
     event.stopPropagation();
     if(action==="exit")ribbitReplayClose();
+    else if(action==="previous")ribbitReplayCollectionStep(-1);
+    else if(action==="next")ribbitReplayCollectionStep(1);
+    else if(action==="browse")ribbitReplayView.collection?.openBrowser?.();
     else if(action==="play")ribbitReplayView.paused=!ribbitReplayView.paused;
     else if(action==="speed"){
       const rates=[.25,.5,.75,1,1.25,1.5,1.75,2,4];
@@ -271,6 +307,10 @@ function ribbitReplayCreateControls(){
   });
   ribbitReplayControls={host,header,footer,seek,
     caption:header.querySelector(".rr-spectator-caption"),
+    date:header.querySelector(".rr-spectator-date"),
+    previous:footer.querySelector('[data-replay-action="previous"]'),
+    next:footer.querySelector('[data-replay-action="next"]'),
+    browse:footer.querySelector('[data-replay-action="browse"]'),
     badge:header.querySelector(".rr-spectator-badge small"),
     play:footer.querySelector('[data-replay-action="play"]'),
     speed:footer.querySelector('[data-replay-action="speed"]'),
@@ -282,6 +322,11 @@ function ribbitReplayShowControls(){
   if(!controls)return;
   controls.host.classList.add("rr-replay-layout");
   controls.caption.textContent=ribbitReplayView?.caption||"REPLAY";
+  const at=ribbitReplayView?.recordedAt??ribbitReplayView?.data?.recordedAt;
+  const date=Number(at)?new Date(at):new Date(at||"");
+  controls.date.textContent=Number.isFinite(date.getTime())
+    ? ` • ${date.toLocaleDateString(undefined,{year:"numeric",month:"short",day:"numeric"})} ${date.toLocaleTimeString(undefined,{hour:"numeric",minute:"2-digit"})}`
+    : "";
   controls.badge.textContent=ribbitReplayView?.data?.fps===60?"60 FPS":"ARCHIVED FRAMES";
   ribbitReplayUpdateControls();
 }
@@ -296,20 +341,29 @@ function ribbitReplayUpdateControls(){
   controls.play.textContent=view.paused?"PLAY":"PAUSE";
   controls.speed.textContent=`${view.rate}X`;
   controls.time.textContent=`${format(view.position)} / ${format(duration)}`;
+  const collection=view.collection;
+  controls.browse.hidden=!collection;
+  controls.previous.hidden=!collection;
+  controls.next.hidden=!collection;
+  controls.previous.disabled=!collection||collection.index<=0;
+  controls.next.disabled=!collection||collection.index>=collection.entries.length-1;
   if(!view.scrubbing){
     const progress=duration?view.position/duration:0;
     controls.seek.value=String(Math.round(10000*progress));
     controls.seek.style.setProperty("--rr-replay-progress",`${(progress*100).toFixed(2)}%`);
   }
 }
-function ribbitReplayBegin(data,caption="REPLAY"){
+function ribbitReplayBegin(data,caption="REPLAY",options={}){
   if(!validateRibbitReplayData(data))return ribbitReplayUnavailable("REPLAY UNAVAILABLE","THIS RECORD HAS NO PLAYABLE GAME-STATE DATA");
   if(ribbitReplayCapture)finishRibbitReplayCapture();
+  const previousRestore=ribbitReplayView?.restore;
   ribbitReplayView={
-    data,caption:String(caption||"REPLAY").toUpperCase().slice(0,65),
+    data,caption:String(caption||"REPLAY").toUpperCase().slice(0,90),
+    recordedAt:options.recordedAt||data.recordedAt||null,
+    collection:options.collection||null,
     position:0,lastTick:performance.now(),paused:false,rate:1,
     scrubbing:false,wasPaused:false,soundIndex:0,
-    restore:{state:game.state,mode:game.mode},error:""
+    restore:previousRestore||{state:game.state,mode:game.mode},error:""
   };
   game.state="rrEngineReplay";
   document.body.classList.add("rr-engine-replay-active");
@@ -330,6 +384,15 @@ function ribbitReplayUnavailable(title,reason){
   ribbitReplayShowControls();
   clearHeldInput();
   return false;
+}
+function ribbitReplayCollectionStep(delta){
+  const collection=ribbitReplayView?.collection;
+  if(!collection?.entries?.length || typeof collection.playIndex!=="function")return false;
+  const target=collection.index+delta;
+  if(target<0||target>=collection.entries.length)return false;
+  // Preserve the entire in-game viewer; switching resets its own timeline.
+  collection.playIndex(target);
+  return true;
 }
 function ribbitReplayClose(){
   if(!ribbitReplayView)return false;
@@ -418,9 +481,15 @@ function paintRibbitReplayStage(){
   const fliesOld=flies.slice();
   const platformsOld=platforms,flySpawnsOld=flySpawns,vocabularyOld=VOCABULARY;
   const labelsOld=window.RibbitRaceFinalCatchLabelsGone;
-  const finalHold=!!data.final && view.position>=data.frames[data.frames.length-1].t;
+  const clueOld=window.RibbitReplayClueBlank;
+  const finalFrameTime=data.frames[data.frames.length-1].t;
+  const finalHold=!!data.final && view.position>=finalFrameTime;
+  const animatedTailSeconds=finalHold ? Math.max(0,(view.position-finalFrameTime)/1000) : 0;
+  const replaySceneState=(data.mode==="solo" && (state.phase==="won" || finalHold)) ||
+    (data.mode==="pvp" && ["won","pvpCelebration"].includes(state.phase))
+    ? state.phase==="pvpCelebration" ? "pvpCelebration" : "won" : "playing";
   try{
-    game.state=state.phase==="won"?"won":"playing";
+    game.state=replaySceneState;
     game.mode=data.mode;game.selectedLevelId=data.level;game.timeOfDay=data.timeOfDay;
     game.moonPhaseIndex=data.moonPhaseIndex;game.skinId=data.skinId;
     game.worldTime=state.world;game.visualTime=state.visual;game.elapsed=state.clock;
@@ -438,10 +507,15 @@ function paintRibbitReplayStage(){
     if(data.vocab?.length)VOCABULARY=normalizeVocabularyEntries(data.vocab);
     if(state.gameState)Object.assign(game,state.gameState);
     // Never enter pause/tutorial/save screens as a side effect of rendering.
-    game.state=state.phase==="won"?"won":"playing";
+    game.state=replaySceneState;
     game.onlineMode=false;game.tutorialActive=false;game.sandboxMode=false;
     platforms=LEVELS[data.level].platforms;flySpawns=LEVELS[data.level].flySpawns;
     Object.assign(frog,state.player);
+    if(finalHold && data.mode==="solo") {
+      frog.danceTime=Math.max(0,Number(state.player?.danceTime)||0)+animatedTailSeconds;
+      game.visualTime=(Number(state.visual)||0)+animatedTailSeconds;
+      frog.grounded=true;
+    }
     Object.assign(tongue,state.tongue||state.player.tongue||{active:false});
     if(data.mode==="pvp")state.players.forEach((player,i)=>{
       if(pvpPlayers[i])Object.assign(pvpPlayers[i],player,{tongue:player.tongue||{active:false}});
@@ -450,6 +524,10 @@ function paintRibbitReplayStage(){
     // The LIVE game may have hidden all final-catch labels after completing its
     // last round; archived flies still need their labels at every recorded frame.
     window.RibbitRaceFinalCatchLabelsGone=false;
+    // Leave the Find the Match frame visible at the last replay frame.
+    // Only its English clue becomes blank; older completed runs may have no
+    // remaining live target, so the renderer must be allowed to draw anyway.
+    window.RibbitReplayClueBlank=finalHold || view.position>=Math.max(0,data.duration-1);
     // Existing scene engine paints the original fly labels, HUD and slow-mo camera.
     ribbitReplayPreviousDrawScene();
     if (state.phase === "countdown") {
@@ -460,16 +538,28 @@ function paintRibbitReplayStage(){
       game.state = "playing";
     }
     if(finalHold){
-      const final=data.final,skin=getSelectedSkin();
-      ctx.fillStyle="rgba(9,26,34,.82)";ctx.fillRect(103,84,274,78);
-      ctx.fillStyle=COLORS.ink;ctx.fillRect(106,86,268,73);
-      ctx.fillStyle="#f7fdff";ctx.fillRect(110,90,260,65);
-      ctx.fillStyle=skin.mid;ctx.fillRect(112,92,256,22);
-      ctx.fillStyle=skin.light;ctx.fillRect(116,95,248,3);
-      drawBitmapText("REPLAY COMPLETE!",W/2,99,1.15,"center",COLORS.white,skin.dark);
+      // Stepped white end card, bold red banner, shine and charcoal border
+      // like the normal FIVE FLIES screen. It is drawn OVER the LIVE hops.
+      const final=data.final;
+      const rect={x:39,y:14,w:402,h:128};
+      ctx.fillStyle="rgba(11,32,40,.38)";
+      ctx.fillRect(rect.x+5,rect.y+7,rect.w,rect.h);
+      ctx.fillStyle=COLORS.ink;
+      ctx.fillRect(rect.x+5,rect.y,rect.w-10,rect.h);
+      ctx.fillRect(rect.x,rect.y+5,rect.w,rect.h-10);
+      ctx.fillStyle="#f7fdff";
+      ctx.fillRect(rect.x+10,rect.y+4,rect.w-20,rect.h-8);
+      ctx.fillRect(rect.x+4,rect.y+10,rect.w-8,rect.h-20);
+      ctx.fillStyle="#791c2b";
+      ctx.fillRect(rect.x+12,rect.y+10,rect.w-24,46);
+      ctx.fillStyle="#b22b40";
+      ctx.fillRect(rect.x+15,rect.y+13,rect.w-30,40);
+      ctx.fillStyle="#f57b91";
+      ctx.fillRect(rect.x+21,rect.y+16,rect.w-42,4);
+      drawBitmapText("REPLAY COMPLETE!",W/2,rect.y+29,1.7,"center",COLORS.white,"#711b29");
       const fmt=typeof formatTime==="function"?formatTime(final.time):`${Number(final.time).toFixed(2)}S`;
-      drawBitmapText(`FINAL TIME ${fmt}`,W/2,122,.86,"center","#34484f");
-      drawBitmapText(`${final.jumps} JUMPS  •  ${final.score} FLIES`,W/2,140,.78,"center","#34484f");
+      drawBitmapText(`FINAL TIME ${fmt}`,W/2,rect.y+75,1.0,"center","#34484f");
+      drawBitmapText(`${final.jumps} JUMPS  •  ${final.score} FLIES`,W/2,rect.y+101,.95,"center","#34484f");
     }
   }finally{
     Object.assign(game,gameOld);Object.assign(frog,frogOld);Object.assign(tongue,tongueOld);
@@ -478,6 +568,7 @@ function paintRibbitReplayStage(){
     flies.splice(0,flies.length,...fliesOld);
     platforms=platformsOld;flySpawns=flySpawnsOld;VOCABULARY=vocabularyOld;
     window.RibbitRaceFinalCatchLabelsGone=labelsOld;
+    window.RibbitReplayClueBlank=clueOld;
   }
 }
 // Replays suppress ONLY the standard win modal, so the frog remains visible
@@ -502,23 +593,26 @@ function ribbitReplayAdjustRate(step){
   ribbitReplayView.rate=clamp(Math.round((ribbitReplayView.rate+step)*4)/4,.25,2);
 }
 function handleRibbitReplayKey(event){
-  if(!ribbitReplayView)return;
+  if(!ribbitReplayView || window.RibbitFrogTagReplayBrowser?.isOpen?.())return;
   const key=event.code;
   const supported=["Escape","Backspace","Space","ArrowLeft","ArrowRight","ArrowUp","ArrowDown",
-    "Equal","Minus","KeyF","KeyJ","KeyL","KeyR","Home","End","Comma","Period",
+    "Equal","Minus","KeyF","KeyJ","KeyL","KeyX","KeyZ","KeyN","KeyB","KeyR","Home","End","Comma","Period",
     ...Array.from({length:10},(_,i)=>`Digit${i}`),...Array.from({length:10},(_,i)=>`Numpad${i}`)];
   if(!supported.includes(key)){
     event.preventDefault();event.stopImmediatePropagation();return;
   }
   event.preventDefault();event.stopImmediatePropagation();
-  if(event.repeat && !["ArrowLeft","ArrowRight","KeyJ","KeyL","Comma","Period"].includes(key))return;
+  if(event.repeat && !["ArrowLeft","ArrowRight","KeyJ","KeyL","KeyX","KeyZ","Comma","Period"].includes(key))return;
   const view=ribbitReplayView;
   if(key==="Escape"||key==="Backspace")ribbitReplayClose();
   else if(key==="Space")view.paused=!view.paused;
   else if(key==="ArrowLeft")ribbitReplaySeek(view.position/1000-5);
   else if(key==="ArrowRight")ribbitReplaySeek(view.position/1000+5);
   else if(key==="KeyJ")ribbitReplaySeek(view.position/1000-10);
-  else if(key==="KeyL")ribbitReplaySeek(view.position/1000+10);
+  else if(key==="KeyL"||key==="KeyX")ribbitReplaySeek(view.position/1000+10);
+  else if(key==="KeyZ")ribbitReplaySeek(view.position/1000-10);
+  else if(key==="KeyN"&&event.shiftKey)ribbitReplayCollectionStep(1);
+  else if(key==="KeyB"&&event.shiftKey)ribbitReplayCollectionStep(-1);
   else if(key==="KeyF")toggleRibbitFullscreen();
   else if(key==="KeyR")view.rate=view.rate===4?1:4;
   else if(key==="Home")ribbitReplaySeek(0);
@@ -545,6 +639,10 @@ window.RibbitEngineReplay=Object.freeze({
   exportCurrent:ribbitReplayExportCurrent,
   finishCapture:finishRibbitReplayCapture,whenComplete:ribbitReplayWhenComplete,
   play:ribbitReplayBegin,close:ribbitReplayClose,
+  nextReplay:()=>ribbitReplayCollectionStep(1),previousReplay:()=>ribbitReplayCollectionStep(-1),
+  isPaused:()=>!!ribbitReplayView?.paused,
+  setPaused:value=>{if(ribbitReplayView){ribbitReplayView.paused=!!value;ribbitReplayView.lastTick=performance.now();}},
   seek:ribbitReplaySeek,unavailable:ribbitReplayUnavailable,
+  combineRounds:ribbitReplayCombineRounds,
   active:()=>!!ribbitReplayView
 });

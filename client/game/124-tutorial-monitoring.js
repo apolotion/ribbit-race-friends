@@ -365,13 +365,31 @@ function drivePvpPracticeCpu(setup, now) {
   }
 
   if (setup === "pvpUnderBonkTwo") {
-    // Begin charging *as soon as* P1 releases their first jump from the
-    // left-middle platform. Ember may only launch once P1 lands on the
-    // lower-middle perch; she is never teleported between attempts.
+    // Ember starts on the LEFT-MIDDLE perch shown in reference #2. After
+    // the dialogue she quick-drops by ordinary engine physics; no poofs.
+    // The player may make as many setup jumps as needed to reach the center
+    // perch before she launches the first under-bonk.
     const center = PARK_PLATFORMS[3];
+    if (!tutorial.pvpUnderBonkEmberDismounted) {
+      // Her first rightward drop from the left-middle perch can naturally
+      // LAND on the lower-center perch. Quick-drop from that intermediate
+      // perch too, then start the bonks only after she reaches GROUND.
+      if (ember.grounded && ember.y + ember.h >= CONFIG.groundY - 1 &&
+          !ember.charging && !tutorial.pvpScriptActions.length) {
+        tutorial.pvpUnderBonkEmberDismounted = true;
+      } else {
+        const perch = ember.grounded ? getPvpStandingPlatform(ember) : null;
+        if (perch && !perch.ground && !ember.charging && !tutorial.pvpScriptActions.length) {
+          tutorial.pvpUnderBonkDismountQueued = true;
+          scriptPvpQuickDrop(1, 0, 1);
+        }
+        return;
+      }
+    }
     const playerFlying = !p1.grounded && p1.firstJumpMade && !p1.charging;
     if (playerFlying) tutorial.pvpUnderBonkAttemptAirborne = true;
     if (playerFlying && tutorial.pvpUnderBonks === 0 &&
+        tutorial.pvpUnderBonkEmberDismounted &&
         !tutorial.pvpUnderBonkChargePrimed && !tutorial.dialogueOpen) {
       tutorial.pvpUnderBonkChargePrimed = true;
       scriptPvpPress(1, 1);
@@ -636,17 +654,22 @@ function monitorPvp() {
       tutorial.pvpLastPracticeEventAt = now - 200;
       return;
     }
-    if (tutorial.pvpUnderBonkAttemptAirborne && playerLanded && !landedOnCenter && tutorial.pvpUnderBonks === 0) {
-      failAttempt("LAND ON THE LOWER-MIDDLE PLATFORM");
-      return;
-    }
+    // Allow intermediate setup jumps from P1's new center-ground starting
+    // position. Failing to land the perch on the first jump must not poof the
+    // frogs or erase the two-bonk lesson's progress.
     // If Ember lands after attempting to jump past P1 without getting under
     // bonked, the attempt really failed; poof both frogs, keeping no progress.
     if (tutorial.pvpUnderBonkPendingSecond && ember.firstJumpMade && !ember.grounded)
       tutorial.pvpUnderBonkEmberAirborne = true;
     if (tutorial.pvpUnderBonkPendingSecond && tutorial.pvpUnderBonkEmberAirborne && ember.grounded &&
         !ember.bonked && ember.stunTimer <= 0 && now - tutorial.pvpLastPracticeEventAt > 600) {
-      failAttempt("HOLD YOUR PERCH AND UNDER BONK EMBER");
+      if (tutorial.pvpUnderBonks > 0 && landedOnCenter) {
+        // A near-miss on bonk #2 retries Ember's natural jump from wherever
+        // she landed. Preserve bonk #1 and NEVER poof/reset her mid-lesson.
+        tutorial.pvpUnderBonkPendingSecond = false;
+        tutorial.pvpUnderBonkEmberAirborne = false;
+        tutorial.pvpLastPracticeEventAt = now - 900;
+      } else failAttempt("HOLD YOUR PERCH AND UNDER BONK EMBER");
     }
     return;
   }
@@ -656,7 +679,14 @@ function monitorPvp() {
       failAttempt("USE A QUICK TAP TO STAY LOW");
     } else {
       const platform = PARK_PLATFORMS[3];
-      if (p1.x > platform.x + platform.w + 18 && pvpTutorialSettled()) passStep();
+      const underPerch = p1.x + p1.w > platform.x && p1.x < platform.x + platform.w &&
+        p1.y >= platform.y + platform.h - 2;
+      if (underPerch) tutorial.pvpAvoidUnderPassedBeneath = true;
+      // The right side is enough: no 18px extra travel/settling requirement.
+      // passStep handles a final airborne landing before opening dialogue.
+      if (tutorial.pvpAvoidUnderPassedBeneath && p1.x + p1.w >= platform.x + platform.w + 1) {
+        passStep();
+      }
     }
     return;
   }

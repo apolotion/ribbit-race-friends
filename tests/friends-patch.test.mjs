@@ -36,8 +36,8 @@ test("PIN hashing stays within Cloudflare PBKDF2 limit and matches 100000 rounds
 });
 
 test("Friends release exposes the new build marker",()=>{
-  assert.equal(BUILD,"2026.10.13-friends-polish-46");
-  assert.match(browserSource,/2026\.10\.13\-friends\-polish\-46/);
+  assert.equal(BUILD,"2026.10.13-friends-polish-49");
+  assert.match(browserSource,/2026\.10\.13\-friends\-polish\-49/);
 });
 
 test("server vocabulary is exactly the requested 15 entries",()=>{
@@ -77,7 +77,7 @@ test("index is presentation-only and gameplay source is separated by responsibil
   assert.match(indexHtml,/\/scripts\/cloud-client\.js/);
   assert.match(indexHtml,/\/scripts\/game\.bundle\.js/);
   const modules=fs.readdirSync(new URL("../client/game/",import.meta.url)).filter(name=>/^\d+-.+\.js$/.test(name));
-  assert.equal(modules.length,30);
+  assert.equal(modules.length,31);
   assert.ok(modules.includes("133-engine-replay.js"));
   assert.match(fs.readFileSync(new URL("../scripts/build-game.mjs",import.meta.url),"utf8"),/class GameBundleBuilder/);
 });
@@ -324,8 +324,8 @@ test("Friends first-place notice is a world-record notice with hover details",()
   assert.doesNotMatch(indexHtml,/MIGRATE OLD PRIVATE-KEY ACCOUNT/);
 });
 
-test("version 1.7.34 remains in settings and the How To Play book footer",()=>{
-  assert.match(html,/const RIBBIT_DISPLAY_VERSION = "VERSION 1\.7\.34"/);
+test("version 1.7.37 remains in settings and the How To Play book footer",()=>{
+  assert.match(html,/const RIBBIT_DISPLAY_VERSION = "VERSION 1\.7\.37"/);
   assert.match(html,/drawVersionLabel\(panel\.x \+ panel\.w \/ 2, panel\.y \+ panel\.h - 14, "center"/);
   assert.doesNotMatch(html,/drawVersionLabel\(399, 218, "right"\)/);
   assert.match(html,/function getPauseBookTheme/);

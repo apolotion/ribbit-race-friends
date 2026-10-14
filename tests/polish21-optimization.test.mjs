@@ -18,7 +18,7 @@ function between(source, start, end) {
 test("Polish 21 uses responsibility-focused modules instead of giant runtime files", () => {
   const directory = join(root, "client/game");
   const modules = readdirSync(directory).filter((name) => /^\d+-.+\.js$/.test(name));
-  assert.equal(modules.length, 30);
+  assert.equal(modules.length, 31);
   const lineCounts = modules.map((name) => read(`client/game/${name}`).split(/\r?\n/).length);
   assert.ok(Math.max(...lineCounts) < 3000, `largest module has ${Math.max(...lineCounts)} lines`);
   for (const name of [

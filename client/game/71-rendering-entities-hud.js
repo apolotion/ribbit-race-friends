@@ -868,12 +868,17 @@
     }
 
     function drawVocabularyPrompt() {
-      if (!["playing", "paused", "countdown"].includes(game.state)) return;
-      if (game.sandboxMode || game.winPending || !Number.isInteger(game.targetVocabIndex)) return;
-      if (game.tutorialActive && !flies.some((fly) => fly &&
+      const replayActive=!!window.RibbitEngineReplay?.active?.();
+      if (!["playing", "paused", "countdown"].includes(game.state) && !replayActive) return;
+      if (game.sandboxMode || (!replayActive && game.winPending) ||
+          (!replayActive && !Number.isInteger(game.targetVocabIndex))) return;
+      if (!replayActive && game.tutorialActive && !flies.some((fly) => fly &&
           (game.mode === "pvp" ? fly.state !== "eaten" : fly.state === "active" && fly.tutorialArmed !== false))) return;
 
-      const prompt = normalizeVocabularyCellText(getLocalizedClueTerm(VOCABULARY[game.targetVocabIndex]) || "", 80);
+      // At the end of an archived replay, retain the complete FIND THE MATCH
+      // plate and its title; clear only the English term underneath it.
+      const prompt = window.RibbitReplayClueBlank || !Number.isInteger(game.targetVocabIndex)
+        ? "" : normalizeVocabularyCellText(getLocalizedClueTerm(VOCABULARY[game.targetVocabIndex]) || "", 80);
       const left = 154;
       const top = 234;
       const width = 172;

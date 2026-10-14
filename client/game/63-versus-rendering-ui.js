@@ -279,12 +279,11 @@
       const popProgress = clamp(1 - (player.bonkLandingPopTimer || 0) / popDuration, 0, 1);
       const popOffset = player.bonkLandingPopTimer > 0 ? Math.round(Math.sin(popProgress * Math.PI) * 3) : 0;
       const baseY = Math.round(player.y + player.h - popOffset);
-      const recoveryWindow = 0.22;
-      const recoveringStun = player.stunCountdownStarted && player.stunTimer > 0 && player.stunTimer <= recoveryWindow;
+      // Never start rotating during the stun. The former last-.22s rotation
+      // restarted at the stun end when recoveryFlipTimer was set, showing two
+      // full rotations (and occasionally a visible inverted snap).
       const recoveringFlip = (player.recoveryFlipTimer || 0) > 0;
-      const recovering = recoveringStun || recoveringFlip;
-      const recoveryProgress = recoveringStun ? clamp(1 - player.stunTimer / recoveryWindow, 0, 1)
-        : recoveringFlip ? 1 - player.recoveryFlipTimer / .24 : 0;
+      const recoveryProgress = recoveringFlip ? clamp(1 - player.recoveryFlipTimer / .24, 0, 1) : 0;
       const upsideDown = player.bonked || player.stunTimer > 0 || recoveringFlip;
       const sx = 1 + player.landingSquash * 0.18 + (player.charging ? player.charge * 0.20 : 0);
       const sy = 1 / Math.sqrt(sx);
@@ -293,7 +292,7 @@
         // Rotate around the center of the collision box so the stunned frog
         // remains fully above the ground rather than being drawn underneath it.
         ctx.translate(baseX, Math.round(player.y + player.h / 2 - popOffset));
-        ctx.rotate(recovering ? (1 - recoveryProgress) * Math.PI : Math.PI);
+        ctx.rotate(recoveringFlip ? (1 - recoveryProgress) * Math.PI : Math.PI);
         ctx.scale(player.dir, 1);
         ctx.scale(sx, sy);
         ctx.translate(-11, -7);

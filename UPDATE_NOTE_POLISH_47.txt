@@ -1,0 +1,70 @@
+RIBBIT RACE — FRIENDS EDITION
+POLISH 47 | VERSION 1.7.35 | 2026-10-13
+Build 2026.10.13-friends-polish-47
+
+This is a COMPLETE GitHub/Cloudflare deployment ZIP based on Polish 46 (1.7.34).
+It includes browser assets, Worker source, the game modules, and tests. Keep
+existing Cloudflare data, player accounts, vocabulary, and game progress.
+No database schema migration and no Apps Script code.gs changes are required.
+
+REPLAY KEYS
+- X / L: seek forward ten seconds; Z / J: seek backward ten seconds.
+- Shift+N: next Frog Tags replay set; Shift+B: previous replay set.
+- Existing 0–9 tenth seeking, frame stepping, speed changes, R toggle 4x,
+  F fullscreen, Space pause, timeline scrubbing and audio are preserved.
+- The in-game viewer has PREVIOUS, REPLAYS, and NEXT buttons for Frog Tags.
+- Replacing one replay from another retains the correct original menu on Exit.
+
+FROG TAGS
+- The small replay icon on every opponent's row now opens a single scrollable
+  menu of saved replay sets against that opponent; the menu can show all
+  opponents and has a search filter.
+- One NEW Frog Tag replay is recorded for each COMPLETE best-of match/set,
+  instead of accidentally ending the recording after round one.
+- The 60 FPS recorder continues across 3-2-1 countdowns, rounds, round-result
+  celebrations and next-round transitions until the actual set winner exists.
+- The archive stores the opponent, original recording date, win/loss, final
+  score, and number of rounds.
+- Older one-round recordings are explicitly labeled ROUND-ONLY; archives with
+  several saved rounds from one match are assembled into one stitched set.
+- All Frog Tag replays share the same in-engine replay experience, including
+  flies and their vocabulary labels, tongue animation, synthesized sound,
+  slow-motion catches, fullscreen, timeline and frame controls.
+- The Frog Tags replay index retains up to 500 entries, deduplicating identical
+  replay IDs. No old saved replay records or local progress are deleted.
+
+REPLAY VIEWER
+- The original replay date/time appears alongside the title (for example,
+  FASTEST TIME or FEWEST JUMPS) when available; new recordings include a
+  recordedAt timestamp. Older recordings without timestamps remain playable.
+- At the replay's end, the FIND THE MATCH panel remains visible. Only the
+  English clue below its title becomes blank.
+- The original title and complete fly HUD remain inside the unobscured stage;
+  the spectator toolbar/header live outside the stage.
+
+LIMITATIONS
+- The full high-frame-rate replay objects are saved to IndexedDB in the
+  browser/device that recorded the match. Frog Tags summary metadata can be
+  backed up with the normal game save, but an archived replay from a different
+  device is not magically available as a video on this device. Missing older
+  recordings are labeled unavailable; the menu never invents footage.
+- Truly old video-only replay assets cannot be converted into native stage
+  frames. Older frame-based round archives can still be watched/combined.
+- Existing records can only contain what was actually recorded at that time;
+  an older single-round clip cannot be reconstructed into an unwritten set.
+
+VALIDATION
+- npm run check: game bundle builds; source parses; static assets confirmed.
+- npm test: 483/483 automated tests pass including newly added dynamic tests
+  of three-round set recording, legacy-round stitching, keyboard seeking,
+  metadata grouping, and replay viewport behavior.
+- Chromium offline UI test: Frog Tags menu renders, filters opponents,
+  scrolls and switches recordings without browser JavaScript errors.
+- Full online Cloudflare match end-to-end verification needs deployment with
+  two real players; this package was not deployed to the live service.
+
+DEPLOYMENT
+- Replace the files at the GitHub repo root with the ZIP contents, preserving
+  folder structure; deploy the Worker as usual.
+- Public URL cache-busting uses 2026.10.13-friends-polish-47.
+- No code.gs changes, Worker bindings, or database migrations needed.

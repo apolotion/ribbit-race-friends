@@ -590,12 +590,12 @@ update = function(dt, ...rest) {
       for (const player of pvpPlayers) {
         player.inputHeld = false;
         player.charging = false;
-        if (!player.grounded || player.bonked || player.stunTimer > 0 ||
-            player.bonkLandingPopTimer > 0 || player.recoveryFlipTimer > 0) {
-          // The recovery countdown and final rotation run even with the frog
-          // on the floor and Ember speaking. Input remains blocked.
-          updatePvpPlayer(player, dt);
-        } else { player.vx = 0; player.vy = 0; }
+        // Even a grounded and otherwise idle frog needs this normal update:
+        // it advances landingSquash, bonkLandingPopTimer, stun countdowns
+        // and the ONE recoveryFlipTimer throughout fast-forwarded dialogue.
+        // updatePvpPlayer has a grounded early-return, so it will not launch
+        // a new jump or introduce opponent collisions while inputs are locked.
+        updatePvpPlayer(player, dt);
       }
       updatePvpImpactEffects(dt);
     } else {

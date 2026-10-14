@@ -1507,7 +1507,7 @@
     }
     try {
       if (typeof window.RibbitRacePlayRecordReplay === "function") {
-        await window.RibbitRacePlayRecordReplay(row.replayUsername || row.name, level, metric, row.replayUid || "");
+        await window.RibbitRacePlayRecordReplay(row.replayUsername || row.name, level, metric, row.replayUid || "",row.date||null);
         return true;
       }
       const replayQuery = new URLSearchParams({
@@ -2100,7 +2100,9 @@
 
   function archiveOnlineRound() {
     const significantSolo = game.mode === "solo" && game.state === "won" && Boolean(game.newBestTime || game.newFewestJumps || game.newEndlessBest || game.newWorldRecord);
-    const onlineFinished = Boolean(game.onlineMode && ["won","pvpCelebration"].includes(game.state));
+    // Online set replays are archived in 110-online-mobile-polish.js only after
+    // the full match resolves; do not create duplicate per-round history here.
+    const onlineFinished = false;
     if (!significantSolo && !onlineFinished) return;
     const key = `${game.pvpMatchId || game.onlineRoomCode || "online"}:${game.pvpRoundIndex || 0}:${game.pvpElapsed || game.elapsed || 0}`;
     if (polish.lastArchivedRoundKey === key) return;

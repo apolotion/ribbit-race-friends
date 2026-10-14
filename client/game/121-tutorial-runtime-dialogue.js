@@ -689,6 +689,9 @@ function clearScenarioState() {
   tutorial.pvpUnderBonkAttemptAirborne = false;
   tutorial.pvpUnderBonkChargePrimed = false;
   tutorial.pvpUnderBonkEmberAirborne = false;
+  tutorial.pvpUnderBonkDismountQueued = false;
+  tutorial.pvpUnderBonkEmberDismounted = false;
+  tutorial.pvpAvoidUnderPassedBeneath = false;
   tutorial.pvpReboundCount = 0;
   tutorial.pvpInterceptSeen = false;
   tutorial.pvpBoostedBonkSeen = false;

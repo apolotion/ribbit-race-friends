@@ -5,11 +5,11 @@
  */
 (() => {
   "use strict";
-  const BUILD = "2026.10.13-friends-polish-46";
+  const BUILD = "2026.10.13-friends-polish-49";
   const RR_V160_CANDIDATES = {"catchFly":["attemptFlyCatch","attemptPvpFlyCatch","catchSandboxFly","getPvpImminentCatchFly","recordFlyEaten","scheduleFlyReplacementFromCatch"],"jumpSound":["playJumpSound"],"beep":["playCountdownGoSound","playCountdownSound"],"replayUpload":["saveRecordDate"],"restart":["resetGame","resetPvpGame","resetPvpPlayer","resetRoundLifecycle","resetRoundNetwork","restartCurrentLevel"],"drop":[],"render":["drawPvpScene","drawScene"],"worldRecord":[],"fullscreen":["getFullscreenElement","hideFullscreenFallback","showFullscreenFallback","syncFullscreenButton","toggleRibbitFullscreen"],"onlineSubmit":[],"leaderboard":["isSoloEndlessLeaderboardEligible","savePvpMatchWinsForLeaderboard"]};
   const RR_V160_VARS = {"onlineSelect":[],"achievementSelect":["activeAchievementIndex","hoveredAchievementCard"],"backRect":[]};
 
-  const VERSION = "1.7.34";
+  const VERSION = "1.7.37";
   const V = {
     menuTouch: new Map(), chargeTouch: new Map(), achievementPinned: -1,
     finalCatchStarted: 0, finalCatchLabelsGone: false,
@@ -205,8 +205,14 @@
   window.RibbitFrogTags={
     list:tagHistory,
     add(match){
-      const rows=tagHistory();rows.unshift({...match,id:match.id||crypto.randomUUID?.()||String(Date.now()),at:match.at||Date.now()});
-      try{localStorage.setItem(TAG_KEY,JSON.stringify(rows.slice(0,100)));window.dispatchEvent(new Event("rr-save-dirty"));}catch(_){}
+      const rows=tagHistory();
+      const entry={...match,id:match.id||crypto.randomUUID?.()||String(Date.now()),at:match.at||Date.now()};
+      // One Frog Tags row per completed SET. If an event fires twice, it must
+      // not create a second copy of the same recorded encounter.
+      const prior=rows.findIndex(row=>entry.replayId && row.replayId===entry.replayId);
+      if(prior>=0)rows.splice(prior,1);
+      rows.unshift(entry);
+      try{localStorage.setItem(TAG_KEY,JSON.stringify(rows.slice(0,500)));window.dispatchEvent(new Event("rr-save-dirty"));}catch(_){}
     },
     against(name){return tagHistory().filter(r=>String(r.opponent||"").toLowerCase()===String(name||"").toLowerCase());}
   };
@@ -397,18 +403,46 @@
 
   function currentOnlineAppearance(){return window.RibbitOnlineAppearance.get()||first(["selectedFrogAppearance","selectedAppearance","currentFrogAppearance"])||null;}
   function remoteAppearance(){const o=onlineObj();return o?.opponentAppearance||o?.remoteAppearance||o?.players?.find?.(p=>!p.local)?.appearance||null;}
-  function currentOnlineMatchId(){const o=onlineObj();return String(o?.matchId||o?.roomCode||o?.id||"");}
-  let onlineRecording=false,onlineRecordedMatch="";
-  async function finishOnlineArchive(){
+  function currentOnlineMatchId(){
+    const o=onlineObj();
+    return String(window.OnlineVersus?.diagnostic?.().matchId||o?.matchId||o?.roomCode||o?.id||"");
+  }
+  let onlineRecording=false,onlineRecordedMatch="",onlineRecordIdentity=null,onlineArchiveTimer=0;
+  async function finishOnlineArchive(snapshot=onlineRecordIdentity){
     if(!onlineRecording)return;
     onlineRecording=false;
+    clearTimeout(onlineArchiveTimer);onlineArchiveTimer=0;
+    // Finish one continuous set capture, never the first round of a best-of.
     const record=window.RibbitEngineReplay?.exportCurrent?.();
     if(!record || record.kind!=="ribbit-engine-frames" || record.mode!=="pvp" || record.frames.length<2)return;
-    const id="online-"+(currentOnlineMatchId()||Date.now())+"-"+Date.now();
-    await ReplayDb.put({id,record,at:Date.now(),type:"ribbit-engine-frames"});
-    const o=onlineObj();const result=o?.result||o?.finishedResult||{};
-    window.RibbitFrogTags.add({id:currentOnlineMatchId()||id,replayId:id,opponent:opponentName(),opponentAppearance:remoteAppearance(),ownAppearance:currentOnlineAppearance(),won:!!(result.won||result.winnerRole===o?.role),score:result.score||result.roundWins||null});
+    window.RibbitEngineReplay?.finishCapture?.();
+    const at=Date.now(),matchId=String(snapshot?.matchId||currentOnlineMatchId()||at);
+    const id=`online-set-${matchId}-${at}`;
+    record.recordedAt=snapshot?.at||record.recordedAt||at;
+    try{
+      await ReplayDb.put({id,record,at:record.recordedAt,type:"ribbit-engine-frames"});
+      const tags={id:matchId,setId:matchId,replayId:id,scope:"set",
+        at:record.recordedAt,opponent:snapshot?.opponent||opponentName(),
+        opponentAppearance:snapshot?.opponentAppearance||remoteAppearance(),
+        ownAppearance:snapshot?.ownAppearance||currentOnlineAppearance(),
+        won:!!snapshot?.won,roundCount:Math.max(1,Number(snapshot?.roundCount)||1),
+        score:snapshot?.score||null};
+      window.RibbitFrogTags.add(tags);
+    }catch(error){console.warn("Could not archive complete Frog Tags set",error);}
   }
+  function captureOnlineResult(){
+    if(!onlineRecording || !game.onlineMode || game.mode!=="pvp" ||
+       game.pvpMatchWinnerIndex===null || game.pvpMatchWinnerIndex===undefined)return;
+    onlineRecordIdentity={matchId:onlineRecordedMatch||currentOnlineMatchId(),
+      opponent:window.OnlineVersus?.roomPlayerLabel?.(1-Number(window.OnlineVersus?.localIndex?.()||0))||opponentName(),
+      opponentAppearance:remoteAppearance(),ownAppearance:currentOnlineAppearance(),
+      at:Date.now(),won:game.pvpMatchWinnerIndex===Number(window.OnlineVersus?.localIndex?.()||0),
+      roundCount:game.pvpRoundNumber,score:Array.isArray(game.pvpRoundWins)?[...game.pvpRoundWins]:null};
+    if(!onlineArchiveTimer)onlineArchiveTimer=setTimeout(()=>finishOnlineArchive(),1600);
+  }
+  window.addEventListener("ribbit-pvp-round-ended",event=>{
+    if(event.detail?.matchWinnerIndex!==null && event.detail?.matchWinnerIndex!==undefined)captureOnlineResult();
+  });
 
   // Render a frog-sprite marker and disabled arrows over the old Frog Tags list.
   function drawMiniFrog(g,appearance,x,y){
@@ -478,7 +512,23 @@
 
   // Online recording state and match archive monitor.
   let priorOnlinePlaying=false;
-  const archiveTick=()=>{const online=/online/i.test(stateName())||!!onlineObj();const playing=online&&/playing|countdown/i.test(stateName());if(playing&&!priorOnlinePlaying&&!mobileOn()){onlineRecording=true;onlineRecordedMatch=currentOnlineMatchId();}if(!playing&&priorOnlinePlaying)finishOnlineArchive();priorOnlinePlaying=playing;requestAnimationFrame(archiveTick);};requestAnimationFrame(archiveTick);
+  const archiveTick=()=>{
+    const participating=!!game.onlineMode&&game.mode==="pvp" && !window.OnlineVersus?.isSpectating?.();
+    const roundPlaying=participating && ["playing","countdown"].includes(game.state);
+    if(roundPlaying&&!onlineRecording){
+      onlineRecording=true;onlineRecordedMatch=currentOnlineMatchId();onlineRecordIdentity=null;
+    }
+    if(onlineRecording && participating && game.pvpMatchWinnerIndex!==null &&
+      game.pvpMatchWinnerIndex!==undefined && !onlineArchiveTimer)captureOnlineResult();
+    // Never finalize when a round celebrates or players wait for the next
+    // round; those moments are part of the current best-of set.
+    if(onlineRecording&&!participating){
+      if(onlineRecordIdentity)finishOnlineArchive(onlineRecordIdentity);
+      else {onlineRecording=false;window.RibbitEngineReplay?.finishCapture?.();}
+    }
+    priorOnlinePlaying=roundPlaying;
+    requestAnimationFrame(archiveTick);
+  };requestAnimationFrame(archiveTick);
 
   // Expose build for diagnostics.
   window.RibbitRaceV160={build:BUILD,version:VERSION,state:V,opponentName};

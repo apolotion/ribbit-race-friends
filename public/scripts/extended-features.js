@@ -120,7 +120,7 @@
         this.play(name,level,metric);
       });
     }
-    async play(username,level,metric,uid=""){
+    async play(username,level,metric,uid="",recordedAt=null){
       const spectator=window.RibbitEngineReplay;
       if(!spectator)return false;
       const caption=`${username} • ${String(level).toUpperCase()} • ${metric==="time"?"FASTEST TIME":"FEWEST JUMPS"}`;
@@ -139,7 +139,8 @@
           spectator.unavailable("LEGACY VIDEO REPLAY","OLD VIDEOS CANNOT BE REBUILT AS GAMEPLAY. SET A NEW RECORD TO SAVE A STAGE REPLAY.");
           return false;
         }
-        return spectator.play(await this.decodeReplay(mime,payload.data),caption);
+        const record=await this.decodeReplay(mime,payload.data);
+        return spectator.play(record,caption,{recordedAt:recordedAt||record.recordedAt||payload.recordedAt||payload.date});
       }catch(error){
         console.warn("Ribbit in-game replay unavailable",error);
         spectator.unavailable("REPLAY COULD NOT LOAD","SAVED GAME-STATE DATA IS MISSING OR INVALID");
@@ -150,8 +151,8 @@
   const replayController = new ReplayController();
   // Canvas-native leaderboard rows call this bridge directly. The server keeps
   // the current PB recording for each player, level, and ranked metric.
-  window.RibbitRacePlayRecordReplay = (username, level, metric, uid = "") =>
-    replayController.play(String(username || ""), String(level || "").toLowerCase(), String(metric || "time").toLowerCase(), String(uid || ""));
+  window.RibbitRacePlayRecordReplay = (username, level, metric, uid = "", recordedAt=null) =>
+    replayController.play(String(username || ""), String(level || "").toLowerCase(), String(metric || "time").toLowerCase(), String(uid || ""),recordedAt);
 
   class PaletteController {
     constructor(){this.clip=json("rrFrogPaletteClipboardV1",null);this.panel=null;this.make();this.bind();setTimeout(()=>this.tick(),250)}

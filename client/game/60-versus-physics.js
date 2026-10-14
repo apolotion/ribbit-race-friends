@@ -19,6 +19,7 @@
       player.dropThroughPlatform = null;
       player.landingSquash = 0;
       player.bonkLandingPopTimer = 0;
+      player.recoveryFlipTimer = 0;
       player.blinkTimer = 1.2 + player.index;
       player.blinking = false;
       clearFrogAfterimages(player);
@@ -916,6 +917,9 @@
         CONFIG.pvpBonkMaxStunSeconds
       );
       victim.bonked = true;
+      // A fresh bonk cancels any previous flip-back. The victim gets exactly
+      // one new upright recovery, AFTER the next stun expires.
+      victim.recoveryFlipTimer = 0;
       victim.wasBonkedThisJump = true;
       victim.lastStunEndAt = -Infinity;
       victim.stunTimer = 0;

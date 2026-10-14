@@ -3,7 +3,7 @@
 
 const SOLO_SEEN_KEY = "rrFriendsEngineTutorialSoloSeenV8";
 const PVP_SEEN_KEY = "rrFriendsEngineTutorialPvpSeenV8";
-const TUTORIAL_BUILD = "2026.10.13-friends-polish-46";
+const TUTORIAL_BUILD = "2026.10.13-friends-polish-49";
 const TUTORIAL_ACHIEVEMENT_ID = "tutorial-graduate";
 const PVP_TUTORIAL_ACHIEVEMENT_ID = "versus-tutorial-graduate";
 const TYPEWRITER_MS_PER_CHARACTER = 28;
@@ -214,6 +214,9 @@ const tutorial = {
   pvpUnderBonkAttemptAirborne: false,
   pvpUnderBonkChargePrimed: false,
   pvpUnderBonkEmberAirborne: false,
+  pvpUnderBonkDismountQueued: false,
+  pvpUnderBonkEmberDismounted: false,
+  pvpAvoidUnderPassedBeneath: false,
   pvpReboundCount: 0,
   pvpInterceptSeen: false,
   pvpBoostedBonkSeen: false,
@@ -975,8 +978,8 @@ const PVP_STEPS = Object.freeze([
     ],
     "dialogue": [
       "Now let's switch places.",
-      "Jump onto this platform before I try to jump up past you.",
-      "Then hold your spot while I recover and try again.",
+      "I'll drop to the ground. Get onto the lower-middle platform before I jump beneath you.",
+      "Stay on the perch for both of my jumps, even after the first bonk.",
       "Give me two under bonks without giving up your perch!"
     ],
     "successDialogue": [
@@ -1015,8 +1018,8 @@ const PVP_STEPS = Object.freeze([
     ],
     "dialogue": [
       "Now I'll take the platform.",
-      "Tap jump very quickly to get underneath and past me.",
-      "Remember: quick taps, not charged jumps!"
+      "Start from the ground to my left and quick-tap right beneath my platform.",
+      "Pass my platform's right edge without getting bonked—no extra distance needed!"
     ],
     "successDialogue": [
       "Not even a bump!",

@@ -37,11 +37,11 @@ test('Under-bonk demonstration reaches center platform through a real charged ju
  assert.match(motion,/setup === "pvpDemoUnderBonk"[\s\S]{0,280}getPvpStandingPlatform\(ember\) === PARK_PLATFORMS\[3\]/);
  assert.match(motion,/scriptPvpChargedJump\(0, \.78, 1, 120\)/);
 });
-test('Low-profile lesson completes after exactly five actual airborne landing cycles',()=>{
+test('Low-profile lesson completes after exactly four actual airborne landing cycles',()=>{
  const motion=section(scene,'function updatePvpDemonstration','function startPvpFinalMatch');
  assert.match(motion,/tutorial\.pvpLowProfileJumpCount = \(tutorial\.pvpLowProfileJumpCount \|\| 0\) \+ 1/);
- assert.match(motion,/tutorial\.pvpLowProfileJumpCount < 5/);
- assert.match(motion,/completed = tutorial\.pvpLowProfileJumpCount === 5 && ember\.grounded/);
+ assert.match(motion,/tutorial\.pvpLowProfileJumpCount < 4/);
+ assert.match(motion,/completed = tutorial\.pvpLowProfileJumpCount === 4 && ember\.grounded/);
  assert.doesNotMatch(motion,/setup === "pvpDemoAvoidUnder"[\s\S]{0,220}positionPvp\(ember/);
 });
 test('Rebound demo uses 75 percent charge and rebound-practice second setup is mirrored and centered',()=>{

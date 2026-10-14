@@ -1362,12 +1362,10 @@
         return recentBattleArchive(opponent).find(r=>typeof r.replayId==="string"&&r.replayId.length>0)||null;
       }
       async function playBattleReplay(row) {
-        const recent=recentBattleReplay(row?.name);
-        if(!recent)return;
-        const replayId=recent.replayId;
-        try {
-          await window.RibbitRacePlayStoredReplay?.(replayId,`${row.name} • RECENT MATCH`);
-        }catch(error){console.warn("Frog Tags replay unavailable",error);}
+        // A frog tag is an opponent's collection of completed SETS, not merely
+        // the latest round. Open the scrollable archive first.
+        try { window.RibbitOpenFrogTagGames?.(row?.name); }
+        catch(error){console.warn("Frog Tags replay browser unavailable",error);}
       }
       function openBattleStats(row){
         try{
@@ -1430,9 +1428,12 @@
           const stamp=Number(latest?.at||r.updatedAt||0);
           const date=stamp?new Date(stamp).toLocaleDateString('en-US',{month:'numeric',day:'numeric',year:'2-digit'}):'—';
           drawBitmapText(date,333,y+2,.48,'center','#59666b');
-          if(recentBattleReplay(r.name)){
+          {
+            // Every opponent row opens the complete Frog Tags replay browser.
+            // A muted icon means this device has no playable local replay yet.
+            const hasLocalReplay=!!recentBattleReplay(r.name);
             const hit={x:379,y:y-3,w:26,h:17,row:r};
-            const body='#48555a',slate='#9aa9ae';
+            const body=hasLocalReplay?'#48555a':'#a6b3b8',slate=hasLocalReplay?'#9aa9ae':'#d1d9dc';
             ctx.fillStyle=body;ctx.fillRect(hit.x+5,hit.y+6,16,11);ctx.fillRect(hit.x+8,hit.y+2,10,4);
             ctx.fillStyle=slate;ctx.fillRect(hit.x+7,hit.y+3,3,2);ctx.fillRect(hit.x+11,hit.y+3,3,2);ctx.fillRect(hit.x+15,hit.y+3,3,2);ctx.fillRect(hit.x+6,hit.y+5,3,2);ctx.fillRect(hit.x+10,hit.y+5,3,2);ctx.fillRect(hit.x+14,hit.y+5,3,2);
             ctx.fillStyle='#f7fdff';ctx.fillRect(hit.x+8,hit.y+9,10,5);ctx.fillStyle=slate;ctx.fillRect(hit.x+12,hit.y+10,2,3);

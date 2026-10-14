@@ -74,7 +74,7 @@ test('Player can begin sky-bonk dialogue on landing while stun flip-back remains
   assert.match(monitor,/setup === "pvpBufferedSky"[\s\S]{0,280}p1\.grounded/);
   assert.match(dialogue,/const recovering = pvpPlayers\.some/);
   assert.match(dialogue,/if \(recovering\) return true/);
-  assert.match(hooks,/player\.stunTimer > 0/);
+  assert.match(hooks,/updatePvpPlayer\(player, dt\)/);
   assert.match(lifecycle,/if \(tutorial\.kind === "pvp"\) clearHeldInput\(\)/);
 });
 
@@ -88,7 +88,7 @@ test('Fly vocabulary matches live visible targets and blank panel survives retri
 
 test('Real wall rebound controls Ember facing, rebound sparkles affect both frogs', () => {
   assert.match(scenarios,/ember\.wallBouncedThisJump/);
-  assert.match(scenarios,/scriptPvpChargedJump\(1, \.88, -1, 0\)/);
+  assert.match(scenarios,/scriptPvpChargedJump\(1, returnPower, -1, 0\)/);
   assert.doesNotMatch(scenarios,/scriptPvpChargedJump\(1, \.55, 1, 0\)/);
   assert.match(hooks,/a\.catchSparkleTimer/);
   assert.match(hooks,/b\.catchSparkleTimer/);

@@ -37,7 +37,7 @@ test('new PB state timelines use gzip/json, saved through the authenticated Work
   assert.match(recorder,/new DecompressionStream\("gzip"\)/);
   assert.match(recorder,/\/api\/replays\/submit/);
   assert.match(recorder,/\/api\/replays\/get/);
-  assert.match(recorder,/spectator\.play\(await this\.decodeReplay/);
+  assert.match(recorder,/spectator\.play\(record,caption,\{recordedAt:/);
   assert.match(worker,/application\\\/vnd\\\.ribbit-race\\\.frames\\\+|application\/vnd\.ribbit-race\.frames\+/);
 });
 test('frame sampler stays connected to game RAF and retains past rounds in Versus replays',()=>{
@@ -52,7 +52,7 @@ test('Frog Tags play saved frame data on stage and never construct a video popup
 });
 test('unexpected in-air bonks settle normally while Ember dialogue blocks input',()=>{
   assert.match(hooks,/tutorial\.kind === "pvp" && tutorial\.dialogueOpen/);
-  assert.match(hooks,/player\.stunTimer > 0 \|\|\s*player\.bonkLandingPopTimer > 0/);
+  assert.match(hooks,/updatePvpPlayer\(player, dt\)/);
   assert.match(hooks,/player\.charging = false/);
   assert.match(hooks,/updatePvpImpactEffects\(dt\)/);
 });
