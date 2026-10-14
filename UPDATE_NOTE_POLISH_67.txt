@@ -1,0 +1,16 @@
+RIBBIT RACE FRIENDS — POLISH 67 / VERSION 1.7.54
+
+FLASH CARDS
+- Rebuilt the flash-card screen to match the approved stacked-card design while retaining the existing 16:9 game-frame aspect ratio.
+- Full-width crimson FLASH CARDS header, centered continuous green progress bar, centered card count, stacked cards, top-right exit icon, and evenly matched square controls.
+- Sort and Notes are now compact icon buttons in the bottom-left corner; Shuffle and Help remain in the bottom-right corner.
+- The term is vertically centered on the card. The language label stays along the lower edge, and the bookmark star remains in the upper-right.
+- Sort Mode is toggled by the check/X icon. While active, the left and right navigation buttons become WRONG and RIGHT grading controls; missed cards repeat until mastered.
+- Normal browsing no longer marks the next card wrong. Swiping browses normally unless Sort Mode is active.
+- Notes now open from the term side without forcing the card to flip. Saved-note indicators appear on either face.
+- Updated keyboard help: T toggles Sort Mode, 1/2 grade in Sort Mode, N opens Notes, S shuffles, H opens Help.
+
+PACKAGE
+- Complete GitHub-ready Cloudflare Worker repository.
+- Build with `npm run check && npm test`; deploy with `npx wrangler deploy`.
+- No database migration, Worker binding change, or Code.gs update is required.
