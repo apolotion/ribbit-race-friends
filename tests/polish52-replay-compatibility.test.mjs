@@ -139,7 +139,7 @@ function viewingContext(){
   const drawn=[],seen=[];
   const classes={add(){},remove(){}};
   Object.assign(ctx,{
-    W:480,H:270,COLORS:{ink:'#26363d',white:'#fff'},clamp:(n,min,max)=>Math.min(max,Math.max(min,n)),
+    W:480,H:270,CONFIG:{playBottom:229},COLORS:{ink:'#26363d',white:'#fff'},clamp:(n,min,max)=>Math.min(max,Math.max(min,n)),
     platforms:[],flySpawns:[],normalizeVocabularyEntries:v=>v,
     document:{body:{classList:classes},getElementById:()=>null},
     canvas:{addEventListener(){}},drawScene(){seen.push({state:ctx.game.state,dance:ctx.frog.danceTime});},
@@ -161,7 +161,7 @@ test('At 1 second of jumping, the score appears in the CENTER and the frog keeps
   assert.ok(!drawn.some(a=>a[0]==='REPLAY COMPLETE!'));
   ctx.ribbitReplaySeek(6.01);ctx.paintRibbitReplayStage();
   assert.ok(drawn.some(a=>a[0]==='REPLAY COMPLETE!' && a[1]===240));
-  assert.ok(drawn.some(a=>a[0]==='rect' && a[1]===44 && a[2]===71));
+  assert.ok(drawn.some(a=>a[0]==='rect' && a[1]===44 && a[2]===51));
   ctx.ribbitReplaySeek(8.98);ctx.paintRibbitReplayStage();
   assert.ok(seen.at(-1).dance>=3.9,`expected an animated final frame; actual ${seen.at(-1).dance}`);
   assert.ok(seen.at(-1).state==='won');
@@ -207,5 +207,7 @@ test('Legacy no-phase no-audio replay renders successfully using safe defaults',
   assert.equal(ctx.ribbitReplayBegin(legacy,'OLD REPLAY'),true);
   ctx.ribbitReplaySeek(.07);
   assert.doesNotThrow(()=>ctx.paintRibbitReplayStage());
+  assert.equal(seen.at(-1).countdown,3,'old recordings reconstruct the missing 3-2-1 in memory');
+  ctx.ribbitReplaySeek(2.28);ctx.paintRibbitReplayStage();
   assert.equal(seen.at(-1).state,'playing');
 });

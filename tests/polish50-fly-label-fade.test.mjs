@@ -39,8 +39,8 @@ function makeLegacyReplayOpacity() {
 }
 
 test('Polish 50 uses current cache marker and a 0.42-second return fade', () => {
-  assert.equal(JSON.parse(read('package.json')).version, '1.7.44');
-  assert.match(read('src/common.js'), /2026\.10\.13-friends-polish-56/);
+  assert.equal(JSON.parse(read('package.json')).version, '1.7.46');
+  assert.match(read('src/common.js'), /2026\.10\.13-friends-polish-58/);
   assert.match(update, /Math\.max\(0, dt\) \/ 0\.42/);
   assert.match(labels, /const returnOpacity = recovery \* recovery \* \(3 - 2 \* recovery\)/);
 });

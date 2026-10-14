@@ -123,6 +123,11 @@
         drawFlyAt(currentFly.x, currentFly.y, getFlySpawnScale(currentFly));
         drawFlyNameTag(currentFly);
       }
+      if(criticalCatch && game.soloCriticalCatchFlyVisual &&
+          !flies.some(f=>f?.id===game.soloCriticalCatchFlyVisual.id)) {
+        drawSlowMotionFlyPull(game.soloCriticalCatchFlyVisual,getFrogMouth(),
+          game.soloCriticalCatchElapsed,game.soloCriticalCatchDuration);
+      }
       drawFrogAfterimages(frog);
       drawAirShadowForEntity(frog, getFrogPalette());
       drawFrog();
@@ -218,6 +223,22 @@
       if (card.type === "level") return getAchievementDefinition(`level-${card.levelId}`)?.lines || [];
       if (card.type === "custom") return getAchievementDefinition("custom-colors")?.lines || [];
       if (card.type === "time") return getAchievementDefinition("time-select")?.lines || [];
+      if (card.type === "leaderboard") {
+        // The visible World Record award is a victory notice card, not the
+        // legacy fixed-position toast. Its detail is tied to this exact record.
+        const prior = card.record?.previous || window.RibbitPreviousWorldRecord?.(card.record) || null;
+        if (!prior || !prior.name) {
+          return ["PREVIOUS HOLDER: NOT RECORDED", "RECORD: NOT AVAILABLE", "DATE: UNKNOWN"];
+        }
+        const label = prior.kind === "next-best" ? "NEXT BEST" : "PREVIOUS";
+        const metric = card.record?.metric === "time" ? "TIME" : card.record?.metric === "jumps" ? "JUMPS"
+          : card.record?.metric === "pvpwins" ? "WINS" : "FLIES";
+        return [
+          `${label}: ${String(prior.name).slice(0, 22)}`,
+          `${metric}: ${prior.displayValue || prior.value || "--"}`,
+          `DATE: ${prior.date || "UNKNOWN"}`
+        ];
+      }
       return [];
     }
 
@@ -247,7 +268,9 @@
         const levelLabel = record.level && record.level !== "all" ? String(record.level).toUpperCase() : "FRIENDS";
         items.push({
           type: "leaderboard",
-          title: (window.RibbitWorldRecordNotice?.prepare?.() ?? "WORLD RECORD"),
+          // Never call prepare() while painting the victory menu: it creates
+          // a DOM hover hitbox in the wrong location and re-arms it every frame.
+          title: "WORLD RECORD",
           subtitle: `${record.scope === "class" ? `${record.scopeLabel || "CLASS"} • ` : ""}${levelLabel} ${metricLabel}`,
           palette: { dark: "#9a5b18", mid: "#e5a72d", light: "#ffe27a", belly: "#fff3a8" },
           record
@@ -437,12 +460,20 @@
         );
       }
 
+      // Re-evaluate the last mouse position on EVERY paint. The record award
+      // often arrives asynchronously after the results screen first appears;
+      // a stationary mouse must begin hovering it without another pointermove.
+      const pointer = game.victoryPointerPoint;
+      if (pointer) {
+        const liveCard = layout.cards.find((item) => pointInsideRect(pointer, item));
+        game.victoryNoticeHoverKey = getVictoryNoticeKey(liveCard);
+      } else game.victoryNoticeHoverKey = "";
       if (game.victoryNoticeHoverKey) {
         const card = layout.cards.find((item) => getVictoryNoticeKey(item) === game.victoryNoticeHoverKey);
         const lines = getVictoryNoticeRequirementLines(card);
         if (card && lines.length) {
           const width = 224;
-          const height = lines.length > 1 ? 31 : 25;
+          const height = lines.length > 2 ? 39 : lines.length > 1 ? 31 : 25;
           const left = Math.round(clamp(card.x + card.w / 2 - width / 2, 12, W - width - 12));
           const top = Math.round(Math.max(layout.panelY + 51, card.y - height - 5));
           ctx.fillStyle = "rgba(25,43,52,0.35)";
@@ -1814,6 +1845,7 @@
 
     canvas.addEventListener("pointermove", (event) => {
       const point = getCanvasPoint(event);
+      game.victoryPointerPoint = point; // keep even before the async victory badge appears
 
       if((game.state==="custom"||game.state==="setup")&&game.customHatOpen){
         const point=getCanvasPoint(event);
@@ -2172,6 +2204,7 @@
       releaseMainButton();
     });
     canvas.addEventListener("pointerleave", () => {
+      game.victoryPointerPoint = null;
       if (game.state === "main") {
         game.mainHoveredSelection = null;
         game.achievementButtonHovered = false;

@@ -140,7 +140,10 @@
           return false;
         }
         const record=await this.decodeReplay(mime,payload.data);
-        return spectator.play(record,caption,{recordedAt:recordedAt||record.recordedAt||payload.recordedAt||payload.date});
+        // Leaderboard dates can describe a daily summary, not the exact play.
+        // Prefer the recording's original UTC epoch, then the server's exact
+        // saved timestamp. A row's localized date is a last-resort fallback.
+        return spectator.play(record,caption,{recordedAt:record.recordedAt||payload.recordedAt||payload.updated||recordedAt||payload.date});
       }catch(error){
         console.warn("Ribbit in-game replay unavailable",error);
         spectator.unavailable("REPLAY COULD NOT LOAD","SAVED GAME-STATE DATA IS MISSING OR INVALID");

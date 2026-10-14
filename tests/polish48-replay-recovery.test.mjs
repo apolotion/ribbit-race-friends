@@ -9,12 +9,12 @@ const physics = read('client/game/60-versus-physics.js');
 const rendering = read('client/game/63-versus-rendering-ui.js');
 const hud = read('client/game/71-rendering-entities-hud.js');
 
-const version = '1.7.44';
-const marker = '2026.10.13-friends-polish-56';
+const version = '1.7.46';
+const marker = '2026.10.13-friends-polish-58';
 
 test('Polish 48 version and cache marker agree across source, browser and Worker', () => {
   assert.equal(JSON.parse(read('package.json')).version,version);
-  assert.match(read('client/game/10-core-config.js'), /VERSION 1\.7\.44/);
+  assert.match(read('client/game/10-core-config.js'), /VERSION 1\.7\.46/);
   assert.ok(read('src/common.js').includes(marker));
   assert.ok(read('client/game/120-tutorial-config.js').includes(marker));
   assert.ok(read('public/index.html').includes(marker));
@@ -34,7 +34,7 @@ test('Replay records three seconds of victory, displays centered stats after one
 test('Replay Complete card is centered in both axes, with stepped FIVE FLIES styling and blank final clue', () => {
   assert.match(replay,/const rect=\{w:402,h:128\};/);
   assert.match(replay,/rect\.x=Math\.round\(\(W-rect\.w\)\/2\);/);
-  assert.match(replay,/rect\.y=Math\.round\(\(H-rect\.h\)\/2\);/);
+  assert.match(replay,/rect\.y=Math\.round\(\(CONFIG\.playBottom-rect\.h\)\/2\);/);
   assert.match(replay,/ctx\.fillRect\(rect\.x\+5,rect\.y,rect\.w-10,rect\.h\)/);
   assert.match(replay,/drawBitmapText\("REPLAY COMPLETE!"/);
   assert.match(replay,/RibbitReplayClueBlank=finalHold \|\| view\.position/);

@@ -2008,6 +2008,9 @@
 
   function drawWorldRecordNotice() {
     if (game.state !== "won" || !(game.newWorldRecord || game.worldRecordNotice || game.roundWorldRecord)) return;
+    // If the actual victory notice already displays WORLD RECORD, its own
+    // hover tooltip takes precedence over the obsolete fixed-location badge.
+    if (getVictoryUnlockNoticeLayout()?.cards?.some(card => card.type === "leaderboard")) return;
     const rect = { x:150, y:205, w:180, h:24 };
     ctx.fillStyle = "rgba(25,43,52,.28)"; ctx.fillRect(rect.x + 2, rect.y + 2, rect.w, rect.h);
     ctx.fillStyle = "#805316"; ctx.fillRect(rect.x, rect.y, rect.w, rect.h);

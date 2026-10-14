@@ -4,6 +4,7 @@
 const RIBBIT_ENGINE_REPLAY_MIME = "application/vnd.ribbit-race.frames+json";
 const RIBBIT_REPLAY_FPS = 60;
 const RIBBIT_REPLAY_FRAME_INTERVAL = 1000/RIBBIT_REPLAY_FPS;
+const RIBBIT_REPLAY_COUNTDOWN_STEP_MS = 750;
 const RIBBIT_REPLAY_MAX_FRAMES = 30000; // Full best-of sets at 60 Hz, including countdowns and result transitions.
 const RIBBIT_REPLAY_DANCE_MILLIS = 3000; // recorded dance frames; the last second is generated for playback
 const RIBBIT_REPLAY_SCORE_DELAY = 1000; // show the hopping frog alone for one second
@@ -72,6 +73,7 @@ function captureRibbitReplaySnapshot(now){
   }
   if(Array.isArray(game.pvpRoundWins))visual.pvpRoundWins=[...game.pvpRoundWins];
   if(game.pvpCriticalCatchFlyVisual)visual.pvpCriticalCatchFlyVisual={...game.pvpCriticalCatchFlyVisual};
+  if(game.soloCriticalCatchFlyVisual)visual.soloCriticalCatchFlyVisual={...game.soloCriticalCatchFlyVisual};
   return {
     t:Math.max(0,Math.round(now-capture.startedAt-capture.pausedMillis)),
     clock:game.elapsed,world:game.worldTime,visual:game.visualTime,
@@ -146,6 +148,7 @@ function ribbitReplayCaptureTick(now=performance.now()){
       if(ribbitReplayCapture)finishRibbitReplayCapture();
       ribbitReplayCapture={
         v:RIBBIT_REPLAY_SCHEMA_VERSION,kind:"ribbit-engine-frames",fps:RIBBIT_REPLAY_FPS,mode,level,recordedAt:Date.now(),
+        recordedTimeZone:Intl.DateTimeFormat().resolvedOptions().timeZone || null,
         timeOfDay:game.timeOfDay,moonPhaseIndex:game.moonPhaseIndex,skinId:game.skinId,
         pvpTimeLimitSeconds:game.pvpTimeLimitSeconds,pvpFirstTo:game.pvpFirstTo,
         pvpRoundGoalMode:game.pvpRoundGoalMode,pvpBestOf:game.pvpBestOf,
@@ -200,8 +203,9 @@ function ribbitReplayExportCurrent(){
     : frames[frames.length-1].t;
   return {
     version:RIBBIT_REPLAY_SCHEMA_VERSION,kind:"ribbit-engine-frames",fps:capture.fps||RIBBIT_REPLAY_FPS,
-    compatibility:{frameSchema:RIBBIT_REPLAY_SCHEMA_VERSION,minimumPlayerVersion:1,recordedBy:"1.7.44"},
-    mode:capture.mode,level:capture.level,recordedAt:capture.recordedAt,timeOfDay:capture.timeOfDay,
+    compatibility:{frameSchema:RIBBIT_REPLAY_SCHEMA_VERSION,minimumPlayerVersion:1,recordedBy:"1.7.46"},
+    mode:capture.mode,level:capture.level,recordedAt:capture.recordedAt,
+    recordedTimeZone:capture.recordedTimeZone,timeOfDay:capture.timeOfDay,
     moonPhaseIndex:capture.moonPhaseIndex,skinId:capture.skinId,vocab:capture.vocab,
     stageLayout:capture.stageLayout,
     pvpTimeLimitSeconds:capture.pvpTimeLimitSeconds,pvpFirstTo:capture.pvpFirstTo,
@@ -277,6 +281,47 @@ function ribbitReplayFinalTimeline(data){
   const finishAt=start+RIBBIT_REPLAY_SCORE_DELAY+RIBBIT_REPLAY_SCORE_HOLD;
   return {start,showAt,finishAt};
 }
+// Preserve original archived data, but reconstruct the opening 3-2-1 when
+// legacy/unexpectedly late captures start directly on the first play frame.
+// These synthetic *playback-only* frames are explicitly marked, and can never
+// overwrite a stored recording. Newly made recordings still use real counts.
+function ribbitReplayEnsureCountdown(data) {
+  if(!data?.frames?.length)return data;
+  const first=data.frames[0], phase=first.phase||first.gameState?.state;
+  const firstCount=Number(first.gameState?.countdownNumber||0);
+  if(phase==='countdown'&&firstCount===3)return data;
+  const missing=phase==='countdown' && firstCount>0 && firstCount<3 ? 3-firstCount : 3;
+  const lead=missing*RIBBIT_REPLAY_COUNTDOWN_STEP_MS;
+  const prefix=[];
+  for(let i=0;i<missing;i++) {
+    const number=3-i;
+    for(const frameOffset of [0,RIBBIT_REPLAY_COUNTDOWN_STEP_MS-17]) {
+      prefix.push({...first,t:i*RIBBIT_REPLAY_COUNTDOWN_STEP_MS+frameOffset,
+        phase:'countdown',flies:[],
+        player:{...first.player,charging:false},
+        players:(first.players||[]).map(player=>({...player,charging:false})),
+        gameState:{...first.gameState,state:'countdown',countdownNumber:number,
+          countdownTimer:Math.max(.017,(RIBBIT_REPLAY_COUNTDOWN_STEP_MS-frameOffset)/1000),
+          soloCriticalCatchActive:false,pvpCriticalCatchActive:false}});
+    }
+  }
+  const frames=data.frames.map(frame=>({...frame,t:frame.t-first.t+lead}));
+  const sounds=(data.sounds||[]).map(sound=>({...sound,t:Math.max(lead,sound.t-first.t+lead)}));
+  // Reconstruct only missing countdown ticks. The original sound track starts
+  // at the same moment as its original visual after the inserted countdown.
+  for(let i=0;i<missing;i++) {
+    const number=3-i;
+    sounds.push({t:i*RIBBIT_REPLAY_COUNTDOWN_STEP_MS,
+      f:({3:392,2:466,1:587})[number],d:.1,v:.022,s:34});
+  }
+  sounds.sort((a,b)=>a.t-b.t);
+  const final=data.final ? {...data.final,
+    startT:Number.isFinite(data.final.startT)?data.final.startT-first.t+lead:data.final.startT} : undefined;
+  return {...data,frames:[...prefix,...frames],sounds,final,
+    duration:(data.duration||data.frames.at(-1).t)-first.t+lead,
+    reconstructedCountdown:true};
+}
+
 // Merge historical round recordings into a single watchable set. New
 // recordings are already one continuous 60 Hz set, so only legacy groups use
 // this adapter. Frame/audio timestamps stay sorted and all source data stays
@@ -315,16 +360,27 @@ function ribbitReplayCreateControls(){
   const footer=document.createElement("nav");
   footer.id="rr-spectator-toolbar";
   footer.setAttribute("aria-label","Replay playback controls");
+  // SVG icons scale cleanly while preserving the game's square-button style;
+  // they are true controls with accessible names, not decorative Unicode text.
   footer.innerHTML=`
     <button type="button" data-replay-action="previous" title="Previous Frog Tags set (Shift+B)" hidden>◀</button>
     <button type="button" data-replay-action="browse" title="Browse Frog Tags replays" hidden>REPLAYS</button>
     <button type="button" data-replay-action="next" title="Next Frog Tags set (Shift+N)" hidden>▶</button>
-    <button type="button" data-replay-action="play" aria-label="Pause or play">PAUSE</button>
-    <button type="button" data-replay-action="speed" aria-label="Change playback speed">1X</button>
+    <button type="button" data-replay-action="play" class="rr-replay-icon-button" aria-label="Pause playback" title="Pause playback (Space)">
+      <svg aria-hidden="true" viewBox="0 0 24 24" width="25" height="25" fill="currentColor"><path class="rr-play-triangle" d="M7 4v16l13-8z" hidden/><path class="rr-play-bars" d="M5 4h5v16H5zm9 0h5v16h-5z"/><path class="rr-replay-arrow" d="M12 3a9 9 0 1 1-8.7 11.4h3.1A6 6 0 1 0 8.4 6.1L11 9H3V1l3.2 3.2A8.9 8.9 0 0 1 12 3z" hidden/></svg>
+    </button>
     <label class="rr-replay-progress" aria-label="Timeline">
       <input type="range" min="0" max="10000" step="1" value="0" aria-label="Seek replay timeline" />
     </label>
     <span class="rr-replay-time" aria-live="off">0:00 / 0:00</span>
+    <label class="rr-replay-volume" title="Replay volume" aria-label="Replay volume">
+      <svg aria-hidden="true" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M4 9h4l5-4v14l-5-4H4zM17 9q4 3 0 6"/></svg>
+      <input type="range" min="0" max="100" step="1" value="100" aria-label="Replay volume" />
+    </label>
+    <button type="button" data-replay-action="speed" class="rr-replay-speed" aria-label="Change playback speed" title="Playback speed (0.25x–4x)">
+      <svg aria-hidden="true" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="13" r="8"/><path d="M12 5V2m-4 0h8m4 2 2-2M12 8v5l3 2"/></svg>
+      <span class="rr-speed-value">1×</span>
+    </button>
     <button type="button" data-replay-action="fullscreen" title="Fullscreen (F)">⛶</button>
     <button type="button" data-replay-action="exit">EXIT</button>`;
   host.append(header,footer);
@@ -347,6 +403,12 @@ function ribbitReplayCreateControls(){
     if(!ribbitReplayView?.data)return;
     ribbitReplaySeek((Number(event.target.value)/10000)*(ribbitReplayView.data.duration||0)/1000);
   });
+  const volume=footer.querySelector(".rr-replay-volume input");
+  volume.addEventListener("input",event=>{
+    if(!ribbitReplayView)return;
+    ribbitReplayView.volume=clamp(Number(event.target.value)/100,0,1);
+    ribbitReplayUpdateControls();
+  });
   footer.addEventListener("click",event=>{
     const action=event.target.closest("button")?.dataset.replayAction;
     if(!action||!ribbitReplayView)return;
@@ -360,6 +422,9 @@ function ribbitReplayCreateControls(){
       const rates=[.25,.5,.75,1,1.25,1.5,1.75,2,4];
       const index=rates.findIndex(n=>n===ribbitReplayView.rate);
       ribbitReplayView.rate=rates[(index+1)%rates.length];
+      // The stopwatch updates as soon as it is clicked, even on a paused
+      // viewer where the animation loop may not paint another frame yet.
+      ribbitReplayUpdateControls();
     }else if(action==="fullscreen")toggleRibbitFullscreen();
   });
   ribbitReplayControls={host,header,footer,seek,
@@ -371,7 +436,7 @@ function ribbitReplayCreateControls(){
     badge:header.querySelector(".rr-spectator-badge small"),
     play:footer.querySelector('[data-replay-action="play"]'),
     speed:footer.querySelector('[data-replay-action="speed"]'),
-    time:footer.querySelector(".rr-replay-time")};
+    volume, time:footer.querySelector(".rr-replay-time")};
   return ribbitReplayControls;
 }
 function ribbitReplayShowControls(){
@@ -380,10 +445,18 @@ function ribbitReplayShowControls(){
   controls.host.classList.add("rr-replay-layout");
   controls.caption.textContent=ribbitReplayView?.caption||"REPLAY";
   const at=ribbitReplayView?.recordedAt??ribbitReplayView?.data?.recordedAt;
-  const date=Number(at)?new Date(at):new Date(at||"");
-  controls.date.textContent=Number.isFinite(date.getTime())
-    ? ` • ${date.toLocaleDateString(undefined,{year:"numeric",month:"short",day:"numeric"})} ${date.toLocaleTimeString(undefined,{hour:"numeric",minute:"2-digit"})}`
-    : "";
+  const number=Number(at);
+  const date=Number.isFinite(number)&&number>0
+    ? new Date(number<10_000_000_000?number*1000:number) : new Date(at||"");
+  let options={year:"numeric",month:"short",day:"numeric",hour:"numeric",minute:"2-digit",hour12:true};
+  // Display the clock time at the ORIGINAL recording location when saved,
+  // not a potentially unrelated visitor's current timezone.
+  if(ribbitReplayView?.recordedTimeZone)options.timeZone=ribbitReplayView.recordedTimeZone;
+  try{
+    controls.date.textContent=Number.isFinite(date.getTime())
+      ? ` • ${date.toLocaleString(undefined,options)}` : "";
+  }catch(_){delete options.timeZone;controls.date.textContent=Number.isFinite(date.getTime())
+    ? ` • ${date.toLocaleString(undefined,options)}` : "";}
   controls.badge.textContent=ribbitReplayView?.data?.fps===60?"60 FPS":"ARCHIVED FRAMES";
   ribbitReplayUpdateControls();
 }
@@ -395,8 +468,21 @@ function ribbitReplayUpdateControls(){
     const value=Math.max(0,Math.floor(ms/1000));
     return `${Math.floor(value/60)}:${String(value%60).padStart(2,"0")}`;
   };
-  controls.play.textContent=view.paused && view.data && view.position>=duration-1 ? "REPLAY" : view.paused?"PLAY":"PAUSE";
-  controls.speed.textContent=`${view.rate}X`;
+  const playState=view.data && view.position>=duration-1
+    ? "replay" : view.paused ? "play" : "pause";
+  controls.play.dataset.state=playState;
+  controls.play.setAttribute("aria-label",`${playState.charAt(0).toUpperCase()}${playState.slice(1)} playback`);
+  controls.play.title=playState==="replay"?"Watch again (Space)":`${playState} (Space)`;
+  for(const [selector,kind] of [[".rr-play-triangle","play"],[".rr-play-bars","pause"],[".rr-replay-arrow","replay"]]) {
+    const glyph=controls.play.querySelector(selector);
+    // SVG paths do not consistently implement HTMLElement.hidden. Toggle the
+    // attribute AND display style so only the intended icon can render.
+    glyph.toggleAttribute("hidden",playState!==kind);
+    glyph.style.display=playState===kind?"":"none";
+  }
+  controls.speed.querySelector(".rr-speed-value").textContent=`${view.rate}×`;
+  controls.volume.value=String(Math.round(view.volume*100));
+  controls.volume.setAttribute("aria-valuetext",`${Math.round(view.volume*100)} percent`);
   controls.time.textContent=`${format(view.position)} / ${format(duration)}`;
   const collection=view.collection;
   controls.browse.hidden=!collection;
@@ -411,16 +497,19 @@ function ribbitReplayUpdateControls(){
   }
 }
 function ribbitReplayBegin(data,caption="REPLAY",options={}){
-  const playable=ribbitReplayAdaptLegacy(data);
-  if(!playable)return ribbitReplayUnavailable("REPLAY UNAVAILABLE","THIS RECORD HAS NO PLAYABLE GAME-STATE DATA");
+  const validated=ribbitReplayAdaptLegacy(data);
+  if(!validated)return ribbitReplayUnavailable("REPLAY UNAVAILABLE","THIS RECORD HAS NO PLAYABLE GAME-STATE DATA");
   if(ribbitReplayCapture)finishRibbitReplayCapture();
+  const playable=ribbitReplayEnsureCountdown(validated);
   const previousRestore=ribbitReplayView?.restore;
   ribbitReplayView={
     data:playable,caption:String(caption||"REPLAY").toUpperCase().slice(0,90),
-    recordedAt:options.recordedAt||playable.recordedAt||null,
+    recordedAt:playable.recordedAt||options.recordedAt||null,
+    recordedTimeZone:playable.recordedTimeZone||null,
     collection:options.collection||null,
     position:0,lastTick:performance.now(),paused:false,rate:1,
     scrubbing:false,wasPaused:false,soundIndex:0,
+    volume:ribbitReplayView?.volume ?? 1,
     restore:previousRestore||{state:game.state,mode:game.mode},error:""
   };
   game.state="rrEngineReplay";
@@ -434,7 +523,7 @@ function ribbitReplayUnavailable(title,reason){
   ribbitReplayView={
     data:null,caption:String(title).toUpperCase(),error:String(reason).toUpperCase(),
     position:0,lastTick:performance.now(),paused:true,rate:1,
-    scrubbing:false,wasPaused:true,soundIndex:0,
+    scrubbing:false,wasPaused:true,soundIndex:0,volume:1,
     restore:{state:game.state,mode:game.mode}
   };
   game.state="rrEngineReplay";
@@ -504,8 +593,14 @@ function ribbitReplayTick(now=performance.now()){
       // Sound is not re-triggered by scrub, seeking, or frame-stepping.
       if(Number.isFinite(sound.f)&&sound.f>=45&&sound.f<=20000&&
         Number.isFinite(sound.d)&&sound.d>0&&sound.d<=3&&
-        Number.isFinite(sound.v)&&sound.v>=0&&sound.v<=.5){
-        tone(sound.f,sound.d,sound.v,Number(sound.s)||0);
+        Number.isFinite(sound.v)&&sound.v>=0&&sound.v<=.5 && view.volume>0){
+        // Replay volume is independent of the currently loaded game save.
+        // Restore its mute and volume preferences immediately after each tone.
+        const formerVolume=game.volume,formerMute=game.muted;
+        try{
+          game.muted=false;game.volume=1;
+          tone(sound.f,sound.d,sound.v*view.volume,Number(sound.s)||0);
+        }finally{game.muted=formerMute;game.volume=formerVolume;}
       }
     }
     if(view.position>=view.data.duration)view.paused=true;
@@ -597,6 +692,7 @@ function paintRibbitReplayStage(){
     game.pvpRoundGoalMode=data.pvpRoundGoalMode||"5flies";
     game.pvpBestOf=data.pvpBestOf??3;
     game.tutorialActive=false;game.soloCriticalCatchActive=false;game.pvpCriticalCatchActive=false;
+    game.soloCriticalCatchFlyVisual=null;game.pvpCriticalCatchFlyVisual=null;
     tutorial.active=false;tutorial.completeScreen=false;tutorial.dialogueOpen=false;
     game.winPending=false;game.pvpWinPendingIndex=null;game.pvpImpactEffects=[];
     if(data.vocab?.length)VOCABULARY=normalizeVocabularyEntries(data.vocab);
@@ -646,7 +742,9 @@ function paintRibbitReplayStage(){
       const final=data.final;
       const rect={w:402,h:128};
       rect.x=Math.round((W-rect.w)/2);
-      rect.y=Math.round((H-rect.h)/2);
+      // Center only within the level's PLAYFIELD. The bottom vocabulary
+      // panel is HUD, not part of the gameplay area we want to cover.
+      rect.y=Math.round((CONFIG.playBottom-rect.h)/2);
       ctx.fillStyle="rgba(11,32,40,.38)";
       ctx.fillRect(rect.x+5,rect.y+7,rect.w,rect.h);
       ctx.fillStyle=COLORS.ink;
@@ -724,8 +822,8 @@ function handleRibbitReplayKey(event){
   else if(key==="End")ribbitReplaySeek(view.data?.duration/1000||0);
   else if(key==="Comma"&&event.shiftKey||key==="ArrowDown"||key==="Minus")ribbitReplayAdjustRate(-.25);
   else if(key==="Period"&&event.shiftKey||key==="ArrowUp"||key==="Equal")ribbitReplayAdjustRate(.25);
-  else if(key==="Comma")ribbitReplaySeek((view.position+(1000/RIBBIT_REPLAY_FPS))/1000);
-  else if(key==="Period")ribbitReplaySeek((view.position-(1000/RIBBIT_REPLAY_FPS))/1000);
+  else if(key==="Comma")ribbitReplaySeek((view.position-(1000/RIBBIT_REPLAY_FPS))/1000);
+  else if(key==="Period")ribbitReplaySeek((view.position+(1000/RIBBIT_REPLAY_FPS))/1000);
   else if(/^Digit[0-9]$/.test(key)||/^Numpad[0-9]$/.test(key)){
     const tenth=Number(key.slice(-1));
     ribbitReplaySeek(tenth*(view.data?.duration||0)/10000);

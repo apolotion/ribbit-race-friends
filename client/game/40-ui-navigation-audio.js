@@ -2675,7 +2675,9 @@
     }
 
     function resumePausedGame() {
-      if (game.mode === "pvp" && !game.pvpUnpauseCountdown) {
+      if (game.mode === "pvp" && !game.pvpUnpauseCountdown &&
+          !(typeof tutorial !== "undefined" && tutorial.active && tutorial.kind === "pvp" &&
+            typeof tutorialStep === "function" && tutorialStep()?.setup === "pvpFinalMatch")) {
         game.state = "playing";
         game.countdownNumber = 0;
         game.countdownTimer = 0;

@@ -1,5 +1,5 @@
 
-/* Ribbit Race Friends 1.7.44 — account modal, mobile touch, tutorials, and UI polish. */
+/* Ribbit Race Friends 1.7.46 — account modal, mobile touch, tutorials, and UI polish. */
 html, body {
   -webkit-touch-callout: none;
   -webkit-user-select: none;
@@ -428,3 +428,37 @@ body.rr-engine-replay-active #cloud-status-pill {display:none!important;}
 .rr-tag-replay-empty {padding:20px 10px;text-align:center;color:#59666b;}
 @media(max-width:790px){#rr-spectator-header .rr-spectator-date{font-size:.68em;}#rr-spectator-header .rr-spectator-badge{font-size:.72em;}}
 @media(max-width:620px){#rr-spectator-header .rr-spectator-title{flex-direction:column;align-items:flex-start;justify-content:center;gap:0;}#rr-spectator-header .rr-spectator-date{font-size:8px;}#rr-spectator-toolbar [data-replay-action="browse"]{font-size:8px;}#rr-spectator-toolbar .rr-replay-time{display:none;} .rr-tag-replay-entry{padding:9px 7px;} .rr-tag-replay-entry-play{padding:5px 5px;font-size:10px;}}
+
+/* Polish 57: stable, icon-led spectator transport and volume; time and title
+   share the SAME type styling. Speed's stopwatch never changes size. */
+#rr-spectator-header .rr-spectator-date {color:#f7fdff;font-size:inherit;text-shadow:inherit;}
+#rr-spectator-toolbar .rr-replay-icon-button {
+  width:clamp(36px,4.2vw,58px);height:clamp(36px,4.2vw,58px);
+  display:inline-grid;place-items:center;padding:4px;flex-shrink:0;
+}
+#rr-spectator-toolbar .rr-replay-icon-button svg {display:block;width:clamp(19px,2vw,27px);height:clamp(19px,2vw,27px);}
+#rr-spectator-toolbar .rr-replay-icon-button [hidden]{display:none!important;}
+#rr-spectator-toolbar .rr-replay-volume {
+  display:flex;align-items:center;gap:5px;flex:0 0 clamp(86px,12vw,165px);
+  min-width:0;color:#b8f5dc;
+}
+#rr-spectator-toolbar .rr-replay-volume svg {flex:none;}
+#rr-spectator-toolbar .rr-replay-volume input {
+  min-width:28px;width:100%;height:16px;padding:0;margin:0;
+  accent-color:#49dce9;cursor:pointer;touch-action:manipulation;
+}
+#rr-spectator-toolbar .rr-replay-speed {
+  display:inline-flex;align-items:center;justify-content:center;gap:3px;
+  flex:0 0 clamp(64px,6.3vw,93px);width:clamp(64px,6.3vw,93px);
+  height:clamp(36px,4.2vw,58px);padding:3px!important;
+  font-variant-numeric:tabular-nums;
+}
+#rr-spectator-toolbar .rr-replay-speed svg{flex:none;width:18px;height:18px;}
+#rr-spectator-toolbar .rr-speed-value{min-width:3ch;text-align:center;font-size:.85em;}
+@media(max-width:620px){
+  #rr-spectator-toolbar .rr-replay-volume {flex-basis:65px;gap:2px;}
+  #rr-spectator-toolbar .rr-replay-volume svg {width:13px;height:13px;}
+  #rr-spectator-toolbar .rr-replay-speed {flex-basis:53px;width:53px;gap:1px;}
+  #rr-spectator-toolbar .rr-replay-speed svg {width:13px;height:13px;}
+  #rr-spectator-toolbar .rr-replay-icon-button{width:34px;height:32px;}
+}

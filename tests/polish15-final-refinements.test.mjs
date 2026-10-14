@@ -21,7 +21,7 @@ function block(source, start, end) {
 
 test("Polish 16 cache marker is wired", () => {
   for (const source of [tutorial, read("src/common.js"), read("public/index.html"), read("public/scripts/cloud-client.js")]) {
-    assert.match(source, /2026\.10\.13-friends-polish-56/);
+    assert.match(source, /2026\.10\.13-friends-polish-58/);
   }
 });
 

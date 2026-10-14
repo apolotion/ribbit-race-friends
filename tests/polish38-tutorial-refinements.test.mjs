@@ -47,7 +47,7 @@ test('final Solo and Versus rounds restore active fly clues on replay/scene rest
   assert.match(scenes, /vocabIndex/);
   assert.match(single, /tutorialArmed !== false/);
   assert.match(rendering, /function drawCurrentGoalHud\(\)/);
-  assert.match(rendering, /tutorial\.kind === "pvp" && tutorialStep\(\)\?\.setup === "pvpFinalMatch"/);
+  assert.match(rendering, /function drawCurrentGoalHud\(\)[\s\S]*?if \(!tutorial\.active\) return/);
 });
 
 test('both Versus jump meters are symmetrically sized and final opponent label says Ember', () => {
@@ -83,9 +83,9 @@ test('Ember starts buffered sky drop centered atop the high platform and practic
 });
 
 test('player and Ember switch ground positions for one natural under bonk', () => {
-  assert.match(scenes, /case "pvpUnderBonkTwo"[\s\S]{0,550}positionPvp\(p1, 64, CONFIG\.groundY - p1\.h, 1\)/);
+  assert.match(scenes, /case "pvpUnderBonkTwo"[\s\S]{0,550}positionPvpOnPlatform\(p1, middleLeft, 1\)/);
   assert.match(scenes, /positionPvp\(ember, 238, CONFIG\.groundY - ember\.h, -1\)/);
-  assert.match(monitoring, /scriptPvpChargedJump\(1, \.55, direction, 0\)/);
+  assert.match(monitoring, /scriptPvpChargedJump\(1, \.89, -1, 0\)/);
   assert.match(monitoring, /tutorial\.pvpUnderBonks >= 1/);
   assert.doesNotMatch(monitoring, /second-under-bonk-straight-up/);
   assert.match(config, /Give me one clean under bonk/);
@@ -104,7 +104,7 @@ test('chapter switching cleans hidden players and stale smoke', () => {
   assert.match(lifecycle, /tutorial\.smokeClouds\.length = 0/);
 });
 
-test('Final tutorial current-goal panel is hidden and Solo progress headers removed', () => {
-  assert.match(rendering, /if \(!tutorial\.active \|\| \(tutorial\.kind === "pvp" && tutorialStep\(\)\?\.setup === "pvpFinalMatch"\)\) return/);
+test('Final tutorial Current Goal stays visible while Solo progress headers are removed', () => {
+  assert.match(rendering, /function drawCurrentGoalHud\(\)[\s\S]*?if \(!tutorial\.active\) return/);
   assert.doesNotMatch(rendering, /drawTutorialProgress\(\);/);
 });

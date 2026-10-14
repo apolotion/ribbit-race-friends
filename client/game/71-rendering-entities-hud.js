@@ -357,6 +357,36 @@
       ctx.restore();
     }
 
+    // A fly caught on the first frame of a zoom is removed from collision
+    // state immediately, but remains a visible, foreground sprite as the
+    // tongue reels it into the frog. Uses zoom time rather than tongue.active,
+    // which can end long before the two-second slow-motion camera finishes.
+    function drawSlowMotionFlyPull(visual, mouth, elapsed, duration) {
+      if (!visual || !mouth) return;
+      const fromX=Number(visual.baseX ?? visual.x);
+      const fromY=Number(visual.baseY ?? visual.y);
+      if (![fromX,fromY,mouth.x,mouth.y].every(Number.isFinite)) return;
+      const progress=clamp((Number(elapsed)||0)/Math.max(.001,Number(duration)||2),0,1);
+      const amount=clamp((progress-.07)/.78,0,1);
+      if (amount>=1) return; // has entered the frog's mouth, not vanished on catch
+      const ease=amount*amount*(3-2*amount);
+      const x=lerp(fromX,mouth.x,ease);
+      const y=lerp(fromY,mouth.y,ease);
+      ctx.save();
+      ctx.globalAlpha=clamp((1-ease)/.14,0,1);
+      const dx=x-mouth.x,dy=y-mouth.y;
+      const points=Math.max(1,Math.ceil(Math.hypot(dx,dy)/3));
+      for(let index=0;index<=points;index++){
+        const t=index/points;
+        const px=Math.round(lerp(mouth.x,x,t)),py=Math.round(lerp(mouth.y,y,t));
+        ctx.fillStyle="#923c61";ctx.fillRect(px-1,py,3,2);
+        ctx.fillStyle="#ef819e";ctx.fillRect(px,py-1,2,2);
+      }
+      // Always draw fly AFTER the tongue; it needs to sit on top visually.
+      drawFlyAt(x,y,Math.max(.34,1-.5*ease));
+      ctx.restore();
+    }
+
     function drawTongue() {
       if (!tongue.active) return;
 

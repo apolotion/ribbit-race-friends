@@ -3,12 +3,12 @@
     // Friends Edition: accounts, matchmaking, and live human gameplay use the
     // same-origin Cloudflare Worker/Durable Object service. The historical
     // directOnlyVersion field is retained only as a protocol compatibility marker.
-    const RIBBIT_DIRECT_BUILD = "2026.10.13-friends-polish-56";
+    const RIBBIT_DIRECT_BUILD = "2026.10.13-friends-polish-58";
     const RIBBIT_DIRECT_POLICY_VERSION = 2;
     const RIBBIT_ONLINE_PROTOCOL_VERSION = 3;
     const RIBBIT_QUICKPLAY_VERSION = 3;
 
-    const RIBBIT_CLOUD_CLIENT_VERSION = "2026.10.13-friends-polish-56";
+    const RIBBIT_CLOUD_CLIENT_VERSION = "2026.10.13-friends-polish-58";
     const RIBBIT_CLOUD_SAVE_SCHEMA_VERSION = 2;
     // Preserve every current and future Ribbit Race key, including legacy one-button keys.
     const RIBBIT_GAME_KEY = /^(?:ribbitRace|oneButtonFrog)/;
@@ -61,6 +61,9 @@
       let leaderboardPage = 0;
       const leaderboardPageSize = 12;
       const LEADERBOARD_FIRST_PLACE_NOTICE_KEY = "ribbitRaceLeaderboardFirstPlaceNoticesV1";
+      // Local evidence of the actual prior #1, retained across normal reloads.
+      // This is a new key, not a change to cloud save/database schemas.
+      const WORLD_RECORD_LEADERS_KEY = "rrWorldRecordLeadersV1";
       let leaderboardBaselineReady = false;
       let leaderboardRelevantDirty = false;
       let lastLeaderboardRecordCheckAt = 0;
@@ -994,6 +997,72 @@
         }
       }
 
+      function readPreviousWorldLeaders() {
+        try {
+          const rows = JSON.parse(localStorage.getItem(WORLD_RECORD_LEADERS_KEY) || "{}");
+          return rows && typeof rows === "object" && !Array.isArray(rows) ? rows : {};
+        } catch (_) { return {}; }
+      }
+
+      function captureWorldLeaders(entries) {
+        const result = {};
+        const levels = ["park", "swamp", "jungle", "pond", "lake", "garden"];
+        for (const metric of ["time", "jumps", "endless", "flies", "pvpwins"]) {
+          for (const level of metric === "flies" || metric === "pvpwins" ? ["all"] : levels) {
+            let top = null;
+            for (const entry of entries) {
+              if (!entry) continue;
+              const record = entry.records?.[level] || {};
+              const value = Number(metric === "flies" ? entry.totalFlies
+                : metric === "pvpwins" ? entry.pvpMatchWins : record[metric]);
+              if (!Number.isFinite(value) || value <= 0) continue;
+              const higherIsBetter = metric === "flies" || metric === "pvpwins" || metric === "endless";
+              if (!top || (higherIsBetter ? value > top.value : value < top.value)) {
+                const exactDate = metric === "endless" ? record.endlessDate : record.date;
+                top = {
+                  uid: String(entry.uid || entry.username || entry.name || ""),
+                  name: String(entry.name || entry.username || "PLAYER"),
+                  value, date: String(exactDate || "")
+                };
+              }
+            }
+            if (top) result[`school:${metric}:${level}`] = top;
+          }
+        }
+        return result;
+      }
+
+      function previousWorldRecord(record, allEntries, oldLeaders, newLeaders) {
+        const key = `${record.scope || "school"}:${record.metric}:${record.level || "all"}`;
+        const latest = newLeaders[key], previous = oldLeaders[key];
+        if (latest && previous && (previous.uid !== latest.uid || Number(previous.value) !== Number(latest.value))) {
+          return { ...previous, kind:"previous" };
+        }
+        // Without a cached earlier leaderboard, a runner-up is not proven to
+        // be the *former* holder. Show them honestly as NEXT BEST instead.
+        const runners = (allEntries || []).filter(entry =>
+          String(entry.uid || entry.username || entry.name || "") !== latest?.uid);
+        const runner = captureWorldLeaders(runners)[key];
+        return runner ? { ...runner, kind:"next-best" } : null;
+      }
+
+      function worldRecordDisplayValue(value, metric) {
+        const score = Number(value);
+        if (!Number.isFinite(score)) return "--";
+        if (metric === "time") {
+          const minutes = Math.floor(score / 60);
+          return `${String(minutes).padStart(2,"0")}:${(score-minutes*60).toFixed(1).padStart(4,"0")}`;
+        }
+        return String(Math.floor(score));
+      }
+
+      // A late async record notice may draw without moving the mouse. The
+      // victory card can query this cache on every frame as details arrive.
+      let recentWorldRecordPrevious = {};
+      window.RibbitPreviousWorldRecord = record => recentWorldRecordPrevious[
+        `${record?.scope || "school"}:${record?.metric || ""}:${record?.level || "all"}`
+      ] || null;
+
       function collectCurrentFirstPlaceRecords(entries) {
         const allEntries = Array.isArray(entries) ? entries.filter(Boolean) : [];
         const current = allEntries.find((entry) => entry && entry.isCurrent);
@@ -1089,7 +1158,26 @@
         try {
           const result = await serverCall("apiGetLeaderboard", { sessionToken });
           if (!result || !result.ok) return false;
-          const currentFirsts = collectCurrentFirstPlaceRecords(Array.isArray(result.entries) ? result.entries : []);
+          const entries = Array.isArray(result.entries) ? result.entries : [];
+          const currentFirsts = collectCurrentFirstPlaceRecords(entries);
+          const oldLeaders = readPreviousWorldLeaders();
+          const newLeaders = captureWorldLeaders(entries);
+          recentWorldRecordPrevious = {};
+          Object.entries(currentFirsts).forEach(([key, record]) => {
+            const prior = previousWorldRecord(record, entries, oldLeaders, newLeaders);
+            if (prior) {
+              const detail = { ...prior,
+                displayValue: worldRecordDisplayValue(prior.value, record.metric),
+                // A date is taken from the original record, never guessed from
+                // the player's unrelated account-last-updated timestamp.
+                date: prior.date ? formatLeaderboardDate(prior.date) : "UNKNOWN",
+              };
+              record.previous = detail;
+              recentWorldRecordPrevious[key] = detail;
+            }
+          });
+          // Store the true leaders even when this is a quiet baseline refresh.
+          try { localStorage.setItem(WORLD_RECORD_LEADERS_KEY, JSON.stringify(newLeaders)); } catch (_) {}
           const stored = readLeaderboardFirstPlaceNotices();
           const categoryKeys = ["school", "class"].flatMap((scope) => [
             `${scope}:flies:all`,

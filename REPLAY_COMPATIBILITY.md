@@ -40,3 +40,20 @@ frog continues to animate. New replays record 3000ms of solo victory frames;
 the last 1000ms of dance is generated during playback with the same animation
 clock. Legacy v1 recordings with final frames are retimed for display without
 changing the saved source or adding events that were never recorded.
+
+## Polish 57 additions (1.7.45)
+
+- Playback-only `ribbitReplayEnsureCountdown()` reconstructs missing initial
+  countdown states for late-start legacy recordings. Saved frames and sounds
+  are not mutated; newly recorded replays capture the actual 3-2-1. Synthetic
+  countdown tones are labeled by phase rather than presented as historical
+  recorded events.
+- `recordedAt` and `recordedTimeZone` now take precedence over leaderboard
+  row timestamps, keeping replay date/time local to the original recording
+  where the original timezone was saved. Older recordings without timezone
+  use the viewer's timezone; they cannot recover an unsaved historic timezone.
+- New recordings preserve `soloCriticalCatchFlyVisual` and
+  `pvpCriticalCatchFlyVisual` for smooth slow-motion fly-to-mouth rendering.
+  Missing visual states in legacy clips do not invalidate playback.
+- Keep the exact original recorder frame schema (`version:2`) until a future
+  additive version needs to be introduced. Always maintain v1 and v2 readers.

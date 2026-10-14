@@ -598,7 +598,8 @@ update = function(dt, ...rest) {
   // only the controlled frog. Flies stay still during a poof transition.
   if (tutorial.active && tutorialMovementLocked()) {
     updateTutorialAmbient(dt, { animateFlies: true });
-    if (tutorial.kind === "pvp" && tutorial.dialogueOpen && !tutorial.resetPending &&
+    if (tutorial.kind === "pvp" &&
+        (tutorial.dialogueOpen || tutorial.pvpAwaitRecoveryAdvance) && !tutorial.resetPending &&
         !tutorial.pvpFrogsHidden && game.state === "playing") {
       // Dialogue blocks controls, not gravity. A surprise bonk or wall rebound
       // may leave either frog airborne when Ember begins speaking. Finish that

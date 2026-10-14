@@ -5,11 +5,11 @@
  */
 (() => {
   "use strict";
-  const BUILD = "2026.10.13-friends-polish-56";
+  const BUILD = "2026.10.13-friends-polish-58";
   const RR_V160_CANDIDATES = {"catchFly":["attemptFlyCatch","attemptPvpFlyCatch","catchSandboxFly","getPvpImminentCatchFly","recordFlyEaten","scheduleFlyReplacementFromCatch"],"jumpSound":["playJumpSound"],"beep":["playCountdownGoSound","playCountdownSound"],"replayUpload":["saveRecordDate"],"restart":["resetGame","resetPvpGame","resetPvpPlayer","resetRoundLifecycle","resetRoundNetwork","restartCurrentLevel"],"drop":[],"render":["drawPvpScene","drawScene"],"worldRecord":[],"fullscreen":["getFullscreenElement","hideFullscreenFallback","showFullscreenFallback","syncFullscreenButton","toggleRibbitFullscreen"],"onlineSubmit":[],"leaderboard":["isSoloEndlessLeaderboardEligible","savePvpMatchWinsForLeaderboard"]};
   const RR_V160_VARS = {"onlineSelect":[],"achievementSelect":["activeAchievementIndex","hoveredAchievementCard"],"backRect":[]};
 
-  const VERSION = "1.7.44";
+  const VERSION = "1.7.46";
   const V = {
     menuTouch: new Map(), chargeTouch: new Map(), achievementPinned: -1,
     cpuTakeoverUntil: 0, cpuTakeoverStarted: 0, cpuSnapshot: null,

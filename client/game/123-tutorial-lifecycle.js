@@ -19,6 +19,7 @@ function configureStep(showDialogue = true, options = {}) {
   tutorial.pvpHiddenPlayerIndices = [];
   tutorial.pvpDemoActive = false;
   tutorial.pvpPlayerScriptLocked = false;
+  tutorial.pvpAwaitRecoveryAdvance = false;
   tutorial.pendingPvpVisualPoses = null;
   tutorial.dialogueHiddenDuringPoof = false;
   tutorial.resetPvpPoofPlayers = [0, 1];
@@ -370,6 +371,7 @@ function beginScenarioEntryTransition() {
     tutorial.pvpCaption = "YOUR TURN!";
     tutorial.pvpCaptionUntil = performance.now() + 1600;
     schedulePvpFlyReveal(setup, pvpFlyRevealDelayMs(setup));
+    if (["pvpReboundCatch", "pvpIntercept"].includes(setup)) tutorial.promptHidden = false;
     tutorial.enteredAt = performance.now();
     return;
   }
@@ -388,6 +390,7 @@ function beginScenarioEntryTransition() {
         tutorial.pvpCaption = "YOUR TURN!";
         tutorial.pvpCaptionUntil = performance.now() + 1600;
         schedulePvpFlyReveal(setup, pvpFlyRevealDelayMs(setup));
+        if (["pvpReboundCatch", "pvpIntercept"].includes(setup)) tutorial.promptHidden = false;
       } else {
         applyControlledPose(intendedStartPose);
         restoreStepSequence();
@@ -537,12 +540,18 @@ function passStep() {
   if (!tutorial.active || tutorial.passed || tutorial.passPending) return;
   // Techniques such as wall rebounds can succeed in mid-air. Let the real
   // engine finish the landing before Ember freezes the pose for dialogue.
+  // Exception: sky-bonk lessons start the next SPOKEN line when the attacker
+  // lands, with the victim still completing their legitimate five-second stun
+  // and upright recovery behind the dialogue. Waiting for !victim.bonked
+  // here would silently reintroduce the five-second narration delay.
+  const skyBonkLandingDialogue = tutorial.kind === "pvp" &&
+    ["pvpDemoSkyBonk", "pvpSkyBonk", "pvpDemoBufferedSky", "pvpBufferedSky"].includes(tutorialStep()?.setup);
   if ((tutorial.kind === "solo" && (!frog.grounded || tongue.active || game.soloCriticalCatchActive)) ||
       (tutorial.kind === "pvp" && tutorialStep()?.setup !== "pvpFinalMatch" &&
-       (!pvpPlayers[0].grounded || pvpPlayers[0].bonked ||
+       (!pvpPlayers[0].grounded || (!skyBonkLandingDialogue && pvpPlayers[0].bonked) ||
         pvpPlayers[0].tongue?.active || game.pvpCriticalCatchActive ||
-        // A bonked coach must finish dropping; no levitating victim in dialogue.
-        pvpPlayers[1].bonked ||
+        // The other frog must reach a perch/ground, but their stun can remain.
+        (!skyBonkLandingDialogue && pvpPlayers[1].bonked) ||
         (!pvpPlayers[1].grounded && !tutorialStep()?.demonstration)))) {
     tutorial.passPending = true;
     tutorial.passPendingAt = performance.now();
@@ -621,7 +630,7 @@ function beginCompletionScreen() {
   tutorial.dialoguePointerId = null;
   tutorial.frogHidden = false;
   resetDialogueSpaceHold();
-  game.tutorialActive = false;
+  game.tutorialActive = tutorial.kind === "pvp";
   game.tutorialDisplayCatchTarget = null;
   flies.length = 0;
   game.spawnQueue.length = 0;
@@ -632,12 +641,27 @@ function beginCompletionScreen() {
   frog.charging = false;
   clearHeldInput();
   if (tutorial.kind === "pvp") {
-    game.mode = "solo";
-    game.skinId = pvpPlayers[0]?.skinId || game.skinId || "azure";
-    game.selectedLevelId = "park";
-    applySelectedLevel();
+    // Keep the Versus renderer, Ember's crown and both score/charge HUDs.
+    // Previous completion code changed to Solo and erased Ember entirely.
+    game.mode = "pvp";
+    game.pvpCpuEnabled = true;
+    game.pvpSetupSkinIds[1] = "ember";
+    positionPvp(pvpPlayers[0], 150, CONFIG.groundY - pvpPlayers[0].h, 1);
+    positionPvp(pvpPlayers[1], 300, CONFIG.groundY - pvpPlayers[1].h, -1);
+    pvpPlayers[1].skinId = "ember";
+    tutorial.pvpCompletionPoofAt = performance.now();
+    [pvpPlayers[0], pvpPlayers[1]].forEach((player) => {
+      addTutorialPoof(player.x + player.w / 2, player.y + player.h / 2, "in");
+    });
+    playTutorialPoofSound("in");
   }
-  if (!alreadyWon || tutorial.kind === "pvp") {
+  if (tutorial.kind === "pvp") {
+    game.state = "won";
+    game.victorySelection = "home";
+    game.victoryMouseMode = false;
+    game.winInputLock = CONFIG.winDanceRevealDelay + 0.5;
+    playWinSound();
+  } else if (!alreadyWon) {
     clearFrogAfterimages(frog);
     frog.danceTime = 0;
     frog.grounded = true;
@@ -756,7 +780,23 @@ function clearTutorialCarryoverFlies() {
   if (removed) clearLabelCaches();
 }
 
+function pvpTutorialRecoveryIsPlaying() {
+  return tutorial.kind === "pvp" && pvpPlayers.some((player) =>
+    player && (player.bonked || player.stunTimer > 0 ||
+      (player.recoveryFlipTimer || 0) > 0));
+}
+
 function nextStep() {
+  // Fast-forwarding text may close a success line in a split second. Keep the
+  // current frogs and their genuine stun/recovery motion visible before the
+  // NEXT chapter's poof; do not reset away the recovery animation.
+  if (tutorial.active && !tutorial.resetPending && pvpTutorialRecoveryIsPlaying()) {
+    tutorial.pvpAwaitRecoveryAdvance = true;
+    tutorial.pvpPlayerScriptLocked = true;
+    clearHeldInput();
+    return;
+  }
+  tutorial.pvpAwaitRecoveryAdvance = false;
   const steps = tutorial.kind === "pvp" ? PVP_STEPS : SOLO_STEPS;
   if (tutorial.step >= steps.length - 1) {
     finish(true);

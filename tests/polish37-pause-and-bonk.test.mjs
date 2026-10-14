@@ -74,8 +74,8 @@ test('buffered drop tutorial now targets Ember waiting at left ground',()=>{
  assert.equal(demo[0].y,200);
  assert.equal(demo[1].y,200);
  const player=positions.capture('pvpBufferedBonk').players;
- assert.equal(player[0].x+11,240); // player begins at middle ground facing left
- assert.equal(player[1].x+11,75); // Ember waits to the left as pictured
+ assert.equal(player[0].x+11,75); // player begins on the left facing right
+ assert.equal(player[1].x+11,240); // Ember waits at center ground
  const motion=section(scene,'function beginPvpDemoMotion','function updatePvpDemonstration');
  assert.match(motion,/case "pvpDemoBufferedBonk"[\s\S]{0,310}scriptPvpChargedJump\(1, \.70, -1, 0\)/);
  assert.match(motion,/armPvpScriptedBuffer\(1, PARK_PLATFORMS\[3\]\)/);
@@ -86,10 +86,10 @@ test('third practice bonk waits until Ember falls and finishes her stun rotation
  assert.match(monitor,/ember\.stunTimer <= 0 && ember\.y \+ ember\.h >= CONFIG\.groundY - 1/);
 });
 
-test('sky bonk dialogue waits until frogs complete their natural recovery',()=>{
- assert.match(monitor,/setup === "pvpSkyBonk"[\s\S]{0,190}pvpPracticeEventReady\(100, now\)/);
+test('sky bonk narration follows the attacking frog landing rather than victim recovery',()=>{
+ assert.match(monitor,/setup === "pvpSkyBonk"[\s\S]{0,380}pvpPracticeEventReady\(100, now\)/);
  assert.match(monitor,/setup === "pvpBufferedSky"[\s\S]{0,350}pvpPracticeEventReady\(100, now\)/);
- assert.match(scene,/setup === "pvpDemoSkyBonk" \? ember\.grounded/);
+ assert.match(scene,/setup === "pvpDemoSkyBonk" \|\| setup === "pvpDemoBufferedSky"/);
  assert.match(scene,/setup !== "pvpDemoBufferedSky" \|\| ember\.grounded/);
 });
 

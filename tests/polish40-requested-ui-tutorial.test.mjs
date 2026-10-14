@@ -66,6 +66,6 @@ test('buffered sky bonk launches top center to proven target facing left',()=>{
  assert.match(scenes,/rightMiddle\.x \+ rightMiddle\.w - p1\.w \+ 2/);
 });
 test('sky bonk dialogue only waits for impact plus attacker landing',()=>{
- assert.match(scenes,/setup === "pvpDemoSkyBonk" \? ember\.grounded/);
+ assert.match(scenes,/setup === "pvpDemoSkyBonk" \|\| setup === "pvpDemoBufferedSky"/);
  assert.match(monitor,/pvpPracticeEventReady\(100, now\)/);
 });

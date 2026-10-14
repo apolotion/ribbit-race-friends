@@ -952,7 +952,7 @@ function drawGoalHowToTooltip() {
 }
 
 function drawCurrentGoalHud() {
-  if (!tutorial.active || (tutorial.kind === "pvp" && tutorialStep()?.setup === "pvpFinalMatch")) return;
+  if (!tutorial.active) return;
   const goal = currentGoalLines();
   const { x, y, w, h } = getTutorialGoalRect();
   const now = performance.now();
@@ -1263,7 +1263,8 @@ function drawTutorialCompletionHomeButton(rect) {
 function drawCompletionScreen() {
   if (!tutorial.completeScreen || game.state !== "won") return;
   const skin = getSelectedSkin();
-  const panel = { x: 72, y: 16, w: 336, h: 106 };
+  // Center within the PLAYFIELD (0..playBottom), not the entire canvas HUD.
+  const panel = { x: 72, y: Math.round((CONFIG.playBottom - 106) / 2), w: 336, h: 106 };
 
   ctx.save();
   // Match the normal level-complete card: offset shadow, cross-shaped dark
@@ -1377,6 +1378,10 @@ drawVocabularyPrompt = function(...args) {
   // for a full second before it poofs in, and must not reveal the answer then.
   const displayedFlies = tutorial.active ? tutorialDisplayedFlies() : [];
   const anyVisible = displayedFlies.length > 0;
+  const earlyClue = tutorial.active && tutorial.kind === "pvp" &&
+    ["pvpReboundCatch", "pvpIntercept"].includes(tutorialStep()?.setup) &&
+    !tutorial.dialogueOpen && !tutorial.resetPending &&
+    !tutorial.promptHidden;
   const pvpMatchFly = tutorial.active && tutorial.kind === "pvp" && anyVisible;
   if (pvpMatchFly && !displayedFlies.some((fly) =>
       fly.vocabIndex === game.targetVocabIndex)) {
@@ -1387,7 +1392,7 @@ drawVocabularyPrompt = function(...args) {
   if (tutorial.active && (
     ["win", "lose"].includes(tutorial.pvpFinalOutcome) ||
     !Number.isInteger(game.targetVocabIndex) ||
-    (!anyVisible && !keepDuringTongueCinematic) ||
+    (!anyVisible && !keepDuringTongueCinematic && !earlyClue) ||
     ((!tutorialPlayerHasControl() && !visibleDuringExplanation && !keepDuringMissReset && !keepDuringTongueCinematic && !pvpMatchFly) ||
     (tutorial.promptHidden && !pvpMatchFly))
   )) {

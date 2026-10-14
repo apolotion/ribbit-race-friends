@@ -28,7 +28,7 @@ test('stage spectator playback renders through original game scene and restores 
   assert.match(engine,/game\.state=restore\?\.state\|\|"main"/);
 });
 test('stage replay offers spectator-like playback controls, seeking, speed and Exit',()=>{
-  for(const item of ['PAUSE','PLAY','SPECTATOR REPLAY','EXIT','ArrowLeft','ArrowRight','Space','Escape'])assert.ok(engine.includes(item));
+  for(const item of ['rr-play-bars','rr-play-triangle','rr-replay-arrow','SPECTATOR REPLAY','EXIT','ArrowLeft','ArrowRight','Space','Escape'])assert.ok(engine.includes(item));
   assert.match(engine,/window\.addEventListener\("keydown",handleRibbitReplayKey,true\)/);
   assert.match(engine,/canvas\.addEventListener\("pointerdown",event=>/);
 });
@@ -51,7 +51,7 @@ test('Frog Tags play saved frame data on stage and never construct a video popup
   assert.doesNotMatch(online, /createElement\("video"\)/);
 });
 test('unexpected in-air bonks settle normally while Ember dialogue blocks input',()=>{
-  assert.match(hooks,/tutorial\.kind === "pvp" && tutorial\.dialogueOpen/);
+  assert.match(hooks,/tutorial\.kind === "pvp" &&\s*\(tutorial\.dialogueOpen \|\| tutorial\.pvpAwaitRecoveryAdvance\)/);
   assert.match(hooks,/updatePvpPlayer\(player, dt\)/);
   assert.match(hooks,/player\.charging = false/);
   assert.match(hooks,/updatePvpImpactEffects\(dt\)/);

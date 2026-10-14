@@ -44,6 +44,7 @@
       game.finishTime = null;
       game.soloCriticalCatchActive = false;
       game.soloCriticalCatchElapsed = 0;
+      game.soloCriticalCatchFlyVisual = null;
       game.soloCriticalCatchX = W / 2;
       game.soloCriticalCatchY = CONFIG.groundY / 2;
       game.soloTimeRemaining = Number(game.soloTimeLimitSeconds) > 0 ? game.soloTimeLimitSeconds : 0;

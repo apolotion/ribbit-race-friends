@@ -1,0 +1,38 @@
+RIBBIT RACE FRIENDS — POLISH 57 (1.7.45)
+Build: 2026.10.13-friends-polish-57
+Based on complete Polish 56 GitHub-ready repository.
+
+CHANGES
+1) World Record hover: Results-screen World Record reward cards now have an
+   interactive tooltip bound to their actual changing card positions.
+   The hover is reevaluated every frame, so delayed award updates display
+   the tooltip even if the mouse is stationary. It shows saved prior holder,
+   score/time and record date when available; otherwise labels the leaderboard
+   runner-up as NEXT BEST or says PREVIOUS HOLDER NOT RECORDED.
+2) Replay countdown: Real initial 3-2-1 captured in new recordings; incomplete
+   historic recordings receive a non-destructive, playback-only countdown.
+3) Replay header: Original recording time and date, with stored recording
+   timezone when available; inline font matches title (9:51 PM example).
+4) Replay hotkeys: comma = back 1 frame, period = forward 1 frame.
+   Shift-comma and Shift-period still adjust playback speed.
+5) Zoom catch: Slow-motion fly remains drawn as it travels into the mouth
+   along the visible tongue, including Solo and Versus and 60 FPS replays.
+6) Toolbar: Icon play/pause/replay control, adjustable replay volume, fixed
+   stopwatch playback-speed button (0.25x through 4x) on the right.
+7) Result: REPLAY COMPLETE screen centered in the gameplay playfield,
+   excluding the lower game HUD; score overlay does not freeze the dance.
+8) Older replay v1 and v2 archives remain supported without modification.
+
+TESTING
+- 555 automated tests, including 8 new Polish 57 regression checks.
+- Isolated Chromium playback tests confirmed actual 3 countdown, 9:51 PM
+  timezone-safe replay display, frame stepping, fixed stopwatch width,
+  volume setting, captured-fly drag, centered overlay, and no JS errors.
+- Isolated Chromium World Record hover test confirmed prior holder, time
+  and date appear when asynchronous reward is added after mouse hover.
+- Full deployed multiplayer test remains outstanding.
+
+DEPLOY
+Replace the entire GitHub repository contents using this ZIP. No code.gs
+or Cloudflare database migrations are required. Existing accounts and
+replay save formats are preserved.

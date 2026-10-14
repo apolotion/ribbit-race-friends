@@ -17,10 +17,10 @@ function block(start, end) {
   return engine.slice(from, to);
 }
 
-test("1.7.44 polished tutorial build and first-boot marker are installed", () => {
-  assert.equal(JSON.parse(read("package.json")).version, "1.7.44");
-  assert.match(read("src/common.js"), /2026\.10\.13-friends-polish-56/);
-  assert.match(engine, /const TUTORIAL_BUILD = "2026\.10\.13-friends-polish-56"/);
+test("1.7.46 polished tutorial build and first-boot marker are installed", () => {
+  assert.equal(JSON.parse(read("package.json")).version, "1.7.46");
+  assert.match(read("src/common.js"), /2026\.10\.13-friends-polish-58/);
+  assert.match(engine, /const TUTORIAL_BUILD = "2026\.10\.13-friends-polish-58"/);
   assert.match(engine, /rrFriendsEngineTutorialSoloSeenV8/);
 });
 
@@ -192,7 +192,7 @@ test("buffer and quick drops do not consume tutorial jump attempts", () => {
 });
 
 test("successful wall techniques continue physics to landing before freezing", () => {
-  assert.match(engine, /function passStep\(\)[\s\S]{0,420}!frog\.grounded \|\| tongue\.active \|\| game\.soloCriticalCatchActive/);
+  assert.match(engine, /function passStep\(\)[\s\S]{0,1600}!frog\.grounded \|\| tongue\.active \|\| game\.soloCriticalCatchActive/);
   assert.match(engine, /tutorial\.passPending = true/);
   assert.match(engine, /if \(frog\.grounded && !tongue\.active && !game\.soloCriticalCatchActive\) finalizePassedStep\(\)/);
   assert.match(engine, /function finalizePassedStep\(\)[\s\S]{0,900}freezeControlledEntity\(\)/);

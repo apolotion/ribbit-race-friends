@@ -365,31 +365,19 @@ function drivePvpPracticeCpu(setup, now) {
   }
 
   if (setup === "pvpUnderBonkTwo") {
-    // The player starts at left ground, Ember at right ground. Wait for P1's
-    // actual climb onto the center perch, then launch ONE real under bonk.
-    const center = PARK_PLATFORMS[3];
-    const playerFlying = !p1.grounded && p1.firstJumpMade && !p1.charging;
-    if (playerFlying) tutorial.pvpUnderBonkAttemptAirborne = true;
-    if (playerFlying && !tutorial.pvpUnderBonkChargePrimed &&
-        !ember.charging && !tutorial.dialogueOpen) {
-      tutorial.pvpUnderBonkChargePrimed = true;
-      scriptPvpPress(1, -1);
-    }
-    const onCenter = p1.grounded && getPvpStandingPlatform(p1) === center;
-    if (!tutorial.pvpUnderBonkAttemptAirborne || !onCenter ||
+    // The player is already positioned at the star on the middle-left perch.
+    // Give them a beat to see their stance, then have Ember jump from below.
+    const perch = PARK_PLATFORMS[2];
+    const onPerch = p1.grounded && getPvpStandingPlatform(p1) === perch;
+    if (!onPerch || now - tutorial.enteredAt < 900 ||
         tutorial.pvpUnderBonkPendingSecond || tutorial.dialogueOpen ||
         tutorial.pvpUnderBonks >= 1 || ember.bonked || ember.stunTimer > 0 ||
         !ember.grounded || tutorial.pvpScriptActions.length) return;
+    tutorial.pvpUnderBonkAttemptAirborne = true;
     tutorial.pvpUnderBonkPendingSecond = true;
     tutorial.pvpUnderBonkEmberAirborne = false;
-    const direction = p1.x + p1.w / 2 >= ember.x + ember.w / 2 ? 1 : -1;
-    ember.dir = direction;
-    if (ember.charging) {
-      tutorial.pvpUnderBonkChargePrimed = false;
-      scriptPvpRelease(1, .55);
-    } else if (!ember.inputHeld) {
-      scriptPvpChargedJump(1, .55, direction, 0);
-    }
+    // With P1 on the middle-left perch, Ember launches leftward from x=238.
+    scriptPvpChargedJump(1, .89, -1, 0);
     return;
   }
 
@@ -472,8 +460,12 @@ function monitorPvp() {
     return;
   }
   if (tutorial.passPending) {
-    if (p1?.grounded && !p1.bonked && !p1.tongue?.active &&
-        !ember?.bonked && !game.pvpCriticalCatchActive) finalizePassedStep();
+    // A valid sky bonk should not postpone Ember's narration for the full
+    // stun duration. The target keeps animating while dialogue is visible.
+    const earlySkyBonkDialogue = ["pvpDemoSkyBonk", "pvpSkyBonk", "pvpDemoBufferedSky", "pvpBufferedSky"].includes(setup);
+    if (p1?.grounded && (earlySkyBonkDialogue || !p1.bonked) && !p1.tongue?.active &&
+        (earlySkyBonkDialogue || !ember?.bonked) && !game.pvpCriticalCatchActive &&
+        (ember?.grounded || tutorialStep()?.demonstration)) finalizePassedStep();
     return;
   }
   drivePvpPracticeCpu(setup, now);
@@ -567,8 +559,9 @@ function monitorPvp() {
 
   if (setup === "pvpSkyBonk") {
     if (tutorial.pvpSkyBonkSeen) {
-      if (p1.grounded && ember.grounded && !ember.bonked && ember.stunTimer <= 0 &&
-          (ember.recoveryFlipTimer || 0) <= 0 && pvpPracticeEventReady(100, now)) passStep();
+      // Start Ember's line after the attacking PLAYER lands, not five
+      // seconds later when the stunned Ember finishes recovering.
+      if (p1.grounded && ember.grounded && pvpPracticeEventReady(100, now)) passStep();
     } else if (tutorial.pvpBonks >= 1) {
       failAttempt("JUMP HIGH ABOVE THE MAP BEFORE THE BONK");
     } else if (playerLanded && now - tutorial.enteredAt > 600) {
@@ -579,8 +572,7 @@ function monitorPvp() {
 
   if (setup === "pvpBufferedSky") {
     if (tutorial.pvpSkyBonkSeen && tutorial.pvpBufferedBonkSeen && tutorial.pvpMaximumBonkSeen) {
-      if (p1.grounded && ember.grounded && !ember.bonked && ember.stunTimer <= 0 &&
-          (ember.recoveryFlipTimer || 0) <= 0 && pvpPracticeEventReady(100, now) &&
+      if (p1.grounded && ember.grounded && pvpPracticeEventReady(100, now) &&
           !p1.tongue?.active && !game.pvpCriticalCatchActive) passStep();
     } else if (tutorial.pvpBonks >= 1) {
       failAttempt("COMBINE A SKY BONK WITH A BUFFERED DROP");
@@ -619,7 +611,6 @@ function monitorPvp() {
   }
 
   if (setup === "pvpUnderBonkTwo") {
-    const center = PARK_PLATFORMS[3];
     if (tutorial.pvpUnderBonks >= 1) {
       if (pvpPracticeEventReady(250, now) && ember.stunTimer <= 0 &&
           ember.grounded && !ember.bonked && (ember.recoveryFlipTimer || 0) <= 0) passStep();
@@ -650,7 +641,8 @@ function monitorPvp() {
     const underPerch = p1.x + p1.w > platform.x && p1.x < platform.x + platform.w &&
       p1.y >= platform.y + platform.h - 2;
     if (underPerch) tutorial.pvpAvoidUnderPassedBeneath = true;
-    if (tutorial.pvpAvoidUnderPassedBeneath && p1.x + p1.w >= platform.x + platform.w + 1)
+    // P1 now runs from the right side toward the LEFT edge, as pictured.
+    if (tutorial.pvpAvoidUnderPassedBeneath && p1.x <= platform.x - p1.w + 1)
       passStep();
     return;
   }
@@ -750,7 +742,8 @@ function tutorialMovementLocked() {
   return Boolean(
     tutorial.active &&
     (tutorial.dialogueOpen || tutorial.resetPending || tutorial.frogHidden || tutorial.pvpFrogsHidden ||
-      tutorial.passed || tutorial.sceneLandingDelayUntil > performance.now())
+      tutorial.passed || tutorial.pvpAwaitRecoveryAdvance ||
+      tutorial.sceneLandingDelayUntil > performance.now())
   );
 }
 
@@ -805,6 +798,13 @@ function updateTutorial() {
       setPrompt(visible[0].vocabIndex);
     }
     if (visible.length) tutorial.promptHidden = false;
+  }
+  if (tutorial.pvpAwaitRecoveryAdvance) {
+    if (!pvpTutorialRecoveryIsPlaying()) {
+      tutorial.pvpAwaitRecoveryAdvance = false;
+      nextStep();
+    }
+    return;
   }
   if (tutorial.pvpDemoActive) {
     updatePvpDemonstration();

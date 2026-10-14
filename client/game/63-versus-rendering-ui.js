@@ -527,8 +527,8 @@
 
       const target = getPvpTargetScore();
       const timedRound = game.pvpTimeLimitSeconds > 0 && !game.pvpSuddenDeath;
-      const tutorialPvp = Boolean(game.tutorialActive && window.RibbitRaceTutorialEngine?.active && window.RibbitRaceTutorialEngine?.kind === "pvp");
-      const tutorialFinalMatch = tutorialPvp && window.RibbitRaceTutorialEngine?.setup === "pvpFinalMatch";
+      const tutorialPvp = Boolean(game.tutorialActive && (tutorial.active || tutorial.completeScreen) && tutorial.kind === "pvp");
+      const tutorialFinalMatch = tutorialPvp && tutorialStep()?.setup === "pvpFinalMatch";
       const boxes = [
         { player: pvpPlayers[0], x: 8, label: "P1", mirror: false },
         { player: pvpPlayers[1], x: W - 84, label: game.pvpCpuEnabled ? "CPU" : "P2", mirror: true }
@@ -585,6 +585,9 @@
           ? (game.onlineMode ? (OnlineVersus.localIndex() === 1 ? "YOU - TAP METER" : (window.RibbitOpponentName?.() || "OPPONENT")) : game.pvpCpuEnabled ? `CPU LV ${game.pvpCpuDifficulty}` : "P2 JUMP")
           : (game.onlineMode ? (OnlineVersus.localIndex() === 1 ? "YOU - SPACE" : (window.RibbitOpponentName?.() || "OPPONENT")) : game.pvpCpuEnabled ? `CPU LV ${game.pvpCpuDifficulty}` : "RIGHT SHIFT"), palette: p2Palette }
       ].forEach(({ player, x, label, palette }) => {
+        // The Current Goal occupies Ember's right HUD position until the
+        // final completion poof. Show the labeled EMBER meter afterwards.
+        if (tutorialPvp && player.index === 1 && !tutorial.completeScreen) return;
         const meterW = 112;
         ctx.fillStyle = COLORS.ink;
         ctx.fillRect(x - 2, meterY - 2, meterW + 4, meterH + 4);
@@ -1410,31 +1413,26 @@
         drawFlyAt(fly.x, fly.y, getFlySpawnScale(fly));
         drawFlyNameTag(fly);
       }
-      // Keep an eaten fly visible while its real tongue retracts during the
-      // tutorial slow-motion zoom. The body and word plate travel with it.
-      if (criticalCatch && ((tutorial.active && tutorial.kind === "pvp") ||
-          window.RibbitEngineReplay?.active?.())) {
-        const ghost = game.pvpCriticalCatchFlyVisual;
-        if (ghost && !flies.some((fly) => fly?.id === ghost.id)) {
-          const catcher = pvpPlayers[game.pvpCriticalCatchWinnerIndex];
-          const tongue = catcher?.tongue;
-          if (tongue?.active) {
-            const mouth = getPvpMouth(catcher);
-            const progress = clamp(tongue.elapsed / Math.max(.001,tongue.duration), 0, 1);
-            const drawProgress = clamp((progress - .46) / .54, 0, 1);
-            ghost.x = lerp(ghost.baseX, mouth.x, drawProgress);
-            ghost.y = lerp(ghost.baseY, mouth.y, drawProgress);
-            drawFlyAt(ghost.x, ghost.y, 1);
-          }
-        }
+      // A completed catch has already removed the real fly from gameplay.
+      // Render the visual catch independently of tongue.active for EVERY zoom
+      // (regular/local, online, tutorial and replay), not just tutorial frames.
+      if (criticalCatch && game.pvpCriticalCatchFlyVisual &&
+          !flies.some(f=>f?.id===game.pvpCriticalCatchFlyVisual.id)) {
+        const catcher=pvpPlayers[game.pvpCriticalCatchWinnerIndex];
+        if(catcher)drawSlowMotionFlyPull(game.pvpCriticalCatchFlyVisual,getPvpMouth(catcher),
+          game.pvpCriticalCatchElapsed,game.pvpCriticalCatchDuration);
       }
       pvpPlayers.forEach(p => drawEntity(p, drawFrogAfterimages));
       if (!["pvpCelebration", "won"].includes(game.state)) pvpPlayers.forEach((player)=>drawAirShadowForEntity(OnlineVersus.displayPlayer(player),getPvpSkinPalette(player.skinId,player.index===0?"azure":"crimson")));
       if (game.state === "pvpCelebration") {
         drawPvpRoundCelebration();
       } else if (game.state === "won") {
-        // Keep the live winner/loser animations moving behind the result panel.
-        drawPvpGameplayCelebrationFrogs();
+        // Graduation celebrates BOTH frogs, not one winner and one loser.
+        if (tutorial.completeScreen && tutorial.kind === "pvp") {
+          for (const player of pvpPlayers) {
+            drawPvpVictoryDanceFrogExact(player.x + player.w / 2, player.y + player.h, player, 1);
+          }
+        } else drawPvpGameplayCelebrationFrogs();
       } else {
         pvpPlayers.forEach(p => drawEntity(p, drawPvpPlayer));
       }
@@ -1471,7 +1469,7 @@
         drawPauseControls();
       } else if (game.state === "countdown") {
         drawResumeCountdown();
-      } else if (game.state === "won") {
+      } else if (game.state === "won" && !(tutorial.completeScreen && tutorial.kind === "pvp")) {
         drawPvpWinScreen();
       }
       // PvP achievements are notification-only and never enter the solo menu.

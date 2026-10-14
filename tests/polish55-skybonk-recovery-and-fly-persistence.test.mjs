@@ -33,10 +33,10 @@ test('second recovery bonk is accepted only within one second of actual recovery
 });
 
 test('screen-reference poses face the requested directions',()=>{
-  assert.match(scenes,/case "pvpBufferedBonk"[\s\S]*?positionPvp\(ember, 64, CONFIG\.groundY-ember\.h, 1\)/);
+  assert.match(scenes,/case "pvpBufferedBonk"[\s\S]*?positionPvp\(p1, 64, CONFIG\.groundY-p1\.h, 1\)/);
   assert.match(scenes,/case "pvpDemoUnderBonk"[\s\S]*?positionPvp\(p1, 210, CONFIG\.groundY - p1\.h, 1\)/);
-  assert.match(scenes,/case "pvpUnderBonkTwo"[\s\S]*?positionPvp\(p1, 64, CONFIG\.groundY - p1\.h, 1\);[\s\S]*?positionPvp\(ember, 238, CONFIG\.groundY - ember\.h, -1\)/);
-  assert.match(scenes,/case "pvpAvoidUnder"[\s\S]*?positionPvp\(p1, 155, CONFIG\.groundY - p1\.h, 1\)/);
+  assert.match(scenes,/case "pvpUnderBonkTwo"[\s\S]*?positionPvpOnPlatform\(p1, middleLeft, 1\);[\s\S]*?positionPvp\(ember, 238, CONFIG\.groundY - ember\.h, -1\)/);
+  assert.match(scenes,/case "pvpAvoidUnder"[\s\S]*?positionPvp\(p1, 343, CONFIG\.groundY - p1\.h, -1\)/);
   assert.match(scenes,/positionPvpReboundPracticeLayout\(completed = 0\)[\s\S]*?positionPvp\(p1, 145,[\s\S]*?positionPvp\(ember, 305/);
 });
 

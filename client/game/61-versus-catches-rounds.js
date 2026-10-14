@@ -95,6 +95,13 @@
       if (!shouldStartSoloCriticalCatch(targetFly)) return false;
       game.soloCriticalCatchActive = true;
       game.soloCriticalCatchElapsed = 0;
+      // Store a visual copy before the real fly is scored/removed. It travels
+      // continuously from the original position to the mouth during the zoom.
+      game.soloCriticalCatchFlyVisual = {
+        id:targetFly.id, x:Number(targetFly.x),y:Number(targetFly.y),
+        baseX:Number(targetFly.baseX ?? targetFly.x),baseY:Number(targetFly.baseY ?? targetFly.y),
+        vocabIndex:targetFly.vocabIndex,phase:Number(targetFly.phase)||0
+      };
       game.soloCriticalCatchX = clamp(Number(targetFly?.baseX ?? targetFly?.x ?? (frog.x + frog.w / 2)), 24, W - 24);
       game.soloCriticalCatchY = clamp(Number(targetFly?.baseY ?? targetFly?.y ?? (frog.y + frog.h / 2)), 28, CONFIG.playBottom - 24);
       // Low impact plus an upward sweep creates the whoosh into slow motion.
@@ -111,6 +118,7 @@
       const progress = clamp(game.soloCriticalCatchElapsed / Math.max(0.001, game.soloCriticalCatchDuration), 0, 1);
       if (progress >= 1) {
         game.soloCriticalCatchActive = false;
+        game.soloCriticalCatchFlyVisual = null;
         return 1;
       }
       // The returned value scales physics and the solo clock together.
@@ -200,9 +208,11 @@
     function startPvpCriticalCatch(player, targetFly, kind = "final") {
       if (!player || game.pvpCriticalCatchActive || game.mode !== "pvp") return false;
       const lesson = typeof tutorial !== "undefined" && tutorial.active && tutorial.kind === "pvp" ? tutorialStep()?.setup : "";
-      // Chapter 15's coach demonstration is at normal speed. The player is
-      // the only one allowed the rebound/steal slow-motion celebration.
-      if (["pvpDemoDinnerSteal", "pvpDinnerSteal"].includes(lesson) && player.index !== 0) return false;
+      // Ember's authored dinner-steal DEMONSTRATION gets its own slow motion.
+      // During the player's turn, an accidental boost that helps Ember catch
+      // the fly must NOT zoom for her; only the player's catch should zoom.
+      if (lesson === "pvpDinnerSteal" && player.index !== 0) return false;
+      if (lesson === "pvpDemoDinnerSteal" && player.index !== 1) return false;
       const normalizedKind = ["contest", "clutch", "technique"].includes(kind) ? kind : "final";
       if (normalizedKind === "final" && game.pvpCriticalCatchPlayedThisRound) return false;
       const criticalKey = normalizedKind !== "final"

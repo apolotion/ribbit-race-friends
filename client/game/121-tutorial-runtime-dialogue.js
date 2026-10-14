@@ -486,6 +486,7 @@ function armScenarioAfterDialogue() {
       return;
     }
     if (tutorial.scenePositionedDuringDialogue) {
+      if (["pvpReboundCatch", "pvpIntercept"].includes(setup)) tutorial.promptHidden = false;
       tutorial.scenePositionedDuringDialogue = false;
       tutorial.pendingPvpTargetPoses = null;
       tutorial.pendingPvpVisualPoses = null;

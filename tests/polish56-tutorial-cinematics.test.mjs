@@ -62,9 +62,12 @@ test('Chapter 15 limits slow-mo to player catch while preserving other chapter c
   };
   vm.createContext(ctx);vm.runInContext(source,ctx);
   const fly={id:19,x:110,y:90,baseX:110,baseY:90,vocabIndex:1};
+  // Ember's scripted DINNER STEAL demonstration is cinematic. During the
+  // player's turn, an accidental assisted Ember catch stays at normal speed.
+  ctx.tutorialStep=()=>({setup:'pvpDinnerSteal'});
   assert.equal(ctx.startPvpCriticalCatch(players[1],fly,'technique'),false);
   assert.equal(ctx.game.pvpCriticalCatchActive,false);
-  assert.equal(effects.length,0,'Ember catch does not play cinematic tones');
+  assert.equal(effects.length,0,'player-turn Ember catch does not play cinematic tones');
   assert.equal(ctx.startPvpCriticalCatch(players[0],fly,'technique'),true);
   assert.equal(ctx.game.pvpCriticalCatchKind,'technique');
 });
