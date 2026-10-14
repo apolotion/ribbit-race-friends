@@ -29,10 +29,11 @@
   window.addEventListener("pointerup",ev=>{if(!P19.mouseJump)return;P19.mouseJump=false;if(game.mode==="pvp")releasePvpButton(0);else releaseMainButton();},{passive:true});
   // W is preserved as a P1 alias by getPvpControlBinding; in solo the core
   // router already handles W and both Shift keys with a single held-key set.
-  // Sudden-death flies never start appearing behind the countdown.
+  // Do not clear flies during countdown: the same countdown is used for
+  // resuming a paused round. Fresh rounds and sudden death clear their own
+  // fly state in resetPvpGame()/beginPvpSuddenDeath(), respectively.
   const priorUpdateP19=update;update=function(dt,...rest){
     const e=engine(),pvpTraining=!!(e?.active&&e.kindPolish19==="pvp"),setup=String(e?.polish19Setup||"").toLowerCase(),title=String(e?.stepTitlePolish19||"").toLowerCase();
-    if(game.mode==="pvp"&&game.state==="countdown"){flies.length=0;if(game.spawnQueue)game.spawnQueue.length=0;}
     const finalRace=pvpTraining&&(/final|race|match/.test(setup+" "+title));
     if(finalRace){game.pvpCpuEnabled=true;game.pvpCpuDifficulty=5;game.pvpCpuLevel=5;if(pvpPlayers?.[1]){pvpPlayers[1].cpu=true;pvpPlayers[1].cpuLevel=5;pvpPlayers[1].inputHeld=false;}}
     const before=pvpTraining&&e.dialogueOpen?(pvpPlayers||[]).map(p=>Number(p.stunTimer||0)):null;

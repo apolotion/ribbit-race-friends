@@ -5,14 +5,13 @@
  */
 (() => {
   "use strict";
-  const BUILD = "2026.10.13-friends-polish-49";
+  const BUILD = "2026.10.13-friends-polish-51";
   const RR_V160_CANDIDATES = {"catchFly":["attemptFlyCatch","attemptPvpFlyCatch","catchSandboxFly","getPvpImminentCatchFly","recordFlyEaten","scheduleFlyReplacementFromCatch"],"jumpSound":["playJumpSound"],"beep":["playCountdownGoSound","playCountdownSound"],"replayUpload":["saveRecordDate"],"restart":["resetGame","resetPvpGame","resetPvpPlayer","resetRoundLifecycle","resetRoundNetwork","restartCurrentLevel"],"drop":[],"render":["drawPvpScene","drawScene"],"worldRecord":[],"fullscreen":["getFullscreenElement","hideFullscreenFallback","showFullscreenFallback","syncFullscreenButton","toggleRibbitFullscreen"],"onlineSubmit":[],"leaderboard":["isSoloEndlessLeaderboardEligible","savePvpMatchWinsForLeaderboard"]};
   const RR_V160_VARS = {"onlineSelect":[],"achievementSelect":["activeAchievementIndex","hoveredAchievementCard"],"backRect":[]};
 
-  const VERSION = "1.7.37";
+  const VERSION = "1.7.39";
   const V = {
     menuTouch: new Map(), chargeTouch: new Map(), achievementPinned: -1,
-    finalCatchStarted: 0, finalCatchLabelsGone: false,
     cpuTakeoverUntil: 0, cpuTakeoverStarted: 0, cpuSnapshot: null,
     remoteWasAirborne: false, lastCountdownSecond: -1,
     lastState: "", lastRoundKey: "", previousRecords: new Map(),
@@ -135,18 +134,11 @@
   }
   window.RibbitOpponentName=opponentName;
 
-  // Final Catch labels are one-way faded. They cannot reappear until the state changes.
-  window.RibbitV160ShouldHideFlyLabels=()=>V.finalCatchLabelsGone;
-  window.RibbitV160ResetFinalCatchLabels=()=>{
-    V.finalCatchStarted=0;
-    V.finalCatchLabelsGone=false;
-  };
-  window.RibbitV160FlyLabelAlpha=(base=1)=>{
-    if(!V.finalCatchStarted) return base;
-    const t=(performance.now()-V.finalCatchStarted)/900;
-    if(t>=1){V.finalCatchLabelsGone=true;return 0;}
-    return base*Math.max(0,1-t);
-  };
+  // Retain public compatibility hooks, but never permanently suppress labels.
+  // The engine now owns both the cinematic fade-out and post-zoom fade-in.
+  window.RibbitV160ShouldHideFlyLabels=()=>false;
+  window.RibbitV160ResetFinalCatchLabels=()=>{ game.flyLabelReturnAlpha=1; };
+  window.RibbitV160FlyLabelAlpha=(base=1)=>base*getCriticalCatchWordFade();
 
   // World-record details are exposed to existing toast hover code.
   window.RibbitWorldRecordDetail=()=>V.worldRecordDetail;
@@ -243,9 +235,6 @@
   function tick(now){
     const st=stateName();
     if(st!==V.lastState){
-      if(/final/i.test(st)){V.finalCatchStarted=now;V.finalCatchLabelsGone=false;}
-      else if(/final/i.test(V.lastState)){V.finalCatchStarted=0;}
-      if(/main|title|setup|onlineConnect|countdown/i.test(st)){V.finalCatchStarted=0;V.finalCatchLabelsGone=false;}
       V.lastState=st;
     }
     detectTakeover(now);freezeTakeover(now);

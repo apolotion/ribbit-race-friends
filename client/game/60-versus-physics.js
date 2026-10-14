@@ -121,7 +121,7 @@
       const openingVocabulary = shuffledVocabularyIndices().slice(0, CONFIG.maxFlies);
       const openingTarget = openingVocabulary[Math.floor(Math.random() * openingVocabulary.length)];
       const orderedOpeningVocabulary = [openingTarget, ...openingVocabulary.filter((vocabIndex) => vocabIndex !== openingTarget)];
-      game.spawnQueue = orderedOpeningVocabulary.map((vocabIndex, index) => ({ dueAt: index === 0 ? 0 : index * 1.05 + STEP, source: "initial", vocabIndex }));
+      game.spawnQueue = orderedOpeningVocabulary.map((vocabIndex, index) => ({ dueAt: index === 0 ? 0 : index * CONFIG.pvpOpeningFlyInterval + STEP, source: "initial", vocabIndex }));
       game.targetVocabIndex = openingTarget;
       if(OnlineVersus.isActive()){OnlineVersus.resetRoundState();OnlineVersus.preparePromptPlan();}
     }

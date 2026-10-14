@@ -23,6 +23,7 @@ const RIBBIT_REPLAY_GAME_FIELDS = [
   "pvpCriticalCatchActive","pvpCriticalCatchElapsed","pvpCriticalCatchDuration",
   "pvpCriticalCatchWinnerIndex","pvpCriticalCatchKind","pvpCriticalCatchX","pvpCriticalCatchY",
   "pvpCriticalCatchScreenX","pvpCriticalCatchScreenY","pvpCriticalCatchFlyVisual",
+  "flyLabelReturnAlpha",
   "winPending","pvpWinPendingIndex","finishTime","soloTimeRemaining","soloTimeLimitSeconds","soloTimedOut",
   "pvpCelebrationWinnerIndex","pvpWinnerIndex","pvpMatchWinnerIndex","messageTimer",
   "tutorialActive","pvpImpactEffects","newBestTime","newFewestJumps",
@@ -464,6 +465,27 @@ function replayFrameAt(position,frames){
     flies:(a.flies||[]).map(f=>{const next=alternate.get(f.id);return next?
       {...f,x:f.x+(next.x-f.x)*factor,y:f.y+(next.y-f.y)*factor}:f;})};
 }
+// Older recorded sets did not store the returning word-plate opacity. Infer
+// it from the last recorded critical-catch frame, so seeking through a legacy
+// zoom still produces a gradual fade-in rather than a sudden full-opacity pop.
+function legacyReplayFlyLabelReturnAlpha(position, frames) {
+  if (!Array.isArray(frames) || !frames.length) return 1;
+  let low = 0, high = frames.length - 1;
+  while (low < high) {
+    const middle = (low + high + 1) >> 1;
+    if (frames[middle].t <= position) low = middle;
+    else high = middle - 1;
+  }
+  for (let index = low; index >= 0; index -= 1) {
+    const frame = frames[index];
+    if (position - frame.t > 520) break;
+    if (frame.gameState?.soloCriticalCatchActive || frame.gameState?.pvpCriticalCatchActive) {
+      const firstNonZoom = frames[index + 1]?.t ?? frame.t;
+      return clamp((position - firstNonZoom) / 420, 0, 1);
+    }
+  }
+  return 1;
+}
 function paintRibbitReplayStage(){
   const view=ribbitReplayView,data=view?.data;
   if(!data){
@@ -505,7 +527,14 @@ function paintRibbitReplayStage(){
     tutorial.active=false;tutorial.completeScreen=false;tutorial.dialogueOpen=false;
     game.winPending=false;game.pvpWinPendingIndex=null;game.pvpImpactEffects=[];
     if(data.vocab?.length)VOCABULARY=normalizeVocabularyEntries(data.vocab);
+    // Earlier replay versions did not record the fade state: show their terms
+    // normally instead of borrowing opacity from the current live match.
+    game.flyLabelReturnAlpha=1;
     if(state.gameState)Object.assign(game,state.gameState);
+    if (!Number.isFinite(state.gameState?.flyLabelReturnAlpha) &&
+        !game.pvpCriticalCatchActive && !game.soloCriticalCatchActive) {
+      game.flyLabelReturnAlpha=legacyReplayFlyLabelReturnAlpha(view.position,data.frames);
+    }
     // Never enter pause/tutorial/save screens as a side effect of rendering.
     game.state=replaySceneState;
     game.onlineMode=false;game.tutorialActive=false;game.sandboxMode=false;
@@ -521,8 +550,8 @@ function paintRibbitReplayStage(){
       if(pvpPlayers[i])Object.assign(pvpPlayers[i],player,{tongue:player.tongue||{active:false}});
     });
     flies.splice(0,flies.length,...state.flies.map(f=>({...f,spawnAge:f.spawnAge||5})));
-    // The LIVE game may have hidden all final-catch labels after completing its
-    // last round; archived flies still need their labels at every recorded frame.
+    // Legacy replay compatibility only: terms are now always eligible to draw,
+    // with each frame's recorded opacity restored above.
     window.RibbitRaceFinalCatchLabelsGone=false;
     // Leave the Find the Match frame visible at the last replay frame.
     // Only its English clue becomes blank; older completed runs may have no

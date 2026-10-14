@@ -18,7 +18,7 @@ const index = read("public/index.html");
 
 test("polish 11 cache marker is wired through client, worker, and asset URLs", () => {
   for (const source of [tutorial, cloud, index, read("src/common.js")]) {
-    assert.match(source, /2026\.10\.13-friends-polish-49/);
+    assert.match(source, /2026\.10\.13-friends-polish-51/);
   }
 });
 
@@ -43,11 +43,12 @@ test("Achievements uses an inset medal button and canvas-native dropdown leaderb
   assert.match(css, /#cloud-leaderboard[\s\S]{0,100}display: none !important/);
 });
 
-test("final-catch fly labels remain gone while flies and sparks keep rendering", () => {
-  assert.match(hooks, /critical-catch lifecycle[\s\S]{0,260}remainder of the round/i);
-  assert.match(tutorial, /if \(window\.RibbitRaceFinalCatchLabelsGone\) return/);
-  assert.match(read("client/game/80-input-loop-startup.js"), /drawFlySpawnSparks\(currentFly\);[\s\S]{0,80}drawFlyAt\(currentFly\.x/);
-  assert.match(versus, /drawFlySpawnSparks\(fly\);[\s\S]{0,80}drawFlyAt\(fly\.x/);
+test("fly words return after every Versus zoom without suppressing flies or sparks", () => {
+  assert.doesNotMatch(hooks, /critical-catch lifecycle[\s\S]{0,260}remainder of the round/i);
+  assert.doesNotMatch(tutorial, /if \(window\.RibbitRaceFinalCatchLabelsGone\) return/);
+  assert.match(read("client/game/80-input-loop-startup.js"), /drawFlySpawnSparks\(currentFly\);[\s\S]{0,85}drawFlyAt\(currentFly\.x/);
+  assert.match(versus, /drawFlySpawnSparks\(fly\);[\s\S]{0,85}drawFlyAt\(fly\.x/);
+  assert.match(versus, /drawFlyAt\(fly\.x, fly\.y, getFlySpawnScale\(fly\)\);\s*drawFlyNameTag\(fly\);/);
 });
 
 test("original online panel owns rendering and input in requested order", () => {

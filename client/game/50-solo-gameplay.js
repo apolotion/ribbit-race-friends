@@ -325,6 +325,10 @@
       return [...new Set(candidates)];
     }
 
+    function getFlySpawnMinimumSpacing() {
+      return game.mode === "pvp" ? CONFIG.pvpFlySpawnMinimumSpacing : CONFIG.flySpawnMinimumSpacing;
+    }
+
     function ensureTargetVocabularyAvailable(vocabIndex = game.targetVocabIndex) {
       if (!Number.isInteger(vocabIndex) || !VOCABULARY[vocabIndex]) return false;
 
@@ -336,7 +340,7 @@
       // This guard is especially important in First to 10 rounds, where both
       // players can collectively use every vocabulary item before the round ends.
       const spacingReadyAt = Number.isFinite(game.lastFlySpawnTime)
-        ? game.lastFlySpawnTime + CONFIG.flySpawnMinimumSpacing
+        ? game.lastFlySpawnTime + getFlySpawnMinimumSpacing()
         : game.elapsed;
       game.spawnQueue.push({
         dueAt: Math.max(game.elapsed, spacingReadyAt),
@@ -399,7 +403,7 @@
 
     function spawnFly(spawnTicket = null) {
       if (game.sandboxMode || flies.length >= CONFIG.maxFlies || (!isSoloEndlessMode() && game.score >= getSoloTargetScore())) return false;
-      if (game.elapsed - game.lastFlySpawnTime < CONFIG.flySpawnMinimumSpacing) return false;
+      if (game.elapsed - game.lastFlySpawnTime < getFlySpawnMinimumSpacing()) return false;
 
       const occupiedSpawnIndices = new Set(flies.map((currentFly) => currentFly.spawnIndex));
       let choices = flySpawns
@@ -534,18 +538,22 @@
 
 
     function scheduleFlyReplacementFromCatch() {
-      const dueTime = game.elapsed + CONFIG.flyRespawnDelay;
+      const versus = game.mode === "pvp";
+      const dueTime = game.elapsed + (versus ? CONFIG.pvpFlyRespawnDelay : CONFIG.flyRespawnDelay);
 
-      // Keep not-yet-used opening spawns from appearing immediately after a
-      // catch while retaining their original two-second spacing.
-      let nextInitialDue = dueTime;
-      const pendingInitialTickets = game.spawnQueue
-        .filter((ticket) => ticket.source === "initial")
-        .sort((a, b) => a.dueAt - b.dueAt);
+      // Solo deliberately slows remaining opening spawns after an early catch.
+      // Versus must NOT: doing this to the shared queue could delay its third
+      // and fourth opening flies until 5-8 seconds into a competitive round.
+      if (!versus) {
+        let nextInitialDue = dueTime;
+        const pendingInitialTickets = game.spawnQueue
+          .filter((ticket) => ticket.source === "initial")
+          .sort((a, b) => a.dueAt - b.dueAt);
 
-      for (const ticket of pendingInitialTickets) {
-        ticket.dueAt = Math.max(ticket.dueAt, nextInitialDue);
-        nextInitialDue = ticket.dueAt + CONFIG.secondFlySpawnDelay;
+        for (const ticket of pendingInitialTickets) {
+          ticket.dueAt = Math.max(ticket.dueAt, nextInitialDue);
+          nextInitialDue = ticket.dueAt + CONFIG.secondFlySpawnDelay;
+        }
       }
 
       // This ticket belongs only to this catch. Later fly spawns and later

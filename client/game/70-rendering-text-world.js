@@ -289,7 +289,6 @@
     // become whole physical pixels (4, 3, or 2 pixels per bitmap cell), so the same
     // word cannot shimmer between fractional raster positions on later frames.
     function layoutStableFlyLabelText(text, maximumWidth = 120) {
-    if (typeof window !== "undefined" && window.RibbitV160ShouldHideFlyLabels?.()) return;
       const normalized = normalizeBitmapText(text).trim();
       const scales = [1, 0.75, 0.5];
       for (const scale of scales) {

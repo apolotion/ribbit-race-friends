@@ -277,6 +277,8 @@
       pvpWinnerIndex: null,
       pvpWinPendingIndex: null,
       pvpElapsed: 0,
+      // Shared term-plate opacity after a slow-motion catch (1 = fully visible).
+      flyLabelReturnAlpha: 1,
       pvpFinalDisplayTime: null,
       pvpSetupLevelId: "park",
       pvpRandomPreviewLevelId: "park",

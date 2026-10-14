@@ -24,7 +24,6 @@
     mainHoverKey: "",
     onlineHoverKey: "",
     worldRecordHovered: false,
-    labelFadeStartedAt: 0,
     priorCriticalCatch: false,
     previousRoundState: "",
     lastArchivedRoundKey: "",
@@ -854,7 +853,6 @@
 
   const originalDrawFlyNameTagPolish8 = drawFlyNameTag;
   drawFlyNameTag = function(currentFly, ...rest) {
-    if (window.RibbitRaceFinalCatchLabelsGone) return;
     return withLocalizedVocabulary(
       Number(currentFly?.vocabIndex),
       () => originalDrawFlyNameTagPolish8.call(this, currentFly, ...rest),
@@ -2166,10 +2164,12 @@
     flushPendingHatNotices();
     const criticalCatchActive = Boolean(game.soloCriticalCatchActive || game.pvpCriticalCatchActive);
     if (polish.priorCriticalCatch && !criticalCatchActive) {
-      polish.labelFadeStartedAt = performance.now();
-      // The cinematic already faded the plates out. Keep them permanently gone
-      // after this point so there is no one-frame post-zoom reappearance.
-      window.RibbitRaceFinalCatchLabelsGone = true;
+      // First non-zoom simulation frame starts fully transparent, not suddenly
+      // opaque. Every still-alive fly then returns over 0.42 seconds.
+      game.flyLabelReturnAlpha = 0;
+    } else if (!criticalCatchActive && game.state !== "paused" &&
+        Number.isFinite(game.flyLabelReturnAlpha) && game.flyLabelReturnAlpha < 1) {
+      game.flyLabelReturnAlpha = Math.min(1, game.flyLabelReturnAlpha + Math.max(0, dt) / 0.42);
     }
     polish.priorCriticalCatch = criticalCatchActive;
     archiveOnlineRound();

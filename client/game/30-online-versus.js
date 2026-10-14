@@ -1097,7 +1097,7 @@
           for(const f of flies){
             drawFlySpawnSparks(f);
             drawFlyAt(f.x,f.y,getFlySpawnScale(f));
-            if (!window.RibbitRaceFinalCatchLabelsGone) drawFlyNameTag(f);
+            drawFlyNameTag(f);
           }
           pvpPlayers.forEach(drawPvpTongue);pvpPlayers.forEach(drawPvpPlayer);drawPvpImpactEffects();ctx.restore();drawPvpHud();
           if(game.state==='countdown')drawResumeCountdown();
@@ -1590,14 +1590,14 @@
         game.completedVocabIndices=new Set(sim.completedVocabIndices||[]);
         nextFlyId=Math.max(Number(sim.nextFlyId)||1,...flies.map(f=>Number(f.id)+1));
         game.lastFlySpawnIndex=Number.isInteger(sim.lastFlySpawnIndex)?sim.lastFlySpawnIndex:-1;
-        game.lastFlySpawnTime=Number.isFinite(sim.lastFlySpawnTime)?sim.lastFlySpawnTime:game.elapsed-CONFIG.flySpawnMinimumSpacing;
+        game.lastFlySpawnTime=Number.isFinite(sim.lastFlySpawnTime)?sim.lastFlySpawnTime:game.elapsed-CONFIG.pvpFlySpawnMinimumSpacing;
         game.pvpImpactEffects=(snapshot.impacts||[]).map(e=>({...e}));
         for(const k of ['pvpBonkCounts','pvpRoundBonkCounts','pvpMatchBonkCounts','pvpSelfBonkCounts'])if(Array.isArray(sim[k]))game[k]=sim[k].slice();
         resetRoundNetwork(snapshot.roundKey||currentRoundKey());
         if(Array.isArray(snapshot.promptTargets))snapshot.promptTargets.forEach((v,i)=>{if(Number.isInteger(v))net.promptPlan[Number(snapshot.promptBase)+i]=v;});
         net.simClock=Number(snapshot.sampleClock)||0;
         if(!snapshot.simulation&&game.state==='playing'&&game.pvpWinPendingIndex===null&&!game.pvpTimerGraceActive){
-          for(let i=flies.length;i<CONFIG.maxFlies;i++)game.spawnQueue.push({dueAt:game.elapsed+(i-flies.length)*CONFIG.flySpawnMinimumSpacing});
+          for(let i=flies.length;i<CONFIG.maxFlies;i++)game.spawnQueue.push({dueAt:game.elapsed+(i-flies.length)*CONFIG.pvpFlySpawnMinimumSpacing});
         }
         if(game.state==='playing'&&game.pvpWinPendingIndex===null&&!game.pvpTimerGraceActive&&!game.pvpTimedOutcomePending){
           ensureTargetVocabularyAvailable(game.targetVocabIndex);
@@ -1635,7 +1635,7 @@
           if(game.pvpWinPendingIndex===null&&!game.pvpTimerGraceActive&&!game.pvpTimedOutcomePending){
             ensureTargetVocabularyAvailable(game.targetVocabIndex);
             if(!game.spawnQueue.length&&flies.length<CONFIG.maxFlies){
-              for(let i=flies.length;i<CONFIG.maxFlies;i++)game.spawnQueue.push({dueAt:game.elapsed+(i-flies.length+1)*CONFIG.flySpawnMinimumSpacing});
+              for(let i=flies.length;i<CONFIG.maxFlies;i++)game.spawnQueue.push({dueAt:game.elapsed+(i-flies.length+1)*CONFIG.pvpFlySpawnMinimumSpacing});
             }
           }
         }else if(game.state==='countdown'){

@@ -1,0 +1,51 @@
+RIBBIT RACE FRIENDS — POLISH 50
+Version 1.7.38
+Build: 2026.10.13-friends-polish-50
+Based on: Polish 49, Version 1.7.37
+
+FIX — FLY VOCABULARY TAGS DISAPPEARING IN VERSUS
+
+CAUSE
+- Several older compatibility layers permanently disabled fly word plates
+  after ANY slow-motion critical-catch zoom, including non-winning contested
+  catches. This could happen in the middle of a 60-second Versus round.
+- After the cinematic ended, rendering of all surviving labels was blocked
+  by global flags until another round/reset, so flies had no translations.
+
+CHANGES
+1. All still-visible fly terms return automatically after each slow-motion
+   zoom; contested and clutch catches are no longer mistaken for permanent
+   end-of-round suppression.
+2. Fly terms retain their existing progressive fade-out during zoom and now
+   fade back in over 0.42 seconds. Fade-in uses smooth easing, not a one-frame
+   toggle, and leaves original vocabulary and word-plate placement intact.
+3. A second catch started during fade-in cannot flash labels to full opacity
+   before fading them away again.
+4. Removed permanent hide gates from Solo, local Versus, Online spectator and
+   shared rendering modules. Earlier final-catch compatibility hooks remain
+   available but no longer suppress labels.
+5. Fly-label fade state is saved per 60 FPS replay snapshot so newly recorded
+   replays support smooth fade-in when seeking and frame-stepping. Older
+   recordings derive a post-zoom fade from their recorded critical-catch frames.
+6. Tutorial and round resets can restore labels immediately when opening a
+   fresh scene; ordinary zooms use the gradual return fade.
+
+PRESERVED
+- Existing fly identities/vocabulary, matching HUD, Solo, Versus, Online,
+  Frog Tags, replay controls and audio, tutorial chapters and cloud saves.
+- No Code.gs update, Cloudflare Worker schema change, or D1 migration.
+
+VERIFICATION
+- Built the game bundle from all 31 source modules. Static check passed.
+- 503/503 automated tests passed (497 existing + 6 new behavior checks).
+- Isolated Chromium canvas test uses the actual game draw/opacity/update
+  functions. Observed pixel-alpha sequence during the return fade:
+  0, 5, 10, 17, 26, 36, 48, 61, ... 244, 250, 253, 255 (full),
+  with no browser exceptions. A second zoom also returned to full opacity.
+- Automated tests cover fade timings, interrupted/repeated zooms,
+  local/online renderer paths, and old/new replay compatibility.
+- Full deployed multiplayer match not retested in this environment.
+
+DEPLOYMENT
+- Replace repository files with this entire ZIP and push/redeploy as normal.
+- Preserve existing Cloudflare configuration, data and accounts.

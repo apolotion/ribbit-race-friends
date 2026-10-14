@@ -17,6 +17,11 @@
       flyRespawnDelay: 2.0,
       secondFlySpawnDelay: 2.0,
       flySpawnMinimumSpacing: 1.0,
+      // Keep Solo's deliberate study pace unchanged. Versus needs faster,
+      // independent replenishment so a quick catch cannot empty the arena.
+      pvpFlyRespawnDelay: 1.0,
+      pvpFlySpawnMinimumSpacing: 0.75,
+      pvpOpeningFlyInterval: 0.85,
       flySpawnEffectDuration: 0.58,
       flyGrowDuration: 0.42,
       catchSparkleDuration: 0.25,
@@ -64,7 +69,7 @@
     const canvas = document.getElementById("game");
     const gameFrame = document.getElementById("game-frame");
     const friendsGameInputLocked = () => window.RibbitFriendsGameInputLocked?.() === true;
-    const RIBBIT_DISPLAY_VERSION = "VERSION 1.7.37";
+    const RIBBIT_DISPLAY_VERSION = "VERSION 1.7.39";
     const RIBBIT_CREDIT_TEXT = "MADE BY NICK M.";
     const RIBBIT_CREDIT_Y = 228;
     const rgbValueEditor = document.getElementById("rgb-value-editor");

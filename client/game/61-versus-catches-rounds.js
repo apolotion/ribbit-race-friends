@@ -749,7 +749,7 @@
       const openingTarget = openingVocabulary[Math.floor(Math.random() * openingVocabulary.length)];
       const ordered = [openingTarget, ...openingVocabulary.filter((value) => value !== openingTarget)];
       game.spawnQueue = ordered.map((vocabIndex, index) => ({
-        dueAt: game.elapsed + (index === 0 ? 0 : index * 1.05 + STEP),
+        dueAt: game.elapsed + (index === 0 ? 0 : index * CONFIG.pvpOpeningFlyInterval + STEP),
         source: "sudden",
         vocabIndex
       }));

@@ -1,5 +1,5 @@
 
-// Ribbit Race Friends 1.7.37 — compatibility hooks, safety guards, and runtime polish.
+// Ribbit Race Friends 1.7.39 — compatibility hooks, safety guards, and runtime polish.
 // This module is bundled last so it can observe the established private game scope.
 (() => {
   "use strict";
@@ -467,40 +467,15 @@
   }
   requestAnimationFrame(rr170RemoteSmoothing);
 
-  // Final Catch labels stay gone after their fade completes. The old guard
-  // watched a generic alpha that could reset to 1 on the first post-cinematic
-  // frame, which caused every label to pop back in once. Track the actual
-  // critical-catch lifecycle instead and keep the labels suppressed for the
-  // remainder of the round.
-  let finalCatchLabelsGone = false;
-  let finalCatchWasActive = false;
+  // Tutorial/round reset hook: restore terms immediately at the beginning of
+  // a new scene. Ordinary zoom catches use the 0.42-second return fade instead.
   window.RibbitRaceResetFinalCatchLabels = () => {
-    finalCatchLabelsGone = false;
-    finalCatchWasActive = false;
-    window.RibbitRaceFinalCatchLabelsGone = false;
+    const g = gameObject();
+    if (g) g.flyLabelReturnAlpha = 1;
+    window.RibbitRaceFinalCatchLabelsGone = false; // old extensions only
     try { window.RibbitV160ResetFinalCatchLabels?.(); } catch (_) {}
   };
-  function finalCatchGuard() {
-    const g = gameObject();
-    const state = stateName();
-    const active = Boolean(firstValue(
-      g?.soloCriticalCatchActive,
-      g?.pvpCriticalCatchActive,
-      g?.finalCatchActive,
-      /final.?catch/i.test(state)
-    ));
-    const newRound = /main|title|setup|onlineconnect|countdown/i.test(state);
-    if (newRound && !active) {
-      finalCatchLabelsGone = false;
-      finalCatchWasActive = false;
-    }
-    if (active) finalCatchWasActive = true;
-    if (finalCatchWasActive && !active && !newRound) finalCatchLabelsGone = true;
-    if (!newRound && window.RibbitRaceFinalCatchLabelsGone === true) finalCatchLabelsGone = true;
-    window.RibbitRaceFinalCatchLabelsGone = finalCatchLabelsGone;
-    requestAnimationFrame(finalCatchGuard);
-  }
-  requestAnimationFrame(finalCatchGuard);
+  window.RibbitRaceFinalCatchLabelsGone = false;
 
   function resetToStart() {
     try {

@@ -120,7 +120,7 @@
       for (const currentFly of flies) {
         drawFlySpawnSparks(currentFly);
         drawFlyAt(currentFly.x, currentFly.y, getFlySpawnScale(currentFly));
-        if (!window.RibbitRaceFinalCatchLabelsGone) { drawFlyNameTag(currentFly); }
+        drawFlyNameTag(currentFly);
       }
       drawFrogAfterimages(frog);
       drawAirShadowForEntity(frog, getFrogPalette());

@@ -44,7 +44,7 @@
             for (let count = 0; count < missing; count += 1) {
               const vocabIndex = vocabPool[count] ?? chooseUnusedVocabularyIndex([...selected]);
               selected.add(vocabIndex);
-              latestDue = Math.max(game.elapsed + STEP, latestDue + CONFIG.flySpawnMinimumSpacing);
+              latestDue = Math.max(game.elapsed + STEP, latestDue + CONFIG.pvpFlySpawnMinimumSpacing);
               game.spawnQueue.push({ dueAt: latestDue, source: "pvp-fill", vocabIndex });
             }
             game.spawnQueue.sort((a, b) => a.dueAt - b.dueAt);
@@ -1404,7 +1404,7 @@
       for (const fly of flies) {
         drawFlySpawnSparks(fly);
         drawFlyAt(fly.x, fly.y, getFlySpawnScale(fly));
-        if (!window.RibbitRaceFinalCatchLabelsGone) { drawFlyNameTag(fly); }
+        drawFlyNameTag(fly);
       }
       // Keep an eaten fly visible while its real tongue retracts during the
       // tutorial slow-motion zoom. The body and word plate travel with it.

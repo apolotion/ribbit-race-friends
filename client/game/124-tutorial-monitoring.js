@@ -478,9 +478,7 @@ function monitorPvp() {
       startResumeCountdown(false);
       return;
     }
-    // Never inherit a prior tutorial cinematic's permanent label-hiding flag.
-    if (!game.pvpCriticalCatchActive && window.RibbitRaceFinalCatchLabelsGone)
-      try { window.RibbitRaceResetFinalCatchLabels?.(); } catch (_) {}
+    // Every surviving fly now fades its term back in automatically after zoom.
     if (tutorial.pvpFinalMatchStarted && game.state === "playing" &&
         !game.pvpSuddenDeath && game.pvpTimeLimitSeconds > 0 &&
         game.pvpTimeRemaining <= 0 &&

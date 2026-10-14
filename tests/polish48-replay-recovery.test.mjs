@@ -9,12 +9,12 @@ const physics = read('client/game/60-versus-physics.js');
 const rendering = read('client/game/63-versus-rendering-ui.js');
 const hud = read('client/game/71-rendering-entities-hud.js');
 
-const version = '1.7.37';
-const marker = '2026.10.13-friends-polish-49';
+const version = '1.7.39';
+const marker = '2026.10.13-friends-polish-51';
 
 test('Polish 48 version and cache marker agree across source, browser and Worker', () => {
   assert.equal(JSON.parse(read('package.json')).version,version);
-  assert.match(read('client/game/10-core-config.js'), /VERSION 1\.7\.37/);
+  assert.match(read('client/game/10-core-config.js'), /VERSION 1\.7\.39/);
   assert.ok(read('src/common.js').includes(marker));
   assert.ok(read('client/game/120-tutorial-config.js').includes(marker));
   assert.ok(read('public/index.html').includes(marker));

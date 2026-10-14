@@ -21,7 +21,6 @@
     }
 
     function getFlyLabelAnchor(currentFly) {
-    if (typeof window !== "undefined" && window.RibbitV160ShouldHideFlyLabels?.()) return;
       if (currentFly.state === "spitting") {
         return { x: currentFly.returnX, y: currentFly.returnY };
       }
@@ -36,7 +35,6 @@
     const flyLabelSpriteCache = new Map();
 
     function flyLabelCacheKey(currentFly) {
-    if (typeof window !== "undefined" && window.RibbitV160ShouldHideFlyLabels?.()) return;
       const id = Number(currentFly?.id) || 0;
       const vocab = Number(currentFly?.vocabIndex) || 0;
       if (game.mode === "pvp") {
@@ -48,7 +46,6 @@
     }
 
     function pruneFlyLabelPlacementCache() {
-    if (typeof window !== "undefined" && window.RibbitV160ShouldHideFlyLabels?.()) return;
       const live = new Set(flies.map((currentFly) => flyLabelCacheKey(currentFly)));
       for (const key of flyLabelPlacementCache.keys()) {
         if (!live.has(key)) flyLabelPlacementCache.delete(key);
@@ -65,7 +62,6 @@
     }
 
     function getFlyLabelHudObstacles() {
-    if (typeof window !== "undefined" && window.RibbitV160ShouldHideFlyLabels?.()) return;
       const obstacles = [
         { x: 3, y: 3, w: 92, h: 29 },
         { x: W - 95, y: 3, w: 92, h: 29 }
@@ -77,7 +73,6 @@
     }
 
     function chooseFlyLabelRect(currentFly, anchor, width, height) {
-    if (typeof window !== "undefined" && window.RibbitV160ShouldHideFlyLabels?.()) return;
       // 1.6.0: the plate center remains locked directly above the fly's stable anchor.
       // It never shifts sideways to avoid the score, timer, pause button, or another
       // label. When two plates would overlap, only the vertical row may change.
@@ -131,7 +126,6 @@
     }
 
     function drawStableFlyLabelTextToSprite(targetContext, layout, width, textTop, lineHeight) {
-    if (typeof window !== "undefined" && window.RibbitV160ShouldHideFlyLabels?.()) return;
       const lines = Array.isArray(layout?.lines) && layout.lines.length ? layout.lines : [""];
       const logicalScale = Number(layout?.scale) || 1;
       const cell = Math.max(1, Math.round(logicalScale * RENDER_SCALE));
@@ -168,7 +162,6 @@
     }
 
     function getFlyLabelSprite(currentFly, term, layout, width, height) {
-    if (typeof window !== "undefined" && window.RibbitV160ShouldHideFlyLabels?.()) return;
       const cacheKey = flyLabelCacheKey(currentFly);
       const stripeColor = getSelectedSkin().mid;
       const signature = `${term}\u0000${layout.scale}\u0000${layout.lines.join("\u0001")}\u0000${width}x${height}\u0000${stripeColor}`;
@@ -201,11 +194,20 @@
     }
 
     function getCriticalCatchWordFade() {
+      // Slow-motion zooms may be contested/ordinary catches, not only the last
+      // fly of a round. Their labels fade out in the cinematic and MUST return
+      // as soon as play resumes. The shared opacity is advanced by the real
+      // game tick (and recorded in the replay), not by each label's draw call.
+      const recovery = clamp(Number(game.flyLabelReturnAlpha ?? 1), 0, 1);
+      const returnOpacity = recovery * recovery * (3 - 2 * recovery);
       let progress = null;
       if (game.mode === "solo" && game.soloCriticalCatchActive) progress = getSoloCriticalCatchVisuals().progress;
       else if (game.mode === "pvp" && game.pvpCriticalCatchActive) progress = getPvpCriticalCatchVisuals().progress;
-      if (progress === null) return 1;
-      return 1 - clamp((progress - 0.08) / 0.52, 0, 1);
+      if (progress === null) return returnOpacity;
+      // If another catch happens during the return fade, don't briefly pop
+      // labels to full opacity at the start of the second zoom.
+      const outgoing = 1 - clamp((progress - 0.08) / 0.52, 0, 1);
+      return Math.min(returnOpacity, outgoing);
     }
 
     function drawFlyNameTag(currentFly) {

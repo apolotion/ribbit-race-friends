@@ -18,6 +18,9 @@ function startRibbitRaceGame() {
       flyRespawnDelay: 2.0,
       secondFlySpawnDelay: 2.0,
       flySpawnMinimumSpacing: 1.0,
+      pvpFlyRespawnDelay: 1.0,
+      pvpFlySpawnMinimumSpacing: 0.75,
+      pvpOpeningFlyInterval: 0.85,
       flySpawnEffectDuration: 0.58,
       flyGrowDuration: 0.42,
       catchSparkleDuration: 0.25,
@@ -64,7 +67,7 @@ function startRibbitRaceGame() {
     const canvas = document.getElementById("game");
     const gameFrame = document.getElementById("game-frame");
     const friendsGameInputLocked = () => window.RibbitFriendsGameInputLocked?.() === true;
-    const RIBBIT_DISPLAY_VERSION = "VERSION 1.7.37";
+    const RIBBIT_DISPLAY_VERSION = "VERSION 1.7.39";
     const RIBBIT_CREDIT_TEXT = "MADE BY NICK M.";
     const RIBBIT_CREDIT_Y = 228;
     const rgbValueEditor = document.getElementById("rgb-value-editor");
@@ -1958,6 +1961,7 @@ function startRibbitRaceGame() {
       pvpWinnerIndex: null,
       pvpWinPendingIndex: null,
       pvpElapsed: 0,
+      flyLabelReturnAlpha: 1,
       pvpFinalDisplayTime: null,
       pvpSetupLevelId: "park",
       pvpRandomPreviewLevelId: "park",
@@ -3181,7 +3185,7 @@ function startRibbitRaceGame() {
           for(const f of flies){
             drawFlySpawnSparks(f);
             drawFlyAt(f.x,f.y,getFlySpawnScale(f));
-            if (!window.RibbitRaceFinalCatchLabelsGone) drawFlyNameTag(f);
+            drawFlyNameTag(f);
           }
           pvpPlayers.forEach(drawPvpTongue);pvpPlayers.forEach(drawPvpPlayer);drawPvpImpactEffects();ctx.restore();drawPvpHud();
           if(game.state==='countdown')drawResumeCountdown();
@@ -3667,14 +3671,14 @@ function startRibbitRaceGame() {
         game.completedVocabIndices=new Set(sim.completedVocabIndices||[]);
         nextFlyId=Math.max(Number(sim.nextFlyId)||1,...flies.map(f=>Number(f.id)+1));
         game.lastFlySpawnIndex=Number.isInteger(sim.lastFlySpawnIndex)?sim.lastFlySpawnIndex:-1;
-        game.lastFlySpawnTime=Number.isFinite(sim.lastFlySpawnTime)?sim.lastFlySpawnTime:game.elapsed-CONFIG.flySpawnMinimumSpacing;
+        game.lastFlySpawnTime=Number.isFinite(sim.lastFlySpawnTime)?sim.lastFlySpawnTime:game.elapsed-CONFIG.pvpFlySpawnMinimumSpacing;
         game.pvpImpactEffects=(snapshot.impacts||[]).map(e=>({...e}));
         for(const k of ['pvpBonkCounts','pvpRoundBonkCounts','pvpMatchBonkCounts','pvpSelfBonkCounts'])if(Array.isArray(sim[k]))game[k]=sim[k].slice();
         resetRoundNetwork(snapshot.roundKey||currentRoundKey());
         if(Array.isArray(snapshot.promptTargets))snapshot.promptTargets.forEach((v,i)=>{if(Number.isInteger(v))net.promptPlan[Number(snapshot.promptBase)+i]=v;});
         net.simClock=Number(snapshot.sampleClock)||0;
         if(!snapshot.simulation&&game.state==='playing'&&game.pvpWinPendingIndex===null&&!game.pvpTimerGraceActive){
-          for(let i=flies.length;i<CONFIG.maxFlies;i++)game.spawnQueue.push({dueAt:game.elapsed+(i-flies.length)*CONFIG.flySpawnMinimumSpacing});
+          for(let i=flies.length;i<CONFIG.maxFlies;i++)game.spawnQueue.push({dueAt:game.elapsed+(i-flies.length)*CONFIG.pvpFlySpawnMinimumSpacing});
         }
         if(game.state==='playing'&&game.pvpWinPendingIndex===null&&!game.pvpTimerGraceActive&&!game.pvpTimedOutcomePending){
           ensureTargetVocabularyAvailable(game.targetVocabIndex);
@@ -3712,7 +3716,7 @@ function startRibbitRaceGame() {
           if(game.pvpWinPendingIndex===null&&!game.pvpTimerGraceActive&&!game.pvpTimedOutcomePending){
             ensureTargetVocabularyAvailable(game.targetVocabIndex);
             if(!game.spawnQueue.length&&flies.length<CONFIG.maxFlies){
-              for(let i=flies.length;i<CONFIG.maxFlies;i++)game.spawnQueue.push({dueAt:game.elapsed+(i-flies.length+1)*CONFIG.flySpawnMinimumSpacing});
+              for(let i=flies.length;i<CONFIG.maxFlies;i++)game.spawnQueue.push({dueAt:game.elapsed+(i-flies.length+1)*CONFIG.pvpFlySpawnMinimumSpacing});
             }
           }
         }else if(game.state==='countdown'){
@@ -7328,13 +7332,16 @@ function startRibbitRaceGame() {
       }
       return [...new Set(candidates)];
     }
+    function getFlySpawnMinimumSpacing() {
+      return game.mode === "pvp" ? CONFIG.pvpFlySpawnMinimumSpacing : CONFIG.flySpawnMinimumSpacing;
+    }
     function ensureTargetVocabularyAvailable(vocabIndex = game.targetVocabIndex) {
       if (!Number.isInteger(vocabIndex) || !VOCABULARY[vocabIndex]) return false;
       const alreadyAvailable = flies.some((currentFly) => currentFly.vocabIndex === vocabIndex) ||
         game.spawnQueue.some((ticket) => ticket.vocabIndex === vocabIndex);
       if (alreadyAvailable) return true;
       const spacingReadyAt = Number.isFinite(game.lastFlySpawnTime)
-        ? game.lastFlySpawnTime + CONFIG.flySpawnMinimumSpacing
+        ? game.lastFlySpawnTime + getFlySpawnMinimumSpacing()
         : game.elapsed;
       game.spawnQueue.push({
         dueAt: Math.max(game.elapsed, spacingReadyAt),
@@ -7379,7 +7386,7 @@ function startRibbitRaceGame() {
     }
     function spawnFly(spawnTicket = null) {
       if (game.sandboxMode || flies.length >= CONFIG.maxFlies || (!isSoloEndlessMode() && game.score >= getSoloTargetScore())) return false;
-      if (game.elapsed - game.lastFlySpawnTime < CONFIG.flySpawnMinimumSpacing) return false;
+      if (game.elapsed - game.lastFlySpawnTime < getFlySpawnMinimumSpacing()) return false;
       const occupiedSpawnIndices = new Set(flies.map((currentFly) => currentFly.spawnIndex));
       let choices = flySpawns
         .map((_, index) => index)
@@ -7502,14 +7509,17 @@ function startRibbitRaceGame() {
       playWinSound();
     }
     function scheduleFlyReplacementFromCatch() {
-      const dueTime = game.elapsed + CONFIG.flyRespawnDelay;
-      let nextInitialDue = dueTime;
-      const pendingInitialTickets = game.spawnQueue
-        .filter((ticket) => ticket.source === "initial")
-        .sort((a, b) => a.dueAt - b.dueAt);
-      for (const ticket of pendingInitialTickets) {
-        ticket.dueAt = Math.max(ticket.dueAt, nextInitialDue);
-        nextInitialDue = ticket.dueAt + CONFIG.secondFlySpawnDelay;
+      const versus = game.mode === "pvp";
+      const dueTime = game.elapsed + (versus ? CONFIG.pvpFlyRespawnDelay : CONFIG.flyRespawnDelay);
+      if (!versus) {
+        let nextInitialDue = dueTime;
+        const pendingInitialTickets = game.spawnQueue
+          .filter((ticket) => ticket.source === "initial")
+          .sort((a, b) => a.dueAt - b.dueAt);
+        for (const ticket of pendingInitialTickets) {
+          ticket.dueAt = Math.max(ticket.dueAt, nextInitialDue);
+          nextInitialDue = ticket.dueAt + CONFIG.secondFlySpawnDelay;
+        }
       }
       const vocabIndex = chooseUnusedVocabularyIndex(getReservedVocabIndices());
       game.spawnQueue.push({
@@ -8293,7 +8303,7 @@ function startRibbitRaceGame() {
       const openingVocabulary = shuffledVocabularyIndices().slice(0, CONFIG.maxFlies);
       const openingTarget = openingVocabulary[Math.floor(Math.random() * openingVocabulary.length)];
       const orderedOpeningVocabulary = [openingTarget, ...openingVocabulary.filter((vocabIndex) => vocabIndex !== openingTarget)];
-      game.spawnQueue = orderedOpeningVocabulary.map((vocabIndex, index) => ({ dueAt: index === 0 ? 0 : index * 1.05 + STEP, source: "initial", vocabIndex }));
+      game.spawnQueue = orderedOpeningVocabulary.map((vocabIndex, index) => ({ dueAt: index === 0 ? 0 : index * CONFIG.pvpOpeningFlyInterval + STEP, source: "initial", vocabIndex }));
       game.targetVocabIndex = openingTarget;
       if(OnlineVersus.isActive()){OnlineVersus.resetRoundState();OnlineVersus.preparePromptPlan();}
     }
@@ -10093,7 +10103,7 @@ function startRibbitRaceGame() {
       const openingTarget = openingVocabulary[Math.floor(Math.random() * openingVocabulary.length)];
       const ordered = [openingTarget, ...openingVocabulary.filter((value) => value !== openingTarget)];
       game.spawnQueue = ordered.map((vocabIndex, index) => ({
-        dueAt: game.elapsed + (index === 0 ? 0 : index * 1.05 + STEP),
+        dueAt: game.elapsed + (index === 0 ? 0 : index * CONFIG.pvpOpeningFlyInterval + STEP),
         source: "sudden",
         vocabIndex
       }));
@@ -10848,7 +10858,7 @@ function startRibbitRaceGame() {
             for (let count = 0; count < missing; count += 1) {
               const vocabIndex = vocabPool[count] ?? chooseUnusedVocabularyIndex([...selected]);
               selected.add(vocabIndex);
-              latestDue = Math.max(game.elapsed + STEP, latestDue + CONFIG.flySpawnMinimumSpacing);
+              latestDue = Math.max(game.elapsed + STEP, latestDue + CONFIG.pvpFlySpawnMinimumSpacing);
               game.spawnQueue.push({ dueAt: latestDue, source: "pvp-fill", vocabIndex });
             }
             game.spawnQueue.sort((a, b) => a.dueAt - b.dueAt);
@@ -12108,7 +12118,7 @@ function startRibbitRaceGame() {
       for (const fly of flies) {
         drawFlySpawnSparks(fly);
         drawFlyAt(fly.x, fly.y, getFlySpawnScale(fly));
-        if (!window.RibbitRaceFinalCatchLabelsGone) { drawFlyNameTag(fly); }
+        drawFlyNameTag(fly);
       }
       if (criticalCatch && ((tutorial.active && tutorial.kind === "pvp") ||
           window.RibbitEngineReplay?.active?.())) {
@@ -12435,7 +12445,6 @@ function startRibbitRaceGame() {
       return drawBitmapTextLayoutToContext(ctx, layout, x, y, align, color, shadowColor, lineGap);
     }
     function layoutStableFlyLabelText(text, maximumWidth = 120) {
-    if (typeof window !== "undefined" && window.RibbitV160ShouldHideFlyLabels?.()) return;
       const normalized = normalizeBitmapText(text).trim();
       const scales = [1, 0.75, 0.5];
       for (const scale of scales) {
@@ -13666,7 +13675,6 @@ function startRibbitRaceGame() {
       ctx.fillRect(px - 2 * s, py, 4 * s, 3 * s);
     }
     function getFlyLabelAnchor(currentFly) {
-    if (typeof window !== "undefined" && window.RibbitV160ShouldHideFlyLabels?.()) return;
       if (currentFly.state === "spitting") {
         return { x: currentFly.returnX, y: currentFly.returnY };
       }
@@ -13675,7 +13683,6 @@ function startRibbitRaceGame() {
     const flyLabelPlacementCache = new Map();
     const flyLabelSpriteCache = new Map();
     function flyLabelCacheKey(currentFly) {
-    if (typeof window !== "undefined" && window.RibbitV160ShouldHideFlyLabels?.()) return;
       const id = Number(currentFly?.id) || 0;
       const vocab = Number(currentFly?.vocabIndex) || 0;
       if (game.mode === "pvp") {
@@ -13686,7 +13693,6 @@ function startRibbitRaceGame() {
       return `solo:${id}:${vocab}`;
     }
     function pruneFlyLabelPlacementCache() {
-    if (typeof window !== "undefined" && window.RibbitV160ShouldHideFlyLabels?.()) return;
       const live = new Set(flies.map((currentFly) => flyLabelCacheKey(currentFly)));
       for (const key of flyLabelPlacementCache.keys()) {
         if (!live.has(key)) flyLabelPlacementCache.delete(key);
@@ -13701,7 +13707,6 @@ function startRibbitRaceGame() {
       return width * height;
     }
     function getFlyLabelHudObstacles() {
-    if (typeof window !== "undefined" && window.RibbitV160ShouldHideFlyLabels?.()) return;
       const obstacles = [
         { x: 3, y: 3, w: 92, h: 29 },
         { x: W - 95, y: 3, w: 92, h: 29 }
@@ -13712,7 +13717,6 @@ function startRibbitRaceGame() {
       return obstacles;
     }
     function chooseFlyLabelRect(currentFly, anchor, width, height) {
-    if (typeof window !== "undefined" && window.RibbitV160ShouldHideFlyLabels?.()) return;
       const cacheKey = flyLabelCacheKey(currentFly);
       const anchorX = Math.round(Number(anchor?.x ?? currentFly?.baseX ?? currentFly?.x) || 0);
       const anchorY = Math.round(Number(anchor?.y ?? currentFly?.baseY ?? currentFly?.y) || 0);
@@ -13756,7 +13760,6 @@ function startRibbitRaceGame() {
       return stableRect;
     }
     function drawStableFlyLabelTextToSprite(targetContext, layout, width, textTop, lineHeight) {
-    if (typeof window !== "undefined" && window.RibbitV160ShouldHideFlyLabels?.()) return;
       const lines = Array.isArray(layout?.lines) && layout.lines.length ? layout.lines : [""];
       const logicalScale = Number(layout?.scale) || 1;
       const cell = Math.max(1, Math.round(logicalScale * RENDER_SCALE));
@@ -13792,7 +13795,6 @@ function startRibbitRaceGame() {
       targetContext.restore();
     }
     function getFlyLabelSprite(currentFly, term, layout, width, height) {
-    if (typeof window !== "undefined" && window.RibbitV160ShouldHideFlyLabels?.()) return;
       const cacheKey = flyLabelCacheKey(currentFly);
       const stripeColor = getSelectedSkin().mid;
       const signature = `${term}\u0000${layout.scale}\u0000${layout.lines.join("\u0001")}\u0000${width}x${height}\u0000${stripeColor}`;
@@ -13820,11 +13822,14 @@ function startRibbitRaceGame() {
       return sprite;
     }
     function getCriticalCatchWordFade() {
+      const recovery = clamp(Number(game.flyLabelReturnAlpha ?? 1), 0, 1);
+      const returnOpacity = recovery * recovery * (3 - 2 * recovery);
       let progress = null;
       if (game.mode === "solo" && game.soloCriticalCatchActive) progress = getSoloCriticalCatchVisuals().progress;
       else if (game.mode === "pvp" && game.pvpCriticalCatchActive) progress = getPvpCriticalCatchVisuals().progress;
-      if (progress === null) return 1;
-      return 1 - clamp((progress - 0.08) / 0.52, 0, 1);
+      if (progress === null) return returnOpacity;
+      const outgoing = 1 - clamp((progress - 0.08) / 0.52, 0, 1);
+      return Math.min(returnOpacity, outgoing);
     }
     function drawFlyNameTag(currentFly) {
       if (game.sandboxMode || currentFly.sandboxTest) return;
@@ -17809,7 +17814,7 @@ function startRibbitRaceGame() {
       for (const currentFly of flies) {
         drawFlySpawnSparks(currentFly);
         drawFlyAt(currentFly.x, currentFly.y, getFlySpawnScale(currentFly));
-        if (!window.RibbitRaceFinalCatchLabelsGone) { drawFlyNameTag(currentFly); }
+        drawFlyNameTag(currentFly);
       }
       drawFrogAfterimages(frog);
       drawAirShadowForEntity(frog, getFrogPalette());
@@ -19810,8 +19815,8 @@ function startRibbitRaceGame() {
     requestAnimationFrame(frame);
 
     /* ===== client/game/90-extended-features.js ===== */
-const RIBBIT_FRIENDS_DISPLAY_VERSION = "1.7.37";
-const RIBBIT_FRIENDS_BUILD = "2026.10.13-friends-polish-49";
+const RIBBIT_FRIENDS_DISPLAY_VERSION = "1.7.39";
+const RIBBIT_FRIENDS_BUILD = "2026.10.13-friends-polish-51";
 function rr14Number(value, fallback = 0) {
   const parsed = Number(value);
   return Number.isFinite(parsed) ? parsed : fallback;
@@ -20290,13 +20295,12 @@ window.RibbitRaceMobileDiagnostics = () => ({
  */
 (() => {
   "use strict";
-  const BUILD = "2026.10.13-friends-polish-49";
+  const BUILD = "2026.10.13-friends-polish-51";
   const RR_V160_CANDIDATES = {"catchFly":["attemptFlyCatch","attemptPvpFlyCatch","catchSandboxFly","getPvpImminentCatchFly","recordFlyEaten","scheduleFlyReplacementFromCatch"],"jumpSound":["playJumpSound"],"beep":["playCountdownGoSound","playCountdownSound"],"replayUpload":["saveRecordDate"],"restart":["resetGame","resetPvpGame","resetPvpPlayer","resetRoundLifecycle","resetRoundNetwork","restartCurrentLevel"],"drop":[],"render":["drawPvpScene","drawScene"],"worldRecord":[],"fullscreen":["getFullscreenElement","hideFullscreenFallback","showFullscreenFallback","syncFullscreenButton","toggleRibbitFullscreen"],"onlineSubmit":[],"leaderboard":["isSoloEndlessLeaderboardEligible","savePvpMatchWinsForLeaderboard"]};
   const RR_V160_VARS = {"onlineSelect":[],"achievementSelect":["activeAchievementIndex","hoveredAchievementCard"],"backRect":[]};
-  const VERSION = "1.7.37";
+  const VERSION = "1.7.39";
   const V = {
     menuTouch: new Map(), chargeTouch: new Map(), achievementPinned: -1,
-    finalCatchStarted: 0, finalCatchLabelsGone: false,
     cpuTakeoverUntil: 0, cpuTakeoverStarted: 0, cpuSnapshot: null,
     remoteWasAirborne: false, lastCountdownSecond: -1,
     lastState: "", lastRoundKey: "", previousRecords: new Map(),
@@ -20404,17 +20408,9 @@ window.RibbitRaceMobileDiagnostics = () => ({
     return String(o?.opponentName||o?.peerName||o?.remoteName||o?.guestName||o?.hostName||o?.players?.find?.(p=>!p.local)?.name||"OPPONENT").toUpperCase();
   }
   window.RibbitOpponentName=opponentName;
-  window.RibbitV160ShouldHideFlyLabels=()=>V.finalCatchLabelsGone;
-  window.RibbitV160ResetFinalCatchLabels=()=>{
-    V.finalCatchStarted=0;
-    V.finalCatchLabelsGone=false;
-  };
-  window.RibbitV160FlyLabelAlpha=(base=1)=>{
-    if(!V.finalCatchStarted) return base;
-    const t=(performance.now()-V.finalCatchStarted)/900;
-    if(t>=1){V.finalCatchLabelsGone=true;return 0;}
-    return base*Math.max(0,1-t);
-  };
+  window.RibbitV160ShouldHideFlyLabels=()=>false;
+  window.RibbitV160ResetFinalCatchLabels=()=>{ game.flyLabelReturnAlpha=1; };
+  window.RibbitV160FlyLabelAlpha=(base=1)=>base*getCriticalCatchWordFade();
   window.RibbitWorldRecordDetail=()=>V.worldRecordDetail;
   window.RibbitSetWorldRecordDetail=(d)=>{V.worldRecordDetail=String(d||"");V.worldRecordUntil=performance.now()+9000;};
   window.RibbitDrawFrogTagsIcon=(g,x,y,s=1,color="#48555a")=>{
@@ -20493,9 +20489,6 @@ window.RibbitRaceMobileDiagnostics = () => ({
   function tick(now){
     const st=stateName();
     if(st!==V.lastState){
-      if(/final/i.test(st)){V.finalCatchStarted=now;V.finalCatchLabelsGone=false;}
-      else if(/final/i.test(V.lastState)){V.finalCatchStarted=0;}
-      if(/main|title|setup|onlineConnect|countdown/i.test(st)){V.finalCatchStarted=0;V.finalCatchLabelsGone=false;}
       V.lastState=st;
     }
     detectTakeover(now);freezeTakeover(now);
@@ -21150,35 +21143,13 @@ window.RibbitRaceMobileDiagnostics = () => ({
     rr170RemoteLast=now;requestAnimationFrame(rr170RemoteSmoothing);
   }
   requestAnimationFrame(rr170RemoteSmoothing);
-  let finalCatchLabelsGone = false;
-  let finalCatchWasActive = false;
   window.RibbitRaceResetFinalCatchLabels = () => {
-    finalCatchLabelsGone = false;
-    finalCatchWasActive = false;
-    window.RibbitRaceFinalCatchLabelsGone = false;
+    const g = gameObject();
+    if (g) g.flyLabelReturnAlpha = 1;
+    window.RibbitRaceFinalCatchLabelsGone = false; // old extensions only
     try { window.RibbitV160ResetFinalCatchLabels?.(); } catch (_) {}
   };
-  function finalCatchGuard() {
-    const g = gameObject();
-    const state = stateName();
-    const active = Boolean(firstValue(
-      g?.soloCriticalCatchActive,
-      g?.pvpCriticalCatchActive,
-      g?.finalCatchActive,
-      /final.?catch/i.test(state)
-    ));
-    const newRound = /main|title|setup|onlineconnect|countdown/i.test(state);
-    if (newRound && !active) {
-      finalCatchLabelsGone = false;
-      finalCatchWasActive = false;
-    }
-    if (active) finalCatchWasActive = true;
-    if (finalCatchWasActive && !active && !newRound) finalCatchLabelsGone = true;
-    if (!newRound && window.RibbitRaceFinalCatchLabelsGone === true) finalCatchLabelsGone = true;
-    window.RibbitRaceFinalCatchLabelsGone = finalCatchLabelsGone;
-    requestAnimationFrame(finalCatchGuard);
-  }
-  requestAnimationFrame(finalCatchGuard);
+  window.RibbitRaceFinalCatchLabelsGone = false;
   function resetToStart() {
     try {
       if (typeof restartLevel === "function") return restartLevel();
@@ -21211,7 +21182,7 @@ window.RibbitRaceMobileDiagnostics = () => ({
 "use strict";
 const SOLO_SEEN_KEY = "rrFriendsEngineTutorialSoloSeenV8";
 const PVP_SEEN_KEY = "rrFriendsEngineTutorialPvpSeenV8";
-const TUTORIAL_BUILD = "2026.10.13-friends-polish-49";
+const TUTORIAL_BUILD = "2026.10.13-friends-polish-51";
 const TUTORIAL_ACHIEVEMENT_ID = "tutorial-graduate";
 const PVP_TUTORIAL_ACHIEVEMENT_ID = "versus-tutorial-graduate";
 const TYPEWRITER_MS_PER_CHARACTER = 28;
@@ -25304,8 +25275,6 @@ function monitorPvp() {
       startResumeCountdown(false);
       return;
     }
-    if (!game.pvpCriticalCatchActive && window.RibbitRaceFinalCatchLabelsGone)
-      try { window.RibbitRaceResetFinalCatchLabels?.(); } catch (_) {}
     if (tutorial.pvpFinalMatchStarted && game.state === "playing" &&
         !game.pvpSuddenDeath && game.pvpTimeLimitSeconds > 0 &&
         game.pvpTimeRemaining <= 0 &&
@@ -27692,7 +27661,6 @@ window.RibbitRaceTutorialEngine = Object.freeze({
     mainHoverKey: "",
     onlineHoverKey: "",
     worldRecordHovered: false,
-    labelFadeStartedAt: 0,
     priorCriticalCatch: false,
     previousRoundState: "",
     lastArchivedRoundKey: "",
@@ -28474,7 +28442,6 @@ window.RibbitRaceTutorialEngine = Object.freeze({
   }
   const originalDrawFlyNameTagPolish8 = drawFlyNameTag;
   drawFlyNameTag = function(currentFly, ...rest) {
-    if (window.RibbitRaceFinalCatchLabelsGone) return;
     return withLocalizedVocabulary(
       Number(currentFly?.vocabIndex),
       () => originalDrawFlyNameTagPolish8.call(this, currentFly, ...rest),
@@ -29663,8 +29630,10 @@ window.RibbitRaceTutorialEngine = Object.freeze({
     flushPendingHatNotices();
     const criticalCatchActive = Boolean(game.soloCriticalCatchActive || game.pvpCriticalCatchActive);
     if (polish.priorCriticalCatch && !criticalCatchActive) {
-      polish.labelFadeStartedAt = performance.now();
-      window.RibbitRaceFinalCatchLabelsGone = true;
+      game.flyLabelReturnAlpha = 0;
+    } else if (!criticalCatchActive && game.state !== "paused" &&
+        Number.isFinite(game.flyLabelReturnAlpha) && game.flyLabelReturnAlpha < 1) {
+      game.flyLabelReturnAlpha = Math.min(1, game.flyLabelReturnAlpha + Math.max(0, dt) / 0.42);
     }
     polish.priorCriticalCatch = criticalCatchActive;
     archiveOnlineRound();
@@ -30239,7 +30208,6 @@ window.RibbitRaceTutorialEngine = Object.freeze({
   window.addEventListener("pointerup",ev=>{if(!P19.mouseJump)return;P19.mouseJump=false;if(game.mode==="pvp")releasePvpButton(0);else releaseMainButton();},{passive:true});
   const priorUpdateP19=update;update=function(dt,...rest){
     const e=engine(),pvpTraining=!!(e?.active&&e.kindPolish19==="pvp"),setup=String(e?.polish19Setup||"").toLowerCase(),title=String(e?.stepTitlePolish19||"").toLowerCase();
-    if(game.mode==="pvp"&&game.state==="countdown"){flies.length=0;if(game.spawnQueue)game.spawnQueue.length=0;}
     const finalRace=pvpTraining&&(/final|race|match/.test(setup+" "+title));
     if(finalRace){game.pvpCpuEnabled=true;game.pvpCpuDifficulty=5;game.pvpCpuLevel=5;if(pvpPlayers?.[1]){pvpPlayers[1].cpu=true;pvpPlayers[1].cpuLevel=5;pvpPlayers[1].inputHeld=false;}}
     const before=pvpTraining&&e.dialogueOpen?(pvpPlayers||[]).map(p=>Number(p.stunTimer||0)):null;
@@ -30285,6 +30253,7 @@ const RIBBIT_REPLAY_GAME_FIELDS = [
   "pvpCriticalCatchActive","pvpCriticalCatchElapsed","pvpCriticalCatchDuration",
   "pvpCriticalCatchWinnerIndex","pvpCriticalCatchKind","pvpCriticalCatchX","pvpCriticalCatchY",
   "pvpCriticalCatchScreenX","pvpCriticalCatchScreenY","pvpCriticalCatchFlyVisual",
+  "flyLabelReturnAlpha",
   "winPending","pvpWinPendingIndex","finishTime","soloTimeRemaining","soloTimeLimitSeconds","soloTimedOut",
   "pvpCelebrationWinnerIndex","pvpWinnerIndex","pvpMatchWinnerIndex","messageTimer",
   "tutorialActive","pvpImpactEffects","newBestTime","newFewestJumps",
@@ -30705,6 +30674,24 @@ function replayFrameAt(position,frames){
     flies:(a.flies||[]).map(f=>{const next=alternate.get(f.id);return next?
       {...f,x:f.x+(next.x-f.x)*factor,y:f.y+(next.y-f.y)*factor}:f;})};
 }
+function legacyReplayFlyLabelReturnAlpha(position, frames) {
+  if (!Array.isArray(frames) || !frames.length) return 1;
+  let low = 0, high = frames.length - 1;
+  while (low < high) {
+    const middle = (low + high + 1) >> 1;
+    if (frames[middle].t <= position) low = middle;
+    else high = middle - 1;
+  }
+  for (let index = low; index >= 0; index -= 1) {
+    const frame = frames[index];
+    if (position - frame.t > 520) break;
+    if (frame.gameState?.soloCriticalCatchActive || frame.gameState?.pvpCriticalCatchActive) {
+      const firstNonZoom = frames[index + 1]?.t ?? frame.t;
+      return clamp((position - firstNonZoom) / 420, 0, 1);
+    }
+  }
+  return 1;
+}
 function paintRibbitReplayStage(){
   const view=ribbitReplayView,data=view?.data;
   if(!data){
@@ -30746,7 +30733,12 @@ function paintRibbitReplayStage(){
     tutorial.active=false;tutorial.completeScreen=false;tutorial.dialogueOpen=false;
     game.winPending=false;game.pvpWinPendingIndex=null;game.pvpImpactEffects=[];
     if(data.vocab?.length)VOCABULARY=normalizeVocabularyEntries(data.vocab);
+    game.flyLabelReturnAlpha=1;
     if(state.gameState)Object.assign(game,state.gameState);
+    if (!Number.isFinite(state.gameState?.flyLabelReturnAlpha) &&
+        !game.pvpCriticalCatchActive && !game.soloCriticalCatchActive) {
+      game.flyLabelReturnAlpha=legacyReplayFlyLabelReturnAlpha(view.position,data.frames);
+    }
     game.state=replaySceneState;
     game.onlineMode=false;game.tutorialActive=false;game.sandboxMode=false;
     platforms=LEVELS[data.level].platforms;flySpawns=LEVELS[data.level].flySpawns;
