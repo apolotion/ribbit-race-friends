@@ -82,21 +82,20 @@ test('Ember starts buffered sky drop centered atop the high platform and practic
   assert.match(scenes, /case "pvpBufferedSky"[\s\S]{0,250}positionPvpOnPlatform\(p1, top, -1\)/);
 });
 
-test('Ember reacts to player release and takes two real under-bonks without a teleport', () => {
-  assert.match(scenes, /case "pvpUnderBonkTwo"[\s\S]{0,500}positionPvp\(p1, 238, CONFIG\.groundY - p1\.h, 1\)/);
-  assert.match(monitoring, /tutorial\.pvpUnderBonkEmberDismounted &&[\s\S]{0,180}tutorial\.pvpUnderBonkChargePrimed = true;\s*scriptPvpPress\(1, 1\)/);
-  assert.match(monitoring, /if \(ember\.charging && tutorial\.pvpUnderBonkChargePrimed\)/);
-  assert.match(monitoring, /if \(tutorial\.pvpUnderBonks > 0\)/);
-  assert.match(monitoring, /second-under-bonk-straight-up/);
-  assert.match(monitoring, /tutorial\.pvpUnderBonks >= 2/);
-  assert.match(monitoring, /Ouch! That first under bonk counted\./);
+test('player and Ember switch ground positions for one natural under bonk', () => {
+  assert.match(scenes, /case "pvpUnderBonkTwo"[\s\S]{0,550}positionPvp\(p1, 64, CONFIG\.groundY - p1\.h, 1\)/);
+  assert.match(scenes, /positionPvp\(ember, 238, CONFIG\.groundY - ember\.h, -1\)/);
+  assert.match(monitoring, /scriptPvpChargedJump\(1, \.55, direction, 0\)/);
+  assert.match(monitoring, /tutorial\.pvpUnderBonks >= 1/);
+  assert.doesNotMatch(monitoring, /second-under-bonk-straight-up/);
+  assert.match(config, /Give me one clean under bonk/);
 });
 
 test('bonk-boost flies spawn at high matching vocabulary positions and finish at real catch range', () => {
   assert.match(scenes, /PARK_PLATFORMS\[1\]\.w \/ 2\), 84, game\.targetVocabIndex/);
   assert.match(scenes, /PARK_PLATFORMS\[6\]\.w \/ 2\), 84, game\.targetVocabIndex/);
   assert.match(scenes, /tutorial\.pvpPracticeCatchCount > 0/);
-  assert.match(hooks, /startPvpCriticalCatch\(player, targetFly, "contest"\)/);
+  assert.match(hooks, /startPvpCriticalCatch\(player, targetFly, "technique"\)/);
 });
 
 test('chapter switching cleans hidden players and stale smoke', () => {

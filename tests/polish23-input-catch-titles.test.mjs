@@ -124,7 +124,7 @@ function catchHarness() {
   };
   vm.createContext(c);vm.runInContext(catches,c);
   const fly={id:'fly1',state:'active',vocabIndex:0,baseX:140,baseY:107,pvpPursuers:[true,false]};
-  function close(){c.pvpPlayers[1].x=145;fly.pvpPursuers[1]=true;}
+  function close(){c.pvpPlayers[0].vx=55;c.pvpPlayers[1].x=145;c.pvpPlayers[1].vx=-55;fly.pvpPursuers[1]=true;}
   function trigger(){const kind=c.getPvpCriticalCatchKind(c.pvpPlayers[0],fly);if(kind)c.startPvpCriticalCatch(c.pvpPlayers[0],fly,kind);return kind;}
   return {c,fly,close,labels,events,trigger};
 }

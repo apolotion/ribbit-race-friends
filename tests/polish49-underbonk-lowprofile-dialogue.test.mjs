@@ -23,42 +23,25 @@ const setupBody = (source, id, nextSetup) => {
   return source.slice(start, end);
 };
 
-test("under-bonk demonstration spawns P1 facing left and Ember on right-middle perch facing left", () => {
+test("under-bonk demonstration spawns player facing right, Ember facing left on middle-right", () => {
   const block = caseBody(scene, "pvpDemoUnderBonk", 'case "pvpUnderBonkTwo"');
-  assert.match(block, /positionPvp\(p1, 210, CONFIG\.groundY - p1\.h, -1\)/);
+  assert.match(block, /positionPvp\(p1, 210, CONFIG\.groundY - p1\.h, 1\)/);
   assert.match(block, /positionPvpOnPlatform\(ember, middleRight, -1, middleRight\.w - ember\.w - 8\)/);
 });
 
-test("two-under-bonk lesson uses reference ground spawn and left-middle Ember perch", () => {
+test("switch-places lesson swaps screenshot ground positions and needs one bonk", () => {
   const block = caseBody(scene, "pvpUnderBonkTwo", 'case "pvpDemoAvoidUnder"');
-  assert.match(block, /positionPvp\(p1, 238, CONFIG\.groundY - p1\.h, 1\)/);
-  assert.match(block, /positionPvpOnPlatform\(ember, middleLeft, -1\)/);
+  assert.match(block, /positionPvp\(p1, 64, CONFIG\.groundY - p1\.h, 1\)/);
+  assert.match(block, /positionPvp\(ember, 238, CONFIG\.groundY - ember\.h, -1\)/);
+  assert.match(config, /Give me one clean under bonk/);
+  assert.match(monitor, /if \(tutorial\.pvpUnderBonks >= 1\)/);
 });
 
-test("Ember drops through intermediate platforms using real quick-drop physics before attempting under-bonks", () => {
+test("single under-bonk uses a real jump and no second scripted contact or poof", () => {
   const block = setupBody(monitor, "pvpUnderBonkTwo", "pvpReboundThree");
-  assert.match(block, /getPvpStandingPlatform\(ember\)/);
-  assert.match(block, /scriptPvpQuickDrop\(1, 0, 1\)/);
-  assert.match(block, /pvpUnderBonkEmberDismounted = true/);
-  assert.doesNotMatch(block, /positionPvp\(/);
-  assert.doesNotMatch(block, /addTutorialPoof\(/);
-});
-
-test("Ember's second under-bonk is a new physics jump, not a scene reset", () => {
-  const block = setupBody(monitor, "pvpUnderBonkTwo", "pvpReboundThree");
-  assert.match(block, /if \(tutorial\.pvpUnderBonks > 0\)/);
-  assert.match(block, /scriptPvpRelease\(1, \.55\)/);
-  assert.match(block, /ember\.vx = 0/);
-  assert.doesNotMatch(block, /beginScenarioEntryTransition\(/);
-  assert.doesNotMatch(block, /addTutorialPoof\(|resetPvpTutorialScenario\(|positionPvp\(/);
-});
-
-test("missed second under-bonk preserves progress and tries again without poof", () => {
-  const block = setupBody(monitor, "pvpUnderBonkTwo", "pvpAvoidUnder");
-  assert.match(block, /tutorial\.pvpUnderBonks > 0 && landedOnCenter/);
-  assert.match(block, /tutorial\.pvpUnderBonkPendingSecond = false/);
-  assert.match(block, /tutorial\.pvpLastPracticeEventAt = now - 900/);
-  assert.match(block, /scenePositionedDuringDialogue = true/);
+  assert.match(block, /scriptPvpChargedJump\(1, \.55, direction, 0\)/);
+  assert.doesNotMatch(block, /addTutorialPoof\(|positionPvp\(/);
+  assert.doesNotMatch(block, /second-under-bonk-straight-up/);
 });
 
 test("low-profile demonstration uses exactly four completed jumps", () => {
@@ -72,7 +55,7 @@ test("low-profile demonstration uses exactly four completed jumps", () => {
 
 test("low-profile practice spawns player left of lower-center platform and checks just past its right edge", () => {
   const start = caseBody(scene, "pvpAvoidUnder", 'case "pvpDemoRebound"');
-  assert.match(start, /positionPvp\(p1, perch\.x - p1\.w - 37, CONFIG\.groundY - p1\.h, 1\)/);
+  assert.match(start, /positionPvp\(p1, 155, CONFIG\.groundY - p1\.h, 1\)/);
   assert.match(start, /positionPvpOnPlatform\(ember, perch, -1\)/);
   const finish = setupBody(monitor, "pvpAvoidUnder", "pvpReboundThree");
   assert.match(finish, /pvpAvoidUnderPassedBeneath = true/);

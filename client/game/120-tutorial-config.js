@@ -3,7 +3,7 @@
 
 const SOLO_SEEN_KEY = "rrFriendsEngineTutorialSoloSeenV8";
 const PVP_SEEN_KEY = "rrFriendsEngineTutorialPvpSeenV8";
-const TUTORIAL_BUILD = "2026.10.13-friends-polish-52";
+const TUTORIAL_BUILD = "2026.10.13-friends-polish-56";
 const TUTORIAL_ACHIEVEMENT_ID = "tutorial-graduate";
 const PVP_TUTORIAL_ACHIEVEMENT_ID = "versus-tutorial-graduate";
 const TYPEWRITER_MS_PER_CHARACTER = 28;
@@ -21,7 +21,7 @@ const PVP_ONE_SECOND_FLY_SETUPS = new Set([
   "pvpDemoDinnerSteal", "pvpDinnerSteal"
 ]);
 const PVP_RETRY_EMBER_STATIONARY_SETUPS = new Set([
-  "pvpBonkCatch", "pvpUnderBonkTwo", "pvpAvoidUnder", "pvpReboundCatch"
+  "pvpBonkCatch", "pvpAvoidUnder", "pvpReboundCatch"
 ]);
 const PVP_MOVING_PRACTICE_SETUPS = new Set([
   "pvpBoostBonk", "pvpUnderBonkTwo", "pvpReboundThree", "pvpIntercept", "pvpDinnerSteal"
@@ -217,6 +217,9 @@ const tutorial = {
   pvpUnderBonkDismountQueued: false,
   pvpUnderBonkEmberDismounted: false,
   pvpAvoidUnderPassedBeneath: false,
+  pvpAvoidUnderTooHigh: false,
+  pvpReboundLandingHoldAt: 0,
+  pvpRecoverySecondBonkOnTime: false,
   pvpReboundCount: 0,
   pvpInterceptSeen: false,
   pvpBoostedBonkSeen: false,
@@ -233,6 +236,7 @@ const tutorial = {
   pvpFinalOutcome: null,
   pvpFlyRevealAt: 0,
   pvpFlyRevealSetup: "",
+  flyDespawnEffects: [],
   pvpPlayerSkinId: "azure",
   pvpPracticeLayoutIndex: 0,
   pvpPracticeCatchCount: 0,
@@ -973,17 +977,17 @@ const PVP_STEPS = Object.freeze([
     "setup": "pvpUnderBonkTwo",
     "portrait": "determined",
     "goal": [
-      "UNDER BONKS",
-      "0 / 2"
+      "UNDER BONK",
+      "0 / 1"
     ],
     "dialogue": [
       "Now let's switch places.",
-      "I'll drop to the ground. Get onto the lower-middle platform before I jump beneath you.",
-      "Stay on the perch for both of my jumps, even after the first bonk.",
-      "Give me two under bonks without giving up your perch!"
+      "I'll drop to the ground. Climb onto the lower-middle platform before I jump beneath you.",
+      "Hold your perch while I jump underneath you.",
+      "Give me one clean under bonk without giving up your perch!"
     ],
     "successDialogue": [
-      "Apparently, jumping into the same frog twice doesn't improve the results."
+      "That was one clean under bonk!"
     ]
   },
   {

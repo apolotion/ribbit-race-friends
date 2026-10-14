@@ -156,6 +156,6 @@ test('Versus remembers both frogs and supports close-contest and last-second cin
   assert.match(versus, /if \(lastSecondCatch\) return "clutch"/);
   assert.match(versus, /return "contest"/);
   assert.match(versus, /game\.pvpCriticalCatchKind === "final" \? "FINAL CATCH!"/);
-  assert.match(versus, /game\.pvpCriticalCatchKind === "clutch" \? "CLUTCH CATCH!" : "CLOSE CATCH!"/);
+  assert.match(versus, /game\.pvpCriticalCatchKind === "contest" \? "CLOSE CATCH!"/);
   assert.match(versus, /const clockDt = game\.pvpCriticalCatchActive \? 0 : dt/);
 });

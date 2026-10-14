@@ -9,21 +9,29 @@ bonkPvpPlayer = function(victim, stomper, ...rest) {
   const sky = Boolean(stomper?.wentAboveMapThisJump || Number(stomper?.highestY) < 5);
   const boosted = Boolean(victim && Number(victim.vy) < -80);
   const startedOnPlatform = Boolean(victim && getPvpStandingPlatform(victim) && !getPvpStandingPlatform(victim)?.ground);
+  const setupBeforeBonk = tutorial.active && tutorial.kind === "pvp" ? tutorialStep()?.setup : "";
+  const recoveryGap = Number(game.pvpElapsed) - Number(victim?.lastStunEndAt);
+  const countsAsRecoveryBonk = setupBeforeBonk === "pvpRecoveryBonk" && stomper?.index === 0 && victim?.index === 1 &&
+    tutorial.pvpBonks === 1 && Number.isFinite(recoveryGap) && recoveryGap >= 0 && recoveryGap <= 1;
   const result = originalBonkPvpPlayerForTutorial.call(this, victim, stomper, ...rest);
+  if (active && sky && ["pvpDemoSkyBonk", "pvpSkyBonk", "pvpDemoBufferedSky", "pvpBufferedSky"].includes(setupBeforeBonk)) {
+    // Tutorial sky-bonk demonstrations use the full five-second stun. The
+    // countdown begins on LANDING and must finish before the recovery turn.
+    victim.bonkStunDuration = CONFIG.pvpBonkMaxStunSeconds;
+    if (victim.stunCountdownStarted) victim.stunTimer = CONFIG.pvpBonkMaxStunSeconds;
+  }
   if (active && tutorialStep()?.demonstration && stomper?.index === 1 && victim?.index === 0) {
     tutorial.pvpDemoBonkAt = performance.now();
     tutorial.pvpDemoBonkCount += 1;
     tutorial.pvpLastPracticeEventAt = tutorial.pvpDemoBonkAt;
-    if (tutorialStep()?.setup === "pvpDemoRecoveryBonk" && tutorial.pvpDemoBonkCount === 1) {
-      // This specific lesson needs the first frog to remain dazed until
-      // Ember has physically reached the wall and bounced back. Use the
-      // engine's legal maximum stun duration; do not invent a second hit.
-      victim.bonkStunDuration = Math.max(Number(victim.bonkStunDuration)||0,4.7);
-      if (victim.stunCountdownStarted) victim.stunTimer = Math.max(Number(victim.stunTimer)||0,4.7);
-    }
+    // The first demonstration bonk keeps its ordinary height-derived Versus
+    // stun duration.  Never extend stun artificially for tutorial dialogue.
   }
   if (active && stomper?.index === 0 && victim?.index === 1) {
     tutorial.pvpBonks += 1;
+    if (setupBeforeBonk === "pvpRecoveryBonk" && tutorial.pvpBonks >= 2) {
+      tutorial.pvpRecoverySecondBonkOnTime = countsAsRecoveryBonk;
+    }
     tutorial.pvpLastPracticeEventAt = performance.now();
     tutorial.pvpLastBonkQuickDrop = quickDrop;
     tutorial.pvpBufferedBonkSeen = tutorial.pvpBufferedBonkSeen || buffered;
@@ -64,17 +72,19 @@ bonkPvpPlayerFromBelow = function(stationary, hitter, ...rest) {
 const originalBouncePvpPlayersSidewaysForTutorial = bouncePvpPlayersSideways;
 bouncePvpPlayersSideways = function(a, b, ...rest) {
   const active = tutorial.active && tutorial.kind === "pvp";
-  const beforeA = a?.lastOpponentBounceType;
-  const beforeB = b?.lastOpponentBounceType;
   const result = originalBouncePvpPlayersSidewaysForTutorial.call(this, a, b, ...rest);
   if (active && (a?.lastOpponentBounceType === "rebound" || b?.lastOpponentBounceType === "rebound") &&
-      beforeA !== "rebound" && beforeB !== "rebound" && performance.now() - tutorial.pvpLastPracticeEventAt > 120) {
+      performance.now() - tutorial.pvpLastPracticeEventAt > 120) {
     tutorial.pvpReboundCount += 1;
     tutorial.pvpReboundAt = performance.now();
     if (!a.grounded && !b.grounded && ["pvpDemoRebound", "pvpReboundThree", "pvpDemoReboundCatch", "pvpReboundCatch", "pvpDemoDinnerSteal", "pvpDinnerSteal"].includes(tutorialStep()?.setup)) {
       // Use the game's existing fly-catch sparkle effect on BOTH frogs.
       a.catchSparkleTimer = Math.max(Number(a.catchSparkleTimer)||0, CONFIG.catchSparkleDuration);
       b.catchSparkleTimer = Math.max(Number(b.catchSparkleTimer)||0, CONFIG.catchSparkleDuration);
+      // Match the normal correct-fly-catch feedback; both frogs participated.
+      if (tutorialStep()?.setup === "pvpReboundThree") {
+        try { playCorrectFlySound(); } catch (_) { tone(720, .055, .014, 90); }
+      }
     }
     tutorial.pvpRebounds = tutorial.pvpReboundCount;
     tutorial.pvpLastPracticeEventAt = performance.now();
@@ -98,16 +108,16 @@ attemptPvpFlyCatch = function(player, targetFly, source = "body", ...rest) {
       !player.grounded && Boolean(player.bouncedOffOpponentThisJump) &&
       player.lastOpponentBounceType === "rebound" && tutorial.pvpReboundAt > 0;
     if (setup === "pvpDemoBoostBonk" && player.index === 1 && tutorial.pvpDemoBonkCount >= 1 &&
-        !game.pvpCriticalCatchActive) startPvpCriticalCatch(player, targetFly, "contest");
+        !game.pvpCriticalCatchActive) startPvpCriticalCatch(player, targetFly, "technique");
     if (setup === "pvpBoostBonk" && player.index === 0 && tutorial.pvpBoostedBonkSeen &&
-        !game.pvpCriticalCatchActive) startPvpCriticalCatch(player, targetFly, "contest");
+        !game.pvpCriticalCatchActive) startPvpCriticalCatch(player, targetFly, "technique");
     if (qualified) {
       tutorial.pvpTechniqueCatchQualified = true;
       tutorial.pvpTechniqueCatchPlayerIndex = player.index;
       tutorial.pvpTechniqueCatchAt = performance.now();
       // Use the existing in-engine slow-motion and zoom cinematic on a real
       // catch, not when merely approaching or tonguing an uncaught fly.
-      if (!game.pvpCriticalCatchActive) startPvpCriticalCatch(player, targetFly, "contest");
+      if (!game.pvpCriticalCatchActive) startPvpCriticalCatch(player, targetFly, "technique");
     }
     tutorial.pvpPracticeCatchCount += 1;
     tutorial.pvpLastPracticeEventAt = performance.now();
@@ -559,6 +569,13 @@ update = function(dt, ...rest) {
   // Let the built-in pause/countdown machinery run normally so the pause menu
   // remains interactive. Tutorial monitoring simply waits until play resumes.
   if (tutorial.active && (game.state === "paused" || game.state === "countdown")) {
+    // Only the final 1v1 countdown advances the scenery clock: clouds, kite,
+    // wind and water should keep moving behind 3-2-1. Physics, flies and
+    // the 30-second match clock are still paused until GO.
+    if (game.state === "countdown" && tutorial.kind === "pvp" &&
+        tutorialStep()?.setup === "pvpFinalMatch") {
+      game.visualTime += Math.max(0, Math.min(.05, Number(dt) || 0));
+    }
     const result = originalUpdate.call(this, dt, ...rest);
     updateTutorial();
     return result;

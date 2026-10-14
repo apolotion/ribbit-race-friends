@@ -48,7 +48,7 @@ test("Final tutorial match re-enables real CPU control", () => {
 });
 
 test("Recovery bonk and rebound practice use the revised authored checks", () => {
-  assert.match(monitor, /recoveryWindowHit/);
+  assert.match(monitor, /pvpRecoverySecondBonkOnTime/);
   assert.match(monitor, /positionPvpReboundPracticeLayout\(completed\)/);
   assert.match(tutorial, /positionPvpOnPlatform\(p1, PARK_PLATFORMS\[2\], 1\)/);
   assert.match(tutorial, /positionPvpOnPlatform\(ember, PARK_PLATFORMS\[5\], -1\)/);

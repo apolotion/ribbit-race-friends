@@ -19,7 +19,7 @@ function block(source, start, end) {
 
 test("Polish 21 cache marker is wired through the Worker, client, and asset URLs", () => {
   for (const source of [tutorial, common, index, read("public/scripts/cloud-client.js")]) {
-    assert.match(source, /2026\.10\.13-friends-polish-52/);
+    assert.match(source, /2026\.10\.13-friends-polish-56/);
   }
 });
 
@@ -52,7 +52,7 @@ test("adjacent icon groups keep breathing room and Tutorial hover suppresses Ran
 test("Achievements leaderboard displays the selected trophy-and-wreath image inside the button", () => {
   const medal = block(tutorial, "function drawMiniMedalButton", "const LEADERBOARD_METRICS");
   assert.match(tutorial, /leaderboardMedalSprite\.src = "\/icons\/leaderboard-trophy-wreath\.png"/);
-  assert.match(medal, /ctx\.drawImage\(leaderboardMedalSprite,rect\.x\+1,rect\.y\+2,26,23\)/);
+  assert.match(medal, /ctx\.drawImage\(leaderboardMedalSprite,1,3,23,17,/);
   assert.match(medal, /ctx\.imageSmoothingEnabled=false/);
   assert.match(medal, /const skin=getSelectedSkin\(\)/);
 });
@@ -82,7 +82,8 @@ test("PvP tutorial chapter strip is hidden during gameplay and dialogue is cente
 
 test("PvP transitions hide stale dialogue during authored poofs", () => {
   assert.match(tutorial, /transitionHeldLineText/);
-  assert.match(tutorial, /beginDialogueLine\(0, \{ delayMs:POOF_TRANSITION_MS \+ \(tutorialStep\(\)\?\.setup === "pvpSkyBonk" \? 500 : 300\), holdPreviousText:false \}\)/);
+  assert.match(tutorial, /postPoofDialogueHoldMs = tutorialStep\(\)\?\.setup === "pvpDemoDropHigh"/);
+  assert.match(tutorial, /delayMs:POOF_TRANSITION_MS \+ postPoofDialogueHoldMs/);
   assert.match(tutorial, /tutorial\.dialogueHeldLineText = ""/);
   assert.match(tutorial, /tutorial\.dialogueHeldUntil = 0/);
 });

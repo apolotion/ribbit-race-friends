@@ -1,0 +1,21 @@
+RIBBIT RACE FRIENDS — POLISH 53
+Version: 1.7.41
+Build: 2026.10.13-friends-polish-53
+
+LEADERBOARD NAVIGATION
+- Leaderboard pagination arrows now use the same coordinates and 20x20 button dimensions as the achievements screen (right side).
+- The 1/1-style page indicator is placed to the LEFT of the two arrows and centered vertically on their row, not between them.
+- The BACK button now matches the centered back button from the achievements screen, with matching hit targets.
+
+ACHIEVEMENTS TROPHY
+- The trophy with wreath now centers by its nontransparent pixel bounds within the 28x28 button. No change to the pixel artwork itself.
+
+REFRESH DESIGN CONCEPTS
+- DESIGN_PREVIEWS/refresh-icon-concepts.png displays ten pixel refresh button choices.
+- DESIGN_PREVIEWS/refresh-icons/ contains each 20x20 transparent PNG, ready for integration after choosing an option.
+- Existing refresh button stays unchanged until the user chooses a design.
+
+DEPLOYMENT
+- Upload the contents of the complete ZIP to the existing GitHub repository and deploy.
+- No code.gs update or Cloudflare schema migration.
+- Source and bundle both included; new version suffix prevents clients caching the previous bundle.

@@ -1,0 +1,35 @@
+RIBBIT RACE FRIENDS — POLISH 56 (1.7.44)
+Build: 2026.10.13-friends-polish-56
+Based on complete Polish 55 GitHub-ready repository.
+
+CHANGES
+1) Tutorial fly despawn: When a lesson finishes, the next chapter begins, or
+   the final coach match ends, remaining flies shrink and break into fading
+   pixel sparkles (0.48 seconds). Chapter 14 (intercept) and other tutorial
+   scenes no longer hard-cut unused flies. Carryover flies in the special solo
+   mixed-vocabulary lesson and preserved retry flies remain intact.
+2) Chapter 15 Dinner Steal: Ember catches at normal speed, with no forced
+   critical slow-motion. Only the human player's qualifying catch can trigger
+   the scripted technique zoom. Normal Versus catch cinematics are unchanged.
+3) Final 1v1 countdown: clouds, kite, and other time-based stage details
+   continue animating during 3-2-1; frogs, flies, and match timer remain frozen
+   until play starts.
+4) End of final 1v1: All remaining flies despawn with the new animation before
+   Ember speaks. Queued spawns and stale fly ghosts are cleared. FIND THE MATCH
+   stays visible with a blank English clue.
+5) CLOSE CATCH: Restored the title for genuine tutorial contests. It now
+   requires both frogs to be close to the SAME fly and currently moving toward
+   it, or actively extending a tongue at it. Stale pursuit records, immobile
+   platform sitters, and frogs moving away cannot produce CLOSE CATCH.
+   Solo rebound-catch cinematics remain available as silent technique zooms.
+
+TESTING
+- 547 / 547 automated tests passed, including new Polish 56 behavioral tests.
+- Isolated Chromium checks confirmed Chapter 14 despawn, final game cleanup,
+  countdown environmental time advance, and no Javascript runtime errors.
+- Full deployed live online multiplayer match not tested in this environment.
+
+DEPLOY
+Replace your GitHub repository files with the ZIP contents, then deploy.
+No code.gs or Cloudflare database migration is required. Existing replays,
+saves, account settings and compatibility infrastructure are preserved.

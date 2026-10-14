@@ -66,7 +66,7 @@ test("PvP practice keeps authored bonk layouts, crowns Ember, and uses pause-onl
 
 test("lesson scenes suppress stray flies and keep score counters tutorial-safe", () => {
   assert.match(tutorial, /function clearUnrelatedPvpTutorialFlies/);
-  assert.match(tutorial, /if \(!flies\[index\]\?\.tutorialAuthored\) flies\.splice/);
+  assert.match(tutorial, /despawnTutorialFlies\(\{ onlyUnrelated:true \}\)/);
   assert.match(tutorial, /player\.score = scoreBefore/);
   assert.match(tutorial, /pvpPracticeCatchCount/);
 });

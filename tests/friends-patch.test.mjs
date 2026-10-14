@@ -36,8 +36,8 @@ test("PIN hashing stays within Cloudflare PBKDF2 limit and matches 100000 rounds
 });
 
 test("Friends release exposes the new build marker",()=>{
-  assert.equal(BUILD,"2026.10.13-friends-polish-52");
-  assert.match(browserSource,/2026\.10\.13\-friends\-polish\-52/);
+  assert.equal(BUILD,"2026.10.13-friends-polish-56");
+  assert.match(browserSource,/2026\.10\.13\-friends\-polish\-56/);
 });
 
 test("server vocabulary is exactly the requested 15 entries",()=>{
@@ -324,8 +324,8 @@ test("Friends first-place notice is a world-record notice with hover details",()
   assert.doesNotMatch(indexHtml,/MIGRATE OLD PRIVATE-KEY ACCOUNT/);
 });
 
-test("version 1.7.40 remains in settings and the How To Play book footer",()=>{
-  assert.match(html,/const RIBBIT_DISPLAY_VERSION = "VERSION 1\.7\.40"/);
+test("version 1.7.44 remains in settings and the How To Play book footer",()=>{
+  assert.match(html,/const RIBBIT_DISPLAY_VERSION = "VERSION 1\.7\.44"/);
   assert.match(html,/drawVersionLabel\(panel\.x \+ panel\.w \/ 2, panel\.y \+ panel\.h - 14, "center"/);
   assert.doesNotMatch(html,/drawVersionLabel\(399, 218, "right"\)/);
   assert.match(html,/function getPauseBookTheme/);

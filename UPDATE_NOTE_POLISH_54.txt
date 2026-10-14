@@ -1,0 +1,29 @@
+RIBBIT RACE FRIENDS — POLISH 54
+Version: 1.7.42
+Build: 2026.10.13-friends-polish-54
+Based on Polish 53 (1.7.41). This is a full GitHub-ready release.
+
+VERSUS AND SOLO TUTORIAL — ENGLISH CLUE TIMING
+- The FIND THE MATCH frame stays visible, but its English term is blank until a fly has actually appeared with its poof-in.
+- Prepared-but-unarmed tutorial flies are never mistaken for visible fly bodies.
+- Once flies spawn, the English target is guaranteed to match an on-screen fly (including during Ember's explanation).
+- The same rule covers fly practice, chapter changes, retries and the final 30-second Versus tutorial match.
+
+EMBER DIALOGUE / TUTORIAL BANNERS
+- YOUR TURN! and WATCH EMBER! banners clear as soon as Ember resumes speaking or the next scripted dialogue transition begins, even during its poof gap.
+- The banner no longer flashes after poofing when the player has no control.
+
+HIGH DROP DIALOGUE PAUSE
+- For the top-platform drop-bonk demonstration, How's the weather down there? now starts after the new frogs poof into position, then a full one-second hold.
+- The textbox is hidden during this one-second post-poof hold. Dialogue fast-forward cannot skip that pre-line hold.
+
+OTHER
+- Fixed the Low Profile HOW TO hover tooltip to correctly say FOUR jumps, consistent with the Polish 49 lesson change.
+- All Polish 53 leaderboard adjustments, replay compatibility, cloud saves and other game systems remain intact.
+
+TESTS
+- Added six deterministic regression tests covering pre-spawn clues, two visible/hidden flies, final-match visibility, banners clearing, post-poof dialogue timing and monitoring.
+
+DEPLOYMENT
+- Replace the files in the GitHub repository with the contents of this ZIP.
+- No code.gs update or Cloudflare D1 migration required.

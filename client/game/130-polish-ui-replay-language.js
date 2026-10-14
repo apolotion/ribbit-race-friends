@@ -914,8 +914,11 @@
     ctx.fillRect(rect.x+2,rect.y+2,rect.w-4,rect.h-4);
     if(leaderboardMedalSprite.complete&&leaderboardMedalSprite.naturalWidth){
       ctx.save();ctx.imageSmoothingEnabled=false;
-      // Exact gold trophy and green wreath chosen from the achievements-menu preview.
-      ctx.drawImage(leaderboardMedalSprite,rect.x+1,rect.y+2,26,23);
+      // Polish 53: align the *visible* trophy/wreath artwork, rather than the
+      // transparent 26x23 asset bounds. The opaque area is x=1..23, y=3..19;
+      // cropping that inset gives a centered 23x17 image in the 28x28 button.
+      ctx.drawImage(leaderboardMedalSprite,1,3,23,17,
+        rect.x+Math.round((rect.w-23)/2),rect.y+Math.round((rect.h-17)/2),23,17);
       ctx.restore();
     }else{
       // Fallback while the graphic loads.
@@ -1379,8 +1382,10 @@
       });
     }
 
-    const prev = { x: 52, y: 226, w: 28, h: 22 };
-    const next = { x: 111, y: 226, w: 28, h: 22 };
+    // Match the Achievements screen: BACK centered, both pagination arrows
+    // at the lower right, with the page count to their LEFT (never between).
+    const prev = ACHIEVEMENTS_UI.pagePrevButton;
+    const next = ACHIEVEMENTS_UI.pageNextButton;
     [
       { key: "prev", rect: prev, direction: -1 },
       { key: "next", rect: next, direction: 1 }
@@ -1392,15 +1397,20 @@
       drawPagerArrowIcon(rect, direction, active ? COLORS.white : "#48555a");
       polish.leaderboardHitRects[key] = rect;
     });
-    drawBitmapText(`${polish.leaderboardPage + 1}/${pageCount}`, 99, 233, .74, "center", "#617177");
+    const pageLabelScale = .75;
+    drawBitmapText(`${polish.leaderboardPage + 1}/${pageCount}`,
+      prev.x - 8,
+      prev.y + (prev.h - 7 * pageLabelScale) / 2,
+      pageLabelScale, "right", "#617177");
 
-    const back = { x: 320, y: 224, w: 112, h: 24 };
+    const back = ACHIEVEMENTS_UI.backButton;
     const backActive = polish.leaderboardHoverKey === "back";
     ctx.fillStyle = "rgba(25,43,52,0.28)"; ctx.fillRect(back.x + 2, back.y + 2, back.w, back.h);
     ctx.fillStyle = backActive ? COLORS.ink : "#93a2a7"; ctx.fillRect(back.x, back.y, back.w, back.h);
     ctx.fillStyle = backActive ? skin.mid : "#f7fdff"; ctx.fillRect(back.x + 2, back.y + 2, back.w - 4, back.h - 4);
     if (backActive) { ctx.fillStyle = skin.light; ctx.fillRect(back.x + 5, back.y + 4, back.w - 10, 3); }
-    drawBitmapText("BACK", back.x + back.w / 2, back.y + 8, 1, "center", backActive ? COLORS.white : "#48555a", backActive ? skin.dark : null);
+    drawBitmapText("BACK", back.x + back.w / 2, back.y + (back.h - 7) / 2,
+      1, "center", backActive ? COLORS.white : "#48555a", backActive ? skin.dark : null);
     polish.leaderboardHitRects.back = back;
     polish.leaderboardHitRects.metric = metricRect;
     polish.leaderboardHitRects.level = levelRect;

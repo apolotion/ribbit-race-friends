@@ -82,7 +82,8 @@ test('Fly vocabulary matches live visible targets and blank panel survives retri
   assert.match(render,/activeFlyPool\.some\(\(fly\) => fly\.vocabIndex === game\.targetVocabIndex\)/);
   assert.match(monitor,/tutorial\.promptHidden = false/);
   assert.match(tutorialUi,/drawBlankTutorialVocabularyPrompt\(\)/);
-  assert.match(tutorialUi,/currentFly\.state === "active" && currentFly\.tutorialArmed !== false/);
+  assert.match(tutorialUi,/const displayedFlies = tutorial\.active \? tutorialDisplayedFlies\(\)/);
+  assert.match(read("client/game/121-tutorial-runtime-dialogue.js"), /!fly\.tutorialAuthored \|\| fly\.tutorialArmed !== false/);
   assert.match(render,/game\.pvpCriticalCatchFlyVisual/);
 });
 

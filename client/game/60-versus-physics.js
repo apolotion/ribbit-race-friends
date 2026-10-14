@@ -486,7 +486,10 @@
           ? player.inputHeld
           : isPvpPhysicalJumpHeld(player.index);
         player.inputHeld = heldThroughStun;
-        if (prevStun > 0 && player.stunTimer === 0) {
+        // Floating-point residue after exactly five seconds must not add
+        // another simulation frame to the stun or skip the recovery animation.
+        if (prevStun > 0 && player.stunTimer <= 1e-8) {
+          player.stunTimer = 0;
           player.stunCountdownStarted = false;
           player.lastStunEndAt = game.pvpElapsed;
           player.recoveryFlipTimer = .24;
@@ -891,6 +894,7 @@
     function getPvpFootstoolStunDuration(stomper) {
       const dropDistance = Math.max(0, stomper.y - stomper.highestY);
       const normalized = clamp(dropDistance / CONFIG.pvpBonkMaxDropDistance, 0, 1);
+      if (dropDistance >= CONFIG.pvpBonkMaxDropDistance - 0.1) return CONFIG.pvpBonkMaxStunSeconds;
       return lerp(CONFIG.pvpBonkMinStunSeconds, CONFIG.pvpBonkMaxStunSeconds, Math.pow(normalized, 0.82));
     }
 

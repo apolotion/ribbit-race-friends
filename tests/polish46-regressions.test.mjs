@@ -33,9 +33,9 @@ test('Solo and Versus replay store independent tongue states and frame interpola
 });
 
 test('An on-screen tutorial fly cannot be rendered without a matching clue',()=>{
-  assert.match(rendering,/fly\.state !== "eaten" &&\s*fly\.vocabIndex === game\.targetVocabIndex/);
+  assert.match(rendering,/displayedFlies\.some\(\(fly\) =>\s*fly\.vocabIndex === game\.targetVocabIndex/);
   assert.match(rendering,/if \(pvpMatchFly/);
-  assert.match(monitor,/const visible = flies\.filter\(\(fly\) => fly && fly\.state !== "eaten"/);
+  assert.match(monitor,/const visible = tutorialDisplayedFlies\(\)/);
   assert.match(entities,/game\.mode === "pvp" \? fly\.state !== "eaten"/);
 });
 

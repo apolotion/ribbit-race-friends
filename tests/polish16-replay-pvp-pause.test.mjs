@@ -20,7 +20,7 @@ function block(source, start, end) {
 
 test("Polish 16 is wired and restores the prior packaged app icons", () => {
   for (const source of [tutorial, read("src/common.js"), index, read("public/scripts/cloud-client.js")]) {
-    assert.match(source, /2026\.10\.13-friends-polish-52/);
+    assert.match(source, /2026\.10\.13-friends-polish-56/);
   }
   assert.match(index, /\/icons\/favicon-32\.png/);
   assert.match(index, /\/icons\/ribbit-race-180\.png/);
@@ -94,7 +94,7 @@ test("rebound effects finish before any next poof", () => {
 
 test("PvP lesson prompts and authored flies are isolated", () => {
   assert.match(tutorial, /function clearUnrelatedPvpTutorialFlies/);
-  assert.match(tutorial, /if \(!flies\[index\]\?\.tutorialAuthored\) flies\.splice/);
+  assert.match(tutorial, /despawnTutorialFlies\(\{ onlyUnrelated:true \}\)/);
   assert.doesNotMatch(tutorial.slice(0, 500), /pvpDemoBonkCatch/);
   assert.match(tutorial, /schedulePvpFlyReveal\(setup, pvpFlyRevealDelayMs\(setup\)\)/);
   assert.match(tutorial, /tutorial\.promptHidden = true/);

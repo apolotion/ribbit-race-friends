@@ -365,65 +365,30 @@ function drivePvpPracticeCpu(setup, now) {
   }
 
   if (setup === "pvpUnderBonkTwo") {
-    // Ember starts on the LEFT-MIDDLE perch shown in reference #2. After
-    // the dialogue she quick-drops by ordinary engine physics; no poofs.
-    // The player may make as many setup jumps as needed to reach the center
-    // perch before she launches the first under-bonk.
+    // The player starts at left ground, Ember at right ground. Wait for P1's
+    // actual climb onto the center perch, then launch ONE real under bonk.
     const center = PARK_PLATFORMS[3];
-    if (!tutorial.pvpUnderBonkEmberDismounted) {
-      // Her first rightward drop from the left-middle perch can naturally
-      // LAND on the lower-center perch. Quick-drop from that intermediate
-      // perch too, then start the bonks only after she reaches GROUND.
-      if (ember.grounded && ember.y + ember.h >= CONFIG.groundY - 1 &&
-          !ember.charging && !tutorial.pvpScriptActions.length) {
-        tutorial.pvpUnderBonkEmberDismounted = true;
-      } else {
-        const perch = ember.grounded ? getPvpStandingPlatform(ember) : null;
-        if (perch && !perch.ground && !ember.charging && !tutorial.pvpScriptActions.length) {
-          tutorial.pvpUnderBonkDismountQueued = true;
-          scriptPvpQuickDrop(1, 0, 1);
-        }
-        return;
-      }
-    }
     const playerFlying = !p1.grounded && p1.firstJumpMade && !p1.charging;
     if (playerFlying) tutorial.pvpUnderBonkAttemptAirborne = true;
-    if (playerFlying && tutorial.pvpUnderBonks === 0 &&
-        tutorial.pvpUnderBonkEmberDismounted &&
-        !tutorial.pvpUnderBonkChargePrimed && !tutorial.dialogueOpen) {
+    if (playerFlying && !tutorial.pvpUnderBonkChargePrimed &&
+        !ember.charging && !tutorial.dialogueOpen) {
       tutorial.pvpUnderBonkChargePrimed = true;
-      scriptPvpPress(1, 1);
+      scriptPvpPress(1, -1);
     }
     const onCenter = p1.grounded && getPvpStandingPlatform(p1) === center;
     if (!tutorial.pvpUnderBonkAttemptAirborne || !onCenter ||
         tutorial.pvpUnderBonkPendingSecond || tutorial.dialogueOpen ||
-        tutorial.pvpUnderBonks >= 2 || ember.bonked || ember.stunTimer > 0 ||
-        !ember.grounded || tutorial.pvpScriptActions.length ||
-        (tutorial.pvpUnderBonks > 0 && now - tutorial.pvpLastPracticeEventAt < 900)) return;
+        tutorial.pvpUnderBonks >= 1 || ember.bonked || ember.stunTimer > 0 ||
+        !ember.grounded || tutorial.pvpScriptActions.length) return;
     tutorial.pvpUnderBonkPendingSecond = true;
     tutorial.pvpUnderBonkEmberAirborne = false;
-    // Target P1's current position, not their initial spawn position. Both
-    // jumps really collide with the underside of the frog, including after
-    // Ember recovers and approaches the opposite direction on the second.
-    const direction = p1.x + p1.w/2 >= ember.x + ember.w/2 ? 1 : -1;
+    const direction = p1.x + p1.w / 2 >= ember.x + ember.w / 2 ? 1 : -1;
     ember.dir = direction;
-    if (ember.charging && tutorial.pvpUnderBonkChargePrimed) {
+    if (ember.charging) {
       tutorial.pvpUnderBonkChargePrimed = false;
       scriptPvpRelease(1, .55);
-    } else if (!ember.charging && !ember.inputHeld) {
-      if (tutorial.pvpUnderBonks > 0) {
-        // Ember has already recovered directly beneath the player's perch.
-        // A normal second jump with zero horizontal drift strikes the underside
-        // instead of side-rebounding and knocking the player away.
-        scriptPvpPress(1, direction);
-        queuePvpScriptAction(458, () => {
-          if (!ember.grounded || ember.bonked) return;
-          scriptPvpRelease(1, .55);
-          ember.vx = 0;
-        }, "second-under-bonk-straight-up");
-      } else {
-        scriptPvpChargedJump(1, .55, direction, 0);
-      }
+    } else if (!ember.inputHeld) {
+      scriptPvpChargedJump(1, .55, direction, 0);
     }
     return;
   }
@@ -457,6 +422,14 @@ function beginPvpTutorialEnding() {
   if (tutorial.pvpFinalOutcome !== null || tutorial.dynamicDialogueLines) return;
   const playerWon = Number(pvpPlayers[0]?.score || 0) > Number(pvpPlayers[1]?.score || 0) || game.pvpWinnerIndex === 0 || game.pvpMatchWinnerIndex === 0;
   tutorial.pvpFinalOutcome = playerWon ? "win" : "lose";
+  // All remaining flies disappear in a short sparkle/poof, rather than
+  // floating through Ember's after-match dialogue with stale terms.
+  despawnTutorialFlies({ all: true });
+  game.spawnQueue.length = 0;
+  game.pvpCriticalCatchFlyVisual = null;
+  game.pvpCriticalCatchActive = false;
+  game.targetVocabIndex = null;
+  tutorial.promptHidden = true;
   game.pvpCpuEnabled = false;
   tutorial.pvpCaption = playerWon ? "YOU WIN!" : "EMBER WINS!";
   tutorial.pvpCaptionUntil = performance.now() + 2400;
@@ -594,7 +567,8 @@ function monitorPvp() {
 
   if (setup === "pvpSkyBonk") {
     if (tutorial.pvpSkyBonkSeen) {
-      if (p1.grounded && pvpPracticeEventReady(100, now)) passStep();
+      if (p1.grounded && ember.grounded && !ember.bonked && ember.stunTimer <= 0 &&
+          (ember.recoveryFlipTimer || 0) <= 0 && pvpPracticeEventReady(100, now)) passStep();
     } else if (tutorial.pvpBonks >= 1) {
       failAttempt("JUMP HIGH ABOVE THE MAP BEFORE THE BONK");
     } else if (playerLanded && now - tutorial.enteredAt > 600) {
@@ -605,7 +579,9 @@ function monitorPvp() {
 
   if (setup === "pvpBufferedSky") {
     if (tutorial.pvpSkyBonkSeen && tutorial.pvpBufferedBonkSeen && tutorial.pvpMaximumBonkSeen) {
-      if (p1.grounded && pvpPracticeEventReady(100, now) && !p1.tongue?.active && !game.pvpCriticalCatchActive) passStep();
+      if (p1.grounded && ember.grounded && !ember.bonked && ember.stunTimer <= 0 &&
+          (ember.recoveryFlipTimer || 0) <= 0 && pvpPracticeEventReady(100, now) &&
+          !p1.tongue?.active && !game.pvpCriticalCatchActive) passStep();
     } else if (tutorial.pvpBonks >= 1) {
       failAttempt("COMBINE A SKY BONK WITH A BUFFERED DROP");
     } else if (playerLanded && now - tutorial.enteredAt > 700) {
@@ -622,9 +598,16 @@ function monitorPvp() {
   }
 
   if (setup === "pvpRecoveryBonk") {
-    const recoveryWindowHit = tutorial.pvpBonks >= 2 && tutorial.pvpLastPracticeEventAt > 0 && now - tutorial.pvpLastPracticeEventAt <= 1000;
-    if (recoveryWindowHit && pvpPracticeEventReady(300, now)) passStep();
-    else if (playerLanded && tutorial.pvpBonks === 0 && now - tutorial.enteredAt > 500) failAttempt("BONK EMBER, TURN AT THE WALL, THEN RETURN");
+    if (tutorial.pvpBonks >= 2) {
+      if (tutorial.pvpRecoverySecondBonkOnTime) {
+        if (pvpPracticeEventReady(300, now)) passStep();
+      } else failAttempt("SECOND BONK MUST LAND WITHIN 1 SECOND OF RECOVERY");
+    } else if (tutorial.pvpBonks === 1 && ember.stunTimer <= 0 && !ember.bonked &&
+               Number.isFinite(ember.lastStunEndAt) &&
+               game.pvpElapsed - ember.lastStunEndAt > 1) {
+      failAttempt("BONK EMBER WITHIN 1 SECOND AFTER SHE RECOVERS");
+    } else if (playerLanded && tutorial.pvpBonks === 0 && now - tutorial.enteredAt > 500)
+      failAttempt("BONK EMBER, TURN AT THE WALL, THEN RETURN");
     return;
   }
 
@@ -637,66 +620,54 @@ function monitorPvp() {
 
   if (setup === "pvpUnderBonkTwo") {
     const center = PARK_PLATFORMS[3];
-    const landedOnCenter = p1.grounded && getPvpStandingPlatform(p1) === center;
-    if (tutorial.pvpUnderBonks >= 2) {
-      if (pvpPracticeEventReady(800, now) && ember.stunTimer <= 0 && ember.grounded && !ember.bonked) passStep();
-      return;
-    }
-    if (tutorial.pvpUnderBonks === 1 && !tutorial.pvpUnderBonkFirstLineShown &&
-        ember.stunTimer <= 0 && ember.grounded && !ember.bonked) {
-      tutorial.pvpUnderBonkFirstLineShown = true;
-      tutorial.pvpUnderBonkPendingSecond = false;
-      tutorial.pvpUnderBonkEmberAirborne = false;
-      openDynamicDialogue(["Ouch! That first under bonk counted."], "annoyed", false);
-      tutorial.scenePositionedDuringDialogue = true; // no poof after the response
-      tutorial.pvpLastPracticeEventAt = now - 200;
-      return;
-    }
-    // Allow intermediate setup jumps from P1's new center-ground starting
-    // position. Failing to land the perch on the first jump must not poof the
-    // frogs or erase the two-bonk lesson's progress.
-    // If Ember lands after attempting to jump past P1 without getting under
-    // bonked, the attempt really failed; poof both frogs, keeping no progress.
-    if (tutorial.pvpUnderBonkPendingSecond && ember.firstJumpMade && !ember.grounded)
-      tutorial.pvpUnderBonkEmberAirborne = true;
-    if (tutorial.pvpUnderBonkPendingSecond && tutorial.pvpUnderBonkEmberAirborne && ember.grounded &&
-        !ember.bonked && ember.stunTimer <= 0 && now - tutorial.pvpLastPracticeEventAt > 600) {
-      if (tutorial.pvpUnderBonks > 0 && landedOnCenter) {
-        // A near-miss on bonk #2 retries Ember's natural jump from wherever
-        // she landed. Preserve bonk #1 and NEVER poof/reset her mid-lesson.
-        tutorial.pvpUnderBonkPendingSecond = false;
-        tutorial.pvpUnderBonkEmberAirborne = false;
-        tutorial.pvpLastPracticeEventAt = now - 900;
-      } else failAttempt("HOLD YOUR PERCH AND UNDER BONK EMBER");
-    }
-    return;
-  }
-
-  if (setup === "pvpAvoidUnder") {
-    if (p1.bonked || p1.stunTimer > 0) {
-      failAttempt("USE A QUICK TAP TO STAY LOW");
-    } else {
-      const platform = PARK_PLATFORMS[3];
-      const underPerch = p1.x + p1.w > platform.x && p1.x < platform.x + platform.w &&
-        p1.y >= platform.y + platform.h - 2;
-      if (underPerch) tutorial.pvpAvoidUnderPassedBeneath = true;
-      // The right side is enough: no 18px extra travel/settling requirement.
-      // passStep handles a final airborne landing before opening dialogue.
-      if (tutorial.pvpAvoidUnderPassedBeneath && p1.x + p1.w >= platform.x + platform.w + 1) {
-        passStep();
+    if (tutorial.pvpUnderBonks >= 1) {
+      if (pvpPracticeEventReady(250, now) && ember.stunTimer <= 0 &&
+          ember.grounded && !ember.bonked && (ember.recoveryFlipTimer || 0) <= 0) passStep();
+    } else if (tutorial.pvpUnderBonkPendingSecond) {
+      if (!ember.grounded && ember.firstJumpMade) tutorial.pvpUnderBonkEmberAirborne = true;
+      if (tutorial.pvpUnderBonkEmberAirborne && ember.grounded &&
+          !ember.bonked && ember.stunTimer <= 0 && now - tutorial.pvpPracticeStartedAt > 600) {
+        failAttempt("GET ON THE CENTER PERCH AND UNDER BONK EMBER");
       }
     }
     return;
   }
 
+  if (setup === "pvpAvoidUnder") {
+    const platform = PARK_PLATFORMS[3];
+    if (p1.bonked || p1.stunTimer > 0) {
+      failAttempt("USE A QUICK TAP TO STAY LOW");
+      return;
+    }
+    if (!p1.grounded && p1.y + p1.h <= platform.y + 0.5)
+      tutorial.pvpAvoidUnderTooHigh = true;
+    if (tutorial.pvpAvoidUnderTooHigh) {
+      // Let the player land normally; the failure poof is not mid-jump.
+      if (playerLanded || (p1.grounded && p1.firstJumpMade && now - tutorial.enteredAt > 300))
+        failAttempt("THAT JUMP WENT TOO HIGH — STAY UNDER THE PLATFORM");
+      return;
+    }
+    const underPerch = p1.x + p1.w > platform.x && p1.x < platform.x + platform.w &&
+      p1.y >= platform.y + platform.h - 2;
+    if (underPerch) tutorial.pvpAvoidUnderPassedBeneath = true;
+    if (tutorial.pvpAvoidUnderPassedBeneath && p1.x + p1.w >= platform.x + platform.w + 1)
+      passStep();
+    return;
+  }
+
   if (setup === "pvpReboundThree") {
+    // All successful/missed rounds hold for half a second AFTER landing.
+    const settled = pvpTutorialSettled();
+    if (!settled) tutorial.pvpReboundLandingHoldAt = 0;
+    else if (!tutorial.pvpReboundLandingHoldAt) tutorial.pvpReboundLandingHoldAt = now;
+    const restedAfterLanding = settled && now - tutorial.pvpReboundLandingHoldAt >= 500;
     // Three total successful rebounds, not three *consecutive* rebounds.
     // A missed attempt may reset frog positions but never erase earned counts.
     if (tutorial.pvpReboundCount >= 3) {
-      if (pvpTutorialSettled()) passStep();
+      if (restedAfterLanding) passStep();
       return;
     }
-    if (tutorial.pvpReboundCount > tutorial.pvpPracticeCount && pvpTutorialSettled() && !tutorial.resetPending) {
+    if (tutorial.pvpReboundCount > tutorial.pvpPracticeCount && restedAfterLanding && !tutorial.resetPending) {
       const completed = Math.min(2, tutorial.pvpReboundCount);
       tutorial.pvpPracticeCount = completed;
       beginPoofTransition({
@@ -710,8 +681,9 @@ function monitorPvp() {
           clearHeldInput();
         }
       });
-    } else if (playerLanded && tutorial.pvpReboundCount === tutorial.pvpPracticeCount &&
-               now - tutorial.enteredAt > 500 && !tutorial.resetPending) {
+    } else if (restedAfterLanding && tutorial.pvpReboundCount === tutorial.pvpPracticeCount &&
+               now - tutorial.enteredAt > 500 && !tutorial.resetPending &&
+               (tutorial.pvpLessonLanded?.[0] || p1.firstJumpMade)) {
       const completed = tutorial.pvpReboundCount;
       beginPoofTransition({
         reason: "retry-pvp-rebound-without-losing-progress",
@@ -799,9 +771,7 @@ function updateTutorialAmbient(dt, options = {}) {
 function clearUnrelatedPvpTutorialFlies() {
   if (!tutorial.active || tutorial.kind !== "pvp" || tutorialStep()?.setup === "pvpFinalMatch") return;
   game.spawnQueue.length = 0;
-  for (let index = flies.length - 1; index >= 0; index -= 1) {
-    if (!flies[index]?.tutorialAuthored) flies.splice(index, 1);
-  }
+  despawnTutorialFlies({ onlyUnrelated:true });
 }
 
 function updateTutorial() {
@@ -830,7 +800,7 @@ function updateTutorial() {
     // An armed, on-screen fly always has a matching English clue, EVEN while
     // Ember explains the move or a completed scene is transitioning. This
     // applies to both authored practice flies and the live final match.
-    const visible = flies.filter((fly) => fly && fly.state !== "eaten" && Number.isInteger(fly.vocabIndex));
+    const visible = tutorialDisplayedFlies();
     if (visible.length && !visible.some((fly) => Number(fly.vocabIndex) === game.targetVocabIndex)) {
       setPrompt(visible[0].vocabIndex);
     }

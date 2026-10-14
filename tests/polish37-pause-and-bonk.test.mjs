@@ -66,7 +66,7 @@ test('Your Turn keeps both frog positions but moves fly to opposite side',()=>{
  assert.equal(ember.flies[0][2],player.flies[0][2]);
 });
 
-test('buffered drop tutorial uses the centered one-jump practice geometry',()=>{
+test('buffered drop tutorial now targets Ember waiting at left ground',()=>{
  const positions=authoredPositions();
  const demo=positions.capture('pvpDemoBufferedBonk').players;
  assert.equal(demo[0].x+11,240); // grounded player dead center
@@ -74,8 +74,8 @@ test('buffered drop tutorial uses the centered one-jump practice geometry',()=>{
  assert.equal(demo[0].y,200);
  assert.equal(demo[1].y,200);
  const player=positions.capture('pvpBufferedBonk').players;
- assert.equal(player[0].x+11,81); // default P1 starting position
- assert.equal(player[1].x+11,240); // target Ember grounded at center
+ assert.equal(player[0].x+11,240); // player begins at middle ground facing left
+ assert.equal(player[1].x+11,75); // Ember waits to the left as pictured
  const motion=section(scene,'function beginPvpDemoMotion','function updatePvpDemonstration');
  assert.match(motion,/case "pvpDemoBufferedBonk"[\s\S]{0,310}scriptPvpChargedJump\(1, \.70, -1, 0\)/);
  assert.match(motion,/armPvpScriptedBuffer\(1, PARK_PLATFORMS\[3\]\)/);

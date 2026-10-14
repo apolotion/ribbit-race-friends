@@ -285,7 +285,16 @@ function beginDialogueLine(index, options = {}) {
   resetDialogueSpaceHold();
 }
 
+function clearPvpCaptionForDialogue() {
+  if (tutorial.kind !== "pvp") return;
+  // WATCH EMBER / YOUR TURN stay up during gameplay, never on a frame in
+  // which Ember is retaking control (including the pre-dialogue poof gap).
+  tutorial.pvpCaption = "";
+  tutorial.pvpCaptionUntil = 0;
+}
+
 function openDialogue() {
+  clearPvpCaptionForDialogue();
   tutorial.dialogueOpen = true;
   tutorial.scenePositionedDuringDialogue = false;
   beginDialogueLine(0);
@@ -300,6 +309,7 @@ function openDialogue() {
 }
 
 function openDynamicDialogue(lines, portraitKey = "thumbsup", postSuccessAdvance = false) {
+  clearPvpCaptionForDialogue();
   tutorial.dynamicDialogueLines = Array.isArray(lines) ? lines.map(String) : [String(lines || "")];
   tutorial.dynamicPortraitKey = portraitKey || "thumbsup";
   tutorial.postSuccessAdvance = Boolean(postSuccessAdvance);
@@ -332,6 +342,15 @@ function collectVisibleTutorialFlyKeys() {
       .map(tutorialFlyKey)
       .filter(Boolean)
   );
+}
+
+// Use the same visibility boundary as the actual fly sprite renderer. Authored
+// flies exist in the array BEFORE their timed poof-in, but are not yet on the
+// screen; never reveal their English clue just because they were prepared.
+function tutorialDisplayedFlies() {
+  return flies.filter((fly) => fly && fly.state !== "eaten" &&
+    Number.isInteger(fly.vocabIndex) &&
+    (!fly.tutorialAuthored || fly.tutorialArmed !== false));
 }
 
 function armTutorialFlies(options = {}) {
@@ -692,6 +711,9 @@ function clearScenarioState() {
   tutorial.pvpUnderBonkDismountQueued = false;
   tutorial.pvpUnderBonkEmberDismounted = false;
   tutorial.pvpAvoidUnderPassedBeneath = false;
+  tutorial.pvpAvoidUnderTooHigh = false;
+  tutorial.pvpReboundLandingHoldAt = 0;
+  tutorial.pvpRecoverySecondBonkOnTime = false;
   tutorial.pvpReboundCount = 0;
   tutorial.pvpInterceptSeen = false;
   tutorial.pvpBoostedBonkSeen = false;

@@ -120,7 +120,7 @@ test('Real same-jump rebound catch triggers zoom for both Ember and the player',
   ctx.attemptPvpFlyCatch(ember,fly);
   assert.equal(ctx.tutorial.pvpTechniqueCatchQualified,true);
   assert.deepEqual(ctx.zoomEvents.map(x=>x[0]),[1]);
-  assert.equal(ctx.zoomEvents[0][1],'contest');
+  assert.equal(ctx.zoomEvents[0][1],'technique');
   assert.equal(ember.score,0,'training catches cannot change the score');
   ctx.game.pvpCriticalCatchActive=false;ctx.tutorial.pvpTechniqueCatchQualified=false;
   ctx.setup='pvpDinnerSteal';ctx.tutorial.pvpReboundAt=550;

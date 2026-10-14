@@ -19,7 +19,7 @@ test("chosen green laurel and gold trophy renders in the existing achievements l
   assert.ok(sprite.width<=28 && sprite.height<=28);
   assert.match(ui,/leaderboardMedalSprite\.src = "\/icons\/leaderboard-trophy-wreath\.png"/);
   const draw=source("function drawMiniMedalButton","const LEADERBOARD_METRICS");
-  assert.match(draw,/ctx\.drawImage\(leaderboardMedalSprite,rect\.x\+1,rect\.y\+2,26,23\)/);
+  assert.match(draw,/ctx\.drawImage\(leaderboardMedalSprite,1,3,23,17,/);
   assert.match(draw,/ctx\.imageSmoothingEnabled=false/);
 });
 

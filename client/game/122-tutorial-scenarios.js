@@ -409,8 +409,9 @@ function positionPvpReboundPracticeLayout(completed = 0) {
     positionPvpOnPlatform(p1, PARK_PLATFORMS[2], 1);
     positionPvpOnPlatform(ember, PARK_PLATFORMS[5], -1);
   } else {
-    positionPvp(p1, 150, CONFIG.groundY - p1.h, 1);
-    positionPvp(ember, 300, CONFIG.groundY - ember.h, -1);
+    // First rebound starts from the original head-to-head tutorial lane.
+    positionPvp(p1, 145, CONFIG.groundY - p1.h, 1);
+    positionPvp(ember, 305, CONFIG.groundY - ember.h, -1);
   }
   tutorial.pvpMirrorWasHeld = false;
 }
@@ -491,10 +492,10 @@ function configurePvpStep(index) {
       break;
     }
     case "pvpBufferedBonk": {
-      // P1 uses their default left starting position. Ember waits in the
-      // center: one jump, one buffered drop, one bonk. A miss retries.
-      positionPvp(p1, PVP_START_X[0], CONFIG.groundY-p1.h, 1);
-      positionPvp(ember, Math.round((W-ember.w)/2), CONFIG.groundY-ember.h, -1);
+      // Screenshot reference: Ember waits on the left ground (~x=64),
+      // below the player's buffered-drop approach from the middle lane.
+      positionPvp(p1, Math.round((W-p1.w)/2), CONFIG.groundY-p1.h, -1);
+      positionPvp(ember, 64, CONFIG.groundY-ember.h, 1);
       break;
     }
     case "pvpDemoSkyBonk":
@@ -559,21 +560,18 @@ function configurePvpStep(index) {
       addPvpTutorialFly(Math.round(PARK_PLATFORMS[6].x + PARK_PLATFORMS[6].w / 2), 84, game.targetVocabIndex, 0);
       break;
     case "pvpDemoUnderBonk": {
-      // Polish 49 reference #1: P1 on center ground, initially facing LEFT;
-      // Ember stands on the right-middle perch, facing left. Ember reaches the
-      // lower-middle perch via her own jump before P1 hits her from underneath.
-      positionPvp(p1, 210, CONFIG.groundY - p1.h, -1);
+      // Under-bonk demo: player initially faces RIGHT as requested.
+      // Ember is waiting on the right-middle perch facing the player.
+      positionPvp(p1, 210, CONFIG.groundY - p1.h, 1);
       positionPvpOnPlatform(ember, middleRight, -1, middleRight.w - ember.w - 8);
       break;
     }
     case "pvpUnderBonkTwo": {
-      // Polish 49 reference #2: swap elevations for the player's turn. P1 is
-      // on the center ground facing RIGHT; Ember starts atop the left-middle
-      // perch facing LEFT (the opposite of the old right-facing spawn).
-      // Once the dialogue ends she drops naturally to ground level and makes
-      // BOTH under-bonk attempts without being poofed between them.
-      positionPvp(p1, 238, CONFIG.groundY - p1.h, 1);
-      positionPvpOnPlatform(ember, middleLeft, -1);
+      // Reverse the two ground positions from screenshot #3 during the
+      // "Let's switch places" poof. One under-bonk is enough for this lesson.
+      // P1 climbs the middle perch from the left while Ember waits on ground.
+      positionPvp(p1, 64, CONFIG.groundY - p1.h, 1);
+      positionPvp(ember, 238, CONFIG.groundY - ember.h, -1);
       break;
     }
     case "pvpDemoAvoidUnder":
@@ -583,10 +581,10 @@ function configurePvpStep(index) {
       positionPvp(ember, PARK_PLATFORMS[3].x + PARK_PLATFORMS[3].w + 8, CONFIG.groundY - ember.h, -1);
       break;
     case "pvpAvoidUnder": {
-      // Polish 49 reference #3: start on ground left of the lower-center
-      // platform and slip to the RIGHT under Ember's feet.
+      // Player starts on the left approach lane pictured for the low-profile
+      // exercise, facing toward the platform and remaining below its top.
       const perch = PARK_PLATFORMS[3];
-      positionPvp(p1, perch.x - p1.w - 37, CONFIG.groundY - p1.h, 1);
+      positionPvp(p1, 155, CONFIG.groundY - p1.h, 1);
       positionPvpOnPlatform(ember, perch, -1);
       break;
     }
@@ -1127,6 +1125,8 @@ function updatePvpDemonstration() {
     const bonkImpactReady = tutorial.pvpDemoBonkAt > 0 && now - tutorial.pvpDemoBonkAt >= 100;
     completed = bonkImpactReady &&
       (setup === "pvpDemoSkyBonk" ? ember.grounded : now - tutorial.pvpDemoBonkAt >= 950) &&
+      (!(["pvpDemoSkyBonk", "pvpDemoBufferedSky"].includes(setup)) ||
+        pvpPlayers.every((frog) => !frog.bonked && frog.stunTimer <= 0 && (frog.recoveryFlipTimer || 0) <= 0)) &&
       (setup !== "pvpDemoBufferedSky" || (p1.grounded && p1.y + p1.h >= CONFIG.groundY - 1)) &&
       (setup !== "pvpDemoHighGround" || (p1.grounded && p1.y + p1.h >= CONFIG.groundY - 1)) &&
       (setup !== "pvpDemoBufferedSky" || ember.grounded);
@@ -1141,7 +1141,8 @@ function updatePvpDemonstration() {
   } else if (setup === "pvpDemoRecoveryBonk") {
     completed = tutorial.pvpDemoBlockedBonkAt > 0 &&
       tutorial.pvpRecoveryWallReboundSeen === true &&
-      !p1.bonked && p1.stunTimer <= 0 && pvpTutorialSettled();
+      ember.grounded && !ember.bonked && !ember.charging &&
+      now - tutorial.pvpDemoBlockedBonkAt >= 100;
   } else if (setup === "pvpDemoBoostBonk") {
     // The higher fly must actually be eaten at normal range; bonking alone
     // cannot finish the demo and trigger a fictional long-distance catch.

@@ -117,6 +117,7 @@
       drawTimeOfDayWorldTint();
 
       if (frog.charging && game.state === "playing") drawArcPreview();
+      drawTongue(); // Draw beneath flies so their sprites remain foreground.
       for (const currentFly of flies) {
         drawFlySpawnSparks(currentFly);
         drawFlyAt(currentFly.x, currentFly.y, getFlySpawnScale(currentFly));
@@ -124,7 +125,6 @@
       }
       drawFrogAfterimages(frog);
       drawAirShadowForEntity(frog, getFrogPalette());
-      drawTongue();
       drawFrog();
       drawCatchSparkles();
       drawWrongCatchBubbles();

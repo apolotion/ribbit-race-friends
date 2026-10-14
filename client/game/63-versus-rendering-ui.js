@@ -26,7 +26,8 @@
       }
       updatePvpMovingPlatforms();
       updatePvpImpactEffects(dt);
-      if (game.pvpWinPendingIndex === null && !game.pvpTimerGraceActive && !game.pvpTimedOutcomePending) {
+      if (game.pvpWinPendingIndex === null && !game.pvpTimerGraceActive && !game.pvpTimedOutcomePending &&
+          !(tutorial.active && tutorial.kind === "pvp" && tutorial.pvpFinalOutcome !== null)) {
         // Solo and local Versus use the same four-fly pool. A past tutorial
         // or one-off catch must not strand local Versus with a single target.
         // Respect already-scheduled spawn tickets and avoid touching the
@@ -1401,6 +1402,9 @@
       for (const platform of platforms) drawPlatform(platform);
       drawTimeOfDayWorldTint();
       pvpPlayers.forEach(p => drawEntity(p, drawPvpArcPreview));
+      // Tongue is rendered behind the fly, including a fly travelling along
+      // the tongue during a slow-motion catch.
+      pvpPlayers.forEach(p => drawEntity(p, drawPvpTongue));
       for (const fly of flies) {
         drawFlySpawnSparks(fly);
         drawFlyAt(fly.x, fly.y, getFlySpawnScale(fly));
@@ -1426,7 +1430,6 @@
       }
       pvpPlayers.forEach(p => drawEntity(p, drawFrogAfterimages));
       if (!["pvpCelebration", "won"].includes(game.state)) pvpPlayers.forEach((player)=>drawAirShadowForEntity(OnlineVersus.displayPlayer(player),getPvpSkinPalette(player.skinId,player.index===0?"azure":"crimson")));
-      pvpPlayers.forEach(p => drawEntity(p, drawPvpTongue));
       if (game.state === "pvpCelebration") {
         drawPvpRoundCelebration();
       } else if (game.state === "won") {

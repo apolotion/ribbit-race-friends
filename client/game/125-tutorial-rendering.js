@@ -34,7 +34,7 @@ function currentGoalLines() {
   // its final poof so there is never a blank goal-card flash between lessons.
   if (tutorial.kind === "pvp") {
     if (step.setup === "pvpBonkThree") return ["BONK EMBER", `${Math.min(3, tutorial.pvpBonks)} / 3`];
-    if (step.setup === "pvpUnderBonkTwo") return ["UNDER BONKS", `${Math.min(2, tutorial.pvpUnderBonks)} / 2`];
+    if (step.setup === "pvpUnderBonkTwo") return ["UNDER BONK", `${Math.min(1, tutorial.pvpUnderBonks)} / 1`];
     if (step.setup === "pvpReboundThree") return ["REBOUNDS", `${Math.min(3, tutorial.pvpReboundCount)} / 3`];
     if (step.setup === "pvpFinalMatch") return ["30-SECOND MATCH", `${Number(pvpPlayers[0]?.score || 0)} - ${Number(pvpPlayers[1]?.score || 0)}`];
     return Array.isArray(step.goal) ? step.goal : [step.title];
@@ -889,8 +889,8 @@ function currentGoalHowToLines() {
     pvpHighGround: ["START ON THE LOWER-LEFT PERCH", "KNOCK EMBER OFF THE TOP"],
     pvpRecoveryBonk: ["BONK, THEN HIT THE WALL", "BONK ONLY AFTER SHE RECOVERS"],
     pvpBoostBonk: ["BONK JUST AS EMBER LAUNCHES", "USE THE BOOST TO REACH A FLY"],
-    pvpUnderBonkTwo: ["HOLD THE CENTER LOW PLATFORM", "UNDER-BONK EMBER TWICE"],
-    pvpAvoidUnder: ["USE FIVE TINY QUICK-TAP HOPS", "SLIP BELOW EMBER WITHOUT A BONK"],
+    pvpUnderBonkTwo: ["CLIMB ONTO THE CENTER PERCH", "UNDER-BONK EMBER ONCE"],
+    pvpAvoidUnder: ["USE SHORT QUICK-TAP HOPS", "STAY BELOW THE PERCH TOP"],
     pvpReboundThree: ["MEET EMBER SIDEWAYS IN THE AIR", "LAND THREE REBOUNDS TOTAL"],
     pvpReboundCatch: ["REBOUND FROM STATIONARY EMBER", "CATCH MATCHING FLY IN ONE JUMP"],
     pvpIntercept: ["REBOUND TO CHANGE EMBER'S PATH", "STOP HER BEFORE THE FLY"],
@@ -907,7 +907,7 @@ function currentGoalHowToLines() {
     pvpDemoRecoveryBonk: ["WATCH THE FIRST BONK", "THE WALL TURNS EMBER BACK"],
     pvpDemoBoostBonk: ["WATCH HOW A BONK BOOSTS JUMPS", "TOWARD THE MATCHING FLY"],
     pvpDemoUnderBonk: ["EMBER STANDS ON THE PLATFORM", "YOU JUMP INTO HER FROM BELOW"],
-    pvpDemoAvoidUnder: ["WATCH FIVE GENTLE HOPS", "EMBER SLIPS UNDER THE PERCH"],
+    pvpDemoAvoidUnder: ["WATCH FOUR GENTLE HOPS", "EMBER SLIPS UNDER THE PERCH"],
     pvpDemoRebound: ["WATCH BOTH FROGS MEET SIDEWAYS", "BOTH CHANGE DIRECTIONS"],
     pvpDemoReboundCatch: ["EMBER BOUNCES OFF YOUR SIDE", "THEN CATCHES THE FLY BEHIND"],
     pvpDemoIntercept: ["EMBER DEFLECTS YOUR LEAP", "AND KEEPS YOU FROM THE FLY"],
@@ -1226,6 +1226,7 @@ function drawTutorialOverlay() {
     return;
   }
   drawCurrentGoalHud();
+  drawTutorialFlyDespawnEffects();
   drawTutorialSmoke();
   drawPvpTutorialCaption();
   drawTutorialReferenceHighlights();
@@ -1357,7 +1358,7 @@ function tutorialPromptVisibleDuringDialogue() {
   return Boolean(
     tutorial.active && tutorial.dialogueOpen &&
     (tutorialStep()?.setup === "threeCatches" || tutorial.kind === "pvp") &&
-    flies.some((currentFly) => currentFly?.tutorialAuthored && currentFly.state === "active" && currentFly.tutorialArmed !== false)
+    tutorialDisplayedFlies().some((fly) => fly.tutorialAuthored)
   );
 }
 
@@ -1372,21 +1373,21 @@ drawVocabularyPrompt = function(...args) {
     tutorialStep()?.setup === "rangeCatch" &&
     (game.soloCriticalCatchActive || tongue.active || tutorial.rangeTongueCaught)
   );
-  const authoredVisible = tutorial.active && flies.some((fly) => fly?.tutorialAuthored && fly.state === "active" && fly.tutorialArmed);
-  // The renderer paints every fly in the tutorial, including newly spawned
-  // and still-unarmed authored flies. Its footer must follow that same visual
-  // rule: whenever a visible body exists, use one of those vocabulary terms.
-  const anyVisible = tutorial.active && flies.some((fly) => fly && fly.state !== "eaten" && Number.isInteger(fly.vocabIndex));
+  // Only spawned flies count. An authored fly can be in the engine's array
+  // for a full second before it poofs in, and must not reveal the answer then.
+  const displayedFlies = tutorial.active ? tutorialDisplayedFlies() : [];
+  const anyVisible = displayedFlies.length > 0;
   const pvpMatchFly = tutorial.active && tutorial.kind === "pvp" && anyVisible;
-  if (pvpMatchFly && !flies.some((fly) => fly && fly.state !== "eaten" &&
+  if (pvpMatchFly && !displayedFlies.some((fly) =>
       fly.vocabIndex === game.targetVocabIndex)) {
-    const first = flies.find((fly) => fly && fly.state !== "eaten" && Number.isInteger(fly.vocabIndex));
-    if (first) setPrompt(first.vocabIndex);
+    setPrompt(displayedFlies[0].vocabIndex);
   }
   // Never remove the physical FIND THE MATCH panel—even when all flies were
   // eaten, during the next poof, or in a scene just reached through Level Select.
   if (tutorial.active && (
-    !Number.isInteger(game.targetVocabIndex) || (!authoredVisible && !pvpMatchFly && tutorialStep()?.setup !== "pvpFinalMatch") ||
+    ["win", "lose"].includes(tutorial.pvpFinalOutcome) ||
+    !Number.isInteger(game.targetVocabIndex) ||
+    (!anyVisible && !keepDuringTongueCinematic) ||
     ((!tutorialPlayerHasControl() && !visibleDuringExplanation && !keepDuringMissReset && !keepDuringTongueCinematic && !pvpMatchFly) ||
     (tutorial.promptHidden && !pvpMatchFly))
   )) {

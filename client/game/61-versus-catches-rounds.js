@@ -199,7 +199,11 @@
 
     function startPvpCriticalCatch(player, targetFly, kind = "final") {
       if (!player || game.pvpCriticalCatchActive || game.mode !== "pvp") return false;
-      const normalizedKind = kind === "contest" ? "contest" : kind === "clutch" ? "clutch" : "final";
+      const lesson = typeof tutorial !== "undefined" && tutorial.active && tutorial.kind === "pvp" ? tutorialStep()?.setup : "";
+      // Chapter 15's coach demonstration is at normal speed. The player is
+      // the only one allowed the rebound/steal slow-motion celebration.
+      if (["pvpDemoDinnerSteal", "pvpDinnerSteal"].includes(lesson) && player.index !== 0) return false;
+      const normalizedKind = ["contest", "clutch", "technique"].includes(kind) ? kind : "final";
       if (normalizedKind === "final" && game.pvpCriticalCatchPlayedThisRound) return false;
       const criticalKey = normalizedKind !== "final"
         ? `${normalizedKind}:${game.pvpRoundNumber}:${game.promptSerial}:${targetFly?.id ?? "fly"}`
@@ -332,10 +336,12 @@
         ctx.fillRect(0, 0, W, CONFIG.playBottom);
       }
       const title = game.pvpCriticalCatchKind === "final" ? "FINAL CATCH!"
-        : game.pvpCriticalCatchKind === "clutch" ? "CLUTCH CATCH!" : "CLOSE CATCH!";
-      const silentTrainingCinematic = window.RibbitTutorialShouldHidePvpCatchTitle?.() === true ||
-        (typeof tutorial !== "undefined" && tutorial.active && tutorial.kind === "pvp" && title === "CLOSE CATCH!");
-      if (!silentTrainingCinematic && (title !== "FINAL CATCH!" || !window.RibbitTutorialShouldHideFinalCatchTitle?.())) {
+        : game.pvpCriticalCatchKind === "clutch" ? "CLUTCH CATCH!"
+        : game.pvpCriticalCatchKind === "contest" ? "CLOSE CATCH!" : "";
+      // Show genuine CLOSE CATCH in training, but never mislabel a solo
+      // rebound-catch demonstration as a contest between both frogs.
+      const silentTrainingCinematic = title !== "CLOSE CATCH!" && window.RibbitTutorialShouldHidePvpCatchTitle?.() === true;
+      if (title && !silentTrainingCinematic && (title !== "FINAL CATCH!" || !window.RibbitTutorialShouldHideFinalCatchTitle?.())) {
         ctx.globalAlpha = holdFade;
         ctx.fillStyle = "rgba(38,54,61,0.78)";
         ctx.fillRect(W / 2 - 74, 29, 148, 18);
@@ -344,22 +350,34 @@
       ctx.restore();
     }
 
+    // A contested fly needs TWO nearby frogs actively closing in RIGHT NOW.
+    // Historical pursuit flags and stationary contact cannot make a platform-
+    // sitting Ember trigger CLOSE CATCH when only the player is moving.
+    function pvpFrogActivelyPursuingFly(player, targetFly) {
+      if (!player || !targetFly || player.bonked || Number(player.stunTimer || 0) > 0) return false;
+      const mouth = getPvpMouth(player);
+      const dx = Number(targetFly.baseX ?? targetFly.x) - mouth.x;
+      const dy = Number(targetFly.baseY ?? targetFly.y) - mouth.y;
+      if (!Number.isFinite(dx) || !Number.isFinite(dy) || Math.hypot(dx, dy) > 56) return false;
+      const t = player.tongue;
+      // Extending a tongue at this very fly is an active catch attempt, even
+      // when a frog has planted its feet to aim.
+      if (t?.active && t.targetFlyId === targetFly.id && !t.captured &&
+          Number(t.elapsed || 0) < Number(t.duration || 0)) return true;
+      const vx = Number(player.vx) || 0;
+      const vy = Number(player.vy) || 0;
+      if (Math.hypot(vx, vy) < 8) return false;
+      // The velocity has to take the frog nearer the fly, not away from it.
+      // A frog standing above a fly with vy=0 never qualifies.
+      const toward = vx * dx + vy * dy;
+      return toward > 5 * Math.max(1, Math.hypot(dx, dy));
+    }
+
     function pvpFlyContestIsClose(player, targetFly) {
-      if (!player || !targetFly) return false;
+      if (!player || !targetFly || !flyMatchesPrompt(targetFly)) return false;
       const other = pvpPlayers[player.index === 0 ? 1 : 0];
-      if (!other || other.bonked || Number(other.stunTimer || 0) > 0) return false;
-      const fx = Number(targetFly.baseX ?? targetFly.x);
-      const fy = Number(targetFly.baseY ?? targetFly.y);
-      const otherMouth = getPvpMouth(other);
-      const dx = otherMouth.x - fx;
-      const dy = otherMouth.y - fy;
-      const close = Math.hypot(dx, dy) <= 56;
-      const pursuing = Boolean(
-        (other.tongue?.active && other.tongue.targetFlyId === targetFly.id) ||
-        pvpPlayerTouchesFly(other, targetFly) ||
-        targetFly.pvpPursuers?.[other.index]
-      );
-      return close && pursuing;
+      return pvpFrogActivelyPursuingFly(player, targetFly) &&
+        pvpFrogActivelyPursuingFly(other, targetFly);
     }
 
     function getPvpCriticalCatchKind(player, targetFly) {
@@ -492,7 +510,7 @@
         player.bouncedOffOpponentThisJump && !player.grounded && flyMatchesPrompt(targetFly);
       // Trigger the zoom on real normal-range tongue launch (not after the
       // fly disappears). Let the fly travel toward the mouth in the cinematic.
-      if (techniqueCatch && !game.pvpCriticalCatchActive) startPvpCriticalCatch(player, targetFly, "contest");
+      if (techniqueCatch && !game.pvpCriticalCatchActive) startPvpCriticalCatch(player, targetFly, "technique");
       else if (criticalKind) startPvpCriticalCatch(player, targetFly, criticalKind);
       tone(player.index === 0 ? 330 : 300, 0.05, 0.015, 80);
     }

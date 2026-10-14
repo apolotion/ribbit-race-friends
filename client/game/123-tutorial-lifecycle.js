@@ -45,6 +45,7 @@ function configureStep(showDialogue = true, options = {}) {
   tutorial.dialogueOpen = false;
   tutorial.dialoguePointerId = null;
   tutorial.blockJumpUntilRelease = false;
+  if (showDialogue) clearPvpCaptionForDialogue();
 
   // These two authored transitions explicitly poof before Ember refers to the
   // new height/perch. The text begins one second after both frogs reappear.
@@ -62,7 +63,12 @@ function configureStep(showDialogue = true, options = {}) {
   } else if (prePoofBeforeDialogue && preservedPvpVisualPoses) {
     tutorial.dialogueOpen = true;
     tutorial.scenePositionedDuringDialogue = false;
-    beginDialogueLine(0, { delayMs:POOF_TRANSITION_MS + (tutorialStep()?.setup === "pvpSkyBonk" ? 500 : 300), holdPreviousText:false });
+    // The high-drop joke must begin a full second AFTER the new positions
+    // poof in, not a few hundred milliseconds later. No textbox or text is
+    // drawn during the pause, and fast-forward cannot bypass it.
+    const postPoofDialogueHoldMs = tutorialStep()?.setup === "pvpDemoDropHigh"
+      ? 1000 : tutorialStep()?.setup === "pvpSkyBonk" ? 500 : 300;
+    beginDialogueLine(0, { delayMs:POOF_TRANSITION_MS + postPoofDialogueHoldMs, holdPreviousText:false });
     tutorial.transitionHeldLineText = "";
     tutorial.transitionHeldPortraitKey = "";
     tutorial.dialogueHeldLineText = "";
@@ -146,6 +152,65 @@ function playTutorialPoofSound(kind = "out") {
     tone(190, .07, .014, 165);
     tone(480, .08, .012, 105, .025);
   }
+}
+
+// Visual-only despawn: remove a tutorial fly from collision/scoring instantly,
+// but let a small shrinking sprite and pixel sparkles fade out for 0.48 s.
+// Never despawn/clone a carryover fly that an authored retry preserves.
+function despawnTutorialFlies(options = {}) {
+  if (!tutorial.active || !Array.isArray(flies)) return 0;
+  if (!Array.isArray(tutorial.flyDespawnEffects)) tutorial.flyDespawnEffects = [];
+  const now = performance.now();
+  const survivors = [];
+  let count = 0;
+  for (const fly of flies) {
+    const selected = fly && (options.onlyUnrelated ? !fly.tutorialAuthored :
+      (options.all || fly.tutorialAuthored));
+    const preserve = options.preserveKeys instanceof Set &&
+      options.preserveKeys.has(tutorialFlyKey(fly));
+    if (!selected || preserve || (!options.onlyUnrelated && !options.all && fly.tutorialArmed === false)) {
+      survivors.push(fly);
+      continue;
+    }
+    if (fly.state === "active" && (options.all || fly.tutorialArmed !== false)) {
+      const x = Number(fly.x ?? fly.baseX), y = Number(fly.y ?? fly.baseY);
+      if (Number.isFinite(x) && Number.isFinite(y)) {
+        tutorial.flyDespawnEffects.push({ x, y, born:now, vocabIndex:fly.vocabIndex });
+        if (tutorial.flyDespawnEffects.length > 20) tutorial.flyDespawnEffects.shift();
+      }
+    }
+    count++;
+  }
+  if (count) {
+    flies.splice(0, flies.length, ...survivors);
+    clearLabelCaches();
+  }
+  return count;
+}
+
+function drawTutorialFlyDespawnEffects(now = performance.now()) {
+  const effects = tutorial.flyDespawnEffects;
+  if (!Array.isArray(effects) || effects.length === 0) return;
+  tutorial.flyDespawnEffects = effects.filter((effect) => now - effect.born < 480);
+  ctx.save();
+  for (const effect of tutorial.flyDespawnEffects) {
+    const progress = clamp((now - effect.born) / 480, 0, 1);
+    const fade = Math.max(0, 1 - progress);
+    const scale = Math.max(0.01, 1 - progress * 0.9);
+    ctx.globalAlpha = fade;
+    if (progress < 0.72) drawFlyAt(effect.x, effect.y - progress * 5, scale);
+    // Pixel debris expands as the fly shrinks, then fades away entirely.
+    for (let i = 0; i < 8; i++) {
+      const angle = Math.PI * 2 * i / 8;
+      const radius = 3 + 13 * progress + (i % 3);
+      const x = Math.round(effect.x + Math.cos(angle) * radius);
+      const y = Math.round(effect.y + Math.sin(angle) * radius * 0.75);
+      const size = progress < 0.55 ? 3 : 2;
+      ctx.fillStyle = i % 2 ? "#f6e185" : "#ccfaff";
+      ctx.fillRect(x, y, size, size);
+    }
+  }
+  ctx.restore();
 }
 
 function beginPoofTransition(options = {}) {
@@ -415,6 +480,9 @@ function failAttempt(message) {
   const emberStaysPut = tutorial.kind === "pvp" &&
     PVP_RETRY_EMBER_STATIONARY_SETUPS.has(setup);
   const emberPose = emberStaysPut ? capturePvpTutorialPoses()?.[1] : null;
+  const retainedFlyObjects = setup === "pvpReboundCatch"
+    ? flies.filter((fly) => fly?.tutorialAuthored && fly.state === "active" && fly.tutorialArmed !== false)
+    : [];
   beginPoofTransition({
     reason: "failed-attempt",
     message: message || "TRY AGAIN",
@@ -424,6 +492,16 @@ function failAttempt(message) {
     pvpPoofPlayers: emberStaysPut ? [0] : [0, 1],
     action: () => {
       rebuildCurrentScenarioForRetry();
+      if (retainedFlyObjects.length) {
+        // configurePvpStep may rebuild its list, but visible authored flies
+        // remain the SAME objects/IDs and stay fully grown across the poof.
+        flies.length = 0;
+        for (const fly of retainedFlyObjects) {
+          fly.spawnAge = Math.max(Number(fly.spawnAge) || 0, CONFIG.flySpawnEffectDuration + CONFIG.flyGrowDuration + 0.1);
+          flies.push(fly);
+          nextFlyId = Math.max(nextFlyId, Number(fly.id) + 1);
+        }
+      }
       if (emberPose && pvpPlayers[1]) applyControlledPose(emberPose, pvpPlayers[1]);
     }
   });
@@ -434,6 +512,9 @@ function finalizePassedStep() {
   const step = tutorialStep();
   tutorial.passPending = false;
   tutorial.passPendingAt = 0;
+  // An unused chapter fly (particularly in the intercept lesson) leaves with
+  // an animated exit before Ember starts the next explanation.
+  despawnTutorialFlies();
   if (!tutorial.successDialogueShown && Array.isArray(step?.successDialogue) && step.successDialogue.length) {
     tutorial.successDialogueShown = true;
     // PvP success may open while the *victim* is still falling. Do not erase
@@ -685,6 +766,9 @@ function nextStep() {
   const carryoverFlies = tutorial.kind === "solo" && previousSetup === "comboMixed"
     ? captureTutorialCarryoverFlies()
     : [];
+  // Carryover vocabulary from the single-player mixed lesson remains visible;
+  // every other uncaught tutorial fly gets its own soft exit before rebuild.
+  despawnTutorialFlies({ preserveKeys: new Set(carryoverFlies.map(tutorialFlyKey)) });
   const visualPose = captureControlledPose();
   const pvpVisualPoses = tutorial.kind === "pvp" ? capturePvpTutorialPoses() : null;
   tutorial.transitionHeldLineText = String(tutorial.dialogueHeldLineText || currentDialogueLine() || "");
@@ -697,6 +781,7 @@ function nextStep() {
 
 function skipToNextTutorialScene() {
   if (!tutorial.active) return false;
+  despawnTutorialFlies();
   const steps = tutorial.kind === "pvp" ? PVP_STEPS : SOLO_STEPS;
   const currentScene = Number(tutorialStep()?.scene || 1);
   const targetIndex = steps.findIndex((step, index) => index > tutorial.step && Number(step?.scene || index + 1) > currentScene);

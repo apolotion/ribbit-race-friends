@@ -1,0 +1,32 @@
+RIBBIT RACE FRIENDS — POLISH 55
+Version: 1.7.43
+Build: 2026.10.13-friends-polish-55
+Based on Polish 54 (1.7.42). Full GitHub-ready release.
+
+VERSUS TUTORIAL — BONK AND RECOVERY TIMING
+- Full-strength sky bonks stun for exactly five seconds AFTER the bonked frog reaches the ground. A rounding safeguard prevents an extra physics frame at the timer's final tick.
+- The sky-bonk demonstration and practice hold for each frog's landing and complete upright recovery, so the animation is not skipped by early dialogue.
+- “You Can't Bonk an Already Stunned Frog” uses natural Versus height-dependent stun, not the old arbitrary 4.7-second extension. Ember's follow-up dialogue is permitted once Ember lands and finishes the rebound, not after waiting for P1's stun to expire.
+- “Bonk Ember Twice” accepts the second bonk only within one second after Ember's regular stun ends. Late second bonks poof the frogs for a retry.
+
+VERSUS TUTORIAL — POSITIONS AND GOALS
+- Buffered platform-drop bonk: Ember on left ground at x=64 facing right; the player begins center stage facing left.
+- Under-bonk demonstration: the player starts facing right.
+- “Let's Switch Places”: the player's frog starts left (x=64), looking right; Ember starts right (x=238), looking left. Just ONE clean under-bonk required.
+- Low-profile under-bonk avoidance: the player begins on the left approach (x=155) and faces right. Jumping above the lower-middle platform's top triggers a retry poof upon landing, not during flight.
+- First rebound practice retains the established opening face-to-face ground arrangement: player x=145 facing right, Ember x=305 facing left. Later rebound layouts still use their respective middle/top platform positions.
+
+REBOUND AND TONGUE ANIMATIONS
+- On the student's first-rebound challenge, both frogs get a real correct-fly-catch-style sparkle after a successful midair rebound, and the next success/retry poof waits 0.5 second after landing.
+- In “Rebound Off Me to Catch That Fly,” retries reuse the SAME on-screen fly objects and their vocabulary labels, rather than despawning the flies when the player poofs.
+- Draw fly sprites in front of tongues during pull-ins, including slow-motion zooms and recorded replays; this applies to Solo and Versus.
+
+COMPATIBILITY AND DEPLOYMENT
+- Existing achievements, saves, Frog Tags, and the versioned replay compatibility layer are retained.
+- Replace repository files with this ZIP; no Google Apps Script code.gs edits or Cloudflare D1 migration are required.
+
+TESTING
+- Automated Node suite: 540/540 tests passing before final packaging, including nine new focused Polish 55 regressions.
+- Isolated Chromium gameplay-engine checks confirmed reference starting positions, exactly 5.000 seconds of sky-bonk stun at 60fps after landing, ordinary (height-based) stun, both sides of the one-second second-bonk recovery window, and dual-frog rebound sparkle. No browser JavaScript exceptions.
+- Full deployed Cloudflare multiplayer tutorial has not been playtested.
+- The user refers to screenshot 5 for the first rebound, but this turn contained only four screenshots; the preexisting opening positions were retained until the missing reference can be provided.
