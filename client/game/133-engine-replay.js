@@ -203,7 +203,7 @@ function ribbitReplayExportCurrent(){
     : frames[frames.length-1].t;
   return {
     version:RIBBIT_REPLAY_SCHEMA_VERSION,kind:"ribbit-engine-frames",fps:capture.fps||RIBBIT_REPLAY_FPS,
-    compatibility:{frameSchema:RIBBIT_REPLAY_SCHEMA_VERSION,minimumPlayerVersion:1,recordedBy:"1.7.52"},
+    compatibility:{frameSchema:RIBBIT_REPLAY_SCHEMA_VERSION,minimumPlayerVersion:1,recordedBy:"1.7.53"},
     mode:capture.mode,level:capture.level,recordedAt:capture.recordedAt,
     recordedTimeZone:capture.recordedTimeZone,timeOfDay:capture.timeOfDay,
     moonPhaseIndex:capture.moonPhaseIndex,skinId:capture.skinId,vocab:capture.vocab,
@@ -638,7 +638,7 @@ function ribbitReplayCollectionStep(delta){
 function ribbitReplayClose(){
   if(!ribbitReplayView)return false;
   const restore=ribbitReplayView.restore;
-  ribbitReplaySpaceRelease();
+  ribbitReplaySpaceRelease(true);
   ribbitReplayView=null;
   document.body.classList.remove("rr-engine-replay-active");
   ribbitReplayControls?.host?.classList.remove("rr-replay-layout");
@@ -676,7 +676,15 @@ function ribbitReplayTogglePlayback(){
 }
 function ribbitReplayTick(now=performance.now()){
   if(!ribbitReplayView){ribbitReplayCaptureTick(now);return;}
-  const view=ribbitReplayView,dt=Math.max(0,Math.min(now-view.lastTick,120));
+  const view=ribbitReplayView;
+  // During the first second, Space behaves as a normal tap candidate. Only
+  // AFTER a complete hold do we enter temporary 2x mode.
+  if(Number.isFinite(view.spacePressAt) && !view.spaceFastForwardHeld &&
+     now-view.spacePressAt>=RIBBIT_REPLAY_SPACE_HOLD_MS){
+    view.spaceFastForwardHeld=true;
+    view.lastTick=now;
+  }
+  const dt=Math.max(0,Math.min(now-view.lastTick,120));
   view.lastTick=now;
   // Space is a temporary 2x transport. When the replay was paused at keydown,
   // the playhead still scrubs forward silently and stays paused on release.
@@ -915,10 +923,14 @@ drawHudPausePlaySprite=function(rect,paused=false,palette=getSelectedSkin()){
   ctx.fillStyle=theme.belly;ctx.fillRect(x+2,y+2,w-4,h-4);
   ctx.fillStyle=theme.light;ctx.fillRect(x+3,y+2,w-6,2);
   ctx.fillStyle=theme.dark;
-  // Pixel X instead of a pause/play icon; its original box is unchanged.
-  for(let i=0;i<15;i++){
-    ctx.fillRect(x+Math.round((w-16)/2)+i,y+Math.round((h-16)/2)+i,2,2);
-    ctx.fillRect(x+Math.round((w-16)/2)+14-i,y+Math.round((h-16)/2)+i,2,2);
+  // Thick, square pixel X with a one-pixel inset. It matches the pause/play
+  // HUD's chunkier geometric sprite and never touches the button border.
+  const iconSide=Math.max(7,Math.min(12,w-10,h-10));
+  const step=Math.max(1,Math.floor(iconSide/5));
+  const left=x+Math.floor((w-step*5)/2), top=y+Math.floor((h-step*5)/2);
+  for(let i=0;i<5;i++){
+    ctx.fillRect(left+i*step,top+i*step,step+1,step+1);
+    ctx.fillRect(left+(4-i)*step,top+i*step,step+1,step+1);
   }
   ctx.restore();
 };
@@ -942,22 +954,36 @@ function ribbitReplayAdjustRate(step){
   if(!ribbitReplayView)return;
   ribbitReplayView.rate=clamp(Math.round((ribbitReplayView.rate+step)*4)/4,.25,2);
 }
+// A short Space tap toggles play/pause. Holding it for >1 second activates
+// 2x transport only for the duration of the hold (paused transport is silent).
+const RIBBIT_REPLAY_SPACE_HOLD_MS = 1000;
 function ribbitReplaySpacePress(event){
   const view=ribbitReplayView;
-  if(!view?.data || view.spaceFastForwardHeld)return;
-  if(view.position>=view.data.duration-1)return;
-  view.spaceFastForwardHeld=true;
+  if(!view?.data || Number.isFinite(view.spacePressAt))return;
+  if(view.position>=view.data.duration-1){
+    ribbitReplayTogglePlayback();
+    view.spaceTapConsumed=true;
+    return;
+  }
+  view.spacePressAt=performance.now();
+  view.spaceTapConsumed=false;
+  view.spaceFastForwardHeld=false;
   view.spaceStartedPaused=!!view.paused;
   view.lastTick=performance.now();
-  ribbitReplayUpdateControls();
 }
-function ribbitReplaySpaceRelease(){
+function ribbitReplaySpaceRelease(cancel=false){
   const view=ribbitReplayView;
-  if(!view?.spaceFastForwardHeld)return;
+  if(!view)return;
+  if(!Number.isFinite(view.spacePressAt) && !view.spaceFastForwardHeld){view.spaceTapConsumed=false;return;}
+  const heldLong=view.spaceFastForwardHeld || performance.now()-view.spacePressAt >= RIBBIT_REPLAY_SPACE_HOLD_MS;
+  const shouldToggle=!cancel && !heldLong && !view.spaceTapConsumed;
+  view.spacePressAt=null;
   view.spaceFastForwardHeld=false;
   view.spaceStartedPaused=false;
+  view.spaceTapConsumed=false;
   view.lastTick=performance.now();
-  ribbitReplayUpdateControls();
+  if(shouldToggle)ribbitReplayTogglePlayback();
+  else ribbitReplayUpdateControls();
 }
 function handleRibbitReplayKey(event){
   if(!ribbitReplayView || window.RibbitFrogTagReplayBrowser?.isOpen?.())return;
@@ -1007,7 +1033,7 @@ window.addEventListener("keyup",event=>{
   event.preventDefault();event.stopImmediatePropagation();
   ribbitReplaySpaceRelease();
 },true);
-window.addEventListener("blur",ribbitReplaySpaceRelease);
+window.addEventListener("blur",()=>ribbitReplaySpaceRelease(true));
 canvas.addEventListener("pointerdown",event=>{
   if(!ribbitReplayView)return;
   event.preventDefault();event.stopImmediatePropagation();

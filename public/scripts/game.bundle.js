@@ -67,7 +67,7 @@ function startRibbitRaceGame() {
     const canvas = document.getElementById("game");
     const gameFrame = document.getElementById("game-frame");
     const friendsGameInputLocked = () => window.RibbitFriendsGameInputLocked?.() === true;
-    const RIBBIT_DISPLAY_VERSION = "VERSION 1.7.52";
+    const RIBBIT_DISPLAY_VERSION = "VERSION 1.7.53";
     const RIBBIT_CREDIT_TEXT = "MADE BY NICK M.";
     const RIBBIT_CREDIT_Y = 228;
     const rgbValueEditor = document.getElementById("rgb-value-editor");
@@ -19989,8 +19989,8 @@ function startRibbitRaceGame() {
     requestAnimationFrame(frame);
 
     /* ===== client/game/90-extended-features.js ===== */
-const RIBBIT_FRIENDS_DISPLAY_VERSION = "1.7.52";
-const RIBBIT_FRIENDS_BUILD = "2026.10.14-friends-polish-65";
+const RIBBIT_FRIENDS_DISPLAY_VERSION = "1.7.53";
+const RIBBIT_FRIENDS_BUILD = "2026.10.14-friends-polish-66";
 function rr14Number(value, fallback = 0) {
   const parsed = Number(value);
   return Number.isFinite(parsed) ? parsed : fallback;
@@ -20469,10 +20469,10 @@ window.RibbitRaceMobileDiagnostics = () => ({
  */
 (() => {
   "use strict";
-  const BUILD = "2026.10.14-friends-polish-65";
+  const BUILD = "2026.10.14-friends-polish-66";
   const RR_V160_CANDIDATES = {"catchFly":["attemptFlyCatch","attemptPvpFlyCatch","catchSandboxFly","getPvpImminentCatchFly","recordFlyEaten","scheduleFlyReplacementFromCatch"],"jumpSound":["playJumpSound"],"beep":["playCountdownGoSound","playCountdownSound"],"replayUpload":["saveRecordDate"],"restart":["resetGame","resetPvpGame","resetPvpPlayer","resetRoundLifecycle","resetRoundNetwork","restartCurrentLevel"],"drop":[],"render":["drawPvpScene","drawScene"],"worldRecord":[],"fullscreen":["getFullscreenElement","hideFullscreenFallback","showFullscreenFallback","syncFullscreenButton","toggleRibbitFullscreen"],"onlineSubmit":[],"leaderboard":["isSoloEndlessLeaderboardEligible","savePvpMatchWinsForLeaderboard"]};
   const RR_V160_VARS = {"onlineSelect":[],"achievementSelect":["activeAchievementIndex","hoveredAchievementCard"],"backRect":[]};
-  const VERSION = "1.7.52";
+  const VERSION = "1.7.53";
   const V = {
     menuTouch: new Map(), chargeTouch: new Map(), achievementPinned: -1,
     cpuTakeoverUntil: 0, cpuTakeoverStarted: 0, cpuSnapshot: null,
@@ -21356,7 +21356,7 @@ window.RibbitRaceMobileDiagnostics = () => ({
 "use strict";
 const SOLO_SEEN_KEY = "rrFriendsEngineTutorialSoloSeenV8";
 const PVP_SEEN_KEY = "rrFriendsEngineTutorialPvpSeenV8";
-const TUTORIAL_BUILD = "2026.10.14-friends-polish-65";
+const TUTORIAL_BUILD = "2026.10.14-friends-polish-66";
 const TUTORIAL_ACHIEVEMENT_ID = "tutorial-graduate";
 const PVP_TUTORIAL_ACHIEVEMENT_ID = "versus-tutorial-graduate";
 const TYPEWRITER_MS_PER_CHARACTER = 28;
@@ -28198,6 +28198,7 @@ window.RibbitRaceTutorialEngine = Object.freeze({
   const PROFILE_MENU_ROWS = Object.freeze([
     Object.freeze({ id:"language", label:"LANGUAGE MODE" }),
     Object.freeze({ id:"flashcards", label:"FLASH CARDS" }),
+    Object.freeze({ id:"vocabulary", label:"VOCAB LIST" }),
     Object.freeze({ id:"manage", label:"BACK UP / MANAGE SAVE" }),
     Object.freeze({ id:"signout", label:"SIGN OUT" }),
     Object.freeze({ id:"back", label:"BACK" })
@@ -28358,6 +28359,7 @@ window.RibbitRaceTutorialEngine = Object.freeze({
     const r=(x,y,w,h,c=color)=>{ctx.fillStyle=c;ctx.fillRect(Math.round(cx+x),Math.round(cy+y),w,h);};
     if(kind==="language") {r(-6,-6,12,12);r(-4,-4,8,8,"#f7fdff");r(-1,-6,2,12);r(-6,-1,12,2);}
     else if(kind==="flashcards") {r(-7,-5,10,12);r(-5,-3,6,7,"#f7fdff");r(0,-7,7,11);r(2,-5,3,5,"#f7fdff");}
+    else if(kind==="vocabulary") {r(-7,-7,14,14);r(-5,-5,10,3,"#f7fdff");r(-5,0,10,2,"#f7fdff");r(-5,4,7,2,"#f7fdff");}
     else if(kind==="manage") {r(-7,-6,14,12);r(-4,-5,8,4,"#f7fdff");r(-4,1,8,4,"#f7fdff");r(-1,2,3,3);}
     else if(kind==="signout") {r(-7,-6,8,12);r(-5,-4,4,8,"#f7fdff");r(0,-1,7,2);r(4,-4,3,3);r(4,1,3,3);}
     else {r(-1,-2,8,4);r(-3,-4,3,8);r(-6,-1,3,2);}
@@ -28404,7 +28406,7 @@ window.RibbitRaceTutorialEngine = Object.freeze({
       ctx.fillStyle=selected?COLORS.ink:"#9aa9ae";ctx.fillRect(rect.x,rect.y,rect.w,rect.h);
       ctx.fillStyle=selected?mixHexColors(skin.belly,"#ffffff",.12):"#f7fdff";
       ctx.fillRect(rect.x+2,rect.y+2,rect.w-4,rect.h-4);
-      const stripes={language:skin.light,flashcards:"#f3d171",manage:"#7ee0cf",signout:"#ed9eaa",back:"#f3c5ce"};
+      const stripes={language:skin.light,flashcards:"#f3d171",vocabulary:"#8bc6ee",manage:"#7ee0cf",signout:"#ed9eaa",back:"#f3c5ce"};
       ctx.fillStyle=stripes[rect.id];ctx.fillRect(rect.x+5,rect.y+4,rect.w-10,2);
       drawProfileOptionIcon(rect.id,rect.x+21,rect.y+rect.h/2,selected?skin.dark:"#48555a");
       const labelScale=Math.min(.69,195/Math.max(1,measureBitmapText(rect.label,1)));
@@ -28412,6 +28414,7 @@ window.RibbitRaceTutorialEngine = Object.freeze({
       drawBitmapText(rect.label,rect.x+rect.w/2,baseline,labelScale,"center",selected?skin.dark:"#48555a");
       if(rect.id==="language") drawLanguageValue(rect, getLearningLanguage(), selected);
       else if(rect.id==="flashcards") drawBitmapText(`${getFlashcardVocabulary().length} CARDS`,rect.x+rect.w-9,baseline+1,.38,"right",selected?skin.dark:"#59666b");
+      else if(rect.id==="vocabulary") drawBitmapText(`${getFlashcardVocabulary().length} WORDS`,rect.x+rect.w-9,baseline+1,.38,"right",selected?skin.dark:"#59666b");
     });
   }
   function drawLanguageSwapArrow(selected=false) {
@@ -28710,6 +28713,13 @@ window.RibbitRaceTutorialEngine = Object.freeze({
     rebuildFlashcardDeck(false,false);
     polish.flashcardSelection=1;polish.flashcardHoverKey="";polish.flashcardHelpOpen=false;
     game.state="rrFlashcards";clearHeldInput();tone(480,.04,.009,10);
+    window.RibbitStudyUI?.openCards?.({ vocabularyProvider:getFlashcardVocabulary, account:accountDisplayName(),
+      onExit:()=>{ game.state="rrProfileMenu";polish.profileSelection=1; clearHeldInput(); }});
+  }
+  function openVocabularyList() {
+    game.state="rrVocabList";clearHeldInput();tone(510,.04,.009,20);
+    window.RibbitStudyUI?.openList?.({ vocabularyProvider:getFlashcardVocabulary, account:accountDisplayName(),
+      onExit:()=>{ game.state="rrProfileMenu";polish.profileSelection=2;clearHeldInput(); }});
   }
   function openDeviceMenu() { polish.priorMenuState=game.state; polish.deviceSelection=isRibbitMobileMode()?1:0; game.state="rrDeviceMenu"; clearHeldInput(); tone(480,.04,.009,20); }
   function closeUtilityMenu() { game.state="main"; game.mainFocusVisible=true; tone(330,.04,.009,-30); }
@@ -28719,6 +28729,7 @@ window.RibbitRaceTutorialEngine = Object.freeze({
     const row=PROFILE_MENU_ROWS[index] || PROFILE_MENU_ROWS[0];
     if(row.id==="language") openLanguageMenu();
     else if(row.id==="flashcards") openFlashcardsMenu();
+    else if(row.id==="vocabulary") openVocabularyList();
     else if(row.id==="back") closeUtilityMenu();
     else {
       const id={manage:"friends-manage",signout:"cloud-sign-out"}[row.id];
@@ -30476,6 +30487,7 @@ window.RibbitRaceTutorialEngine = Object.freeze({
       return;
     }
     if (game.state === "rrFlashcards") {
+      if (window.RibbitStudyUI?.isOpen?.()) return;
       const keys=["ArrowLeft","ArrowRight","ArrowUp","ArrowDown","KeyA","KeyD","KeyS","Slash","Space","Enter","NumpadEnter","KeyH","KeyV","KeyR","Escape","Backspace"];
       if(keys.includes(event.code)){
         event.preventDefault();event.stopImmediatePropagation();
@@ -30906,7 +30918,7 @@ function ribbitReplayExportCurrent(){
     : frames[frames.length-1].t;
   return {
     version:RIBBIT_REPLAY_SCHEMA_VERSION,kind:"ribbit-engine-frames",fps:capture.fps||RIBBIT_REPLAY_FPS,
-    compatibility:{frameSchema:RIBBIT_REPLAY_SCHEMA_VERSION,minimumPlayerVersion:1,recordedBy:"1.7.52"},
+    compatibility:{frameSchema:RIBBIT_REPLAY_SCHEMA_VERSION,minimumPlayerVersion:1,recordedBy:"1.7.53"},
     mode:capture.mode,level:capture.level,recordedAt:capture.recordedAt,
     recordedTimeZone:capture.recordedTimeZone,timeOfDay:capture.timeOfDay,
     moonPhaseIndex:capture.moonPhaseIndex,skinId:capture.skinId,vocab:capture.vocab,
@@ -31302,7 +31314,7 @@ function ribbitReplayCollectionStep(delta){
 function ribbitReplayClose(){
   if(!ribbitReplayView)return false;
   const restore=ribbitReplayView.restore;
-  ribbitReplaySpaceRelease();
+  ribbitReplaySpaceRelease(true);
   ribbitReplayView=null;
   document.body.classList.remove("rr-engine-replay-active");
   ribbitReplayControls?.host?.classList.remove("rr-replay-layout");
@@ -31338,7 +31350,13 @@ function ribbitReplayTogglePlayback(){
 }
 function ribbitReplayTick(now=performance.now()){
   if(!ribbitReplayView){ribbitReplayCaptureTick(now);return;}
-  const view=ribbitReplayView,dt=Math.max(0,Math.min(now-view.lastTick,120));
+  const view=ribbitReplayView;
+  if(Number.isFinite(view.spacePressAt) && !view.spaceFastForwardHeld &&
+     now-view.spacePressAt>=RIBBIT_REPLAY_SPACE_HOLD_MS){
+    view.spaceFastForwardHeld=true;
+    view.lastTick=now;
+  }
+  const dt=Math.max(0,Math.min(now-view.lastTick,120));
   view.lastTick=now;
   const advancing=view.spaceFastForwardHeld||!view.paused;
   if(view.data&&advancing&&!view.scrubbing){
@@ -31548,9 +31566,12 @@ drawHudPausePlaySprite=function(rect,paused=false,palette=getSelectedSkin()){
   ctx.fillStyle=theme.belly;ctx.fillRect(x+2,y+2,w-4,h-4);
   ctx.fillStyle=theme.light;ctx.fillRect(x+3,y+2,w-6,2);
   ctx.fillStyle=theme.dark;
-  for(let i=0;i<15;i++){
-    ctx.fillRect(x+Math.round((w-16)/2)+i,y+Math.round((h-16)/2)+i,2,2);
-    ctx.fillRect(x+Math.round((w-16)/2)+14-i,y+Math.round((h-16)/2)+i,2,2);
+  const iconSide=Math.max(7,Math.min(12,w-10,h-10));
+  const step=Math.max(1,Math.floor(iconSide/5));
+  const left=x+Math.floor((w-step*5)/2), top=y+Math.floor((h-step*5)/2);
+  for(let i=0;i<5;i++){
+    ctx.fillRect(left+i*step,top+i*step,step+1,step+1);
+    ctx.fillRect(left+(4-i)*step,top+i*step,step+1,step+1);
   }
   ctx.restore();
 };
@@ -31574,22 +31595,34 @@ function ribbitReplayAdjustRate(step){
   if(!ribbitReplayView)return;
   ribbitReplayView.rate=clamp(Math.round((ribbitReplayView.rate+step)*4)/4,.25,2);
 }
+const RIBBIT_REPLAY_SPACE_HOLD_MS = 1000;
 function ribbitReplaySpacePress(event){
   const view=ribbitReplayView;
-  if(!view?.data || view.spaceFastForwardHeld)return;
-  if(view.position>=view.data.duration-1)return;
-  view.spaceFastForwardHeld=true;
+  if(!view?.data || Number.isFinite(view.spacePressAt))return;
+  if(view.position>=view.data.duration-1){
+    ribbitReplayTogglePlayback();
+    view.spaceTapConsumed=true;
+    return;
+  }
+  view.spacePressAt=performance.now();
+  view.spaceTapConsumed=false;
+  view.spaceFastForwardHeld=false;
   view.spaceStartedPaused=!!view.paused;
   view.lastTick=performance.now();
-  ribbitReplayUpdateControls();
 }
-function ribbitReplaySpaceRelease(){
+function ribbitReplaySpaceRelease(cancel=false){
   const view=ribbitReplayView;
-  if(!view?.spaceFastForwardHeld)return;
+  if(!view)return;
+  if(!Number.isFinite(view.spacePressAt) && !view.spaceFastForwardHeld){view.spaceTapConsumed=false;return;}
+  const heldLong=view.spaceFastForwardHeld || performance.now()-view.spacePressAt >= RIBBIT_REPLAY_SPACE_HOLD_MS;
+  const shouldToggle=!cancel && !heldLong && !view.spaceTapConsumed;
+  view.spacePressAt=null;
   view.spaceFastForwardHeld=false;
   view.spaceStartedPaused=false;
+  view.spaceTapConsumed=false;
   view.lastTick=performance.now();
-  ribbitReplayUpdateControls();
+  if(shouldToggle)ribbitReplayTogglePlayback();
+  else ribbitReplayUpdateControls();
 }
 function handleRibbitReplayKey(event){
   if(!ribbitReplayView || window.RibbitFrogTagReplayBrowser?.isOpen?.())return;
@@ -31639,7 +31672,7 @@ window.addEventListener("keyup",event=>{
   event.preventDefault();event.stopImmediatePropagation();
   ribbitReplaySpaceRelease();
 },true);
-window.addEventListener("blur",ribbitReplaySpaceRelease);
+window.addEventListener("blur",()=>ribbitReplaySpaceRelease(true));
 canvas.addEventListener("pointerdown",event=>{
   if(!ribbitReplayView)return;
   event.preventDefault();event.stopImmediatePropagation();
@@ -31857,6 +31890,342 @@ window.RibbitEngineReplay=Object.freeze({
       event.preventDefault();event.stopImmediatePropagation();hideDialog();
     }
   },true);
+})();
+
+    /* ===== client/game/135-study-flashcards.js ===== */
+window.RibbitStudyUI = (() => {
+  const NOTE_PREFIX = "ribbitRaceFlashcardNotesV1:";
+  const STAR_KEY = "ribbitRaceFlashcardStarsV1";
+  const SWIPE_TIME = 270;
+  const state = {
+    root: null, active: false, view: "cards", getVocabulary: () => [],
+    onExit: null, account: "guest", notes: {}, stars: new Set(),
+    words: [], queue: [], index: 0, round: 0, missed: new Set(),
+    ratings: new Map(), complete: false, flipped: false,
+    animating: false, drag: null, dragMoved: false,
+    search: "", shuffle: false, lastFocus: null
+  };
+  const keyOf = item => `${String(item?.english || "").trim()}|${String(item?.spanish || "").trim()}`;
+  const current = () => state.words[state.queue[state.index]];
+  const noteKey = () => NOTE_PREFIX + state.account.toLowerCase().replace(/[^a-z0-9_-]/g, "_").slice(0, 60);
+  const safeRead = (key, fallback) => {
+    try { const result = JSON.parse(localStorage.getItem(key) || "null"); return result ?? fallback; }
+    catch (_) { return fallback; }
+  };
+  const saveNotes = () => {
+    try { localStorage.setItem(noteKey(), JSON.stringify(state.notes)); } catch (_) {}
+  };
+  const syncData = () => {
+    const list = state.getVocabulary?.() || [];
+    state.words = (Array.isArray(list) ? list : []).filter(v => v && v.english && v.spanish)
+      .map(v => ({ english: String(v.english), spanish: String(v.spanish) }));
+  };
+  const template = `
+  <section class="rr-study-panel" role="dialog" aria-modal="true" aria-labelledby="rr-study-title">
+    <header class="rr-study-header"><h2 id="rr-study-title">FLASH CARDS</h2><button type="button" class="rr-study-exit" data-study="exit" aria-label="Back to account settings">✕</button></header>
+    <div class="rr-study-cards-view">
+      <div class="rr-study-meta"><span class="rr-study-mode">ALL TERMS</span><strong class="rr-study-counter">1 / 15</strong><span class="rr-study-missed">0 TO REVIEW</span></div>
+      <div class="rr-study-progress" role="progressbar" aria-label="Cards reviewed" aria-valuemin="0" aria-valuemax="100"><span></span></div>
+      <div class="rr-study-card-stage">
+        <div class="rr-study-card-shadow rr-study-card-shadow-2" aria-hidden="true"></div>
+        <div class="rr-study-card-shadow rr-study-card-shadow-1" aria-hidden="true"></div>
+        <div class="rr-study-card" id="rr-study-card" role="button" tabindex="0" aria-label="Tap to flip flashcard; swipe left for wrong, right for correct">
+          <div class="rr-study-card-inner">
+            <div class="rr-study-face rr-study-front"><button type="button" class="rr-study-star" data-study="star" aria-label="Bookmark this term" title="Bookmark">★</button><strong class="rr-study-word" id="rr-study-front-word"></strong><span class="rr-study-language">ENGLISH</span></div>
+            <div class="rr-study-face rr-study-back"><button type="button" class="rr-study-star" data-study="star" aria-label="Bookmark this term" title="Bookmark">★</button><strong class="rr-study-word" id="rr-study-back-word"></strong><span class="rr-study-language">ESPAÑOL</span><span class="rr-study-note-indicator">✎ NOTE SAVED</span></div>
+          </div>
+        </div>
+        <div class="rr-study-note-tooltip" role="note" hidden></div>
+        <div class="rr-study-end" hidden><strong>ALL MASTERED!</strong><p>Every card was marked correct.</p><button data-study="restart" type="button">RESTART ALL CARDS</button></div>
+      </div>
+      <div class="rr-study-round-label" aria-live="polite">SWIPE LEFT: WRONG &nbsp; · &nbsp; SWIPE RIGHT: CORRECT</div>
+      <div class="rr-study-toolbar">
+        <div class="rr-study-cluster rr-study-sorting"><button type="button" class="rr-study-wrong" data-study="wrong" title="Didn't know (1)"><span>✕</span><small>1 · WRONG</small></button><button type="button" class="rr-study-correct" data-study="correct" title="Got it (2)"><span>✓</span><small>2 · RIGHT</small></button><button type="button" data-study="note" title="Write note on back of card" aria-label="Edit card notes">✎</button></div>
+        <div class="rr-study-cluster rr-study-nav"><button type="button" data-study="previous" aria-label="Previous flashcard">◀</button><button type="button" class="rr-study-flip" data-study="flip">FLIP CARD</button><button type="button" data-study="next" aria-label="Next (mark missed)">▶</button></div>
+        <div class="rr-study-cluster rr-study-tools"><button type="button" data-study="shuffle" title="Shuffle and restart">⤨</button><button type="button" data-study="help" title="Hotkeys & help">?</button></div>
+      </div>
+    </div>
+    <div class="rr-study-list-view" hidden>
+      <div class="rr-study-list-tools"><label>FIND WORD <input type="search" class="rr-study-search" maxlength="80" placeholder="Search English or Español" autocomplete="off"></label><span class="rr-study-list-count"></span></div>
+      <div class="rr-study-vocab-table" role="list" aria-label="Your vocabulary list"></div>
+      <div class="rr-study-list-actions"><button type="button" data-study="refresh">↻ REFRESH WORDS</button><button type="button" data-study="study-all">STUDY FLASH CARDS</button><button type="button" data-study="exit">BACK</button></div>
+      <p>Words come from your active Friends vocabulary list. Notes are saved locally for this account on this device.</p>
+    </div>
+    <div class="rr-study-modal" hidden><div class="rr-study-modal-card"><h3>✎ FLASHCARD NOTES</h3><p>Notes appear when you hover over this card.</p><textarea class="rr-study-notes-input" maxlength="1200" rows="5" placeholder="Write a memory trick or example…"></textarea><div><button type="button" data-study="save-note">SAVE NOTE</button><button type="button" data-study="cancel-note">CANCEL</button></div></div></div>
+    <div class="rr-study-help" hidden><div class="rr-study-help-card"><h3>HOW TO STUDY</h3><p>Swipe <b>left</b> (1) for a wrong answer. Swipe <b>right</b> (2) for a correct answer. Wrong cards repeat until you get them right.</p><p>Tap the card, Space, or Enter to flip. Use the pencil to write notes; hover over the card to read them. ← goes back, → skips as wrong.</p><button type="button" data-study="close-help">GOT IT</button></div></div>
+  </section>`;
+  function ensureRoot() {
+    if (state.root) return state.root;
+    const frame = document.getElementById("game-frame");
+    if (!frame) return null;
+    const root = document.createElement("div");
+    root.id = "rr-study-overlay";
+    root.hidden = true;
+    root.innerHTML = template;
+    frame.append(root);
+    root.addEventListener("click", onClick);
+    root.addEventListener("pointerdown", onPointerDown);
+    root.addEventListener("pointermove", onPointerMove);
+    root.addEventListener("pointerup", onPointerUp);
+    root.addEventListener("pointercancel", onPointerCancel);
+    root.querySelector(".rr-study-search").addEventListener("input", event => { state.search = event.target.value; renderList(); });
+    root.querySelector(".rr-study-card").addEventListener("mouseenter", () => showNoteTooltip(true));
+    root.querySelector(".rr-study-card").addEventListener("mouseleave", () => showNoteTooltip(false));
+    state.root = root;
+    return root;
+  }
+  function open({ view = "cards", vocabularyProvider, account = "guest", onExit } = {}) {
+    const root = ensureRoot(); if (!root) return false;
+    state.lastFocus = document.activeElement;
+    state.getVocabulary = typeof vocabularyProvider === "function" ? vocabularyProvider : state.getVocabulary;
+    state.account = String(account || "guest");
+    state.notes = safeRead(noteKey(), {});
+    const bookmarks = safeRead(STAR_KEY, []);
+    state.stars = new Set(Array.isArray(bookmarks) ? bookmarks : []);
+    state.onExit = typeof onExit === "function" ? onExit : null;
+    syncData(); state.active = true; state.view = view; state.search = "";
+    state.root.hidden = false;
+    document.body.classList.add("rr-study-active");
+    root.querySelector(".rr-study-modal").hidden = true;
+    root.querySelector(".rr-study-help").hidden = true;
+    root.querySelector(".rr-study-search").value = "";
+    if (view === "cards") resetDeck(false); else renderList();
+    updateView();
+    root.querySelector(".rr-study-exit")?.focus({ preventScroll:true });
+    return true;
+  }
+  function close() {
+    if (!state.active) return;
+    state.active = false;
+    state.animating = false; state.drag = null;
+    state.root.hidden = true;
+    document.body.classList.remove("rr-study-active");
+    const done = state.onExit; state.onExit = null;
+    done?.();
+    if (state.lastFocus?.isConnected && state.lastFocus !== document.body) state.lastFocus.focus({ preventScroll:true });
+  }
+  function resetDeck(shuffle = false) {
+    syncData(); state.queue = state.words.map((_, index) => index);
+    if (shuffle) for (let i = state.queue.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1)); [state.queue[i], state.queue[j]] = [state.queue[j], state.queue[i]];
+    }
+    state.index = 0; state.round = 0; state.missed.clear(); state.ratings.clear(); state.complete = !state.queue.length;
+    state.flipped = false; state.animating = false; state.shuffle = shuffle;
+    const card = state.root.querySelector(".rr-study-card");
+    card.style.transform = "";card.classList.remove("is-flipped", "rr-study-swiping");
+    renderCard();
+  }
+  function renderCard() {
+    if (!state.active || state.view !== "cards") return;
+    const root = state.root, word = current(), complete = state.complete;
+    root.querySelector(".rr-study-mode").textContent = state.round ? `REVIEW MISSED · PASS ${state.round + 1}` : "ALL TERMS";
+    root.querySelector(".rr-study-counter").textContent = complete ? "✓ / ✓" : `${state.index + 1} / ${state.queue.length}`;
+    root.querySelector(".rr-study-missed").textContent = `${state.missed.size} TO REVIEW`;
+    root.querySelector(".rr-study-progress span").style.width = `${complete ? 100 : Math.round((state.index / Math.max(1,state.queue.length)) * 100)}%`;
+    root.querySelector(".rr-study-progress").setAttribute("aria-valuenow", String(complete ? 100 : Math.round((state.index / Math.max(1,state.queue.length)) * 100)));
+    root.querySelector(".rr-study-card").hidden = complete;
+    root.querySelector(".rr-study-card-shadow-1").hidden = complete;
+    root.querySelector(".rr-study-card-shadow-2").hidden = complete;
+    root.querySelector(".rr-study-end").hidden = !complete;
+    if (!complete && word) {
+      root.querySelector("#rr-study-front-word").textContent = word.english.toUpperCase();
+      root.querySelector("#rr-study-back-word").textContent = word.spanish.toUpperCase();
+      root.querySelectorAll(".rr-study-star").forEach(node => {
+        const marked = state.stars.has(keyOf(word));
+        node.classList.toggle("is-bookmarked", marked);
+        node.setAttribute("aria-pressed", String(marked));
+      });
+      const note = String(state.notes[keyOf(word)] || "");
+      root.querySelector(".rr-study-note-indicator").hidden = !note;
+      root.querySelector(".rr-study-card").classList.toggle("is-flipped", state.flipped);
+      root.querySelector(".rr-study-card").setAttribute("aria-label", `${state.flipped ? word.spanish : word.english}; tap to flip, swipe left wrong, swipe right correct`);
+      root.querySelector(".rr-study-round-label").textContent = state.round ? `MISSED CARDS: ${state.missed.size} LEFT · KEEP GOING!` : "SWIPE LEFT: WRONG  ·  SWIPE RIGHT: CORRECT";
+      root.querySelector(".rr-study-note-tooltip").textContent = note;
+      showNoteTooltip(Boolean(root.querySelector(".rr-study-card:hover")));
+    } else {
+      root.querySelector(".rr-study-end strong").textContent = state.words.length ? "ALL MASTERED!" : "NO VOCAB WORDS YET";
+      root.querySelector(".rr-study-end p").textContent = state.words.length ? `${state.words.length} cards reviewed. Great work!` : "Load vocabulary in your account to study.";
+      showNoteTooltip(false);
+    }
+    root.querySelectorAll('[data-study="wrong"], [data-study="correct"], [data-study="flip"], [data-study="previous"], [data-study="next"], [data-study="note"], [data-study="star"]').forEach(btn => { btn.disabled = complete; });
+  }
+  function showNoteTooltip(show) {
+    const popup = state.root?.querySelector(".rr-study-note-tooltip");
+    if (!popup) return;
+    popup.hidden = !show || !state.active || state.view !== "cards" || state.animating || !current() || !state.notes[keyOf(current())];
+  }
+  function updateView() {
+    state.root.querySelector("#rr-study-title").textContent = state.view === "cards" ? "FLASH CARDS" : "VOCAB LIST";
+    state.root.querySelector(".rr-study-cards-view").hidden = state.view !== "cards";
+    state.root.querySelector(".rr-study-list-view").hidden = state.view !== "list";
+    if (state.view === "cards") renderCard(); else renderList();
+  }
+  function renderList() {
+    if (!state.active || state.view !== "list") return;
+    syncData();
+    const filter = state.search.trim().toLocaleLowerCase();
+    const matches = state.words.map((entry, index) => ({entry, index}))
+      .filter(({entry}) => !filter || entry.english.toLocaleLowerCase().includes(filter) || entry.spanish.toLocaleLowerCase().includes(filter));
+    state.root.querySelector(".rr-study-list-count").textContent = `${matches.length} / ${state.words.length} TERMS`;
+    const table = state.root.querySelector(".rr-study-vocab-table");
+    table.replaceChildren();
+    for (const {entry, index} of matches) {
+      const row = document.createElement("div"); row.className = "rr-study-vocab-row";row.setAttribute("role", "listitem");
+      const n = document.createElement("span");n.className="rr-study-vocab-n";n.textContent=String(index+1);
+      const en = document.createElement("strong");en.textContent=entry.english;
+      const es = document.createElement("span");es.textContent=entry.spanish;
+      const note = document.createElement("span");note.className="rr-study-vocab-note";note.textContent=state.notes[keyOf(entry)] ? "✎" : "";
+      row.append(n,en,es,note);table.append(row);
+    }
+    if (!matches.length) { const p=document.createElement("p");p.textContent="No matching terms.";p.className="rr-study-no-results";table.append(p); }
+  }
+  function flip() { if (!state.complete && !state.animating) { state.flipped = !state.flipped; renderCard(); } }
+  function advance() {
+    state.index++;
+    if (state.index >= state.queue.length) {
+      if (state.missed.size) {
+        state.round++;
+        state.queue = state.words.map((entry,i) => ({entry,i})).filter(({entry}) => state.missed.has(keyOf(entry))).map(({i}) => i);
+        state.index = 0;
+      } else state.complete = true;
+    }
+    state.flipped = false;
+    renderCard();
+  }
+  function grade(correct) {
+    if (state.complete || state.animating || !current()) return;
+    const key = keyOf(current());
+    if (correct) state.missed.delete(key); else state.missed.add(key);
+    state.ratings.set(key, correct ? "right" : "wrong");
+    const card = state.root.querySelector(".rr-study-card");
+    state.animating = true;showNoteTooltip(false);
+    card.classList.add(correct ? "rr-study-graded-right" : "rr-study-graded-wrong");
+    window.setTimeout(() => {
+      card.classList.remove("rr-study-graded-right", "rr-study-graded-wrong", "rr-study-swiping", "is-flipped");
+      card.style.transform = "";
+      state.animating = false;
+      if(state.active && state.view === "cards") advance();
+    }, SWIPE_TIME);
+  }
+  function previous() {
+    if (state.animating || state.complete || state.index <= 0) return;
+    state.index--;state.flipped=false;
+    const card=state.root.querySelector(".rr-study-card");
+    card.classList.add("rr-study-in-from-left");
+    window.setTimeout(()=>card.classList.remove("rr-study-in-from-left"),270);
+    renderCard();
+  }
+  function openNote() {
+    if (!current() || state.complete) return;
+    state.flipped = true;renderCard();showNoteTooltip(false);
+    const modal=state.root.querySelector(".rr-study-modal");modal.hidden=false;
+    modal.querySelector("textarea").value=state.notes[keyOf(current())]||"";
+    modal.querySelector("textarea").focus();
+  }
+  function saveNote() {
+    const word=current();if(!word)return;
+    const value=state.root.querySelector(".rr-study-notes-input").value.trim().slice(0,1200);
+    if(value)state.notes[keyOf(word)]=value;else delete state.notes[keyOf(word)];
+    saveNotes();state.root.querySelector(".rr-study-modal").hidden=true;renderCard();
+  }
+  function toggleStar() {
+    const item=current();if(!item)return;
+    const key=keyOf(item);
+    if(state.stars.has(key))state.stars.delete(key);else state.stars.add(key);
+    try{localStorage.setItem(STAR_KEY,JSON.stringify([...state.stars]));}catch(_){}
+    renderCard();
+  }
+  function action(name) {
+    switch(name) {
+      case "exit": close(); break;
+      case "flip": flip(); break;
+      case "wrong": grade(false); break;
+      case "correct": grade(true); break;
+      case "previous": previous(); break;
+      case "next": grade(false); break;
+      case "note": openNote(); break;
+      case "star": toggleStar(); break;
+      case "shuffle": resetDeck(true); break;
+      case "restart": resetDeck(false); break;
+      case "help": state.root.querySelector(".rr-study-help").hidden=false;break;
+      case "close-help": state.root.querySelector(".rr-study-help").hidden=true;break;
+      case "cancel-note": state.root.querySelector(".rr-study-modal").hidden=true;break;
+      case "save-note": saveNote();break;
+      case "study-all": state.view="cards";resetDeck(false);updateView();break;
+      case "refresh": {
+        document.getElementById("cloud-refresh-vocab")?.click();
+        window.setTimeout(()=>{if(state.active&&state.view==="list")renderList();},900);
+        break;
+      }
+    }
+  }
+  function onClick(event) {
+    const button=event.target.closest("[data-study]");
+    if(button){event.stopPropagation();action(button.dataset.study);return;}
+    if (event.target.closest(".rr-study-card")) {
+      if(event.detail===0)flip();
+    }
+  }
+  function onPointerDown(event) {
+    const card=event.target.closest(".rr-study-card");
+    if(!card || event.target.closest("button") || state.complete || state.animating || event.button>0)return;
+    state.drag={id:event.pointerId,x:event.clientX,y:event.clientY,lastX:event.clientX,moved:false};
+    state.dragMoved=false;
+    try{card.setPointerCapture(event.pointerId);}catch(_){}
+  }
+  function onPointerMove(event) {
+    const drag=state.drag;if(!drag||drag.id!==event.pointerId)return;
+    const dx=event.clientX-drag.x,dy=event.clientY-drag.y;
+    drag.lastX=event.clientX;
+    if(Math.abs(dx)>8||Math.abs(dy)>10)drag.moved=true;
+    state.dragMoved=drag.moved;
+    if(!drag.moved)return;
+    const card=state.root.querySelector(".rr-study-card");
+    card.classList.add("rr-study-swiping");
+    card.style.transform=`translateX(${dx}px) rotate(${dx*.045}deg)`;
+    showNoteTooltip(false);
+    event.preventDefault();
+  }
+  function onPointerUp(event) {
+    const drag=state.drag;if(!drag||drag.id!==event.pointerId)return;
+    state.drag=null;
+    const card=state.root.querySelector(".rr-study-card");
+    const dx=event.clientX-drag.x;
+    const threshold=Math.min(95,Math.max(42,card.getBoundingClientRect().width*.20));
+    if(Math.abs(dx)>=threshold){card.style.transform="";grade(dx>0);}
+    else{card.style.transform="";card.classList.remove("rr-study-swiping");if(!drag.moved)flip();}
+  }
+  function onPointerCancel() {
+    if(!state.drag)return;state.drag=null;
+    const card=state.root.querySelector(".rr-study-card");card.style.transform="";card.classList.remove("rr-study-swiping");
+  }
+  document.addEventListener("keydown", event => {
+    if(!state.active)return;
+    if(event.target.closest?.("textarea,input")){
+      if(event.code==="Escape"){
+        event.preventDefault();event.stopImmediatePropagation();
+        state.root.querySelector(".rr-study-modal").hidden=true;
+        state.root.querySelector(".rr-study-search").blur();
+      }
+      return;
+    }
+    const names={Digit1:"wrong",Numpad1:"wrong",Digit2:"correct",Numpad2:"correct",ArrowLeft:"previous",ArrowRight:"next",Space:"flip",Enter:"flip",NumpadEnter:"flip",Escape:"exit",Backspace:"exit",KeyN:"note",KeyH:"help",KeyS:"shuffle"};
+    const modeOpen=!state.root.querySelector(".rr-study-modal").hidden || !state.root.querySelector(".rr-study-help").hidden;
+    if(modeOpen){
+      if(event.code==="Escape"||event.code==="Backspace"){
+        event.preventDefault();event.stopImmediatePropagation();
+        state.root.querySelector(".rr-study-modal").hidden=true;state.root.querySelector(".rr-study-help").hidden=true;
+      }
+      return;
+    }
+    if (event.repeat || !names[event.code]) return;
+    event.preventDefault();event.stopImmediatePropagation();
+    if(state.view==="list"){
+      if(["Escape","Backspace"].includes(event.code))close();
+    }else action(names[event.code]);
+  }, true);
+  return Object.freeze({openCards:args=>open({...args,view:"cards"}),openList:args=>open({...args,view:"list"}),close,isOpen:()=>state.active,
+    getSnapshot:()=>({round:state.round,index:state.index,queue:[...state.queue],missed:[...state.missed],complete:state.complete,view:state.view})});
 })();
 
 }

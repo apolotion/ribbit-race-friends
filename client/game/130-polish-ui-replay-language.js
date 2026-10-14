@@ -85,6 +85,7 @@
   const PROFILE_MENU_ROWS = Object.freeze([
     Object.freeze({ id:"language", label:"LANGUAGE MODE" }),
     Object.freeze({ id:"flashcards", label:"FLASH CARDS" }),
+    Object.freeze({ id:"vocabulary", label:"VOCAB LIST" }),
     Object.freeze({ id:"manage", label:"BACK UP / MANAGE SAVE" }),
     Object.freeze({ id:"signout", label:"SIGN OUT" }),
     Object.freeze({ id:"back", label:"BACK" })
@@ -261,6 +262,7 @@
     const r=(x,y,w,h,c=color)=>{ctx.fillStyle=c;ctx.fillRect(Math.round(cx+x),Math.round(cy+y),w,h);};
     if(kind==="language") {r(-6,-6,12,12);r(-4,-4,8,8,"#f7fdff");r(-1,-6,2,12);r(-6,-1,12,2);}
     else if(kind==="flashcards") {r(-7,-5,10,12);r(-5,-3,6,7,"#f7fdff");r(0,-7,7,11);r(2,-5,3,5,"#f7fdff");}
+    else if(kind==="vocabulary") {r(-7,-7,14,14);r(-5,-5,10,3,"#f7fdff");r(-5,0,10,2,"#f7fdff");r(-5,4,7,2,"#f7fdff");}
     else if(kind==="manage") {r(-7,-6,14,12);r(-4,-5,8,4,"#f7fdff");r(-4,1,8,4,"#f7fdff");r(-1,2,3,3);}
     else if(kind==="signout") {r(-7,-6,8,12);r(-5,-4,4,8,"#f7fdff");r(0,-1,7,2);r(4,-4,3,3);r(4,1,3,3);}
     else {r(-1,-2,8,4);r(-3,-4,3,8);r(-6,-1,3,2);}
@@ -309,7 +311,7 @@
       ctx.fillStyle=selected?COLORS.ink:"#9aa9ae";ctx.fillRect(rect.x,rect.y,rect.w,rect.h);
       ctx.fillStyle=selected?mixHexColors(skin.belly,"#ffffff",.12):"#f7fdff";
       ctx.fillRect(rect.x+2,rect.y+2,rect.w-4,rect.h-4);
-      const stripes={language:skin.light,flashcards:"#f3d171",manage:"#7ee0cf",signout:"#ed9eaa",back:"#f3c5ce"};
+      const stripes={language:skin.light,flashcards:"#f3d171",vocabulary:"#8bc6ee",manage:"#7ee0cf",signout:"#ed9eaa",back:"#f3c5ce"};
       ctx.fillStyle=stripes[rect.id];ctx.fillRect(rect.x+5,rect.y+4,rect.w-10,2);
       drawProfileOptionIcon(rect.id,rect.x+21,rect.y+rect.h/2,selected?skin.dark:"#48555a");
       const labelScale=Math.min(.69,195/Math.max(1,measureBitmapText(rect.label,1)));
@@ -317,6 +319,7 @@
       drawBitmapText(rect.label,rect.x+rect.w/2,baseline,labelScale,"center",selected?skin.dark:"#48555a");
       if(rect.id==="language") drawLanguageValue(rect, getLearningLanguage(), selected);
       else if(rect.id==="flashcards") drawBitmapText(`${getFlashcardVocabulary().length} CARDS`,rect.x+rect.w-9,baseline+1,.38,"right",selected?skin.dark:"#59666b");
+      else if(rect.id==="vocabulary") drawBitmapText(`${getFlashcardVocabulary().length} WORDS`,rect.x+rect.w-9,baseline+1,.38,"right",selected?skin.dark:"#59666b");
     });
   }
   function drawLanguageSwapArrow(selected=false) {
@@ -628,6 +631,13 @@
     rebuildFlashcardDeck(false,false);
     polish.flashcardSelection=1;polish.flashcardHoverKey="";polish.flashcardHelpOpen=false;
     game.state="rrFlashcards";clearHeldInput();tone(480,.04,.009,10);
+    window.RibbitStudyUI?.openCards?.({ vocabularyProvider:getFlashcardVocabulary, account:accountDisplayName(),
+      onExit:()=>{ game.state="rrProfileMenu";polish.profileSelection=1; clearHeldInput(); }});
+  }
+  function openVocabularyList() {
+    game.state="rrVocabList";clearHeldInput();tone(510,.04,.009,20);
+    window.RibbitStudyUI?.openList?.({ vocabularyProvider:getFlashcardVocabulary, account:accountDisplayName(),
+      onExit:()=>{ game.state="rrProfileMenu";polish.profileSelection=2;clearHeldInput(); }});
   }
   function openDeviceMenu() { polish.priorMenuState=game.state; polish.deviceSelection=isRibbitMobileMode()?1:0; game.state="rrDeviceMenu"; clearHeldInput(); tone(480,.04,.009,20); }
   function closeUtilityMenu() { game.state="main"; game.mainFocusVisible=true; tone(330,.04,.009,-30); }
@@ -638,6 +648,7 @@
     const row=PROFILE_MENU_ROWS[index] || PROFILE_MENU_ROWS[0];
     if(row.id==="language") openLanguageMenu();
     else if(row.id==="flashcards") openFlashcardsMenu();
+    else if(row.id==="vocabulary") openVocabularyList();
     else if(row.id==="back") closeUtilityMenu();
     else {
       const id={manage:"friends-manage",signout:"cloud-sign-out"}[row.id];
@@ -2547,6 +2558,7 @@
       return;
     }
     if (game.state === "rrFlashcards") {
+      if (window.RibbitStudyUI?.isOpen?.()) return;
       const keys=["ArrowLeft","ArrowRight","ArrowUp","ArrowDown","KeyA","KeyD","KeyS","Slash","Space","Enter","NumpadEnter","KeyH","KeyV","KeyR","Escape","Backspace"];
       if(keys.includes(event.code)){
         event.preventDefault();event.stopImmediatePropagation();
